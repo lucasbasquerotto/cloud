@@ -1,0 +1,78 @@
+# vars:
+# - hosts_group
+# - droplet_info
+# - do_tags
+# - droplets
+
+- name: create tags
+  digital_ocean_tag:
+    api_token: "{{ droplets_api_token }}"
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - "{{ do_tags }}"
+
+- name: create droplets
+  digital_ocean:
+    unique_name: yes
+    api_token: "{{ droplets_api_token }}"
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    region_id: "{{ item.region_id }}"
+    command: droplet
+    size_id: "{{ droplet_info.size_id }}"
+    image_id: "{{ droplet_info.image_id }}"
+    private_networking: "{{ droplet_info.private_networking }}"
+    ipv6: "{{ droplet_info.ipv6 }}"
+    user_data: "{{ droplet_info.user_data }}"
+    wait_timeout: "{{ droplet_info.wait_timeout }}"
+  with_items:
+  - "{{ droplets }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: droplets_details
+
+- name: Define value of active_droplets
+  set_fact: active_droplets="{{ droplets_details.results | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
+
+- debug: msg="IP of droplet {{ item.name }} is {{ item.ip_address }}"
+  with_items: 
+  - "{{ active_droplets }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: tag each droplet
+  digital_ocean_tag:
+    api_token: "{{ droplets_api_token }}"
+    resource_id: "{{ item[0].id }}"
+    name: "{{ item[1] }}"
+    state: present
+  with_nested:
+  - "{{ active_droplets }}"
+  - "{{ do_tags }}"
+  loop_control:
+    label: "droplet: {{ item[0].name }} - tag: {{ item[1] }}"
+
+- set_fact: 
+    hosts_info: |
+      {{ '# ' + lookup('pipe', 'date +%Y-%m-%d-%H-%M-%S') }}
+
+- name: generate the hosts information with the droplets ips
+  set_fact: 
+    hosts_info: |
+      {{ hosts_info | default('') }}
+      {{ item.name }} ansible_host={{ item.ip_address }} ansible_user={{ droplets_host_user }} ansible_become_pass={{ droplets_host_pass }}
+  with_items: 
+  - "{{ active_droplets }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Update the hosts file with the generated hosts
+  blockinfile:
+    path: "{{ droplets_hosts_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ hosts_group }}"
+    insertafter: "\\[{{ hosts_group }}\\]"
+    block: "{{ hosts_info }}"
+
+- name: refresh inventory
+  meta: refresh_inventory

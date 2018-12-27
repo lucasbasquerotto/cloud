@@ -1,0 +1,4 @@
+host_test_log_file: "/var/log/setup.log"
+host_test_setup_last_line: "Setup Finished"
+host_test_initial_connection_timeout: 60
+host_test_setup_finished_timeout: 60

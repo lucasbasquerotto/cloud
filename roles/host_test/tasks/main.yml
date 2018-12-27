@@ -1,0 +1,37 @@
+# vars:
+#   log_file -> Ex: "/var/log/setup.log"
+#   setup_last_line -> Ex: "Setup Finished"
+#   initial_connection_timeout -> Ex: 60
+#   setup_finished_timeout -> Ex: 60
+
+- name: Wait {{ initial_connection_timeout }} seconds for target connection to become reachable/usable
+  wait_for_connection:
+    delay: 0
+    sleep: 1
+    timeout: "{{ initial_connection_timeout }}"
+
+- name: Gathering facts
+  setup:
+
+- name: Make sure the file "{{ log_file }}" has "{{ setup_last_line }}" in it
+  wait_for:
+    delay: 0
+    sleep: 1
+    timeout: "{{ setup_finished_timeout }}"
+    path: "{{ log_file }}"
+    search_regex: "{{ setup_last_line }}"
+    msg: Timeout to find "{{ setup_last_line }}" inside file "{{ log_file }}"
+
+- name: retrieve last line of "{{ log_file }}"
+  shell: tail -n 1 "{{ log_file }}"
+  register: last_line
+
+- name: Update variable last_line
+  set_fact: last_line="{{ last_line.stdout }}"
+
+- debug: msg="last_line='{{ last_line }}'"
+  
+- name: verify if the setup was finished successfully
+  fail: 
+    msg: "Variable '{{ last_line }}' should be equal to '{{ setup_last_line }}'"
+  when: last_line != setup_last_line
