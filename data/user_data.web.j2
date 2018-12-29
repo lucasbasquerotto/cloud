@@ -5,25 +5,25 @@ set -euo pipefail
 ### SCRIPT VARIABLES ###
 ########################
 
+# Docker version
+DOCKER_CE_VERSION="{{ docker_ce_version | default('18.09.0~ce-0~ubuntu') }}"
+
 # Name of the user to create and grant sudo privileges
-## USERNAME=sammy
 USERNAME="{{ host_user }}"
 
 # Password of the user to create and grant sudo privileges
 PASSWORD="{{ host_pass }}"
-
-# Whether to copy over the root user's `authorized_keys` file to the new sudo
-# user.
-## COPY_AUTHORIZED_KEYS_FROM_ROOT=true
-COPY_AUTHORIZED_KEYS_FROM_ROOT=false
 
 # Additional public keys to add to the new sudo user
 # OTHER_PUBLIC_KEYS_TO_ADD=(
 #	"ssh-rsa AAAAB..."
 #	"ssh-rsa AAAAB..."
 # )
-## OTHER_PUBLIC_KEYS_TO_ADD=()
-OTHER_PUBLIC_KEYS_TO_ADD=( "{{ host_ssh_public_key }}" )
+OTHER_PUBLIC_KEYS_TO_ADD=( 
+{% for item in host_ssh_public_keys %}
+	"{{ item }}" 
+{% endfor %}
+)
 
 ####################
 ### SCRIPT LOGIC ###
@@ -64,11 +64,6 @@ fi
 home_directory="$(eval echo ~${USERNAME})"
 mkdir --parents "${home_directory}/.ssh"
 
-# Copy `authorized_keys` file from root if requested
-if [ "${COPY_AUTHORIZED_KEYS_FROM_ROOT}" = true ]; then
-	cp /root/.ssh/authorized_keys "${home_directory}/.ssh"
-fi
-
 # Add additional provided public keys
 for pub_key in "${OTHER_PUBLIC_KEYS_TO_ADD[@]}"; do
 	echo "${pub_key}" >> "${home_directory}/.ssh/authorized_keys"
@@ -95,7 +90,7 @@ apt autoremove -y
 echo "Main logic finished" >> "/var/log/setup.log"
 
 ########################
-###      ANSIBLE     ###
+###   ANSIBLE HOST   ###
 ########################
 
 echo "Preparing Ansible Host..." >> "/var/log/setup.log"
@@ -104,5 +99,35 @@ apt update
 apt install -y python
 
 echo "Ansible Host Prepared" >> "/var/log/setup.log"
+
+########################
+###      DOCKER      ###
+########################
+
+echo "Preparing Docker Installation..." >> "/var/log/setup.log"
+
+# First, update your existing list of packages
+apt update
+
+# Next, install a few prerequisite packages which let apt use packages over HTTPS
+apt install -y apt-transport-https ca-certificates curl software-properties-common
+
+# Then add the GPG key for the official Docker repository to your system
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+# Add the Docker repository to APT sources
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" -y
+
+# Next, update the package database with the Docker packages from the newly added repo
+apt update
+
+# Finally, install Docker
+apt install -y docker-ce=$DOCKER_CE_VERSION
+
+echo "Docker Installed" >> "/var/log/setup.log"
+
+########################
+###       END        ###
+########################
 
 echo "Setup Finished" >> "/var/log/setup.log"

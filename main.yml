@@ -13,63 +13,52 @@
     main_aux:  
       web_user_data: "{{ lookup('template', 'data/user_data.web.j2', template_vars=dict(main_host_vars)) | trim }}"
       db_user_data: "{{ lookup('template', 'data/user_data.db.j2', template_vars=dict(main_host_vars)) | trim }}"
-    web:
-      hosts_group: 'web'
-      hosts_file: "{{ main.hosts_file }}"
-      api_token: "{{ main.api_token }}"
-      host_user: "{{ main.host_user }}"
-      host_pass: "{{ main.host_pass }}"
-      droplet_info:
-        image_id: "{{ main.web_droplet_info.image_id }}"
-        size_id: "{{ main.web_droplet_info.size_id }}"
-        private_networking: "{{ main.web_droplet_info.private_networking }}"
-        ipv6: "{{ main.web_droplet_info.ipv6 }}"
-        wait_timeout: "{{ main.web_droplet_info.wait_timeout }}"
-        user_data: "{{ main_aux.web_user_data }}"
-      do_tags: "{{ main.web_tags }}"
-      droplets: "{{ main.web_droplets }}"
-    db:
-      hosts_group: 'db'
-      hosts_file: "{{ main.hosts_file }}"
-      api_token: "{{ main.api_token }}"
-      host_user: "{{ main.host_user }}"
-      host_pass: "{{ main.host_pass }}"
-      droplet_info:
-        image_id: "{{ main.db_droplet_info.image_id }}"
-        size_id: "{{ main.db_droplet_info.size_id }}"
-        private_networking: "{{ main.db_droplet_info.private_networking }}"
-        ipv6: "{{ main.db_droplet_info.ipv6 }}"
-        wait_timeout: "{{ main.db_droplet_info.wait_timeout }}"
-        user_data: "{{ main_aux.db_user_data }}"
-      do_tags: "{{ main.db_tags }}"
-      droplets: "{{ main.db_droplets }}"
+    main_droplet_info_list: []  
+
+  pre_tasks:
+  - name: define main droplet info list
+    set_fact: 
+      main_droplet_info_list[{{item.0}}]:
+        hosts_group: "{{ item.1.group }}"
+        hosts_file: "{{ main.hosts_file }}"
+        api_token: "{{ main.api_token }}"
+        host_user: "{{ main.host_user }}"
+        host_pass: "{{ main.host_pass }}"
+        droplet_info:
+          image_id: "{{ main.web_droplet_info.image_id }}"
+          size_id: "{{ main.web_droplet_info.size_id }}"
+          private_networking: "{{ main.web_droplet_info.private_networking }}"
+          ipv6: "{{ main.web_droplet_info.ipv6 }}"
+          wait_timeout: "{{ main.web_droplet_info.wait_timeout }}"
+          user_data: "{{ item.1.user_data }}"
+        do_tags: "{{ main.web_tags }}"
+        droplets: "{{ main.web_droplets }}"
+      main_droplet_info_list: "{{ main_droplet_info_list + [ obj ] }}"
+    with_indexed_items:
+    - { group: "db_master", user_data: "{{ main_aux.db_user_data }}" }
+    - { group: "db_replica", user_data: "{{ main_aux.db_user_data }}" }
+    - { group: "web", user_data: "{{ main_aux.web_user_data }}" }
+    loop_control:
+      label: "{{ item.group }}"
+
   roles:  
   - role: droplets
     vars:
-      hosts_file: "{{ web.hosts_file }}"
-      api_token: "{{ web.api_token }}"
-      host_user: "{{ web.host_user }}"
-      host_pass: "{{ web.host_pass }}"
-      hosts_group: "{{ web.hosts_group }}"
-      droplet_info: "{{ web.droplet_info }}"
-      do_tags: "{{ web.do_tags }}"
-      droplets: "{{ web.droplets }}"
-  
-  - role: droplets
-    vars:
-      hosts_file: "{{ db.hosts_file }}"
-      api_token: "{{ db.api_token }}"
-      host_user: "{{ db.host_user }}"
-      host_pass: "{{ db.host_pass }}"
-      hosts_group: "{{ db.hosts_group }}"
-      droplet_info: "{{ db.droplet_info }}"
-      do_tags: "{{ db.do_tags }}"
-      droplets: "{{ db.droplets }}"
+      droplets_hosts_file: "{{ item.hosts_file }}"
+      droplets_api_token: "{{ item.api_token }}"
+      droplets_host_user: "{{ item.host_user }}"
+      droplets_host_pass: "{{ item.host_pass }}"
+      droplets_hosts_group: "{{ item.hosts_group }}"
+      droplets_info: "{{ item.droplet_info }}"
+      droplets_tags: "{{ item.do_tags }}"
+      droplets_list: "{{ item.droplets }}"
+    with_items:
+    - "{{ main_droplet_info_list }}"
 
 ###############################################################################
 
 - name: Play 02 - Wait for hosts to be ready
-  hosts: web:db
+  hosts: host
   tags:
     - setup
   vars_files: 
@@ -84,14 +73,5 @@
       host_test_setup_last_line: "{{ main.setup_last_line }}"
       host_test_initial_connection_timeout: "{{ main.initial_connection_timeout }}"
       host_test_setup_finished_timeout: "{{ main.setup_finished_timeout }}"
-
-###############################################################################
-
-- name: Play 03 - Install and update hosts packages
-  hosts: web
-  tags:
-    - setup
-  roles:
-  - role: docker
 
 ###############################################################################

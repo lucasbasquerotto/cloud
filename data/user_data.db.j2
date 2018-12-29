@@ -6,24 +6,21 @@ set -euo pipefail
 ########################
 
 # Name of the user to create and grant sudo privileges
-## USERNAME=sammy
 USERNAME="{{ host_user }}"
 
 # Password of the user to create and grant sudo privileges
 PASSWORD="{{ host_pass }}"
-
-# Whether to copy over the root user's `authorized_keys` file to the new sudo
-# user.
-## COPY_AUTHORIZED_KEYS_FROM_ROOT=true
-COPY_AUTHORIZED_KEYS_FROM_ROOT=false
 
 # Additional public keys to add to the new sudo user
 # OTHER_PUBLIC_KEYS_TO_ADD=(
 #	"ssh-rsa AAAAB..."
 #	"ssh-rsa AAAAB..."
 # )
-## OTHER_PUBLIC_KEYS_TO_ADD=()
-OTHER_PUBLIC_KEYS_TO_ADD=( "{{ host_ssh_public_key }}" )
+OTHER_PUBLIC_KEYS_TO_ADD=( 
+{% for item in host_ssh_public_keys %}
+	"{{ item }}" 
+{% endfor %}
+)
 
 ####################
 ### SCRIPT LOGIC ###
@@ -64,11 +61,6 @@ fi
 home_directory="$(eval echo ~${USERNAME})"
 mkdir --parents "${home_directory}/.ssh"
 
-# Copy `authorized_keys` file from root if requested
-if [ "${COPY_AUTHORIZED_KEYS_FROM_ROOT}" = true ]; then
-	cp /root/.ssh/authorized_keys "${home_directory}/.ssh"
-fi
-
 # Add additional provided public keys
 for pub_key in "${OTHER_PUBLIC_KEYS_TO_ADD[@]}"; do
 	echo "${pub_key}" >> "${home_directory}/.ssh/authorized_keys"
@@ -95,7 +87,7 @@ apt autoremove -y
 echo "Main logic finished" >> "/var/log/setup.log"
 
 ########################
-###      ANSIBLE     ###
+###   ANSIBLE HOST   ###
 ########################
 
 echo "Preparing Ansible Host..." >> "/var/log/setup.log"
@@ -104,5 +96,9 @@ apt update
 apt install -y python
 
 echo "Ansible Host Prepared" >> "/var/log/setup.log"
+
+########################
+###       END        ###
+########################
 
 echo "Setup Finished" >> "/var/log/setup.log"
