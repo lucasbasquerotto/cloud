@@ -33,7 +33,7 @@
       droplets_api_token: "{{ main.api_token }}"
       droplets_host_user: "{{ main.host_user }}"
       droplets_host_pass: "{{ main.host_pass }}"
-      droplets_user_data: "{{ outer_item.value.user_data }}"
+      droplets_user_data: "{{ outer_item.user_data }}"
       droplets_info: "{{ outer_item.main_data.info }}"
       droplets_tags: "{{ outer_item.main_data.tags }}"
       droplets_list: "{{ outer_item.main_data.droplets }}"
