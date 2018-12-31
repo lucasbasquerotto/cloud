@@ -25,7 +25,7 @@
         user_data: "{{ main_aux.web_user_data }}" 
 
   pre_tasks:
-    debug:
+  - debug:
       msg: "{{ item.group }} - {{ item.main_data.tags }}"
     with_items:
     - "{{ main_droplet_list }}"
