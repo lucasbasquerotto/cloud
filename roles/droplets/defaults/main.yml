@@ -7,7 +7,7 @@ droplets_info:
   private_networking: 'yes'
   ipv6: 'yes'
   wait_timeout: 500
-  user_data: "{{ omit }}"
+droplets_user_data: "{{ omit }}"
 droplets_tags:
 - "host"
 - "worker"

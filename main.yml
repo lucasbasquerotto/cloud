@@ -13,54 +13,33 @@
     main_aux:  
       web_user_data: "{{ lookup('template', 'data/user_data.web.j2', template_vars=dict(main_host_vars)) | trim }}"
       db_user_data: "{{ lookup('template', 'data/user_data.db.j2', template_vars=dict(main_host_vars)) | trim }}"
-    main_droplet_data:
-      db_master:
-         main_data: "{{ main.db_master }}"
-         user_data: "{{ main_aux.db_user_data }}" 
-      db_replica:
+    main_droplet_list:
+      - group: "db_master"
+        main_data: "{{ main.db_master }}"
+        user_data: "{{ main_aux.db_user_data }}"
+      - group: "db_replica"
          main_data: "{{ main.db_replica }}"
          user_data: "{{ main_aux.db_user_data }}" 
-      web:
+      - group: "web"
          main_data: "{{ main.web }}"
          user_data: "{{ main_aux.web_user_data }}" 
-    main_droplet_info_list: []  
-
-  pre_tasks:
-  - name: define main droplet info list
-    set_fact: 
-      main_droplet_info_list[{{item.0}}]:
-        hosts_group: "{{ item.1.key }}"
-        hosts_file: "{{ main.hosts_file }}"
-        api_token: "{{ main.api_token }}"
-        host_user: "{{ main.host_user }}"
-        host_pass: "{{ main.host_pass }}"
-        droplet_info:
-          image_id: "{{ item.1.value.main_data.info.image_id }}"
-          size_id: "{{ item.1.value.main_data.info.size_id }}"
-          private_networking: "{{ item.1.value.main_data.info.private_networking }}"
-          ipv6: "{{ item.1.value.main_data.info.ipv6 }}"
-          wait_timeout: "{{ item.1.value.main_data.info.wait_timeout }}"
-          user_data: "{{ item.1.value.user_data }}"
-        do_tags: "{{ item.1.value.main_data.tags }}"
-        droplets: "{{ item.1.value.main_data.droplets }}"
-    with_indexed_items:
-    - "{{ main_droplet_data | dict2items }}"
-    loop_control:
-      label: "{{ item.1.key }}"
-
+         
   roles:  
   - role: droplets
     vars:
-      droplets_hosts_file: "{{ item.hosts_file }}"
-      droplets_api_token: "{{ item.api_token }}"
-      droplets_host_user: "{{ item.host_user }}"
-      droplets_host_pass: "{{ item.host_pass }}"
-      droplets_hosts_group: "{{ item.hosts_group }}"
-      droplets_info: "{{ item.droplet_info }}"
-      droplets_tags: "{{ item.do_tags }}"
-      droplets_list: "{{ item.droplets }}"
+      droplets_hosts_group: "{{ item.group }}"
+      droplets_hosts_file: "{{ main.hosts_file }}"
+      droplets_api_token: "{{ main.api_token }}"
+      droplets_host_user: "{{ main.host_user }}"
+      droplets_host_pass: "{{ main.host_pass }}"
+      droplets_user_data: "{{ item.value.user_data }}"
+      droplets_info: "{{ item.main_data.info }}"
+      droplets_tags: "{{ item.main_data.do_tags }}"
+      droplets_list: "{{ item.main_data.droplets }}"
     with_items:
-    - "{{ main_droplet_info_list }}"
+    - "{{ main_droplet_list }}"
+    loop_control:
+      label: "{{ item.group }}"
 
 ###############################################################################
 

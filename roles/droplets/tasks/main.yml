@@ -19,7 +19,7 @@
     wait_timeout: "{{ droplet_info.wait_timeout }}"
     private_networking: "{{ droplet_info.private_networking | default(omit) }}"
     ipv6: "{{ droplet_info.ipv6 | default(omit) }}"
-    user_data: "{{ droplet_info.user_data | default(omit) }}"
+    user_data: "{{ droplets_user_data }}"
   with_items:
   - "{{ droplets_list }}"
   loop_control:
