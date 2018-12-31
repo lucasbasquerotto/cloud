@@ -6,7 +6,6 @@ droplets_info:
   image_id: 'ubuntu-18-04-x64'
   private_networking: 'yes'
   ipv6: 'yes'
-  user_data: ''
   wait_timeout: 500
   user_data: "{{ omit }}"
 droplets_tags:
