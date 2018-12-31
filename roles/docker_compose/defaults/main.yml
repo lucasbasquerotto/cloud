@@ -1,5 +1,5 @@
-docker_compose_bin_src: "data/docker_compose.sh"
-docker_compose_bin_dest: "/usr/local/bin/docker_compose"
+docker_compose_bin_src: "data/docker-compose.sh"
+docker_compose_bin_dest: "/usr/local/bin/docker-compose"
 
 docker_compose_repo: "https://github.com/ansible/ansible-examples.git"
 docker_compose_repo_version: "HEAD"
