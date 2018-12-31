@@ -34,7 +34,7 @@
       droplets_host_pass: "{{ main.host_pass }}"
       droplets_user_data: "{{ item.value.user_data }}"
       droplets_info: "{{ item.main_data.info }}"
-      droplets_tags: "{{ item.main_data.do_tags }}"
+      droplets_tags: "{{ item.main_data.tags }}"
       droplets_list: "{{ item.main_data.droplets }}"
     with_items:
     - "{{ main_droplet_list }}"
