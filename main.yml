@@ -32,8 +32,9 @@
     loop_control:
       label: "{{ item.group }}"
          
-  roles:  
-  - role: droplets
+  tasks:  
+  - include_role: 
+      name: droplets
     vars:
       droplets_hosts_group: "{{ item.group }}"
       droplets_hosts_file: "{{ main.hosts_file }}"
