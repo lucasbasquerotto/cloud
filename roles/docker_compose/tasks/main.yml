@@ -1,10 +1,12 @@
 - name: move the docker compose executable file
+  become: true
   template:
     src: "{{ docker_compose_bin_src }}"
     dest: "{{ docker_compose_bin_dest }}"
     mode: 0700
 
 - name: update the repository with the docker_compose file
+  become: true
   git:
     repo: "{{ docker_compose_repo }}"
     version: "{{ docker_compose_repo_version }}"
