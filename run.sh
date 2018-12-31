@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-GIT_REPO="https://github.com/lucasbasquerotto/ansible-demo.git"
+GIT_REPO="https://github.com/lucasbasquerotto/ansible-docker.git"
 
 cd ~
 

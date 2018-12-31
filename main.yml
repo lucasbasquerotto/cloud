@@ -33,13 +33,12 @@
           user_data: "{{ item.1.user_data }}"
         do_tags: "{{ main.web_tags }}"
         droplets: "{{ main.web_droplets }}"
-      main_droplet_info_list: "{{ main_droplet_info_list + [ obj ] }}"
     with_indexed_items:
     - { group: "db_master", user_data: "{{ main_aux.db_user_data }}" }
     - { group: "db_replica", user_data: "{{ main_aux.db_user_data }}" }
     - { group: "web", user_data: "{{ main_aux.web_user_data }}" }
     loop_control:
-      label: "{{ item.group }}"
+      label: "{{ item.1.group }}"
 
   roles:  
   - role: droplets
