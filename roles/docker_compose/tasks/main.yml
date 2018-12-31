@@ -1,0 +1,12 @@
+- name: move the docker compose executable file
+  template:
+    src: "{{ docker_compose_bin_src }}"
+    dest: "{{ docker_compose_bin_dest }}"
+    mode: 0700
+
+- name: update the repository with the docker_compose file
+  repo: "{{ docker_compose_repo }}"
+  version: "{{ docker_compose_repo_version }}"
+  refspec: "{{ docker_compose_repo_refspec }}"
+  dest: "{{ docker_compose_repo_dest }}"
+  force: "yes"

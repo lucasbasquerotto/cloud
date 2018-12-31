@@ -63,3 +63,41 @@
       host_test_setup_finished_timeout: "{{ main.setup_finished_timeout }}"
 
 ###############################################################################
+
+- name: Play 03 - Prepare and update the docker compose repository
+  hosts: web
+  tags:
+    - prepare
+  vars_files: 
+    - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  roles:
+  - role: docker_compose
+    vars:
+      docker_compose_bin_src: "{{ main.docker_compose_bin_src }}"
+      docker_compose_version: "{{ main.docker_compose_version }}"
+      docker_compose_repo: "{{ main.docker_compose_repo }}"
+      docker_compose_repo_version: "{{ main.docker_compose_repo_version }}"
+      docker_compose_repo_dest: "{{ docker_compose_repo_dest }}"
+
+###############################################################################
+
+- name: Play 04 - Build and run the docker images and containers with docker-compose
+  hosts: web
+  tags:
+    - run
+  tasks:
+  - name: build with docker-compose
+    become: true
+    shell: docker-compose build
+    args:
+      chdir: "{{ docker_compose_repo_dest }}"
+  
+  - name: run with docker-compose
+    become: true
+    shell: docker-compose up -d --remove-orphans
+    args:
+      chdir: "{{ docker_compose_repo_dest }}"
+
+###############################################################################
