@@ -18,11 +18,11 @@
         main_data: "{{ main.db_master }}"
         user_data: "{{ main_aux.db_user_data }}"
       - group: "db_replica"
-         main_data: "{{ main.db_replica }}"
-         user_data: "{{ main_aux.db_user_data }}" 
+        main_data: "{{ main.db_replica }}"
+        user_data: "{{ main_aux.db_user_data }}" 
       - group: "web"
-         main_data: "{{ main.web }}"
-         user_data: "{{ main_aux.web_user_data }}" 
+        main_data: "{{ main.web }}"
+        user_data: "{{ main_aux.web_user_data }}" 
          
   roles:  
   - role: droplets
