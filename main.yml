@@ -11,8 +11,8 @@
       host_pass: "{{ main.host_pass }}"
       host_ssh_public_keys: "{{ main.host_ssh_public_keys }}"
     main_aux:  
-      web_user_data: "{{ lookup('template', 'data/user_data.web.j2', template_vars=dict(main_host_vars)) | trim }}"
-      db_user_data: "{{ lookup('template', 'data/user_data.db.j2', template_vars=dict(main_host_vars)) | trim }}"
+      web_user_data: "{{ lookup('template', 'templates/user_data.web.j2', template_vars=dict(main_host_vars)) | trim }}"
+      db_user_data: "{{ lookup('template', 'templates/user_data.db.j2', template_vars=dict(main_host_vars)) | trim }}"
     main_droplet_list:
       - group: "db_master"
         main_data: "{{ main.db_master }}"
