@@ -13,32 +13,40 @@
     main_aux:  
       web_user_data: "{{ lookup('template', 'data/user_data.web.j2', template_vars=dict(main_host_vars)) | trim }}"
       db_user_data: "{{ lookup('template', 'data/user_data.db.j2', template_vars=dict(main_host_vars)) | trim }}"
+    main_droplet_data:
+      db_master:
+         main_data: "{{ main.db_master }}"
+         user_data: "{{ main_aux.db_user_data }}" 
+      db_replica:
+         main_data: "{{ main.db_replica }}"
+         user_data: "{{ main_aux.db_user_data }}" 
+      web:
+         main_data: "{{ main.web }}"
+         user_data: "{{ main_aux.web_user_data }}" 
     main_droplet_info_list: []  
 
   pre_tasks:
   - name: define main droplet info list
     set_fact: 
       main_droplet_info_list[{{item.0}}]:
-        hosts_group: "{{ item.1.group }}"
+        hosts_group: "{{ item.1.key }}"
         hosts_file: "{{ main.hosts_file }}"
         api_token: "{{ main.api_token }}"
         host_user: "{{ main.host_user }}"
         host_pass: "{{ main.host_pass }}"
         droplet_info:
-          image_id: "{{ main.web_droplet_info.image_id }}"
-          size_id: "{{ main.web_droplet_info.size_id }}"
-          private_networking: "{{ main.web_droplet_info.private_networking }}"
-          ipv6: "{{ main.web_droplet_info.ipv6 }}"
-          wait_timeout: "{{ main.web_droplet_info.wait_timeout }}"
-          user_data: "{{ item.1.user_data }}"
-        do_tags: "{{ main.web_tags }}"
-        droplets: "{{ main.web_droplets }}"
+          image_id: "{{ item.1.value.main_data.info.image_id }}"
+          size_id: "{{ item.1.value.main_data.info.size_id }}"
+          private_networking: "{{ item.1.value.main_data.info.private_networking }}"
+          ipv6: "{{ item.1.value.main_data.info.ipv6 }}"
+          wait_timeout: "{{ item.1.value.main_data.info.wait_timeout }}"
+          user_data: "{{ item.1.value.user_data }}"
+        do_tags: "{{ item.1.value.main_data.tags }}"
+        droplets: "{{ item.1.value.main_data.droplets }}"
     with_indexed_items:
-    - { group: "db_master", user_data: "{{ main_aux.db_user_data }}" }
-    - { group: "db_replica", user_data: "{{ main_aux.db_user_data }}" }
-    - { group: "web", user_data: "{{ main_aux.web_user_data }}" }
+    - "{{ main_droplet_data | dict2items }}"
     loop_control:
-      label: "{{ item.1.group }}"
+      label: "{{ item.1.key }}"
 
   roles:  
   - role: droplets
