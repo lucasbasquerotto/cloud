@@ -16,11 +16,11 @@
     search_regex: "{{ host_test_setup_last_line }}"
     msg: Timeout to find "{{ host_test_setup_last_line }}" inside file "{{ host_test_log_file }}"
 
-- name: [idempotent] retrieve last line of "{{ host_test_log_file }}"
+- name: retrieve last line of "{{ host_test_log_file }}"
   shell: tail -n 1 "{{ host_test_log_file }}"
   register: host_test_last_line
 
-- name: [idempotent] define variable with the last line
+- name: define variable with the last line
   set_fact: host_test_last_line="{{ host_test_last_line.stdout }}"
 
 - debug: msg="last_line='{{ host_test_last_line }}'"

@@ -1,18 +1,19 @@
 #!/bin/bash
 set -e
 
-GIT_REPO="https://github.com/lucasbasquerotto/ansible-docker.git"
+REPO_NAME="ansible-docker"
+GIT_REPO="https://github.com/lucasbasquerotto/$REPO_NAME.git"
 
 cd ~
 
-rm -rf ansible-demo
+rm -rf "$REPO_NAME"
 rm -rf ansible
 
 git clone "$GIT_REPO"
 mkdir ansible
 shopt -s dotglob
-mv ansible-demo/* ansible/
-rm -rf ansible-demo
+mv "$REPO_NAME"/* ansible/
+rm -rf "$REPO_NAME"
 
 mkdir -p ~/env
 mv -vn ~/ansible/env/env.yml ~/env/env.yml
