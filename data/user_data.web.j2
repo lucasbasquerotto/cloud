@@ -6,7 +6,7 @@ set -euo pipefail
 ########################
 
 # Docker version
-DOCKER_CE_VERSION="{{ docker_ce_version | default('18.09.0~ce-0~ubuntu') }}"
+DOCKER_CE_VERSION="{{ docker_ce_version | default('5:18.09.0~3-0~ubuntu-bionic') }}"
 
 # Name of the user to create and grant sudo privileges
 USERNAME="{{ host_user }}"

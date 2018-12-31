@@ -23,7 +23,7 @@
   with_items:
   - "{{ droplets_list }}"
   loop_control:
-    label: "{{ item.name }}"
+    label: "{{ item.name }} - {{ item.state }}"
   register: droplets_details
 
 - name: Define value of droplets_active
