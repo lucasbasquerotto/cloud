@@ -9,7 +9,7 @@
     main_host_vars: 
       host_user: "{{ main.host_user }}"
       host_pass: "{{ main.host_pass }}"
-      host_ssh_public_key: "{{ main.host_ssh_public_key }}"
+      host_ssh_public_keys: "{{ main.host_ssh_public_keys }}"
     main_aux:  
       web_user_data: "{{ lookup('template', 'data/user_data.web.j2', template_vars=dict(main_host_vars)) | trim }}"
       db_user_data: "{{ lookup('template', 'data/user_data.db.j2', template_vars=dict(main_host_vars)) | trim }}"
