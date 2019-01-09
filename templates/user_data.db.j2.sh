@@ -5,6 +5,12 @@ set -euo pipefail
 ### SCRIPT VARIABLES ###
 ########################
 
+# Docker version
+MYSQL_VERSION="{{ mysql_version | default('8.0.13-1ubuntu18.04') }}"
+
+# Docker version
+MYSQL_PASS="{{ mysql_password }}"
+
 # Name of the user to create and grant sudo privileges
 USERNAME="{{ host_user }}"
 
@@ -96,6 +102,36 @@ apt update
 apt install -y python
 
 echo "Ansible Host Prepared" >> "/var/log/setup.log"
+
+########################
+###      MYSQL       ###
+########################
+
+echo "Installing MySQL..." >> "/var/log/setup.log"
+
+echo "Adding the MySQL Package..." >> "/var/log/setup.log"
+
+cd /tmp
+
+curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
+
+export DEBIAN_FRONTEND="noninteractive"; 
+"echo mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
+sudo -E dpkg -i mysql-apt-config*
+
+rm mysql-apt-config*
+
+echo "MySQL Package Added" >> "/var/log/setup.log"
+
+apt update
+
+debconf-set-selections <<< "mysql-server mysql-server/root_password password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
+apt-get install -y mysql-server="$MYSQL_VERSION"
+
+echo "MySQL Installed" >> "/var/log/setup.log"
 
 ########################
 ###       END        ###
