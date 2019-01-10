@@ -116,8 +116,9 @@ cd /tmp
 curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
 
 export DEBIAN_FRONTEND="noninteractive"; 
-"echo mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
-sudo -E dpkg -i mysql-apt-config*
+echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
+#sudo -E dpkg -i mysql-apt-config*
+dpkg -i mysql-apt-config*
 
 rm mysql-apt-config*
 
