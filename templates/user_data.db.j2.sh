@@ -5,10 +5,10 @@ set -euo pipefail
 ### SCRIPT VARIABLES ###
 ########################
 
-# Docker version
+# MySQL version
 MYSQL_VERSION="{{ mysql_version | default('8.0.13-1ubuntu18.04') }}"
 
-# Docker version
+# MySQL password
 MYSQL_PASS="{{ mysql_password }}"
 
 # Name of the user to create and grant sudo privileges
@@ -131,6 +131,7 @@ debconf-set-selections <<< "mysql-server mysql-server/root_password_again passwo
 debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
 debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
 apt-get install -y mysql-server="$MYSQL_VERSION"
+#mysql installation You are required to change your password immediately (root enforced)
 
 echo "MySQL Installed" >> "/var/log/setup.log"
 
