@@ -41,9 +41,7 @@ encrypted_root_pw="$(grep root /etc/shadow | cut --delimiter=: --fields=2)"
 if [ -z "${PASSWORD}" ]; then
 	if [ "${encrypted_root_pw}" != "*" ]; then
 		# Transfer auto-generated root password to user if present
-		# and lock the root account to password-based access
 		echo "${USERNAME}:${encrypted_root_pw}" | chpasswd --encrypted
-		passwd --lock root
 	else
 		# Delete invalid password for user if using keys so that a new password
 		# can be set without providing a previous value
@@ -57,10 +55,12 @@ else
 	echo "$USERNAME:$PASSWORD" | chpasswd
 
 	echo "New password defined for $USERNAME" >> "/var/log/setup.log"
+fi
 
-	if [ "${encrypted_root_pw}" != "*" ]; then
-		passwd --lock root
-	fi
+if [ "${encrypted_root_pw}" != "*" ]; then
+	# lock the root account to password-based access
+	passwd --lock root
+	sed -i 's/^root:.*$/root:*:16231:0:99999:7:::/' /etc/shadow
 fi
 
 # Create SSH directory for sudo user
