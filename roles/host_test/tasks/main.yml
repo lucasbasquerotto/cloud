@@ -29,12 +29,3 @@
   fail: 
     msg: "Variable '{{ host_test_last_line }}' should be equal to '{{ host_test_setup_last_line }}'"
   when: host_test_last_line != host_test_setup_last_line
-
-# Get rid of DO's root password and 'you must change next time you login' stuff
-- name: Setup root account properly
-  lineinfile:
-    backup: yes
-    dest: /etc/shadow
-    regexp: "^root:.*$"
-    state: present
-    line: "root:*:16231:0:99999:7:::"
