@@ -59,7 +59,8 @@ fi
 
 if [ "${encrypted_root_pw}" != "*" ]; then
 	# lock the root account to password-based access
-	passwd --lock root
+	# almost equivalent to: $ passwd --lock root
+	# avoids errors like "You are required to change your password immediately (root enforced)"
 	sed -i 's/^root:.*$/root:*:16231:0:99999:7:::/' /etc/shadow
 fi
 
