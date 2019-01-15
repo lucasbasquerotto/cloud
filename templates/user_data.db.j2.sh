@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1083,SC2129
 set -euo pipefail
 
 ########################
@@ -65,7 +66,7 @@ if [ "${encrypted_root_pw}" != "*" ]; then
 fi
 
 # Create SSH directory for sudo user
-home_directory="$(eval echo ~${USERNAME})"
+home_directory="/home/${USERNAME}"
 mkdir --parents "${home_directory}/.ssh"
 
 # Add additional provided public keys

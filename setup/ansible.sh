@@ -15,11 +15,6 @@ USERNAME="main"
 # Password of the user to create and grant sudo privileges
 PASSWORD="abc123"
 
-# Whether to copy over the root user's `authorized_keys` file to the new sudo
-# user.
-## COPY_AUTHORIZED_KEYS_FROM_ROOT=true
-COPY_AUTHORIZED_KEYS_FROM_ROOT=false
-
 # Additional public keys to add to the new sudo user
 # OTHER_PUBLIC_KEYS_TO_ADD=(
 #	"ssh-rsa AAAAB..."

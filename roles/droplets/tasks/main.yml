@@ -48,8 +48,7 @@
     label: "droplet: {{ item[0].name }} - tag: {{ item[1] }}"
 
 - set_fact: 
-    droplets_hosts_info: |
-      {{ '# ' + lookup('pipe', 'date +%Y-%m-%d-%H-%M-%S') }}
+    droplets_hosts_info: ''
 
 - name: generate the hosts information with the droplets ips
   set_fact: 
