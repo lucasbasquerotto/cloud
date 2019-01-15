@@ -13,3 +13,13 @@
     refspec: "{{ docker_compose_repo_refspec }}"
     dest: "{{ docker_compose_repo_dest }}"
     force: "yes"
+
+- name: Ensure directories are 0755
+  command: find {{ docker_compose_repo_dest }} -type d -exec chmod -c 0755 {} \;
+  register: docker_compose_chmod_result
+  changed_when: 'docker_compose_chmod_result.stdout != ""'
+
+- name: Ensure files are 0644
+  command: find {{ docker_compose_repo_dest }} -type f -exec chmod -c 0644 {} \;
+  register: docker_compose_chmod_result
+  changed_when: 'docker_compose_chmod_result.stdout != ""'
