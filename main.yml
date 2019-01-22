@@ -30,7 +30,11 @@
         main_data: "{{ main.web }}"
         user_data: "{{ main_aux.web_user_data }}" 
 
+  gather_facts: no  
   tasks:  
+  - name: Gathering facts
+    setup: 
+
   - include_role: 
       name: droplets
     vars:
@@ -78,6 +82,10 @@
     - /home/main/env/env.yml
   vars:
     main: "{{ env }}"
+  gather_facts: no
+  pre_tasks:
+  - name: Gathering facts
+    setup:  
   roles:
   - role: docker_compose
     vars:
@@ -97,7 +105,11 @@
     - /home/main/env/env.yml
   vars:
     main: "{{ env }}"
+  gather_facts: no
   tasks:
+  - name: Gathering facts
+    setup: 
+      
   - name: build with docker-compose
     become: true
     shell: docker-compose build
