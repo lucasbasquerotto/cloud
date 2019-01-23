@@ -139,14 +139,14 @@ echo "Installing MySQL..." >> "/var/log/setup.log"
 #echo "MySQL Installed" >> "/var/log/setup.log"
 
 {
-	echo "mysql-apt-config mysql-apt-config/repo-codename select trusty"
-	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu"
-	echo "mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/"
-	echo "mysql-apt-config mysql-apt-config/select-preview select "
-	echo "mysql-apt-config mysql-apt-config/select-product select Ok"
-	echo "mysql-apt-config mysql-apt-config/select-server select mysql-$MYSQL_MAJOR"
-	echo "mysql-apt-config mysql-apt-config/select-tools select "
-	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort"
+	echo "mysql-apt-config mysql-apt-config/repo-codename select trusty" \
+	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu" \
+	echo "mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/" \
+	echo "mysql-apt-config mysql-apt-config/select-preview select " \
+	echo "mysql-apt-config mysql-apt-config/select-product select Ok" \
+	echo "mysql-apt-config mysql-apt-config/select-server select mysql-$MYSQL_MAJOR" \
+	echo "mysql-apt-config mysql-apt-config/select-tools select " \ 
+	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort" \
 
 	echo "mysql-community-server mysql-community-server/data-dir select $MYSQL_PASS;" \
 	echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS;" \
