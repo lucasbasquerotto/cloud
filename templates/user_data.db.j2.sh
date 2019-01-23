@@ -138,24 +138,37 @@ echo "Installing MySQL..." >> "/var/log/setup.log"
 
 #echo "MySQL Installed" >> "/var/log/setup.log"
 
-
-echo "deb http://repo.mysql.com/apt/debian/ stretch mysql-${MYSQL_MAJOR}" > /etc/apt/sources.list.d/mysql.list
-
-echo "MySQL Repo" >> "/var/log/setup.log"
-
 {
-	echo mysql-community-server mysql-community-server/data-dir select ''; \
-	echo mysql-community-server mysql-community-server/root-pass password ''; \
-	echo mysql-community-server mysql-community-server/re-root-pass password ''; \
-	echo mysql-community-server mysql-community-server/remove-test-db select false; \
+	echo "mysql-apt-config mysql-apt-config/repo-codename select trusty"
+	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu"
+	echo "mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/"
+	echo "mysql-apt-config mysql-apt-config/select-preview select "
+	echo "mysql-apt-config mysql-apt-config/select-product select Ok"
+	echo "mysql-apt-config mysql-apt-config/select-server select mysql-$MYSQL_MAJOR"
+	echo "mysql-apt-config mysql-apt-config/select-tools select "
+	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort"
+
+	echo "mysql-community-server mysql-community-server/data-dir select $MYSQL_PASS;" \
+	echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS;" \
+	echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS;" \
+	echo "mysql-community-server mysql-community-server/remove-test-db select false;" \
 } | debconf-set-selections
 
 echo "MySQL debconf-set-selections" >> "/var/log/setup.log"
 
+cd /tmp
+curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
+
+export DEBIAN_FRONTEND="noninteractive"; 
+dpkg -i mysql-apt-config*
+
+echo "MySQL Repo" >> "/var/log/setup.log"
+
 apt-get update 
-apt-get install -y \
-	mysql-community-client="${MYSQL_VERSION}" \
-	mysql-community-server-core="${MYSQL_VERSION}" 
+apt-get install -y mysql-server="$MYSQL_VERSION"
+#apt-get install -y \
+#	mysql-community-client="${MYSQL_VERSION}" \
+#	mysql-community-server-core="${MYSQL_VERSION}" 
 
 echo "MySQL Installed" >> "/var/log/setup.log"
 
