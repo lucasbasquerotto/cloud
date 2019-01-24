@@ -112,71 +112,71 @@ echo "Ansible Host Prepared" >> "/var/log/setup.log"
 
 echo "Installing MySQL..." >> "/var/log/setup.log"
 
-#echo "Adding the MySQL Package..." >> "/var/log/setup.log"
-
-#cd /tmp
-
-#curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
-
-#export DEBIAN_FRONTEND="noninteractive"; 
-#echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
-##sudo -E dpkg -i mysql-apt-config*
-#dpkg -i mysql-apt-config*
-
-#rm mysql-apt-config*
-
-#echo "MySQL Package Added" >> "/var/log/setup.log"
-
-#apt update
-
-#debconf-set-selections <<< "mysql-server mysql-server/root_password password $MYSQL_PASS"
-#debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $MYSQL_PASS"
-#debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
-#debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
-#apt-get install -y mysql-server="$MYSQL_VERSION"
-##mysql installation You are required to change your password immediately (root enforced)
-
-#echo "MySQL Installed" >> "/var/log/setup.log"
-
-{
-	echo "mysql-apt-config mysql-apt-config/repo-codename select trusty"
-	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu"
-	echo "mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/"
-	echo "mysql-apt-config mysql-apt-config/select-preview select "
-	echo "mysql-apt-config mysql-apt-config/select-product select Ok"
-	echo "mysql-apt-config mysql-apt-config/select-server select mysql-$MYSQL_MAJOR"
-	echo "mysql-apt-config mysql-apt-config/select-tools select " 
-	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort" 
-	
-	echo "mysql-community-server mysql-community-server/data-dir select $MYSQL_PASS"
-	echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
-	echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
-	echo "mysql-community-server mysql-community-server/remove-test-db select false"
-} | debconf-set-selections
-
-echo "MySQL debconf-set-selections" >> "/var/log/setup.log"
+echo "Adding the MySQL Package..." >> "/var/log/setup.log"
 
 cd /tmp
+
 curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
 
 export DEBIAN_FRONTEND="noninteractive"; 
+echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
+#sudo -E dpkg -i mysql-apt-config*
 dpkg -i mysql-apt-config*
 
-echo "MySQL Repo" >> "/var/log/setup.log"
+rm mysql-apt-config*
 
-apt-get update 
+echo "MySQL Package Added" >> "/var/log/setup.log"
+
+apt update
+
+debconf-set-selections <<< "mysql-server mysql-server/root_password password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
 apt-get install -y mysql-server="$MYSQL_VERSION"
-#apt-get install -y \
-#	mysql-community-client="${MYSQL_VERSION}" \
-#	mysql-community-server-core="${MYSQL_VERSION}" 
+#mysql installation You are required to change your password immediately (root enforced)
 
 echo "MySQL Installed" >> "/var/log/setup.log"
 
-rm -rf /var/lib/apt/lists/*
-rm -rf /var/lib/mysql 
+# {
+# 	echo "mysql-apt-config mysql-apt-config/repo-codename select trusty"
+# 	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu"
+# 	echo "mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/"
+# 	echo "mysql-apt-config mysql-apt-config/select-preview select "
+# 	echo "mysql-apt-config mysql-apt-config/select-product select Ok"
+# 	echo "mysql-apt-config mysql-apt-config/select-server select mysql-$MYSQL_MAJOR"
+# 	echo "mysql-apt-config mysql-apt-config/select-tools select " 
+# 	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort" 
+	
+# 	echo "mysql-community-server mysql-community-server/data-dir select $MYSQL_PASS"
+# 	echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
+# 	echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
+# 	echo "mysql-community-server mysql-community-server/remove-test-db select false"
+# } | debconf-set-selections
 
-mkdir -p /var/lib/mysql /var/run/mysqld 
-chown -R mysql:mysql /var/lib/mysql /var/run/mysqld 
+# echo "MySQL debconf-set-selections" >> "/var/log/setup.log"
+
+# cd /tmp
+# curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
+
+# export DEBIAN_FRONTEND="noninteractive"; 
+# dpkg -i mysql-apt-config*
+
+# echo "MySQL Repo" >> "/var/log/setup.log"
+
+# apt-get update 
+# apt-get install -y mysql-server="$MYSQL_VERSION"
+# #apt-get install -y \
+# #	mysql-community-client="${MYSQL_VERSION}" \
+# #	mysql-community-server-core="${MYSQL_VERSION}" 
+
+# echo "MySQL Installed" >> "/var/log/setup.log"
+
+# rm -rf /var/lib/apt/lists/*
+# rm -rf /var/lib/mysql 
+
+# mkdir -p /var/lib/mysql /var/run/mysqld 
+# chown -R mysql:mysql /var/lib/mysql /var/run/mysqld 
 
 echo "MySQL Finished" >> "/var/log/setup.log"
 
