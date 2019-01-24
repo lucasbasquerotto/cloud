@@ -8,7 +8,7 @@ set -euo pipefail
 
 # MySQL version
 MYSQL_MAJOR="8.0"
-MYSQL_VERSION="{{ mysql_version | default('8.0.13-1ubuntu18.04') }}"
+MYSQL_VERSION="{{ mysql_version | default('8.0.14-1ubuntu18.04') }}"
 
 # MySQL password
 MYSQL_PASS="{{ mysql_password }}"
