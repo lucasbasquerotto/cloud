@@ -123,7 +123,8 @@
       chdir: "{{ main.docker_compose_repo_dest }}"
 
 ###############################################################################
-- name: Play 05 - Backup the mysql database
+
+- name: Play 05 - Backup the MySQL database
   hosts: db_master
   tags:
     - never
@@ -132,9 +133,52 @@
   tasks:
   - name: Gathering facts
     setup: 
+
+  - name: Dump all databases to hostname.sql
+    file:
+      path: /tmp/backup
+      state: directory
+      mode: 0755
     
   - name: Dump all databases to hostname.sql
     mysql_db:
       state: dump
-      name: all
-      target: /tmp/{{ inventory_hostname }}.sql
+      name: wordpress
+      target: /tmp/backup/dump.sql
+      
+  - name: Compress .sql file in bz2 format
+    archive:
+      path: /tmp/backup/dump.sql
+      dest: /tmp/backup/dump.sql.bz2
+      format: bz2
+
+###############################################################################
+
+- name: Play 06 - Restore the MySQL database
+  hosts: db_master
+  tags:
+    - never
+    - restore
+  gather_facts: no
+  tasks:
+  - name: Gathering facts
+    setup: 
+
+  - name: Dump all databases to hostname.sql
+    file:
+      path: /tmp/restore
+      state: directory
+      mode: 0755
+    
+  - name: Copy database dump file
+    copy:
+      src: dump.sql.bz2
+      dest: /tmp/restore
+      
+  - name: Restore database
+    mysql_db:
+      name: wordpress
+      state: import
+      target: /tmp/restore/dump.sql.bz2
+
+###############################################################################
