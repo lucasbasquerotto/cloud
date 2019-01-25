@@ -1,4 +1,4 @@
-- name: Play 01 - Define variables
+- name: Play 01 - Create droplets and define hosts
   hosts: main
   tags:
     - setup
@@ -123,3 +123,18 @@
       chdir: "{{ main.docker_compose_repo_dest }}"
 
 ###############################################################################
+- name: Play 05 - Backup the mysql database
+  hosts: db_master
+  tags:
+    - never
+    - backup
+  gather_facts: no
+  tasks:
+  - name: Gathering facts
+    setup: 
+    
+  - name: Dump all databases to hostname.sql
+    mysql_db:
+      state: dump
+      name: all
+      target: /tmp/{{ inventory_hostname }}.sql
