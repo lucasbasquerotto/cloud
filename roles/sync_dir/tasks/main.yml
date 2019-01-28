@@ -10,6 +10,9 @@
     src: {{ sync_dir_src }}
     dest: {{ sync_dir_dest }}
     recursive: yes    
+    delete: yes
+    checksum: yes
+    times: no
 
 - name: "cleanup after sync module"
   lineinfile:
