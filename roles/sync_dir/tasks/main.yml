@@ -1,0 +1,19 @@
+- name: "make broken sync module work"
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%{{ sync_dir_host_user }}\s'
+    line: '%{{ sync_dir_host_user }} ALL=(ALL) NOPASSWD: ALL'
+
+- name: "synchronize"
+  synchronize:
+    src: {{ sync_dir_src }}
+    dest: {{ sync_dir_dest }}
+    recursive: yes    
+
+- name: "cleanup after sync module"
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%{{ sync_dir_host_user }}\s'
+    line: '%{{ sync_dir_host_user }} ALL=(ALL) ALL'
