@@ -170,11 +170,11 @@
   vars:
     main: "{{ env }}"
   gather_facts: no
-  pre_tasks:
+  tasks:
   - name: Gathering facts
     setup:  
-    - name: move the docker compose executable file
 
+  - name: move the docker compose executable file
     become: true
     template:
       src: "{{ main.docker_compose_bin_src }}"
