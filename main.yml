@@ -138,6 +138,7 @@
     setup: 
 
   - name: Install dependencies
+    become: true
     apt:
       name:
       - python3
