@@ -87,6 +87,12 @@
   tasks:
   - name: Gathering facts
     setup:  
+
+  - name: create the directory "{{ main.web_local_repo }}"
+    file:
+      path: "{{ main.web_local_repo }}"
+      state: directory
+      mode: 0755
     
   - name: sync the folder to clone locally
     synchronize: 
@@ -102,7 +108,7 @@
   - name: sync the folder to clone locally
     template: 
       src: "{{ item.src }}" 
-      dest: "/tmp/main/web/{{ item.dest_suffix }}"
+      dest: "{{ main.web_local_repo }}/{{ item.dest_suffix }}"
       mode: 0600  
     vars:
       db_host: "{{ hostvars[groups['db_master'][0]].ansible_default_ipv4.address }}"
@@ -181,6 +187,12 @@
       dest: "{{ main.docker_compose_bin_dest }}"
       mode: 0700
 
+  - name: create the directory "{{ main.docker_compose_repo_dest }}"
+    file:
+      path: "{{ main.docker_compose_repo_dest }}"
+      state: directory
+      mode: 0755
+
   - name: update the repository with the docker_compose file
     become: true
     include_role:
@@ -236,21 +248,25 @@
   tags:
   - never
   - backup
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
   gather_facts: no
   tasks:
   - name: Gathering facts
     setup: 
 
-  - name: Dump all databases to hostname.sql
+  - name: Create the backup directory
     file:
       path: /tmp/backup
       state: directory
       mode: 0755
     
-  - name: Dump all databases to hostname.sql
+  - name: Dump the '{{ main.wp_db_name }}' database
     mysql_db:
       state: dump
-      name: wordpress
+      name: "{{ main.wp_db_name }}"
       target: /tmp/backup/dump.sql
       
   - name: Compress .sql file in bz2 format
@@ -271,7 +287,7 @@
   - name: Gathering facts
     setup: 
 
-  - name: Dump all databases to hostname.sql
+  - name: Create the restore directory
     file:
       path: /tmp/restore
       state: directory
