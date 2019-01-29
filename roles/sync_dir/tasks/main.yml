@@ -13,6 +13,8 @@
     delete: yes
     checksum: yes
     times: no
+    rsync_opts:
+    - "--chmod=F600"
 
 - name: "cleanup after sync module"
   lineinfile:

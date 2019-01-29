@@ -1,9 +1,9 @@
 - name: Play 01 - Create droplets and define hosts
   hosts: main
   tags:
-    - setup
+  - setup
   vars_files: 
-    - /home/main/env/env.yml
+  - /home/main/env/env.yml
   vars:
     main: "{{ env }}"
     main_host_vars: 
@@ -58,9 +58,9 @@
 - name: Play 02 - Wait for hosts to be ready
   hosts: host
   tags:
-    - setup
+  - setup
   vars_files: 
-    - /home/main/env/env.yml
+  - /home/main/env/env.yml
   vars:
     main: "{{ env }}"
   gather_facts: no
@@ -74,12 +74,99 @@
 
 ###############################################################################
 
-- name: Play 03 - Prepare and update the docker compose repository
+- name: Play 03.1 - Prepare the docker compose repository locally
+  hosts: main
+  tags:
+  - prepare
+  - prepare-local
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  gather_facts: no
+  tasks:
+  - name: Gathering facts
+    setup:  
+    
+  - name: sync the folder to clone locally
+    synchronize: 
+      src: "files/web/" 
+      dest: "/tmp/main/web/"
+      recursive: yes    
+      delete: yes
+      checksum: yes
+      times: no
+      rsync_opts:
+        - "--chmod=F644"
+    
+  - name: sync the folder to clone locally
+    template: 
+      src: "{{ item.src }}" 
+      dest: "/tmp/main/web/{{ item.dest_suffix }}"
+      mode: 0600  
+    vars:
+      db_host: "{{ hostvars[groups['db_master'][0]].ansible_default_ipv4.address }}"
+      db_port: "{{ main.db_port }}"
+      wp_db_user: "{{ main.wp_db_user }}"
+      wp_db_pass: "{{ main.wp_db_pass }}"
+    loop: "{{ main.repo_templates }}"
+
+###############################################################################
+
+- name: Play 03.2 - Prepare the database master
+  hosts: db_master
+  tags:
+  - prepare
+  - prepare-db-master
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  gather_facts: no
+  tasks:
+  - name: Gathering facts
+    setup: 
+
+  - name: Create a new database with name '{{ main.wp_db_name }}'
+    mysql_db:
+      name: "{{ main.wp_db_name }}"
+      state: present
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
+
+  - name: Create a new database with name '{{ main.wp_db_name }}'
+    mysql_db:
+      name: "{{ main.wp_db_name }}"
+      state: present
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
+
+  - name: Create user with name '{{ main.wp_db_user }}' with all privileges on database '{{ main.wp_db_user }}'
+    mysql_user:
+      name: "{{ main.wp_db_user }}"
+      password: "{{ main.wp_db_pass }}"
+      priv: '{{ main.wp_db_name }}.*:ALL'
+      state: present
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
+      
+  - name: Removes all anonymous user accounts
+    mysql_user:
+      name: ''
+      host_all: yes
+      state: absent
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
+
+###############################################################################
+
+- name: Play 03.3 - Prepare and update the docker compose repository
   hosts: web
   tags:
-    - prepare
+  - prepare
+  - prepare-web
   vars_files: 
-    - /home/main/env/env.yml
+  - /home/main/env/env.yml
   vars:
     main: "{{ env }}"
   gather_facts: no
@@ -100,9 +187,9 @@
 - name: Play 04 - Build and run the docker images and containers with docker-compose
   hosts: web
   tags:
-    - run
+  - run
   vars_files: 
-    - /home/main/env/env.yml
+  - /home/main/env/env.yml
   vars:
     main: "{{ env }}"
   gather_facts: no
@@ -127,8 +214,8 @@
 - name: Play 05 - Backup the MySQL database
   hosts: db_master
   tags:
-    - never
-    - backup
+  - never
+  - backup
   gather_facts: no
   tasks:
   - name: Gathering facts
@@ -157,8 +244,8 @@
 - name: Play 06 - Restore the MySQL database
   hosts: db_master
   tags:
-    - never
-    - restore
+  - never
+  - restore
   gather_facts: no
   tasks:
   - name: Gathering facts
