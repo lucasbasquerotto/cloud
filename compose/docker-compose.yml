@@ -1,0 +1,44 @@
+version: '3.4'
+
+networks:
+  internet:
+    driver: bridge
+    
+x-logging: 
+  main: &mainlog
+    options:
+      max-size: 50m
+      
+services:
+  nginx:
+    build: ./nginx
+    restart: on-failure
+    depends_on:
+     - wordpress
+     - phpmyadmin
+    ports:
+     - "80:80"
+    networks:
+      - internet
+    logging: *mainlog
+
+  wordpress:
+    image: wordpress:$WP_VERSION
+    restart: on-failure
+    environment:
+     - WORDPRESS_DB_HOST=$DB_HOST:$DB_PORT
+     - WORDPRESS_DB_USER=$DB_HOST_USER
+     - WORDPRESS_DB_PASSWORD=$DB_HOST_PASS
+    networks:
+      - internet
+    logging: *mainlog
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin$PMA_VERSION
+    restart: on-failure
+    environment:
+     - PMA_HOST=$DB_HOST
+     - PMA_PORT=$DB_PORT
+    networks:
+      - internet
+    logging: *mainlog
