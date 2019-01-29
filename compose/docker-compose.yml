@@ -11,7 +11,10 @@ x-logging:
       
 services:
   nginx:
-    build: ./nginx
+    build: 
+      context: ./nginx
+      args:
+        NGINX_VERSION: $NGINX_VERSION
     restart: on-failure
     depends_on:
      - wordpress
