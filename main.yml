@@ -109,16 +109,13 @@
     set_fact: 
       db_master_host: "{{ hostvars[groups['db_master'][0]] }}"
     
-  - debug:
-      var: db_master_host
-    
   - name: sync the folder to clone locally
     template: 
       src: "{{ item.src }}" 
       dest: "{{ main.web_local_repo }}/{{ item.dest_suffix }}"
       mode: 0600  
     vars:
-      db_host: "{{ db_master_host.ansible_default_ipv4.address }}"
+      db_host: "{{ db_master_host.ansible_host }}"
       db_port: "{{ main.db_port }}"
       wp_db_user: "{{ main.wp_db_user }}"
       wp_db_pass: "{{ main.wp_db_pass }}"
