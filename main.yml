@@ -91,7 +91,7 @@
   - name: sync the folder to clone locally
     synchronize: 
       src: "files/web/" 
-      dest: "/tmp/main/web/"
+      dest: "{{ main.web_local_repo }}"
       recursive: yes    
       delete: yes
       checksum: yes
@@ -173,14 +173,34 @@
   pre_tasks:
   - name: Gathering facts
     setup:  
-  roles:
-  - role: docker_compose
+    - name: move the docker compose executable file
+
+    become: true
+    template:
+      src: "{{ main.docker_compose_bin_src }}"
+      dest: "{{ main.docker_compose_bin_dest }}"
+      mode: 0700
+
+  - name: update the repository with the docker_compose file
+    become: true
+    include_role:
+      name: sync_dir
     vars:
-      docker_compose_bin_src: "{{ main.docker_compose_bin_src }}"
-      docker_compose_version: "{{ main.docker_compose_version }}"
-      docker_compose_repo: "{{ main.docker_compose_repo }}"
-      docker_compose_repo_version: "{{ main.docker_compose_repo_version }}"
-      docker_compose_repo_dest: "{{ main.docker_compose_repo_dest }}"
+      sync_dir_host_user: "{{ main.host_user }}"
+      sync_dir_src: "{{ main.web_local_repo }}"
+      sync_dir_dest: "{{ main.docker_compose_repo_dest }}"
+
+  - name: Ensure directories are 0755
+    become: true
+    command: find {{ main.web_repo }} -type d -exec chmod -c 0755 {} \;
+    register: chmod_result
+    changed_when: 'chmod_result.stdout != ""'
+
+  - name: Ensure files are 0644
+    become: true
+    command: find {{ main.web_repo }} -type f -exec chmod -c 0644 {} \;
+    register: chmod_result
+    changed_when: 'chmod_result.stdout != ""'
 
 ###############################################################################
 
