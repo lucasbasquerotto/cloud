@@ -137,6 +137,15 @@
   - name: Gathering facts
     setup: 
 
+  - name: Install the MySQL-python through pip
+    become: true
+    pip:
+      name: "{{ item.name }}"
+      version: "{{ item.version }}"
+      state: present
+    with_items:
+    - { name: "PyMySQL", version: "0.9.3" }
+
   - name: Create a new database with name '{{ main.wp_db_name }}'
     mysql_db:
       name: "{{ main.wp_db_name }}"
