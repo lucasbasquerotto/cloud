@@ -166,18 +166,11 @@
       login_user: root
       login_password: "{{ main.mysql_password }}"
 
-  - name: Create a new database with name '{{ main.wp_db_name }}'
-    mysql_db:
-      name: "{{ main.wp_db_name }}"
-      state: present
-      login_user: root
-      login_password: "{{ main.mysql_password }}"
-
-  - name: Create user with name '{{ main.wp_db_user }}' with all privileges on database '{{ main.wp_db_user }}'
+  - name: Create user with name '{{ main.wp_db_user }}' with all privileges on database '{{ main.wp_db_name }}'
     mysql_user:
       name: "{{ main.wp_db_user }}"
       password: "{{ main.wp_db_pass }}"
-      priv: '{{ main.wp_db_name }}.*:ALL'
+      priv: "{{ main.wp_db_name }}.*:ALL"
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
