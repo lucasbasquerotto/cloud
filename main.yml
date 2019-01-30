@@ -235,9 +235,9 @@
     register: chmod_result
     changed_when: 'chmod_result.stdout != ""'
 
-  - name: Ensure files are 0644
+  - name: Ensure files are 0600
     become: true
-    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0644 {} \;
+    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0600 {} \;
     register: chmod_result
     changed_when: 'chmod_result.stdout != ""'
 
