@@ -165,12 +165,19 @@
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
+    
+  - name: set db master hosts vars
+    set_fact: 
+      db_user_priv: "{{ main.wp_db_name }}.*:ALL"
+  
+  - debug:
+      msg: "db_user_priv={{ db_user_priv }}"
 
   - name: Create user with name '{{ main.wp_db_user }}' with all privileges on database '{{ main.wp_db_name }}'
     mysql_user:
       name: "{{ main.wp_db_user }}"
       password: "{{ main.wp_db_pass }}"
-      priv: "{{ main.wp_db_name }}.*:ALL"
+      priv: "{{ db_user_priv }}"
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
