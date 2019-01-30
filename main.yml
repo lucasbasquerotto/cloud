@@ -210,7 +210,7 @@
     become: true
     template:
       src: "{{ main.docker_compose_bin_src }}"
-      dest: "{{ main.docker_compose_bin_dest }}"
+      dest: "/usr/local/bin/docker-compose"
       mode: 0700
 
   - name: create the directory "{{ main.docker_compose_repo_dest }}"
