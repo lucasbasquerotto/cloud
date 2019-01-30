@@ -214,6 +214,7 @@
       mode: 0700
 
   - name: create the directory "{{ main.docker_compose_repo_dest }}"
+    become: true
     file:
       path: "{{ main.docker_compose_repo_dest }}"
       state: directory
