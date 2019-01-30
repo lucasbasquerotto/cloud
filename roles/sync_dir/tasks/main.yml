@@ -7,8 +7,8 @@
 
 - name: "synchronize"
   synchronize:
-    src: {{ sync_dir_src }}
-    dest: {{ sync_dir_dest }}
+    src: "{{ sync_dir_src }}"
+    dest: "{{ sync_dir_dest }}"
     recursive: yes    
     delete: yes
     checksum: yes
