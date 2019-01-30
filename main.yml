@@ -177,7 +177,7 @@
     mysql_user:
       name: "{{ main.wp_db_user }}"
       password: "{{ main.wp_db_pass }}"
-      priv: "{{ db_user_priv }}"
+      priv: "wordpress.*:ALL"
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
