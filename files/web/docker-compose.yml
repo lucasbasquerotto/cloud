@@ -37,7 +37,7 @@ services:
     logging: *mainlog
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin$PMA_VERSION
+    image: phpmyadmin/phpmyadmin:$PMA_VERSION
     restart: on-failure
     environment:
      - PMA_HOST=$DB_HOST
