@@ -21,6 +21,7 @@ services:
      - phpmyadmin
     ports:
      - "80:80"
+     - "8080:8080"
     networks:
       - internet
     logging: *mainlog
