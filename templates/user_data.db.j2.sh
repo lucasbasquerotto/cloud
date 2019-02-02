@@ -133,6 +133,7 @@ debconf-set-selections <<< "mysql-server mysql-server/root_password password $MY
 debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $MYSQL_PASS"
 debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
 debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
+debconf-set-selections <<< "mysql-community-server mysql-server/default-auth-override select Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)"
 apt-get install -y 'mysql-server='"$MYSQL_MAJOR"'.*'
 #mysql installation You are required to change your password immediately (root enforced)
 
