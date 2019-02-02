@@ -177,6 +177,7 @@
     mysql_user:
       name: "{{ main.wp_db_user }}"
       password: "{{ main.wp_db_pass }}"
+      host: "%"
       #priv: "{{ db_user_priv }}" PR #40092
       state: present
       login_user: root
@@ -189,6 +190,21 @@
       state: absent
       login_user: root
       login_password: "{{ main.mysql_password }}"
+
+  - name: Update the configuration
+    become: true
+    copy:
+      src: files/db/mysqld.cnf
+      dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+      owner: root
+      group: root
+      mode: u=rw,g=r,o=r
+      
+  #TODO create handler
+  - name: Restart MySQL
+    service:
+      name: mysql
+      state: restarted
 
 ###############################################################################
 
