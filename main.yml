@@ -159,6 +159,23 @@
     with_items:
     - { name: "PyMySQL", version: "0.9.3" }
 
+  - name: Update the configuration
+    become: true
+    copy:
+      src: files/db/mysqld.cnf
+      dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+      owner: root
+      group: root
+      mode: u=rw,g=r,o=r
+    register: mysql_setup
+      
+  - name: Restart MySQL
+    become: true
+    service:
+      name: mysql
+      state: restarted
+    when: mysql_setup.changed
+
   - name: Create a new database with name '{{ main.wp_db_name }}'
     mysql_db:
       name: "{{ main.wp_db_name }}"
@@ -173,12 +190,24 @@
   - debug:
       msg: "db_user_priv={{ db_user_priv }}"
 
+  - name: Alter root user
+    mysql_user:
+      name: root
+      password: "{{ main.mysql_password }}"
+      host: "%"
+      #priv: "*.*:ALL,GRANT" # PR #40092
+      #plugin: "mysql_native_password" # Issue #27179
+      state: present
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
+
   - name: Create user with name '{{ main.wp_db_user }}' with all privileges on database '{{ main.wp_db_name }}'
     mysql_user:
       name: "{{ main.wp_db_user }}"
       password: "{{ main.wp_db_pass }}"
       host: "%"
-      #priv: "{{ db_user_priv }}" PR #40092
+      #priv: "{{ db_user_priv }}" # PR #40092
+      #plugin: "mysql_native_password" # Issue #27179
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
@@ -190,22 +219,6 @@
       state: absent
       login_user: root
       login_password: "{{ main.mysql_password }}"
-
-  - name: Update the configuration
-    become: true
-    copy:
-      src: files/db/mysqld.cnf
-      dest: /etc/mysql/mysql.conf.d/mysqld.cnf
-      owner: root
-      group: root
-      mode: u=rw,g=r,o=r
-      
-  #TODO create handler
-  - name: Restart MySQL
-    become: true
-    service:
-      name: mysql
-      state: restarted
 
 ###############################################################################
 
