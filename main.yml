@@ -202,6 +202,7 @@
       
   #TODO create handler
   - name: Restart MySQL
+    become: true
     service:
       name: mysql
       state: restarted
