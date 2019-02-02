@@ -5,3 +5,5 @@ datadir         = /var/lib/mysql
 log-error       = /var/log/mysql/error.log
 
 bind-address    = 0.0.0.0
+
+default_authentication_plugin=mysql_native_password
