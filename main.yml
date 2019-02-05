@@ -195,8 +195,10 @@
       name: root
       password: "{{ main.mysql_password }}"
       host: "%"
-      #priv: "*.*:ALL,GRANT" # PR #40092
-      #plugin: "mysql_native_password" # Issue #27179
+      # PR #40092
+      priv: "*.*:ALL,GRANT" 
+      # Issue #27179
+      #plugin: "mysql_native_password" 
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
@@ -206,8 +208,10 @@
       name: "{{ main.wp_db_user }}"
       password: "{{ main.wp_db_pass }}"
       host: "%"
-      #priv: "{{ db_user_priv }}" # PR #40092
-      #plugin: "mysql_native_password" # Issue #27179
+      # PR #40092
+      priv: "{{ db_user_priv }}" 
+      # Issue #27179
+      #plugin: "mysql_native_password" 
       state: present
       login_user: root
       login_password: "{{ main.mysql_password }}"
