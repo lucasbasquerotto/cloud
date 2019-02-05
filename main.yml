@@ -329,6 +329,8 @@
       state: dump
       name: "{{ main.wp_db_name }}"
       target: /tmp/backup/dump.sql
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
       
   - name: Compress .sql file in bz2 format
     archive:
@@ -364,5 +366,7 @@
       name: wordpress
       state: import
       target: /tmp/restore/dump.sql.bz2
+      login_user: root
+      login_password: "{{ main.mysql_password }}"
 
 ###############################################################################
