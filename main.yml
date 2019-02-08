@@ -74,7 +74,7 @@
 
 ###############################################################################
 
-- name: Play 03.1 - Prepare the docker compose repository locally
+- name: Play 03.1.1 - Prepare the docker compose repository locally (db)
   hosts: main
   tags:
   - prepare
@@ -88,16 +88,28 @@
   - name: Gathering facts
     setup:  
 
-  - name: create the directory "{{ main.web_local_repo }}"
+  - name: set main group name
+    set_fact: 
+      main_group_name: "db"
+
+  - name: set src local repo
+    set_fact: 
+      src_local_repo: "files/{{ main_group_name }}/repo"
+
+  - name: set dest local repo
+    set_fact: 
+      dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
+
+  - name: create the directory "{{ main.local_repo_base }}"
     file:
-      path: "{{ main.web_local_repo }}"
+      path: "{{ local_repo }}"
       state: directory
       mode: 0755
     
   - name: sync the folder to clone locally
     synchronize: 
-      src: "files/web/" 
-      dest: "{{ main.web_local_repo }}"
+      src: "{{ src_local_repo }}/" 
+      dest: "{{ dest_local_repo }}/"
       recursive: yes    
       delete: yes
       checksum: yes
@@ -112,7 +124,68 @@
   - name: sync the folder to clone locally
     template: 
       src: "{{ item.src }}" 
-      dest: "{{ main.web_local_repo }}/{{ item.dest_suffix }}"
+      dest: "{{ dest_local_repo }}/{{ item.dest_suffix }}"
+      mode: 0600  
+    vars:
+      db_host: "{{ db_master_host.ansible_host }}"
+      db_port: "{{ main.db_port }}"
+      wp_db_user: "{{ main.wp_db_user }}"
+      wp_db_pass: "{{ main.wp_db_pass }}"
+    loop: "{{ main.repo_templates }}"
+
+###############################################################################
+
+- name: Play 03.1.2 - Prepare the docker compose repository locally (web)
+  hosts: main
+  tags:
+  - prepare
+  - prepare-local
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  gather_facts: no
+  tasks:
+  - name: Gathering facts
+    setup:  
+
+  - name: set main group name
+    set_fact: 
+      main_group_name: "web"
+
+  - name: set src local repo
+    set_fact: 
+      src_local_repo: "files/{{ main_group_name }}/repo/"
+
+  - name: set dest local repo
+    set_fact: 
+      dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
+
+  - name: create the directory "{{ main.local_repo_base }}"
+    file:
+      path: "{{ local_repo }}"
+      state: directory
+      mode: 0755
+    
+  - name: sync the folder to clone locally
+    synchronize: 
+      src: "{{ src_local_repo }}/" 
+      dest: "{{ dest_local_repo }}/"
+      recursive: yes    
+      delete: yes
+      checksum: yes
+      times: no
+      rsync_opts:
+        - "--chmod=F644"
+    
+  - name: set db master hosts vars
+    set_fact: 
+      db_master_host: "{{ hostvars[groups['db_master'][0]] }}"
+    
+  - name: sync the folder to clone locally
+    template: 
+      src: "{{ item.src }}" 
+      dest: "{{ dest_local_repo }}/{{ item.dest_suffix }}"
       mode: 0600  
     vars:
       db_host: "{{ db_master_host.ansible_host }}"
@@ -226,11 +299,11 @@
 
 ###############################################################################
 
-- name: Play 03.3 - Prepare and update the docker compose repository
-  hosts: web
+- name: Play 03.3.1 - Prepare and update the docker compose repository (db)
+  hosts: db
   tags:
   - prepare
-  - prepare-web
+  - prepare-db
   vars_files: 
   - /home/main/env/env.yml
   vars:
@@ -239,6 +312,14 @@
   tasks:
   - name: Gathering facts
     setup:  
+
+  - name: set main group name
+    set_fact: 
+      main_group_name: "db"
+
+  - name: set dest local repo
+    set_fact: 
+      dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
 
   - name: move the docker compose executable file
     become: true
@@ -260,7 +341,66 @@
       name: sync_dir
     vars:
       sync_dir_host_user: "{{ main.host_user }}"
-      sync_dir_src: "{{ main.web_local_repo }}"
+      sync_dir_src: "{{ dest_local_repo }}/"
+      sync_dir_dest: "{{ main.docker_compose_repo_dest }}"
+
+  - name: Ensure directories are 0755
+    become: true
+    command: find {{ main.docker_compose_repo_dest }} -type d -exec chmod -c 0755 {} \;
+    register: chmod_result
+    changed_when: 'chmod_result.stdout != ""'
+
+  - name: Ensure files are 0600
+    become: true
+    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0600 {} \;
+    register: chmod_result
+    changed_when: 'chmod_result.stdout != ""'
+
+###############################################################################
+
+- name: Play 03.3 - Prepare and update the docker compose repository (web)
+  hosts: web
+  tags:
+  - prepare
+  - prepare-web
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  gather_facts: no
+  tasks:
+  - name: Gathering facts
+    setup:  
+
+  - name: set main group name
+    set_fact: 
+      main_group_name: "web"
+
+  - name: set dest local repo
+    set_fact: 
+      dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
+
+  - name: move the docker compose executable file
+    become: true
+    template:
+      src: "{{ main.docker_compose_bin_src }}"
+      dest: "/usr/local/bin/docker-compose"
+      mode: 0700
+
+  - name: create the directory "{{ main.docker_compose_repo_dest }}"
+    become: true
+    file:
+      path: "{{ main.docker_compose_repo_dest }}"
+      state: directory
+      mode: 0755
+
+  - name: update the repository with the docker_compose file
+    become: true
+    include_role:
+      name: sync_dir
+    vars:
+      sync_dir_host_user: "{{ main.host_user }}"
+      sync_dir_src: "{{ dest_local_repo }}/"
       sync_dir_dest: "{{ main.docker_compose_repo_dest }}"
 
   - name: Ensure directories are 0755
