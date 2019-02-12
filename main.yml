@@ -100,9 +100,9 @@
     set_fact: 
       dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
 
-  - name: create the directory "{{ main.local_repo_base }}"
+  - name: create the directory "{{ dest_local_repo }}"
     file:
-      path: "{{ local_repo }}"
+      path: "{{ dest_local_repo }}"
       state: directory
       mode: 0755
     
@@ -161,9 +161,9 @@
     set_fact: 
       dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
 
-  - name: create the directory "{{ main.local_repo_base }}"
+  - name: create the directory "{{ dest_local_repo }}"
     file:
-      path: "{{ local_repo }}"
+      path: "{{ dest_local_repo }}"
       state: directory
       mode: 0755
     
