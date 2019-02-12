@@ -476,7 +476,7 @@
     
   - name: Copy database dump file
     copy:
-      src: dump.sql.bz2
+      src: files/db/dump.sql.bz2
       dest: /tmp/restore
       
   - name: Restore database
