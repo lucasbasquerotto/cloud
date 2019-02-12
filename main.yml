@@ -418,7 +418,7 @@
 ###############################################################################
 
 - name: Play 04 - Build and run the docker images and containers with docker-compose
-  hosts: web
+  hosts: web:db
   tags:
   - run
   vars_files: 
