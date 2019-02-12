@@ -208,29 +208,7 @@
   gather_facts: no
   tasks:
   - name: Gathering facts
-    setup: 
-
-#  - name: Install dependencies
-#    become: true
-#    apt:
-#      name:
-#      - python3
-#      - python3-pip
-#      - python3-setuptools
-#      - python
-#      - python-pip
-#      - python-setuptools
-#      state: latest
-#      update_cache: True
-
-#  - name: Install the MySQL-python through pip
-#    become: true
-#    pip:
-#      name: "{{ item.name }}"
-#      version: "{{ item.version }}"
-#      state: present
-#    with_items:
-#    - { name: "PyMySQL", version: "0.9.3" }
+    setup:
 
   - name: Update the configuration
     become: true
