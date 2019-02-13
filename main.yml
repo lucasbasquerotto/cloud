@@ -480,14 +480,14 @@
     
   - name: Copy database dump file
     copy:
-      src: files/db/dump.sql.bz2
+      src: files/db/initdb.sql.bz2
       dest: /tmp/restore
       
   - name: Restore database
     mysql_db:
       name: wordpress
       state: import
-      target: /tmp/restore/dump.sql.bz2
+      target: /tmp/restore/initdb.sql.bz2
       login_user: root
       login_password: "{{ main.mysql_password }}"
 
