@@ -6,19 +6,19 @@
 
 - name: download git repo
   git:
-    repo: {{ discourse_repo }}
-    dest: '{{ discourse_location }}'
+    repo: "{{ discourse_repo }}"
+    dest: "{{ discourse_location }}"
     update: no
 
 - name: copy discourse configuration app.yml
   copy: 
-    src: {{ discourse_env_location }}/app.yml 
-    dest: {{ discourse_location }}/containers/app.yml 
-    owner: {{ discourse_user }} 
-    group: {{ discourse_group }} 
+    src: "{{ discourse_env_location }}/app.yml "
+    dest: "{{ discourse_location }}/containers/app.yml"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
 
 - name: fix discourse permissions
   file: 
-    path: {{ discourse_location }} 
-    owner: {{ discourse_user }} 
-    group: {{ discourse_group }} 
+    path: "{{ discourse_location }}"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
