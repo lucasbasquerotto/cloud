@@ -100,9 +100,9 @@
     set_fact: 
       dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
 
-  - name: create the directory "{{ main.local_repo_base }}"
+  - name: create the directory "{{ dest_local_repo }}"
     file:
-      path: "{{ local_repo }}"
+      path: "{{ dest_local_repo }}"
       state: directory
       mode: 0755
     
@@ -161,9 +161,9 @@
     set_fact: 
       dest_local_repo: "{{ main.local_repo_base }}/{{ main_group_name }}"
 
-  - name: create the directory "{{ main.local_repo_base }}"
+  - name: create the directory "{{ dest_local_repo }}"
     file:
-      path: "{{ local_repo }}"
+      path: "{{ dest_local_repo }}"
       state: directory
       mode: 0755
     
@@ -208,29 +208,7 @@
   gather_facts: no
   tasks:
   - name: Gathering facts
-    setup: 
-
-  - name: Install dependencies
-    become: true
-    apt:
-      name:
-      - python3
-      - python3-pip
-      - python3-setuptools
-      - python
-      - python-pip
-      - python-setuptools
-      state: latest
-      update_cache: True
-
-  - name: Install the MySQL-python through pip
-    become: true
-    pip:
-      name: "{{ item.name }}"
-      version: "{{ item.version }}"
-      state: present
-    with_items:
-    - { name: "PyMySQL", version: "0.9.3" }
+    setup:
 
   - name: Update the configuration
     become: true
@@ -418,7 +396,7 @@
 ###############################################################################
 
 - name: Play 04 - Build and run the docker images and containers with docker-compose
-  hosts: web
+  hosts: web:db
   tags:
   - run
   vars_files: 
@@ -485,6 +463,10 @@
   tags:
   - never
   - restore
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
   gather_facts: no
   tasks:
   - name: Gathering facts
@@ -498,14 +480,14 @@
     
   - name: Copy database dump file
     copy:
-      src: dump.sql.bz2
+      src: files/db/initdb.sql.bz2
       dest: /tmp/restore
       
   - name: Restore database
     mysql_db:
       name: wordpress
       state: import
-      target: /tmp/restore/dump.sql.bz2
+      target: /tmp/restore/initdb.sql.bz2
       login_user: root
       login_password: "{{ main.mysql_password }}"
 

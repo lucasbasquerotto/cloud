@@ -6,6 +6,9 @@ set -euo pipefail
 ### SCRIPT VARIABLES ###
 ########################
 
+# Docker version
+DOCKER_CE_VERSION="{{ docker_ce_version | default('5:18.09.*') }}"
+
 # MySQL version
 MYSQL_MAJOR="8.0"
 MYSQL_VERSION="{{ mysql_version | default('8.0.14-1ubuntu18.04') }}"
@@ -102,7 +105,16 @@ echo "Main logic finished" >> "/var/log/setup.log"
 echo "Preparing Ansible Host..." >> "/var/log/setup.log"
 
 apt update
-apt install -y python
+
+apt install -y \
+  python \
+  python-pip \
+  python-setuptools \
+  python3 \
+  python3-pip \
+  python3-setuptools
+
+pip install PyMySQL==0.9.3
 
 echo "Ansible Host Prepared" >> "/var/log/setup.log"
 
@@ -120,7 +132,6 @@ curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
 
 export DEBIAN_FRONTEND="noninteractive"; 
 echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
-#sudo -E dpkg -i mysql-apt-config*
 dpkg -i mysql-apt-config*
 
 rm mysql-apt-config*
@@ -135,51 +146,36 @@ debconf-set-selections <<< "mysql-community-server mysql-community-server/root-p
 debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
 debconf-set-selections <<< "mysql-community-server mysql-server/default-auth-override select Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)"
 apt-get install -y 'mysql-server='"$MYSQL_MAJOR"'.*'
-#mysql installation You are required to change your password immediately (root enforced)
 
 echo "MySQL Installed" >> "/var/log/setup.log"
 
-# {
-# 	echo "mysql-apt-config mysql-apt-config/repo-codename select trusty"
-# 	echo "mysql-apt-config mysql-apt-config/repo-distro select ubuntu"
-# 	echo "mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/"
-# 	echo "mysql-apt-config mysql-apt-config/select-preview select "
-# 	echo "mysql-apt-config mysql-apt-config/select-product select Ok"
-# 	echo "mysql-apt-config mysql-apt-config/select-server select mysql-$MYSQL_MAJOR"
-# 	echo "mysql-apt-config mysql-apt-config/select-tools select " 
-# 	echo "mysql-apt-config mysql-apt-config/unsupported-platform select abort" 
-	
-# 	echo "mysql-community-server mysql-community-server/data-dir select $MYSQL_PASS"
-# 	echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_PASS"
-# 	echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_PASS"
-# 	echo "mysql-community-server mysql-community-server/remove-test-db select false"
-# } | debconf-set-selections
-
-# echo "MySQL debconf-set-selections" >> "/var/log/setup.log"
-
-# cd /tmp
-# curl -OL https://dev.mysql.com/get/mysql-apt-config_0.8.10-1_all.deb
-
-# export DEBIAN_FRONTEND="noninteractive"; 
-# dpkg -i mysql-apt-config*
-
-# echo "MySQL Repo" >> "/var/log/setup.log"
-
-# apt-get update 
-# apt-get install -y mysql-server="$MYSQL_VERSION"
-# #apt-get install -y \
-# #	mysql-community-client="${MYSQL_VERSION}" \
-# #	mysql-community-server-core="${MYSQL_VERSION}" 
-
-# echo "MySQL Installed" >> "/var/log/setup.log"
-
-# rm -rf /var/lib/apt/lists/*
-# rm -rf /var/lib/mysql 
-
-# mkdir -p /var/lib/mysql /var/run/mysqld 
-# chown -R mysql:mysql /var/lib/mysql /var/run/mysqld 
-
 echo "MySQL Finished" >> "/var/log/setup.log"
+
+########################
+###      DOCKER      ###
+########################
+
+echo "Preparing Docker Installation..." >> "/var/log/setup.log"
+
+# First, update your existing list of packages
+apt update
+
+# Next, install a few prerequisite packages which let apt use packages over HTTPS
+apt install -y apt-transport-https ca-certificates curl software-properties-common
+
+# Then add the GPG key for the official Docker repository to your system
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+# Add the Docker repository to APT sources
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" -y
+
+# Next, update the package database with the Docker packages from the newly added repo
+apt update
+
+# Finally, install Docker
+apt install -y docker-ce=$DOCKER_CE_VERSION
+
+echo "Docker Installed" >> "/var/log/setup.log"
 
 ########################
 ###       END        ###

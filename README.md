@@ -1,6 +1,6 @@
 # Ansible with Docker
 
-Setup for using **Ansible** to create droplets in **Digital Ocean** that run **Docker** containers.
+Setup for using **Ansible** to create droplets in **Digital Ocean** that run **Docker** containers and a MySQL database.
 
 ### 1) Create an account in Digital Ocean (if you don't have already)
 
