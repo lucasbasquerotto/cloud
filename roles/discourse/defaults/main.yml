@@ -1,5 +1,5 @@
-discourse_env_location: /tmp/main/discourse
+discourse_env_location: "/tmp/main/discourse"
 discourse_repo: "https://github.com/discourse/discourse_docker.git"
 discourse_location: "/var/discourse"
-discourse_user: host
-discourse_group: host
+discourse_user: "host"
+discourse_group: "host"
