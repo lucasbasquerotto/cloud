@@ -76,10 +76,16 @@
   - name: Gathering facts
     setup: 
 
+  - name: create the directory "{{ main.env_location }}"
+    file:
+      path: "{{ main.env_location }}"
+      state: directory
+      mode: 0755
+
   - name: configure the discourse app.yml file
     template:
       src: "templates/discourse/app.yml"
-      dest: "/tmp/main/discourse/app.yml"
+      dest: "{{ main.env_location }}/app.yml"
       mode: 0700
     vars:
       hostname: "{{ main.hostname }}"

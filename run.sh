@@ -19,5 +19,5 @@ mkdir -p ~/env
 mv -vn ~/ansible/env/env.yml ~/env/env.yml
 mv -vn ~/ansible/env/hosts ~/env/hosts
 
-cd ~/ansible/
-ansible-playbook main.yml "$@"
+# cd ~/ansible/
+# ansible-playbook main.yml "$@"
