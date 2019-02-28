@@ -1,0 +1,146 @@
+- name: Play 01 - Create droplets and define hosts
+  hosts: main
+  tags:
+  - setup
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+    main_discourse: "{{ main.discourse }}"
+    main_host_vars: 
+      web:
+        host_user: "{{ main.host_user }}"
+        host_pass: "{{ main.host_pass }}"
+        host_ssh_public_keys: "{{ main.host_ssh_public_keys }}"
+    main_aux:  
+      web_user_data: "{{ lookup('template', 'templates/setup/user_data.web.j2.sh', template_vars=dict(main_host_vars.web)) | trim }}"
+    main_droplet_list:
+      - group: "{{ main_discourse.web.group }}"
+        main_data: "{{ main_discourse.web }}"
+        user_data: "{{ main_aux.web_user_data }}" 
+
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - include_role: 
+      name: droplets
+    vars:
+      droplets_hosts_group: "{{ outer_item.group }}"
+      droplets_hosts_file: "{{ main.hosts_file }}"
+      droplets_api_token: "{{ main.api_token }}"
+      droplets_host_user: "{{ main.host_user }}"
+      droplets_host_pass: "{{ main.host_pass }}"
+      droplets_user_data: "{{ outer_item.user_data }}"
+      droplets_info: "{{ outer_item.main_data.info }}"
+      droplets_tags: "{{ outer_item.main_data.tags }}"
+      droplets_list: "{{ outer_item.main_data.droplets }}"
+    with_items:
+    - "{{ main_droplet_list }}"
+    loop_control:
+      loop_var: outer_item
+      label: "{{ outer_item.group }}"
+
+###############################################################################
+
+- name: Play 02 - Wait for hosts to be ready
+  hosts: host
+  tags:
+  - setup
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  gather_facts: no
+  roles:
+  - role: host_test
+    vars:
+      host_test_log_file: "{{ main.log_file }}"
+      host_test_setup_last_line: "{{ main.setup_last_line }}"
+      host_test_initial_connection_timeout: "{{ main.initial_connection_timeout }}"
+      host_test_setup_finished_timeout: "{{ main.setup_finished_timeout }}"
+    
+###############################################################################
+  
+- name: Play 03 - Prepare the configuration file
+  hosts: main
+  tags:
+  - prepare
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: configure the discourse app.yml file
+    template:
+      src: "templates/discourse/app.yml"
+      dest: "/tmp/main/discourse/app.yml"
+      mode: 0700
+    vars:
+      hostname: "{{ main.hostname }}"
+      email: "{{ main.email }}"
+      smtp_address: "{{ main.smtp_address }}"
+      smtp_port: "{{ main.smtp_port }}"
+      smtp_user_name: "{{ main.smtp_user_name }}"
+      smtp_pass: "{{ main.smtp_pass }}"
+      lang: "{{ main.lang }}"
+      workers: "{{ main.workers }}"
+      text_search_config: "{{ main.text_search_config }}"
+      db_shared_buffers: "{{ main.db_shared_buffers }}"
+      http_port: "{{ main.http_port }}"
+      https_port: "{{ main.https_port }}"
+      host_shared_volume: "{{ main.host_shared_volume }}"
+      host_log_volume: "{{ main.host_log_volume }}"
+
+###############################################################################
+
+- name: Play 04 - Prepare the host
+  hosts: discourse
+  tags:
+  - prepare
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: prepare the discourse environment
+    include_role:
+      name: discourse
+    vars:
+      discourse_env_location: "{{ main.env_location }}"
+      discourse_repo: "{{ main.repo }}"
+      discourse_location: "{{ main.location }}"
+      discourse_user: "{{ main.user }}"
+      discourse_group: "{{ main.group }}"
+
+###############################################################################
+
+- name: Play 05 - Build and run
+  hosts: discourse
+  tags:
+  - build
+  - run
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: rebuild discourse
+    command: ./launcher rebuild app
+    args:
+      chdir: "{{ main.location }}"
+    ignore_errors: yes
+    become: yes

@@ -14,3 +14,9 @@ db_replica
 [db_replica]
 
 [web]
+
+[discourse_db]
+
+[discourse_db_replica]
+
+[discourse_web]
