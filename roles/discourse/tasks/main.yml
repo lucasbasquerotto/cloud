@@ -14,7 +14,7 @@
 - name: copy discourse configuration app.yml
   become: yes
   copy: 
-    src: "{{ discourse_env_location }}/app.yml "
+    src: "{{ discourse_env_location }}/app.yml"
     dest: "{{ discourse_location }}/containers/app.yml"
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
