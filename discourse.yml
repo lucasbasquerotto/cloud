@@ -106,7 +106,7 @@
 ###############################################################################
 
 - name: Play 04 - Prepare the host
-  hosts: discourse
+  hosts: discourse_web
   tags:
   - prepare
   vars_files: 
@@ -131,7 +131,7 @@
 ###############################################################################
 
 - name: Play 05 - Build and run
-  hosts: discourse
+  hosts: discourse_web
   tags:
   - build
   - run
