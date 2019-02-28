@@ -4,6 +4,7 @@ localhost ansible_connection=local
 [host:children]
 db
 web
+discourse
 
 [db:children]
 db_master
@@ -14,6 +15,11 @@ db_replica
 [db_replica]
 
 [web]
+
+[discourse:children]
+discourse_db
+discourse_db_replica
+discourse_web
 
 [discourse_db]
 
