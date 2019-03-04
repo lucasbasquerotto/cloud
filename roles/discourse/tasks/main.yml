@@ -11,6 +11,15 @@
     dest: "{{ discourse_location }}"
     update: no
 
+- name: copy discourse setup file
+  become: yes
+  copy: 
+    src: "{{ discourse_setup_location }}/setup.sh"
+    dest: "{{ discourse_location }}/discourse-custom-setup"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0755
+
 - name: copy discourse configuration app.yml
   become: yes
   copy: 
@@ -18,10 +27,4 @@
     dest: "{{ discourse_location }}/containers/app.yml"
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
-
-- name: fix discourse permissions
-  become: yes
-  file: 
-    path: "{{ discourse_location }}"
-    owner: "{{ discourse_user }}"
-    group: "{{ discourse_group }}"
+    mode: 0600
