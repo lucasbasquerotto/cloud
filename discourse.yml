@@ -146,8 +146,7 @@
     setup: 
 
   - name: rebuild discourse
-    command: ./launcher rebuild app
+    become: yes
+    command: ./discourse-custom-setup
     args:
       chdir: "{{ main.location }}"
-    ignore_errors: yes
-    become: yes
