@@ -123,6 +123,7 @@
       name: discourse
     vars:
       discourse_env_location: "{{ main.env_location }}"
+      discourse_setup_location: "files/discourse"
       discourse_repo: "{{ main.repo }}"
       discourse_location: "{{ main.location }}"
       discourse_user: "{{ main.user }}"
