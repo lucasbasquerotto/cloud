@@ -118,19 +118,25 @@
   tasks:  
   - name: Gathering facts
     setup: 
+    
+  - name: set the discourse hosts vars
+    set_fact: 
+      main_web_host: "{{ hostvars[groups[main.discourse.web.group][0]] }}"
 
   - name: update the discourse site DNS A record
     cloudflare_dns:
       zone: "{{ main.hostname }}"
+      proxied: no
       type: A
       record: "{{ main.discourse.subdomain }}"
-      value: 127.0.0.1
+      value: "{{ main_web_host.ansible_host }}"
       account_email: "{{ main.discourse.cloudflare_email }}"
       account_api_token: "{{ main.discourse.cloudflare_token }}"
 
   - name: update the discourse DNS email records
     cloudflare_dns:
       zone: "{{ main.hostname }}"
+      proxied: no
       type: CNAME
       record: "{{ item.host }}"
       value: "{{ item.value }}"
