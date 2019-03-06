@@ -106,7 +106,43 @@
 
 ###############################################################################
 
-- name: Play 04 - Prepare the host
+- name: Play 04 - Update the DNS records
+  hosts: discourse_web
+  tags:
+  - prepare
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: update the discourse site DNS A record
+    cloudflare_dns:
+      zone: "{{ main.hostname }}"
+      type: A
+      record: "{{ main.discourse.subdomain }}"
+      value: 127.0.0.1
+      account_email: "{{ main.discourse.cloudflare_email }}"
+      account_api_token: "{{ main.discourse.cloudflare_token }}"
+
+  - name: update the discourse DNS email records
+    cloudflare_dns:
+      zone: "{{ main.hostname }}"
+      type: CNAME
+      record: "{{ item.host }}"
+      value: "{{ item.value }}"
+      account_email: "{{ main.discourse.cloudflare_email }}"
+      account_api_token: "{{ main.discourse.cloudflare_token }}"
+    loop: "{{ main.discourse.smtp_dns }}"
+    loop_control:
+      label: "{{ item.host }}"
+
+###############################################################################
+
+- name: Play 05 - Prepare the host
   hosts: discourse_web
   tags:
   - prepare
@@ -132,7 +168,7 @@
 
 ###############################################################################
 
-- name: Play 05 - Build and run
+- name: Play 06 - Build and run
   hosts: discourse_web
   tags:
   - build
