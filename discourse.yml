@@ -188,7 +188,7 @@
   - name: Gathering facts
     setup: 
 
-  - name: rebuild discourse
+  - name: (re)build and (re)start discourse
     become: yes
     command: ./discourse-custom-setup
     args:
