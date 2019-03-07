@@ -155,7 +155,7 @@
       proxied: "{{ main.discourse.cdn_proxied }}"
       type: CNAME
       record: "{{ main.discourse.cdn_subdomain }}"
-      value: "{{ main.discourse.subdomain }}"
+      value: "{{ main.discourse.subdomain }}.{{ main.hostname }}"
       account_email: "{{ main.discourse.cloudflare_email }}"
       account_api_token: "{{ main.discourse.cloudflare_token }}"
 
