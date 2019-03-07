@@ -152,7 +152,7 @@
   - name: update the discourse DNS CDN record
     cloudflare_dns:
       zone: "{{ main.hostname }}"
-      proxied: "{{ cdn_proxied }}"
+      proxied: "{{ main.discourse.cdn_proxied }}"
       type: CNAME
       record: "{{ main.discourse.cdn_subdomain }}"
       value: "{{ main.discourse.subdomain }}"
