@@ -97,7 +97,7 @@
       ssl_prefix: "{{ main.ssl_prefix }}"
       ssl_email: "{{ main.ssl_email }}"
       cdn_prefix: "{{ main.cdn_prefix }}"
-      cdn_url: "{{ main.cdn_url }}"
+      cdn_url: "//{{ main.cdn_host }}"
       lang: "{{ main.lang }}"
       workers: "{{ main.workers }}"
       text_search_config: "{{ main.text_search_config }}"
