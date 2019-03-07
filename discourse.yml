@@ -146,6 +146,16 @@
     loop_control:
       label: "{{ item.host }}"
 
+  - name: update the discourse DNS CDN record
+    cloudflare_dns:
+      zone: "{{ main.hostname }}"
+      proxied: "{{ cdn_proxied }}"
+      type: CNAME
+      record: "{{ main.discourse.cdn_subdomain }}"
+      value: "{{ main.discourse.subdomain }}"
+      account_email: "{{ main.discourse.cloudflare_email }}"
+      account_api_token: "{{ main.discourse.cloudflare_token }}"
+
 ###############################################################################
 
 - name: Play 05 - Prepare the host
