@@ -1,5 +1,5 @@
 ---
-
+  
 - name: 'checking {{ watch_job }} status'
   become: yes
   async_status:
@@ -8,6 +8,10 @@
   vars:
     job: '{{ lookup("vars", watch_job) }}'
   when: 'job.ansible_job_id is defined'
+
+- wait_for:
+    timeout: '{{ watch_timeout }}'
+  when: not watch_status.finished
 
 - name: 'watch_job'
   debug:

@@ -1,38 +1,19 @@
 ---
 
-- name: 'checking {{ watch_job }} status until finished'
-  include_tasks: 'loop.yml'
-  delay: 3
-  retries: 5
-  until: false
-  #delay: '{{ watch_poll }}'
-  #retries: '{{ watch_timeout / watch_poll }}'
-  #until: watch_status.finished is defined and watch_status.finished == 1
-
-- name: '2 - checking {{ watch_job }} status until finished'
-  become: yes
-  async_status:
-    jid: '{{ job.ansible_job_id }}'
-  vars:
-    job: '{{ lookup("vars", watch_job) }}'
-  delay: 3
-  retries: 5
-  register: 'watch_status2'
-  until: watch_status2.finished
-  when: 'job.ansible_job_id is defined'
-
-- name: 'delay'
-  debug:
-    msg: '{{ watch_poll }}'
+# - name: 'checking {{ watch_job }} status until finished'
+#   include_tasks: 'loop.yml'
+#   delay: '{{ watch_poll }}'
+#   retries: '{{ watch_timeout / watch_poll }}'
+#   until: watch_status.finished
 
 - name: 'retries'
-  debug:
-    msg: '{{ watch_timeout / watch_poll }}'
+  set_fact:
+    watch_retries: '{{ watch_timeout / watch_poll }}'
+  
+- name: 'checking {{ watch_job }} status until finished'
+  include_tasks: 'loop.yml'
+  loop: "{{ range(0, watch_retries, watch_poll) }}"
 
-- name: 'watch_status.finished is defined and watch_status.finished == 1'
-  debug:
-    msg: '{{ watch_status.finished is defined and watch_status.finished == 1 }}'
-
-- name: 'watch_status - finished'
-  debug:
-    msg: '{{ watch_status.finished }}'
+- name: 'watch_status is finished'
+  assert:
+    that: watch_status.finished
