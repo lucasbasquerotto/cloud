@@ -4,7 +4,7 @@
   include_tasks: 'loop.yml'
   delay: '{{ watch_poll }}'
   retries: '{{ watch_timeout / watch_poll }}'
-  until: watch_status.finished
+  until: watch_status.finished is defined and watch_status.finished == '1'
 
 - name: 'watch_status - finished'
   debug:
