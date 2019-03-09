@@ -10,7 +10,7 @@
   when: 'job.ansible_job_id is defined'
 
 - wait_for:
-    timeout: '{{ watch_timeout }}'
+    timeout: '{{ watch_poll | int }}'
   when: not watch_status.finished
 
 - name: 'watch_job'
