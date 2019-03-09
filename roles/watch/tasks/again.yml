@@ -5,3 +5,7 @@
   delay: '{{ watch_poll }}'
   retries: '{{ watch_timeout // watch_poll }}'
   until: watch_status.finished
+
+- name: 'watch_status - finished'
+  debug:
+    msg: '{{ watch_status.finished }}'

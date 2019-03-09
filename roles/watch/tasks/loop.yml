@@ -13,14 +13,6 @@
   debug:
     var: '{{ watch_job }}'
 
-- name: 'watch_status'
-  debug:
-    var: '{{ watch_status }}'
-
-- name: 'watch_status finished'
-  debug:
-    msg: '{{ watch_status.finished }}'
-
 - name: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   failed_when: false
   shell: 'tail -n +{{ watch_lines }} {{ watch_file }}'
