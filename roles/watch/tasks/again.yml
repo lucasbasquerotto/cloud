@@ -2,9 +2,11 @@
 
 - name: 'checking {{ watch_job }} status until finished'
   include_tasks: 'loop.yml'
-  delay: '{{ watch_poll }}'
-  retries: '{{ watch_timeout / watch_poll }}'
+  delay: 3
+  retries: 5
   until: false
+  #delay: '{{ watch_poll }}'
+  #retries: '{{ watch_timeout / watch_poll }}'
   #until: watch_status.finished is defined and watch_status.finished == 1
 
 - name: 'delay'
