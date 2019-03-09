@@ -4,4 +4,4 @@
   include_tasks: 'loop.yml'
   delay: '{{ watch_poll }}'
   retries: '{{ watch_timeout // watch_poll }}'
-  until: 'watch_status is finished or watch_status is skipped'
+  until: watch_status.finished
