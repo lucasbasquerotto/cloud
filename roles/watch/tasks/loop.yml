@@ -14,9 +14,12 @@
     var: '{{ watch_job }}'
 
 - name: 'watch_status'
-  become: yes
   debug:
     var: '{{ watch_status }}'
+
+- name: 'watch_status2'
+  debug:
+    msg: '{{ watch_status.finished }} --- {{ watch_status.skipped }}'
 
 - name: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   failed_when: false
