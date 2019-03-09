@@ -231,7 +231,7 @@
 
 ###############################################################################
 
-- name: Play 06 - Stop
+- name: Play 07 - Stop Discourse
   hosts: discourse_web
   tags:
   - never
