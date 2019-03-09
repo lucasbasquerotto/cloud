@@ -220,6 +220,7 @@
     register: 'setup'
 
   - name: 'Watch {{ main.env_location }}/output.log until some-command finishes.'
+    become: yes
     include_role:
       name: 'watch'
     vars:

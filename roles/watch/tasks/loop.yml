@@ -1,6 +1,6 @@
 ---
 
-- name: 'Checking {{ watch_job }} status.'
+- name: 'checking {{ watch_job }} status'
   async_status:
     jid: '{{ job.ansible_job_id }}'
   register: 'watch_status'
@@ -14,7 +14,7 @@
   register: 'watch_tail'
 
 - block:
-  - name: '{{ output_lines }} lines captured.'
+  - name: '{{ output_lines }} lines captured'
     set_fact:
       watch_lines: '{{ watch_lines|int + output_lines|int }}'
 
