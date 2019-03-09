@@ -435,9 +435,6 @@ then
   echo
   echo
   DATE=`date +"%Y-%m-%d-%H%M%S"`
-  BACKUP=$app_name.yml.$DATE.bak
-  echo Saving old file as $BACKUP
-  cp $web_file containers/$BACKUP
   echo "Stopping existing container in 5 seconds or Control-C to cancel."
   sleep 5
   ./launcher stop app
@@ -447,28 +444,28 @@ else
   cp -v $web_template $web_file
   if [ "$data_name" == "data" ]
   then
-      echo "--------------------------------------------------"
-      echo "This two container setup is currently unsupported. Use at your own risk!"
-      echo "--------------------------------------------------"
-      DISCOURSE_DB_PASSWORD=`date +%s | sha256sum | base64 | head -c 20`
+    echo "--------------------------------------------------"
+    echo "This two container setup is currently unsupported. Use at your own risk!"
+    echo "--------------------------------------------------"
+    DISCOURSE_DB_PASSWORD=`date +%s | sha256sum | base64 | head -c 20`
 
-     sed -i -e "s/DISCOURSE_DB_PASSWORD: SOME_SECRET/DISCOURSE_DB_PASSWORD: $DISCOURSE_DB_PASSWORD/w $changelog" $web_file
-     if  [ -s $changelog ]
-     then
-	 rm $changelog
-     else
-       echo "Problem changing DISCOURSE_DB_PASSWORD" in $web_file
-     fi
+    sed -i -e "s/DISCOURSE_DB_PASSWORD: SOME_SECRET/DISCOURSE_DB_PASSWORD: $DISCOURSE_DB_PASSWORD/w $changelog" $web_file
+    if [ -s $changelog ]
+    then
+      rm $changelog
+    else
+      echo "Problem changing DISCOURSE_DB_PASSWORD" in $web_file
+    fi
 
-     cp -v $data_template $data_file
-     quote=\'
-     sed -i -e "s/password ${quote}SOME_SECRET${quote}/password '$DISCOURSE_DB_PASSWORD'/w $changelog" $data_file
-     if  [ -s $changelog ]
-     then
-	 rm $changelog
-     else
-       echo "Problem changing DISCOURSE_DB_PASSWORD" in $data_file
-     fi
+    cp -v $data_template $data_file
+    quote=\'
+    sed -i -e "s/password ${quote}SOME_SECRET${quote}/password '$DISCOURSE_DB_PASSWORD'/w $changelog" $data_file
+    if  [ -s $changelog ]
+    then
+	    rm $changelog
+    else
+      echo "Problem changing DISCOURSE_DB_PASSWORD" in $data_file
+    fi
   fi
 fi
 

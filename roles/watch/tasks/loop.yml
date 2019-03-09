@@ -9,6 +9,14 @@
     job: '{{ lookup("vars", watch_job) }}'
   when: 'job.ansible_job_id is defined'
 
+- name: 'watch_job'
+  debug:
+    var: '{{ watch_job }}'
+
+- name: 'watch_status'
+  debug:
+    var: '{{ watch_status }}'
+
 - name: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   failed_when: false
   shell: 'tail -n +{{ watch_lines }} {{ watch_file }}'
