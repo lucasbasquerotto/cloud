@@ -204,8 +204,25 @@
   - name: Gathering facts
     setup: 
 
+  - name: create the directory "{{ main.env_location }}"
+    file:
+      path: "{{ main.env_location }}"
+      state: directory
+      mode: 0755
+
   - name: (re)build and (re)start discourse
     become: yes
-    command: ./discourse-custom-setup
+    shell: "./discourse-custom-setup > {{ main.env_location }}/output.log"
     args:
       chdir: "{{ main.location }}"
+    async: 3600
+    poll: 0
+    register: 'setup'
+
+  - name: 'Watch {{ main.env_location }}/output.log until some-command finishes.'
+    include_role:
+      name: 'watch'
+    vars:
+      watch_file: '{{ main.env_location }}/output.log'
+      watch_job: 'setup'
+      watch_timeout: 3600
