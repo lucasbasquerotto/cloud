@@ -13,14 +13,11 @@
     timeout: '{{ watch_poll | int }}'
   when: not watch_status.finished
 
-- name: 'watch_job'
-  debug:
-    var: '{{ watch_job }}'
-
 - name: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   failed_when: false
   shell: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   register: 'watch_tail'
+  changed_when: false
 
 - block:
   - name: '{{ output_lines }} lines captured'
