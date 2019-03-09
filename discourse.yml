@@ -228,3 +228,25 @@
       watch_job: 'setup'
       watch_timeout: 3600
       watch_poll: 10
+
+###############################################################################
+
+- name: Play 06 - Stop
+  hosts: discourse_web
+  tags:
+  - never
+  - stop
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: stop discourse
+    become: yes
+    command: "./launcher stop app"
+    args:
+      chdir: "{{ main.location }}"
