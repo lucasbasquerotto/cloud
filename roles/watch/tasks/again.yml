@@ -6,6 +6,14 @@
   retries: '{{ watch_timeout / watch_poll }}'
   until: watch_status.finished is defined and watch_status.finished == 1
 
+- name: 'delay'
+  debug:
+    msg: '{{ watch_poll }}'
+
+- name: 'retries'
+  debug:
+    msg: '{{ watch_timeout / watch_poll }}'
+
 - name: 'watch_status.finished is defined and watch_status.finished == 1'
   debug:
     msg: '{{ watch_status.finished is defined and watch_status.finished == 1 }}'
