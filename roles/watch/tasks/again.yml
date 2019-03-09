@@ -12,7 +12,7 @@
   
 - name: 'checking {{ watch_job }} status until finished'
   include_tasks: 'loop.yml'
-  loop: "{{ range(0, watch_retries | int, watch_poll | int) }}"
+  loop: "{{ range(0, watch_retries | int, watch_poll | int) | list }}"
 
 - name: 'watch_status is finished'
   assert:
