@@ -7,3 +7,5 @@ watch_lines: 0
 watch_poll: 1
 
 watch_timeout: 1000
+
+watch_count: 0
