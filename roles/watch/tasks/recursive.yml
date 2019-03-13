@@ -5,7 +5,7 @@
 
 - name: 'count ({{ watch_count | default(0) }})'
   set_fact:
-    watch_count: '{{ (watch_count | default(0)) + 1 }}'
+    watch_count: '{{ (watch_count | int | default(0)) + 1 }}'
 
 - name: 'retries ({{ (watch_timeout / watch_poll) | int }})'
   set_fact:
