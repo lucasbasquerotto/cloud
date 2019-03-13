@@ -9,10 +9,6 @@
     job: '{{ lookup("vars", watch_job) }}'
   when: 'job.ansible_job_id is defined'
 
-- wait_for:
-    timeout: '{{ watch_poll | int }}'
-  when: not watch_status.finished
-
 - name: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   failed_when: false
   shell: 'tail -n +{{ watch_lines }} {{ watch_file }}'
@@ -20,6 +16,7 @@
   changed_when: false
 
 - block:
+
   - name: '{{ output_lines }} lines captured'
     set_fact:
       watch_lines: '{{ watch_lines|int + output_lines|int }}'
