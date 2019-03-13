@@ -226,8 +226,8 @@
     vars:
       watch_file: '{{ main.env_location }}/output.log'
       watch_job: 'setup'
-      watch_timeout: 36
-      watch_poll: 1
+      watch_timeout: 3600
+      watch_poll: 5
 
 ###############################################################################
 
