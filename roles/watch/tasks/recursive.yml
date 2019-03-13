@@ -3,7 +3,7 @@
 - name: 'checking {{ watch_job }} status (recursive)'
   include_tasks: 'loop.yml'
 
-- name: 'count ({{ watch_count }})'
+- name: 'count ({{ watch_count | int + 1 }})'
   set_fact:
     watch_count: '{{ watch_count | int + 1 }}'
 
