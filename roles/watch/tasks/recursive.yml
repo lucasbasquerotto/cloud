@@ -3,9 +3,9 @@
 - name: 'checking {{ watch_job }} status (recursive)'
   include_tasks: 'loop.yml'
 
-- name: 'count ({{ watch_count | default(0) }})'
+- name: 'count ({{ watch_count }})'
   set_fact:
-    watch_count: '{{ watch_count + 1 }}'
+    watch_count: {{ watch_count + 1 }}
 
 - name: 'retries ({{ (watch_timeout / watch_poll) | int }})'
   set_fact:
