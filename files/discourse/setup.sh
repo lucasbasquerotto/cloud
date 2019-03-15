@@ -33,25 +33,28 @@ check_IP_match () {
   HOST="$1"
   echo
   echo Checking your domain name . . .
+
   if connect_to_port $HOST 443
   then
-      echo
-      echo "Connection to $HOST succeeded."
+    echo
+    echo "Connection to $HOST succeeded."
   else
     echo WARNING:: This server does not appear to be accessible at $HOST:443.
     echo
+
     if connect_to_port $HOST 80
     then
-	echo A connection to port 80 succeeds, however.
-	echo This suggests that your DNS settings are correct,
-	echo but something is keeping traffic to port 443 from getting to your server.
-	echo Check your networking configuration to see that connections to port 443 are allowed.
+      echo A connection to port 80 succeeds, however.
+      echo This suggests that your DNS settings are correct,
+      echo but something is keeping traffic to port 443 from getting to your server.
+      echo Check your networking configuration to see that connections to port 443 are allowed.
     else
       echo "A connection to http://$HOST (port 80) also fails."
       echo
       echo This suggests that $HOST resolves to the wrong IP address
       echo or that traffic is not being routed to your server.
     fi
+
     echo
     echo Google: \"open ports YOUR CLOUD SERVICE\" for information for resolving this problem.
     echo
@@ -66,8 +69,9 @@ check_IP_match () {
 ##
 ## Do we have docker?
 ##
-check_and_install_docker () {
+check_docker () {
   docker_path=`which docker.io || which docker`
+
   if [ -z $docker_path ]; then
     echo "Error: Docker not installed." 1>&2
     exit 1
@@ -99,9 +103,9 @@ check_linux_memory() {
 ## Do we have enough memory and disk space for Discourse?
 ##
 check_disk_and_memory() {
-
   os_type=$(check_OS)
   avail_mem=0
+
   if [ "$os_type" == "Darwin" ]; then
     avail_mem=$(check_osx_memory)
   else
@@ -142,16 +146,16 @@ check_disk_and_memory() {
       echo 'vm.swappiness = 10' > /etc/sysctl.d/30-discourse-swap.conf
 
       total_swap=`free -g --si | awk ' /Swap:/ {print $2} '`
+
       if [ "$total_swap" -lt 2 ]; then
         echo "Failed to create swap: are you root? Are you running on real hardware, or a fully virtualized server?"
         exit 1
       fi
-
     fi
   fi
 
-
   free_disk="$(df /var | tail -n 1 | awk '{print $4}')"
+
   if [ "$free_disk" -lt 5000 ]; then
     echo "WARNING: Discourse requires at least 5GB free disk space. This system"
     echo "does not appear to have sufficient disk space."
@@ -165,7 +169,6 @@ check_disk_and_memory() {
     echo "packages and \`./launcher cleanup\` to remove stale Docker containers."
     exit 1
   fi
-
 }
 
 
@@ -173,12 +176,13 @@ check_disk_and_memory() {
 ## If we have lots of RAM or lots of CPUs, bump up the defaults to scale better
 ##
 scale_ram_and_cpu() {
-
   local changelog=/tmp/changelog.$PPID
+
   # grab info about total system ram and physical (NOT LOGICAL!) CPU cores
   avail_gb=0
   avail_cores=0
   os_type=$(check_OS)
+
   if [ "$os_type" == "Darwin" ]; then
     avail_gb=$(check_osx_memory)
     avail_cores=`sysctl hw.ncpu | awk '/hw.ncpu:/ {print $2}'`
@@ -186,6 +190,7 @@ scale_ram_and_cpu() {
     avail_gb=$(check_linux_memory)
     avail_cores=$((`awk '/cpu cores/ {print $4;exit}' /proc/cpuinfo`*`sort /proc/cpuinfo | uniq | grep -c "physical id"`))
   fi
+
   echo "Found ${avail_gb}GB of memory and $avail_cores physical CPU cores"
 
   # db_shared_buffers: 128MB for 1GB, 256MB for 2GB, or 256MB * GB, max 4096MB
@@ -200,9 +205,11 @@ scale_ram_and_cpu() {
       db_shared_buffers=$(( 256 * $avail_gb ))
     fi
   fi
+
   db_shared_buffers=$(( db_shared_buffers < 4096 ? db_shared_buffers : 4096 ))
 
   sed -i -e "s/^  #\?db_shared_buffers:.*/  db_shared_buffers: \"${db_shared_buffers}MB\"/w $changelog" $data_file
+
   if [ -s $changelog ]
   then
     echo "setting db_shared_buffers = ${db_shared_buffers}MB"
@@ -216,34 +223,33 @@ scale_ram_and_cpu() {
   else
     unicorn_workers=$(( 2 * $avail_cores ))
   fi
+
   unicorn_workers=$(( unicorn_workers < 8 ? unicorn_workers : 8 ))
 
   sed -i -e "s/^  #\?UNICORN_WORKERS:.*/  UNICORN_WORKERS: ${unicorn_workers}/w $changelog" $web_file
+
   if [ -s $changelog ]
   then
-      echo "setting UNICORN_WORKERS = ${unicorn_workers}"
-      rm $changelog
+    echo "setting UNICORN_WORKERS = ${unicorn_workers}"
+    rm $changelog
   fi
 
   echo $data_file memory parameters updated.
 }
 
-
 ##
 ## standard http / https ports must not be occupied
 ##
 check_ports() {
-    check_port "80"
-    check_port "443"
-    echo "Ports 80 and 443 are free for use"
+  check_port "80"
+  check_port "443"
+  echo "Ports 80 and 443 are free for use"
 }
-
 
 ##
 ## check a port to see if it is already in use
 ##
 check_port() {
-
   local valid=$(netstat -tln | awk '{print $4}' | grep ":${1}\$")
 
   if [ -n "$valid" ]; then
@@ -285,7 +291,6 @@ read_default() {
 ## display the config file values to the user
 ##
 display_config() {
-
   # NOTE: Defaults now come from standalone.yml
 
   local changelog=/tmp/changelog.$PPID
@@ -300,15 +305,18 @@ display_config() {
   local smtp_port=$read_config_result
   read_config "DISCOURSE_SMTP_USER_NAME"
   local smtp_user_name=$read_config_result
+
   if [ "$smtp_password" = "pa$$word" ]
   then
-      smtp_password = ""
+    smtp_password=""
   fi
+
   read_config "LETSENCRYPT_ACCOUNT_EMAIL"
   local letsencrypt_account_email=$read_config_result
+  
   if [ "$letsencrypt_account_email" = "me@example.com" ]
   then
-      letsencrypt_account_email = ""
+    letsencrypt_account_email=""
   fi
 
   read_config "DISCOURSE_HOSTNAME"
@@ -337,7 +345,7 @@ display_config() {
 
   if [ ! -z $letsencrypt_account_email ]
   then
-      check_IP_match $hostname
+    check_IP_match $hostname
   fi
 
   echo "Hostname      : $hostname"
@@ -345,7 +353,6 @@ display_config() {
   echo "SMTP address  : $smtp_address"
   echo "SMTP port     : $smtp_port"
   echo "SMTP username : $smtp_user_name"
-  echo "SMTP password : $smtp_password"
 
   if [ ! -z $letsencrypt_account_email ]
   then
@@ -359,11 +366,10 @@ display_config() {
 ## is our config file valid? Does it have the required fields set?
 ##
 validate_config() {
-
   valid_config="y"
 
   for x in DISCOURSE_SMTP_ADDRESS DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_PASSWORD \
-           DISCOURSE_DEVELOPER_EMAILS DISCOURSE_HOSTNAME
+    DISCOURSE_DEVELOPER_EMAILS DISCOURSE_HOSTNAME
   do
     read_config $x
     local result=$read_config_result
@@ -377,7 +383,9 @@ validate_config() {
         echo "$x left at incorrect default of $default"
         valid_config="n"
       fi
+
       config_val=`echo $config_line | awk '{print $2}'`
+
       if [ -z $config_val ]
       then
         echo "$x was not configured"
@@ -397,19 +405,18 @@ validate_config() {
   fi
 }
 
-
 ##
 ## template file names
 ##
 
 if [ "$1" == "2container" ]
 then
-    app_name=web_only
-    data_name=data
-    web_template=samples/web_only.yml
-    data_template=samples/data.yml
-    web_file=containers/$app_name.yml
-    data_file=containers/$data_name.yml
+  app_name=web_only
+  data_name=data
+  web_template=samples/web_only.yml
+  data_template=samples/data.yml
+  web_file=containers/$app_name.yml
+  data_file=containers/$data_name.yml
 else
   app_name=app
   data_name=app
@@ -418,13 +425,14 @@ else
   web_file=containers/$app_name.yml
   data_file=containers/$app_name.yml
 fi
-    changelog=/tmp/changelog
+
+changelog=/tmp/changelog
 
 ##
 ## Check requirements before creating a copy of a config file we won't edit
 ##
 check_root
-check_and_install_docker
+check_docker
 check_disk_and_memory
 
 if [ -a "$web_file" ]
@@ -435,6 +443,9 @@ then
   echo
   echo
   DATE=`date +"%Y-%m-%d-%H%M%S"`
+  BACKUP=$app_name.yml.$DATE.bak
+  echo Saving old file as $BACKUP
+  cp $web_file containers/$BACKUP
   echo "Stopping existing container in 5 seconds or Control-C to cancel."
   sleep 5
   ./launcher stop app
@@ -442,6 +453,7 @@ then
 else
   check_ports
   cp -v $web_template $web_file
+
   if [ "$data_name" == "data" ]
   then
     echo "--------------------------------------------------"
@@ -450,7 +462,8 @@ else
     DISCOURSE_DB_PASSWORD=`date +%s | sha256sum | base64 | head -c 20`
 
     sed -i -e "s/DISCOURSE_DB_PASSWORD: SOME_SECRET/DISCOURSE_DB_PASSWORD: $DISCOURSE_DB_PASSWORD/w $changelog" $web_file
-    if [ -s $changelog ]
+
+    if  [ -s $changelog ]
     then
       rm $changelog
     else
@@ -460,9 +473,10 @@ else
     cp -v $data_template $data_file
     quote=\'
     sed -i -e "s/password ${quote}SOME_SECRET${quote}/password '$DISCOURSE_DB_PASSWORD'/w $changelog" $data_file
+
     if  [ -s $changelog ]
     then
-	    rm $changelog
+      rm $changelog
     else
       echo "Problem changing DISCOURSE_DB_PASSWORD" in $data_file
     fi
@@ -479,13 +493,14 @@ validate_config
 ##
 echo "Updates successful. Rebuilding in 5 seconds."
 sleep 5 # Just a chance to ^C in case they were too fast on the draw
+
 if [ "$data_name" == "$app_name" ]
 then
-    echo Building $app_name
-    ./launcher rebuild $app_name
+  echo Building $app_name
+  ./launcher rebuild $app_name
 else
-    echo Building $data_name now . . .
-    ./launcher rebuild $data_name
-    echo Building $app_name now . . .
-    ./launcher rebuild $app_name
+  echo Building $data_name now . . .
+  ./launcher rebuild $data_name
+  echo Building $app_name now . . .
+  ./launcher rebuild $app_name
 fi
