@@ -86,7 +86,7 @@
     set_fact: 
       main_cf_prefix: "{{ (main.cdn_proxied == 'yes') | ternary('', '#') }}"
 
-    debug:
+  - debug:
       var: "{{ main_cf_prefix }}"
 
   - name: configure the discourse app.yml file
