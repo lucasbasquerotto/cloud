@@ -81,13 +81,6 @@
       path: "{{ main.env_location }}"
       state: directory
       mode: 0755
-    
-  - name: set the cloudflare prefix (to comment or not)
-    set_fact: 
-      main_cf_prefix: "{{ (main.cdn_proxied == 'yes') | ternary('', '#') }}"
-
-  - debug:
-      msg: "main_cf_prefix={{ main_cf_prefix }}"
 
   - name: configure the discourse app.yml file
     template:
@@ -102,7 +95,7 @@
       smtp_user_name: "{{ main.smtp_user_name }}"
       smtp_pass: "{{ main.smtp_pass }}"
       ssl_prefix: "{{ main.ssl_prefix }}"
-      cf_prefix: "{{ main_cf_prefix }}"
+      cf_prefix: "{{ main.cf_prefix }}"
       ssl_email: "{{ main.ssl_email }}"
       cdn_prefix: "{{ main.cdn_prefix }}"
       cdn_url: "//{{ main.cdn_host }}"
@@ -137,24 +130,13 @@
   - name: update the discourse site DNS A record
     cloudflare_dns:
       zone: "{{ main.hostname }}"
-      proxied: no
+      proxied: "{{ main.discourse.cf_proxied }}"
       type: A
       solo: true
       record: "{{ main.discourse.subdomain }}"
       value: "{{ main_web_host.ansible_host }}"
       account_email: "{{ main.discourse.cloudflare_email }}"
       account_api_token: "{{ main.discourse.cloudflare_token }}"
-
-  # - name: update the discourse site DNS A record
-  #   cloudflare_dns:
-  #     zone: "{{ main.hostname }}"
-  #     proxied: "{{ main.discourse.cdn_proxied }}"
-  #     type: A
-  #     solo: true
-  #     record: "{{ main.discourse.subdomain }}"
-  #     value: "{{ main_web_host.ansible_host }}"
-  #     account_email: "{{ main.discourse.cloudflare_email }}"
-  #     account_api_token: "{{ main.discourse.cloudflare_token }}"
 
   - name: update the discourse DNS email records
     cloudflare_dns:
