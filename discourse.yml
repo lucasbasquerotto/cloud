@@ -82,36 +82,10 @@
       state: directory
       mode: 0755
 
-  - name: configure the discourse app.yml file
-    template:
-      src: "templates/discourse/app.yml"
-      dest: "{{ main.env_location }}/app.yml"
-      mode: 0700
-    vars:
-      hostname: "{{ main.hostname }}"
-      email: "{{ main.email }}"
-      smtp_address: "{{ main.smtp_address }}"
-      smtp_port: "{{ main.smtp_port }}"
-      smtp_user_name: "{{ main.smtp_user_name }}"
-      smtp_pass: "{{ main.smtp_pass }}"
-      ssl_prefix: "{{ main.ssl_prefix }}"
-      cf_prefix: "{{ main.cf_prefix }}"
-      ssl_email: "{{ main.ssl_email }}"
-      cdn_prefix: "{{ main.cdn_prefix }}"
-      cdn_url: "//{{ main.cdn_host }}"
-      lang: "{{ main.lang }}"
-      workers: "{{ main.workers }}"
-      text_search_config: "{{ main.text_search_config }}"
-      db_shared_buffers: "{{ main.db_shared_buffers }}"
-      http_port: "{{ main.http_port }}"
-      https_port: "{{ main.https_port }}"
-      host_shared_volume: "{{ main.host_shared_volume }}"
-      host_log_volume: "{{ main.host_log_volume }}"
-
-  # - name: configure the discourse {{ item }}.yml file
+  # - name: configure the discourse app.yml file
   #   template:
-  #     src: "templates/discourse/{{ item }}.yml"
-  #     dest: "{{ main.env_location }}/{{ item }}.yml"
+  #     src: "templates/discourse/app.yml"
+  #     dest: "{{ main.env_location }}/app.yml"
   #     mode: 0700
   #   vars:
   #     hostname: "{{ main.hostname }}"
@@ -131,13 +105,39 @@
   #     db_shared_buffers: "{{ main.db_shared_buffers }}"
   #     http_port: "{{ main.http_port }}"
   #     https_port: "{{ main.https_port }}"
-  #     host_shared_volume: "/var/discourse/shared/{{ item }}"
-  #     host_log_volume: "/var/discourse/shared/{{ item }}/log/var-log"
-  #     db_pass: "{{ main.db_pass }}"
-  #   loop: 
-  #   - "db"
-  #   - "redis"
-  #   - "web_only"
+  #     host_shared_volume: "{{ main.host_shared_volume }}"
+  #     host_log_volume: "{{ main.host_log_volume }}"
+
+  - name: configure the discourse {{ item }}.yml file
+    template:
+      src: "templates/discourse/{{ item }}.yml"
+      dest: "{{ main.env_location }}/{{ item }}.yml"
+      mode: 0700
+    vars:
+      hostname: "{{ main.hostname }}"
+      email: "{{ main.email }}"
+      smtp_address: "{{ main.smtp_address }}"
+      smtp_port: "{{ main.smtp_port }}"
+      smtp_user_name: "{{ main.smtp_user_name }}"
+      smtp_pass: "{{ main.smtp_pass }}"
+      ssl_prefix: "{{ main.ssl_prefix }}"
+      cf_prefix: "{{ main.cf_prefix }}"
+      ssl_email: "{{ main.ssl_email }}"
+      cdn_prefix: "{{ main.cdn_prefix }}"
+      cdn_url: "//{{ main.cdn_host }}"
+      lang: "{{ main.lang }}"
+      workers: "{{ main.workers }}"
+      text_search_config: "{{ main.text_search_config }}"
+      db_shared_buffers: "{{ main.db_shared_buffers }}"
+      http_port: "{{ main.http_port }}"
+      https_port: "{{ main.https_port }}"
+      host_shared_volume: "/var/discourse/shared/{{ item }}"
+      host_log_volume: "/var/discourse/shared/{{ item }}/log/var-log"
+      db_pass: "{{ main.db_pass }}"
+    loop: 
+    - "db"
+    - "redis"
+    - "web_only"
 
 ###############################################################################
 
@@ -233,7 +233,34 @@
 
 ###############################################################################
 
-- name: Play 06 - Build and run
+- name: Play 06 - Prepare machine
+  hosts: discourse_web
+  tags:
+  - prepare
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: create the directory "{{ main.env_location }}"
+    file:
+      path: "{{ main.env_location }}"
+      state: directory
+      mode: 0755
+
+  - name: prepare the machine
+    become: yes
+    shell: "./discourse-custom-setup > {{ main.env_location }}/output.log"
+    args:
+      chdir: "{{ main.location }}"
+
+###############################################################################
+
+- name: Play 07 - Build and run
   hosts: discourse_web
   tags:
   - build
@@ -253,16 +280,28 @@
       state: directory
       mode: 0755
 
+  - name: set the shell command var
+    set_fact: 
+      main_cmd: |
+        { 
+          ./launcher rebuild db.yml; 
+          ./launcher rebuild redis.yml; 
+          ./launcher rebuild web_only.yml 
+        } > "{{ main.env_location }}"/output.log
+
+  - debug:
+      msg: 'main_cmd="{{ main_cmd }}"'
+
   - name: (re)build and (re)start discourse
     become: yes
-    shell: "./discourse-custom-setup > {{ main.env_location }}/output.log"
+    shell: "{{ main_cmd }}"
     args:
       chdir: "{{ main.location }}"
     async: 3600
     poll: 0
     register: 'setup'
 
-  - name: 'Watch {{ main.env_location }}/output.log until some-command finishes.'
+  - name: 'Watch {{ main.env_location }}/output.log until the rebuild finishes.'
     become: yes
     include_role:
       name: 'watch'
@@ -274,7 +313,7 @@
 
 ###############################################################################
 
-- name: Play 07 - Stop Discourse
+- name: Play 08 - Stop Discourse
   hosts: discourse_web
   tags:
   - never

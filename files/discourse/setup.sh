@@ -175,67 +175,67 @@ check_disk_and_memory() {
 ##
 ## If we have lots of RAM or lots of CPUs, bump up the defaults to scale better
 ##
-scale_ram_and_cpu() {
-  local changelog=/tmp/changelog.$PPID
+# scale_ram_and_cpu() {
+#   local changelog=/tmp/changelog.$PPID
 
-  # grab info about total system ram and physical (NOT LOGICAL!) CPU cores
-  avail_gb=0
-  avail_cores=0
-  os_type=$(check_OS)
+#   # grab info about total system ram and physical (NOT LOGICAL!) CPU cores
+#   avail_gb=0
+#   avail_cores=0
+#   os_type=$(check_OS)
 
-  if [ "$os_type" == "Darwin" ]; then
-    avail_gb=$(check_osx_memory)
-    avail_cores=`sysctl hw.ncpu | awk '/hw.ncpu:/ {print $2}'`
-  else
-    avail_gb=$(check_linux_memory)
-    avail_cores=$((`awk '/cpu cores/ {print $4;exit}' /proc/cpuinfo`*`sort /proc/cpuinfo | uniq | grep -c "physical id"`))
-  fi
+#   if [ "$os_type" == "Darwin" ]; then
+#     avail_gb=$(check_osx_memory)
+#     avail_cores=`sysctl hw.ncpu | awk '/hw.ncpu:/ {print $2}'`
+#   else
+#     avail_gb=$(check_linux_memory)
+#     avail_cores=$((`awk '/cpu cores/ {print $4;exit}' /proc/cpuinfo`*`sort /proc/cpuinfo | uniq | grep -c "physical id"`))
+#   fi
 
-  echo "Found ${avail_gb}GB of memory and $avail_cores physical CPU cores"
+#   echo "Found ${avail_gb}GB of memory and $avail_cores physical CPU cores"
 
-  # db_shared_buffers: 128MB for 1GB, 256MB for 2GB, or 256MB * GB, max 4096MB
-  if [ "$avail_gb" -eq "1" ]
-  then
-    db_shared_buffers=128
-  else
-    if [ "$avail_gb" -eq "2" ]
-    then
-      db_shared_buffers=256
-    else
-      db_shared_buffers=$(( 256 * $avail_gb ))
-    fi
-  fi
+#   # db_shared_buffers: 128MB for 1GB, 256MB for 2GB, or 256MB * GB, max 4096MB
+#   if [ "$avail_gb" -eq "1" ]
+#   then
+#     db_shared_buffers=128
+#   else
+#     if [ "$avail_gb" -eq "2" ]
+#     then
+#       db_shared_buffers=256
+#     else
+#       db_shared_buffers=$(( 256 * $avail_gb ))
+#     fi
+#   fi
 
-  db_shared_buffers=$(( db_shared_buffers < 4096 ? db_shared_buffers : 4096 ))
+#   db_shared_buffers=$(( db_shared_buffers < 4096 ? db_shared_buffers : 4096 ))
 
-  sed -i -e "s/^  #\?db_shared_buffers:.*/  db_shared_buffers: \"${db_shared_buffers}MB\"/w $changelog" $data_file
+#   sed -i -e "s/^  #\?db_shared_buffers:.*/  db_shared_buffers: \"${db_shared_buffers}MB\"/w $changelog" $data_file
 
-  if [ -s $changelog ]
-  then
-    echo "setting db_shared_buffers = ${db_shared_buffers}MB"
-    rm $changelog
-  fi
+#   if [ -s $changelog ]
+#   then
+#     echo "setting db_shared_buffers = ${db_shared_buffers}MB"
+#     rm $changelog
+#   fi
 
-  # UNICORN_WORKERS: 2 * GB for 2GB or less, or 2 * CPU, max 8
-  if [ "$avail_gb" -le "2" ]
-  then
-    unicorn_workers=$(( 2 * $avail_gb ))
-  else
-    unicorn_workers=$(( 2 * $avail_cores ))
-  fi
+#   # UNICORN_WORKERS: 2 * GB for 2GB or less, or 2 * CPU, max 8
+#   if [ "$avail_gb" -le "2" ]
+#   then
+#     unicorn_workers=$(( 2 * $avail_gb ))
+#   else
+#     unicorn_workers=$(( 2 * $avail_cores ))
+#   fi
 
-  unicorn_workers=$(( unicorn_workers < 8 ? unicorn_workers : 8 ))
+#   unicorn_workers=$(( unicorn_workers < 8 ? unicorn_workers : 8 ))
 
-  sed -i -e "s/^  #\?UNICORN_WORKERS:.*/  UNICORN_WORKERS: ${unicorn_workers}/w $changelog" $web_file
+#   sed -i -e "s/^  #\?UNICORN_WORKERS:.*/  UNICORN_WORKERS: ${unicorn_workers}/w $changelog" $web_file
 
-  if [ -s $changelog ]
-  then
-    echo "setting UNICORN_WORKERS = ${unicorn_workers}"
-    rm $changelog
-  fi
+#   if [ -s $changelog ]
+#   then
+#     echo "setting UNICORN_WORKERS = ${unicorn_workers}"
+#     rm $changelog
+#   fi
 
-  echo $data_file memory parameters updated.
-}
+#   echo $data_file memory parameters updated.
+# }
 
 ##
 ## standard http / https ports must not be occupied
@@ -365,66 +365,66 @@ display_config() {
 ##
 ## is our config file valid? Does it have the required fields set?
 ##
-validate_config() {
-  valid_config="y"
+# validate_config() {
+#   valid_config="y"
 
-  for x in DISCOURSE_SMTP_ADDRESS DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_PASSWORD \
-    DISCOURSE_DEVELOPER_EMAILS DISCOURSE_HOSTNAME
-  do
-    read_config $x
-    local result=$read_config_result
-    read_default $x
-    local default=$read_default_result
+#   for x in DISCOURSE_SMTP_ADDRESS DISCOURSE_SMTP_USER_NAME DISCOURSE_SMTP_PASSWORD \
+#     DISCOURSE_DEVELOPER_EMAILS DISCOURSE_HOSTNAME
+#   do
+#     read_config $x
+#     local result=$read_config_result
+#     read_default $x
+#     local default=$read_default_result
 
-    if [ ! -z "$result" ]
-    then
-      if [[ "$config_line" = *"$default"* ]]
-      then
-        echo "$x left at incorrect default of $default"
-        valid_config="n"
-      fi
+#     if [ ! -z "$result" ]
+#     then
+#       if [[ "$config_line" = *"$default"* ]]
+#       then
+#         echo "$x left at incorrect default of $default"
+#         valid_config="n"
+#       fi
 
-      config_val=`echo $config_line | awk '{print $2}'`
+#       config_val=`echo $config_line | awk '{print $2}'`
 
-      if [ -z $config_val ]
-      then
-        echo "$x was not configured"
-        valid_config="n"
-      fi
-    else
-      echo "$x not present"
-      valid_config="n"
-    fi
-  done
+#       if [ -z $config_val ]
+#       then
+#         echo "$x was not configured"
+#         valid_config="n"
+#       fi
+#     else
+#       echo "$x not present"
+#       valid_config="n"
+#     fi
+#   done
 
-  if [ "$valid_config" != "y" ]; then
-    echo -e "\nSorry, these $web_file settings aren't valid -- can't continue!"
-    echo "If you have unusual requirements, edit $web_file and then: "
-    echo "./launcher bootstrap $app_name"
-    exit 1
-  fi
-}
+#   if [ "$valid_config" != "y" ]; then
+#     echo -e "\nSorry, these $web_file settings aren't valid -- can't continue!"
+#     echo "If you have unusual requirements, edit $web_file and then: "
+#     echo "./launcher bootstrap $app_name"
+#     exit 1
+#   fi
+# }
 
 ##
 ## template file names
 ##
 
-if [ "$1" == "2container" ]
-then
-  app_name=web_only
-  data_name=data
-  web_template=samples/web_only.yml
-  data_template=samples/data.yml
-  web_file=containers/$app_name.yml
-  data_file=containers/$data_name.yml
-else
-  app_name=app
-  data_name=app
-  web_template=samples/standalone.yml
-  data_template=""
-  web_file=containers/$app_name.yml
-  data_file=containers/$app_name.yml
-fi
+# if [ "$1" == "2container" ]
+# then
+#   app_name=web_only
+#   data_name=data
+#   web_template=samples/web_only.yml
+#   data_template=samples/data.yml
+#   web_file=containers/$app_name.yml
+#   data_file=containers/$data_name.yml
+# else
+#   app_name=app
+#   data_name=app
+#   web_template=samples/standalone.yml
+#   data_template=""
+#   web_file=containers/$app_name.yml
+#   data_file=containers/$app_name.yml
+# fi
 
 changelog=/tmp/changelog
 
@@ -435,72 +435,72 @@ check_root
 check_docker
 check_disk_and_memory
 
-if [ -a "$web_file" ]
-then
-  echo "The configuration file $web_file already exists!"
-  echo
-  echo ". . . reconfiguring . . ."
-  echo
-  echo
-  DATE=`date +"%Y-%m-%d-%H%M%S"`
-  BACKUP=$app_name.yml.$DATE.bak
-  echo Saving old file as $BACKUP
-  cp $web_file containers/$BACKUP
-  echo "Stopping existing container in 5 seconds or Control-C to cancel."
-  sleep 5
-  ./launcher stop app
-  echo
-else
-  check_ports
-  cp -v $web_template $web_file
+# if [ -a "$web_file" ]
+# then
+#   echo "The configuration file $web_file already exists!"
+#   echo
+#   echo ". . . reconfiguring . . ."
+#   echo
+#   echo
+#   DATE=`date +"%Y-%m-%d-%H%M%S"`
+#   BACKUP=$app_name.yml.$DATE.bak
+#   echo Saving old file as $BACKUP
+#   cp $web_file containers/$BACKUP
+#   echo "Stopping existing container in 5 seconds or Control-C to cancel."
+#   sleep 5
+#   ./launcher stop app
+#   echo
+# else
+#   check_ports
+#   cp -v $web_template $web_file
 
-  if [ "$data_name" == "data" ]
-  then
-    echo "--------------------------------------------------"
-    echo "This two container setup is currently unsupported. Use at your own risk!"
-    echo "--------------------------------------------------"
-    DISCOURSE_DB_PASSWORD=`date +%s | sha256sum | base64 | head -c 20`
+#   if [ "$data_name" == "data" ]
+#   then
+#     echo "--------------------------------------------------"
+#     echo "This two container setup is currently unsupported. Use at your own risk!"
+#     echo "--------------------------------------------------"
+#     DISCOURSE_DB_PASSWORD=`date +%s | sha256sum | base64 | head -c 20`
 
-    sed -i -e "s/DISCOURSE_DB_PASSWORD: SOME_SECRET/DISCOURSE_DB_PASSWORD: $DISCOURSE_DB_PASSWORD/w $changelog" $web_file
+#     sed -i -e "s/DISCOURSE_DB_PASSWORD: SOME_SECRET/DISCOURSE_DB_PASSWORD: $DISCOURSE_DB_PASSWORD/w $changelog" $web_file
 
-    if  [ -s $changelog ]
-    then
-      rm $changelog
-    else
-      echo "Problem changing DISCOURSE_DB_PASSWORD" in $web_file
-    fi
+#     if  [ -s $changelog ]
+#     then
+#       rm $changelog
+#     else
+#       echo "Problem changing DISCOURSE_DB_PASSWORD" in $web_file
+#     fi
 
-    cp -v $data_template $data_file
-    quote=\'
-    sed -i -e "s/password ${quote}SOME_SECRET${quote}/password '$DISCOURSE_DB_PASSWORD'/w $changelog" $data_file
+#     cp -v $data_template $data_file
+#     quote=\'
+#     sed -i -e "s/password ${quote}SOME_SECRET${quote}/password '$DISCOURSE_DB_PASSWORD'/w $changelog" $data_file
 
-    if  [ -s $changelog ]
-    then
-      rm $changelog
-    else
-      echo "Problem changing DISCOURSE_DB_PASSWORD" in $data_file
-    fi
-  fi
-fi
+#     if  [ -s $changelog ]
+#     then
+#       rm $changelog
+#     else
+#       echo "Problem changing DISCOURSE_DB_PASSWORD" in $data_file
+#     fi
+#   fi
+# fi
 
-scale_ram_and_cpu
+# scale_ram_and_cpu
 display_config
-validate_config
+# validate_config
 
-##
-## if we reach this point without exiting, OK to proceed
-## rebuild won't fail if there's nothing to rebuild and does the restart
-##
-echo "Updates successful. Rebuilding in 5 seconds."
-sleep 5 # Just a chance to ^C in case they were too fast on the draw
+# ##
+# ## if we reach this point without exiting, OK to proceed
+# ## rebuild won't fail if there's nothing to rebuild and does the restart
+# ##
+# echo "Updates successful. Rebuilding in 5 seconds."
+# sleep 5 # Just a chance to ^C in case they were too fast on the draw
 
-if [ "$data_name" == "$app_name" ]
-then
-  echo Building $app_name
-  ./launcher rebuild $app_name
-else
-  echo Building $data_name now . . .
-  ./launcher rebuild $data_name
-  echo Building $app_name now . . .
-  ./launcher rebuild $app_name
-fi
+# if [ "$data_name" == "$app_name" ]
+# then
+#   echo Building $app_name
+#   ./launcher rebuild $app_name
+# else
+#   echo Building $data_name now . . .
+#   ./launcher rebuild $data_name
+#   echo Building $app_name now . . .
+#   ./launcher rebuild $app_name
+# fi
