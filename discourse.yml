@@ -108,6 +108,37 @@
       host_shared_volume: "{{ main.host_shared_volume }}"
       host_log_volume: "{{ main.host_log_volume }}"
 
+  # - name: configure the discourse {{ item }}.yml file
+  #   template:
+  #     src: "templates/discourse/{{ item }}.yml"
+  #     dest: "{{ main.env_location }}/{{ item }}.yml"
+  #     mode: 0700
+  #   vars:
+  #     hostname: "{{ main.hostname }}"
+  #     email: "{{ main.email }}"
+  #     smtp_address: "{{ main.smtp_address }}"
+  #     smtp_port: "{{ main.smtp_port }}"
+  #     smtp_user_name: "{{ main.smtp_user_name }}"
+  #     smtp_pass: "{{ main.smtp_pass }}"
+  #     ssl_prefix: "{{ main.ssl_prefix }}"
+  #     cf_prefix: "{{ main.cf_prefix }}"
+  #     ssl_email: "{{ main.ssl_email }}"
+  #     cdn_prefix: "{{ main.cdn_prefix }}"
+  #     cdn_url: "//{{ main.cdn_host }}"
+  #     lang: "{{ main.lang }}"
+  #     workers: "{{ main.workers }}"
+  #     text_search_config: "{{ main.text_search_config }}"
+  #     db_shared_buffers: "{{ main.db_shared_buffers }}"
+  #     http_port: "{{ main.http_port }}"
+  #     https_port: "{{ main.https_port }}"
+  #     host_shared_volume: "/var/discourse/shared/{{ item }}"
+  #     host_log_volume: "/var/discourse/shared/{{ item }}/log/var-log"
+  #     db_pass: "{{ main.db_pass }}"
+  #   loop: 
+  #   - "db"
+  #   - "redis"
+  #   - "web_only"
+
 ###############################################################################
 
 - name: Play 04 - Update the DNS records
