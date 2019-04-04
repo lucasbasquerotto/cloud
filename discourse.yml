@@ -230,6 +230,10 @@
       discourse_location: "{{ main.location }}"
       discourse_user: "{{ main.user }}"
       discourse_group: "{{ main.group }}"
+      discourse_items: 
+      - "db"
+      - "redis"
+      - "web_only"
 
 ###############################################################################
 
