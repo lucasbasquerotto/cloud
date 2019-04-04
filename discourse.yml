@@ -288,9 +288,9 @@
     set_fact: 
       main_cmd: |
         { 
-          ./launcher rebuild db.yml; 
-          ./launcher rebuild redis.yml; 
-          ./launcher rebuild web_only.yml 
+          ./launcher rebuild db; 
+          ./launcher rebuild redis; 
+          ./launcher rebuild web_only 
         } > "{{ main.env_location }}"/output.log
 
   - debug:
