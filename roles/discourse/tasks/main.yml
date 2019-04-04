@@ -20,11 +20,12 @@
     group: "{{ discourse_group }}"
     mode: 0755
 
-- name: copy discourse configuration app.yml
+- name: copy discourse configuration "{{ item }}.yml"
   become: yes
   copy: 
-    src: "{{ discourse_env_location }}/app.yml"
-    dest: "{{ discourse_location }}/containers/app.yml"
+    src: "{{ discourse_env_location }}/{{ item }}.yml"
+    dest: "{{ discourse_location }}/containers/{{ item }}.yml"
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
     mode: 0600
+  loop: "{{ discourse_items }}"
