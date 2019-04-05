@@ -235,7 +235,9 @@
 - name: Play 06 - Prepare machine
   hosts: discourse_web
   tags:
-  - prepare
+  - never
+  - initial
+  - bootstrap
   vars_files: 
   - /home/main/env/env.yml
   vars:
@@ -262,6 +264,8 @@
 - name: Play 07 - Build and run
   hosts: discourse_web
   tags:
+  - never
+  - initial
   - build
   - run
   vars_files: 
