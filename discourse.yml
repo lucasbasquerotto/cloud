@@ -297,8 +297,7 @@
 
   - name: set the shell command var
     set_fact: 
-      main_cmd: |
-        { "{{ inner_cmd_list | join('') }}" } > "{{ main.env_location }}/output.log" 2&>1 
+      main_cmd: "{ {{ inner_cmd_list | join('') }} } > {{ main.env_location }}/output.log 2&>1" 
 
   - debug:
       msg: 'main_cmd="{{ main_cmd }}"'
