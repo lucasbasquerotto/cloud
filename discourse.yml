@@ -290,14 +290,14 @@
 
   - name: set the shell inner command var
     set_fact: 
-      inner_cmd_list: "{{ inner_cmd_list + ['./launcher rebuild ' + main_item + '; '] }}"
+      inner_cmd_list: "{{ inner_cmd_list + [' ./launcher rebuild ' + main_item] }}"
     loop: "{{ main.containers }}"
     loop_control:
       loop_var: main_item
 
   - name: set the shell command var
     set_fact: 
-      main_cmd: "{ {{ inner_cmd_list | join('') }} } > {{ main.env_location }}/output.log 2&>1" 
+      main_cmd: "{ {{ inner_cmd_list | join(';') }} } > {{ main.env_location }}/output.log 2&>1" 
 
   - debug:
       msg: 'main_cmd="{{ main_cmd }}"'
