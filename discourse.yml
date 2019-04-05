@@ -299,7 +299,7 @@
     set_fact: 
       main_cmd: |
         { 
-          {{ inner_cmd_list | join('; ')}} 
+          {{ inner_cmd_list | join(';\n')}} 
         } > "{{ main.env_location }}/output.log" 2&>1 
 
   - debug:
