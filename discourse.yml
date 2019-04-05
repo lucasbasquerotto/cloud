@@ -340,7 +340,7 @@
 
   - name: bootstrap discourse web container
     become: yes
-    shell: "./launcher bootstrap {{ main.web_container }}" > "{{ main.env_location }}/output.log" 2&>1 
+    shell: "./launcher bootstrap {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
     args:
       chdir: "{{ main.location }}"
     async: 3600
@@ -382,7 +382,7 @@
 
   - name: start discourse web container
     become: yes
-    shell: "./launcher start {{ main.web_container }}" > "{{ main.env_location }}/output.log" 2&>1 
+    shell: "./launcher start {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
     args:
       chdir: "{{ main.location }}"
     async: 3600
