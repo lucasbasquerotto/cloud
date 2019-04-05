@@ -134,10 +134,7 @@
       host_shared_volume: "/var/discourse/shared/{{ item }}"
       host_log_volume: "/var/discourse/shared/{{ item }}/log/var-log"
       db_pass: "{{ main.db_pass }}"
-    loop: 
-    - "db"
-    - "redis"
-    - "web_only"
+    loop: "{{ containers }}"
 
 ###############################################################################
 
@@ -231,9 +228,7 @@
       discourse_user: "{{ main.user }}"
       discourse_group: "{{ main.group }}"
       discourse_items: 
-      - "db"
-      - "redis"
-      - "web_only"
+    loop: "{{ containers }}"
 
 ###############################################################################
 
@@ -284,14 +279,19 @@
       state: directory
       mode: 0755
 
+  - name: set the shell inner command var
+    set_fact: 
+      inner_cmd_list: []
+
+  - name: set the shell inner command var
+    set_fact: 
+      inner_cmd_list: "{{ inner_cmd_list + ['./launcher rebuild ' + {{ item }}] }}"
+    loop: "{{ containers }}"
+
   - name: set the shell command var
     set_fact: 
       main_cmd: |
-        { 
-          ./launcher rebuild db; 
-          ./launcher rebuild redis; 
-          ./launcher rebuild web_only 
-        } > "{{ main.env_location }}"/output.log
+        { "{{ inner_cmd_list | join('; ')}}" } > "{{ main.env_location }}/output.log" 2&>1 
 
   - debug:
       msg: 'main_cmd="{{ main_cmd }}"'
@@ -317,7 +317,91 @@
 
 ###############################################################################
 
-- name: Play 08 - Stop Discourse
+- name: Play 08 - Bootstrap the web container
+  hosts: discourse_web
+  tags:
+  - never
+  - build-web
+  - bootstrap-web
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: create the directory "{{ main.env_location }}"
+    file:
+      path: "{{ main.env_location }}"
+      state: directory
+      mode: 0755
+
+  - name: bootstrap discourse web container
+    become: yes
+    shell: "./launcher bootstrap {{ main.web_container }}" > "{{ main.env_location }}/output.log" 2&>1 
+    args:
+      chdir: "{{ main.location }}"
+    async: 3600
+    poll: 0
+    register: 'setup'
+
+  - name: 'Watch {{ main.env_location }}/output.log until the web bootstrap finishes'
+    become: yes
+    include_role:
+      name: 'watch'
+    vars:
+      watch_file: '{{ main.env_location }}/output.log'
+      watch_job: 'setup'
+      watch_timeout: 3600
+      watch_poll: 5
+
+###############################################################################
+
+- name: Play 09 - Start the web container
+  hosts: discourse_web
+  tags:
+  - never
+  - build-web
+  - start-web
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: create the directory "{{ main.env_location }}"
+    file:
+      path: "{{ main.env_location }}"
+      state: directory
+      mode: 0755
+
+  - name: start discourse web container
+    become: yes
+    shell: "./launcher start {{ main.web_container }}" > "{{ main.env_location }}/output.log" 2&>1 
+    args:
+      chdir: "{{ main.location }}"
+    async: 3600
+    poll: 0
+    register: 'setup'
+
+  - name: 'Watch {{ main.env_location }}/output.log until the web start finishes'
+    become: yes
+    include_role:
+      name: 'watch'
+    vars:
+      watch_file: '{{ main.env_location }}/output.log'
+      watch_job: 'setup'
+      watch_timeout: 3600
+      watch_poll: 5
+
+###############################################################################
+
+- name: Play 10 - Stop Discourse
   hosts: discourse_web
   tags:
   - never
