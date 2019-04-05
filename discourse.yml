@@ -27,20 +27,19 @@
   - include_role: 
       name: droplets
     vars:
-      droplets_hosts_group: "{{ outer_item.group }}"
+      droplets_hosts_group: "{{ main_item.group }}"
       droplets_hosts_file: "{{ main.hosts_file }}"
       droplets_api_token: "{{ main.api_token }}"
       droplets_host_user: "{{ main.host_user }}"
       droplets_host_pass: "{{ main.host_pass }}"
-      droplets_user_data: "{{ outer_item.user_data }}"
-      droplets_info: "{{ outer_item.main_data.info }}"
-      droplets_tags: "{{ outer_item.main_data.tags }}"
-      droplets_list: "{{ outer_item.main_data.droplets }}"
-    with_items:
-    - "{{ main_droplet_list }}"
+      droplets_user_data: "{{ main_item.user_data }}"
+      droplets_info: "{{ main_item.main_data.info }}"
+      droplets_tags: "{{ main_item.main_data.tags }}"
+      droplets_list: "{{ main_item.main_data.droplets }}"
+    loop: "{{ main_droplet_list }}"
     loop_control:
-      loop_var: outer_item
-      label: "{{ outer_item.group }}"
+      loop_var: main_item
+      label: "{{ main_item.group }}"
 
 ###############################################################################
 
@@ -108,10 +107,10 @@
   #     host_shared_volume: "{{ main.host_shared_volume }}"
   #     host_log_volume: "{{ main.host_log_volume }}"
 
-  - name: configure the discourse {{ item }}.yml file
+  - name: configure the discourse {{ main_item }}.yml file
     template:
-      src: "templates/discourse/{{ item }}.yml"
-      dest: "{{ main.env_location }}/{{ item }}.yml"
+      src: "templates/discourse/{{ main_item }}.yml"
+      dest: "{{ main.env_location }}/{{ main_item }}.yml"
       mode: 0700
     vars:
       hostname: "{{ main.hostname }}"
@@ -131,10 +130,12 @@
       db_shared_buffers: "{{ main.db_shared_buffers }}"
       http_port: "{{ main.http_port }}"
       https_port: "{{ main.https_port }}"
-      host_shared_volume: "/var/discourse/shared/{{ item }}"
-      host_log_volume: "/var/discourse/shared/{{ item }}/log/var-log"
+      host_shared_volume: "/var/discourse/shared/{{ main_item }}"
+      host_log_volume: "/var/discourse/shared/{{ main_item }}/log/var-log"
       db_pass: "{{ main.db_pass }}"
     loop: "{{ main.containers }}"
+    loop_control:
+      loop_var: main_item
 
 ###############################################################################
 
@@ -172,13 +173,14 @@
       proxied: no
       type: CNAME
       solo: true
-      record: "{{ item.host }}"
-      value: "{{ item.value }}"
+      record: "{{ main_item.host }}"
+      value: "{{ main_item.value }}"
       account_email: "{{ main.discourse.cloudflare_email }}"
       account_api_token: "{{ main.discourse.cloudflare_token }}"
     loop: "{{ main.discourse.smtp_dns }}"
     loop_control:
-      label: "{{ item.host }}"
+      loop_var: main_item
+      label: "{{ main_item.host }}"
 
   # - name: update the discourse DNS CDN record
   #   cloudflare_dns:
@@ -227,8 +229,7 @@
       discourse_location: "{{ main.location }}"
       discourse_user: "{{ main.user }}"
       discourse_group: "{{ main.group }}"
-      discourse_items: 
-    loop: "{{ main.containers }}"
+      discourse_items: "{{ main.containers }}"
 
 ###############################################################################
 
@@ -289,8 +290,10 @@
 
   - name: set the shell inner command var
     set_fact: 
-      inner_cmd_list: "{{ inner_cmd_list + ['./launcher rebuild ' + {{ item }}] }}"
+      inner_cmd_list: "{{ inner_cmd_list + ['./launcher rebuild ' + {{ main_item }}] }}"
     loop: "{{ main.containers }}"
+    loop_control:
+      loop_var: main_item
 
   - name: set the shell command var
     set_fact: 
