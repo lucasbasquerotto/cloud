@@ -134,7 +134,7 @@
       host_shared_volume: "/var/discourse/shared/{{ item }}"
       host_log_volume: "/var/discourse/shared/{{ item }}/log/var-log"
       db_pass: "{{ main.db_pass }}"
-    loop: "{{ containers }}"
+    loop: "{{ main.containers }}"
 
 ###############################################################################
 
@@ -228,7 +228,7 @@
       discourse_user: "{{ main.user }}"
       discourse_group: "{{ main.group }}"
       discourse_items: 
-    loop: "{{ containers }}"
+    loop: "{{ main.containers }}"
 
 ###############################################################################
 
@@ -290,7 +290,7 @@
   - name: set the shell inner command var
     set_fact: 
       inner_cmd_list: "{{ inner_cmd_list + ['./launcher rebuild ' + {{ item }}] }}"
-    loop: "{{ containers }}"
+    loop: "{{ main.containers }}"
 
   - name: set the shell command var
     set_fact: 
