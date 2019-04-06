@@ -1,7 +1,7 @@
 - name: Play 01 - Create droplets and define hosts
   hosts: main
   tags:
-  - initial
+  - init
   - setup
   vars_files: 
   - /home/main/env/env.yml
@@ -47,7 +47,7 @@
 - name: Play 02 - Wait for hosts to be ready
   hosts: host
   tags:
-  - initial
+  - init
   - setup
   vars_files: 
   - /home/main/env/env.yml
@@ -67,7 +67,7 @@
 - name: Play 03 - Prepare the configuration file
   hosts: main
   tags:
-  - initial
+  - init
   - prepare
   vars_files: 
   - /home/main/env/env.yml
@@ -146,7 +146,7 @@
   hosts: discourse_web
   tags:
   - never
-  - initial
+  - init
   - prepare
   - dns
   vars_files: 
@@ -216,7 +216,7 @@
   hosts: discourse_web
   tags:
   - never
-  - initial
+  - init
   - prepare
   - repo
   vars_files: 
@@ -247,7 +247,7 @@
   hosts: discourse_web
   tags:
   - never
-  - initial
+  - init
   - bootstrap
   vars_files: 
   - /home/main/env/env.yml
@@ -286,7 +286,7 @@
   hosts: discourse_web
   tags:
   - never
-  - initial
+  - init
   - build
   - run
   vars_files: 
@@ -492,3 +492,28 @@
   #   command: "./launcher stop app"
   #   args:
   #     chdir: "{{ main.location }}"
+
+###############################################################################
+
+- name: Play 10.1 - Stop Discourse (Test)
+  hosts: discourse_web
+  tags:
+  - never
+  - stop2
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: stop discourse
+    become: yes
+    command: "./launcher stop {{ main_item }}"
+    args:
+      chdir: "{{ main.location }}"
+    loop: "{{ main.containers[::-1] }}"
+    loop_control:
+      loop_var: main_item
