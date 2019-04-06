@@ -263,6 +263,7 @@
     include_role: 
       name: long_run
     vars:
+      long_run_title: 'discourse setup'
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './discourse-custom-setup'
@@ -302,6 +303,7 @@
     include_role: 
       name: long_run
     vars:
+      long_run_title: 'discourse rebuild all containers'
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher rebuild {{ main_item }}'
@@ -374,6 +376,7 @@
     include_role: 
       name: long_run
     vars:
+      long_run_title: 'discourse bootstrap web container'
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher bootstrap {{ main.web_container }}'
@@ -425,6 +428,7 @@
     include_role: 
       name: long_run
     vars:
+      long_run_title: 'discourse start web container'
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher start {{ main.web_container }}'
@@ -475,6 +479,7 @@
     include_role: 
       name: long_run
     vars:
+      long_run_title: 'discourse stop all containers'
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher stop {{ main_item }}'
