@@ -1,6 +1,7 @@
 - name: Play 01 - Create droplets and define hosts
   hosts: main
   tags:
+  - initial
   - setup
   vars_files: 
   - /home/main/env/env.yml
@@ -46,6 +47,7 @@
 - name: Play 02 - Wait for hosts to be ready
   hosts: host
   tags:
+  - initial
   - setup
   vars_files: 
   - /home/main/env/env.yml
@@ -65,6 +67,7 @@
 - name: Play 03 - Prepare the configuration file
   hosts: main
   tags:
+  - initial
   - prepare
   vars_files: 
   - /home/main/env/env.yml
