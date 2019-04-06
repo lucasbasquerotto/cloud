@@ -142,7 +142,10 @@
 - name: Play 04 - Update the DNS records
   hosts: discourse_web
   tags:
+  - never
+  - initial
   - prepare
+  - dns
   vars_files: 
   - /home/main/env/env.yml
   vars:
@@ -209,7 +212,10 @@
 - name: Play 05 - Prepare the host
   hosts: discourse_web
   tags:
+  - never
+  - initial
   - prepare
+  - repo
   vars_files: 
   - /home/main/env/env.yml
   vars:
@@ -226,6 +232,7 @@
       discourse_env_location: "{{ main.env_location }}"
       discourse_setup_location: "files/discourse"
       discourse_repo: "{{ main.repo }}"
+      discourse_version: "{{ main.version }}"
       discourse_location: "{{ main.location }}"
       discourse_user: "{{ main.user }}"
       discourse_group: "{{ main.group }}"
@@ -248,17 +255,26 @@
   - name: Gathering facts
     setup: 
 
-  - name: create the directory "{{ main.env_location }}"
-    file:
-      path: "{{ main.env_location }}"
-      state: directory
-      mode: 0755
-
   - name: prepare the machine
     become: yes
-    shell: "./discourse-custom-setup > {{ main.env_location }}/output.log"
-    args:
-      chdir: "{{ main.location }}"
+    include_role: 
+      name: long_run
+    vars:
+      long_run_output_path: '{{ main.env_location }}'
+      long_run_path: '{{ main.location }}'
+      long_run_cmd: './discourse-custom-setup'
+
+  # - name: create the directory "{{ main.env_location }}"
+  #   file:
+  #     path: "{{ main.env_location }}"
+  #     state: directory
+  #     mode: 0755
+
+  # - name: prepare the machine
+  #   become: yes
+  #   shell: "./discourse-custom-setup > {{ main.env_location }}/output.log"
+  #   args:
+  #     chdir: "{{ main.location }}"
 
 ###############################################################################
 
@@ -278,48 +294,60 @@
   - name: Gathering facts
     setup: 
 
-  - name: create the directory "{{ main.env_location }}"
-    file:
-      path: "{{ main.env_location }}"
-      state: directory
-      mode: 0755
-
-  - name: set the shell inner command var
-    set_fact: 
-      inner_cmd_list: []
-
-  - name: set the shell inner command var
-    set_fact: 
-      inner_cmd_list: "{{ inner_cmd_list + [' ./launcher rebuild ' + main_item + ';'] }}"
+  - name: (re)build and (re)start discourse
+    become: yes
+    include_role: 
+      name: long_run
+    vars:
+      long_run_output_path: '{{ main.env_location }}'
+      long_run_path: '{{ main.location }}'
+      long_run_cmd: './launcher rebuild {{ main_item }}'
     loop: "{{ main.containers }}"
     loop_control:
       loop_var: main_item
 
-  - name: set the shell command var
-    set_fact: 
-      main_cmd: "{ {{ inner_cmd_list | join('') }} } &> {{ main.env_location }}/output.log" 
+  # - name: create the directory "{{ main.env_location }}"
+  #   file:
+  #     path: "{{ main.env_location }}"
+  #     state: directory
+  #     mode: 0755
 
-  - debug:
-      msg: 'main_cmd="{{ main_cmd }}"'
+  # - name: set the shell inner command var
+  #   set_fact: 
+  #     inner_cmd_list: []
 
-  - name: (re)build and (re)start discourse
-    become: yes
-    shell: "{{ main_cmd }}"
-    args:
-      chdir: "{{ main.location }}"
-    async: 3600
-    poll: 0
-    register: 'setup'
+  # - name: set the shell inner command var
+  #   set_fact: 
+  #     inner_cmd_list: "{{ inner_cmd_list + [' ./launcher rebuild ' + main_item + ';'] }}"
+  #   loop: "{{ main.containers }}"
+  #   loop_control:
+  #     loop_var: main_item
 
-  - name: 'Watch {{ main.env_location }}/output.log until the rebuild finishes.'
-    become: yes
-    include_role:
-      name: 'watch'
-    vars:
-      watch_file: '{{ main.env_location }}/output.log'
-      watch_job: 'setup'
-      watch_timeout: 3600
-      watch_poll: 5
+  # - name: set the shell command var
+  #   set_fact: 
+  #     main_cmd: "{ {{ inner_cmd_list | join('') }} } &> {{ main.env_location }}/output.log" 
+
+  # - debug:
+  #     msg: 'main_cmd="{{ main_cmd }}"'
+
+  # - name: (re)build and (re)start discourse
+  #   become: yes
+  #   shell: "{{ main_cmd }}"
+  #   args:
+  #     chdir: "{{ main.location }}"
+  #   async: 3600
+  #   poll: 0
+  #   register: 'setup'
+
+  # - name: 'Watch {{ main.env_location }}/output.log until the rebuild finishes.'
+  #   become: yes
+  #   include_role:
+  #     name: 'watch'
+  #   vars:
+  #     watch_file: '{{ main.env_location }}/output.log'
+  #     watch_job: 'setup'
+  #     watch_timeout: 3600
+  #     watch_poll: 5
 
 ###############################################################################
 
@@ -338,30 +366,39 @@
   - name: Gathering facts
     setup: 
 
-  - name: create the directory "{{ main.env_location }}"
-    file:
-      path: "{{ main.env_location }}"
-      state: directory
-      mode: 0755
-
   - name: bootstrap discourse web container
     become: yes
-    shell: "./launcher bootstrap {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
-    args:
-      chdir: "{{ main.location }}"
-    async: 3600
-    poll: 0
-    register: 'setup'
-
-  - name: 'Watch {{ main.env_location }}/output.log until the web bootstrap finishes'
-    become: yes
-    include_role:
-      name: 'watch'
+    include_role: 
+      name: long_run
     vars:
-      watch_file: '{{ main.env_location }}/output.log'
-      watch_job: 'setup'
-      watch_timeout: 3600
-      watch_poll: 5
+      long_run_output_path: '{{ main.env_location }}'
+      long_run_path: '{{ main.location }}'
+      long_run_cmd: './launcher bootstrap {{ main.web_container }}'
+
+  # - name: create the directory "{{ main.env_location }}"
+  #   file:
+  #     path: "{{ main.env_location }}"
+  #     state: directory
+  #     mode: 0755
+
+  # - name: bootstrap discourse web container
+  #   become: yes
+  #   shell: "./launcher bootstrap {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
+  #   args:
+  #     chdir: "{{ main.location }}"
+  #   async: 3600
+  #   poll: 0
+  #   register: 'setup'
+
+  # - name: 'Watch {{ main.env_location }}/output.log until the web bootstrap finishes'
+  #   become: yes
+  #   include_role:
+  #     name: 'watch'
+  #   vars:
+  #     watch_file: '{{ main.env_location }}/output.log'
+  #     watch_job: 'setup'
+  #     watch_timeout: 3600
+  #     watch_poll: 5
 
 ###############################################################################
 
@@ -380,30 +417,39 @@
   - name: Gathering facts
     setup: 
 
-  - name: create the directory "{{ main.env_location }}"
-    file:
-      path: "{{ main.env_location }}"
-      state: directory
-      mode: 0755
-
   - name: start discourse web container
     become: yes
-    shell: "./launcher start {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
-    args:
-      chdir: "{{ main.location }}"
-    async: 3600
-    poll: 0
-    register: 'setup'
-
-  - name: 'Watch {{ main.env_location }}/output.log until the web start finishes'
-    become: yes
-    include_role:
-      name: 'watch'
+    include_role: 
+      name: long_run
     vars:
-      watch_file: '{{ main.env_location }}/output.log'
-      watch_job: 'setup'
-      watch_timeout: 3600
-      watch_poll: 5
+      long_run_output_path: '{{ main.env_location }}'
+      long_run_path: '{{ main.location }}'
+      long_run_cmd: './launcher start {{ main.web_container }}'
+
+  # - name: create the directory "{{ main.env_location }}"
+  #   file:
+  #     path: "{{ main.env_location }}"
+  #     state: directory
+  #     mode: 0755
+
+  # - name: start discourse web container
+  #   become: yes
+  #   shell: "./launcher start {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
+  #   args:
+  #     chdir: "{{ main.location }}"
+  #   async: 3600
+  #   poll: 0
+  #   register: 'setup'
+
+  # - name: 'Watch {{ main.env_location }}/output.log until the web start finishes'
+  #   become: yes
+  #   include_role:
+  #     name: 'watch'
+  #   vars:
+  #     watch_file: '{{ main.env_location }}/output.log'
+  #     watch_job: 'setup'
+  #     watch_timeout: 3600
+  #     watch_poll: 5
 
 ###############################################################################
 
@@ -421,8 +467,20 @@
   - name: Gathering facts
     setup: 
 
-  - name: stop discourse
+  - name: stop discourse containers
     become: yes
-    command: "./launcher stop app"
-    args:
-      chdir: "{{ main.location }}"
+    include_role: 
+      name: long_run
+    vars:
+      long_run_output_path: '{{ main.env_location }}'
+      long_run_path: '{{ main.location }}'
+      long_run_cmd: './launcher stop {{ main_item }}'
+    loop: "{{ main.containers[::-1] }}"
+    loop_control:
+      loop_var: main_item
+
+  # - name: stop discourse
+  #   become: yes
+  #   command: "./launcher stop app"
+  #   args:
+  #     chdir: "{{ main.location }}"

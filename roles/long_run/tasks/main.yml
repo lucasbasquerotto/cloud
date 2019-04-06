@@ -1,0 +1,25 @@
+- name: create the directory "{{ long_run_output_path }}"
+  become: yes
+  file:
+    path: "{{ long_run_output_path }}"
+    state: directory
+    mode: 0744
+
+- name: start the execution
+  become: yes
+  shell: "{{ long_run_cmd }} > {{ long_run_output_path }}/output.log 2&>1"
+  args:
+    chdir: "{{ long_run_path }}"
+  async: 3600
+  poll: 0
+  register: 'long_run_register'
+
+- name: 'Watch {{ long_run_output_path }}/output.log until execution finishes'
+  become: yes
+  include_role:
+    name: 'watch'
+  vars:
+    watch_file: '{{ long_run_output_path }}/output.log'
+    watch_job: 'long_run_register'
+    watch_timeout: 3600
+    watch_poll: 5

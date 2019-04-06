@@ -8,8 +8,9 @@
   become: yes
   git:
     repo: "{{ discourse_repo }}"
+    version: "{{ discourse_version }}"
     dest: "{{ discourse_location }}"
-    update: no
+    update: yes
 
 - name: copy discourse setup file
   become: yes
