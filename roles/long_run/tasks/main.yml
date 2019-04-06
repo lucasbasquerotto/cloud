@@ -6,9 +6,9 @@
     mode: 0744
 
 - set_fact: 
-    long_run_register: ''
+  long_run_register: ''
 
-- name: 'start the execution of {{ long_run_title }} -> "{{ long_run_cmd }}"'
+- name: 'start the execution of "{{ long_run_title }}" -> "{{ long_run_cmd }}"'
   become: yes
   shell: "{{ long_run_cmd }} >> {{ long_run_output_path }}/output.log 2&>1"
   args:
@@ -17,7 +17,7 @@
   poll: 0
   register: 'long_run_register'
 
-- name: 'Watch {{ long_run_output_path }}/output.log until "{{ long_run_title }}" finishes'
+- name: 'Watch "{{ long_run_output_path }}/output.log" until "{{ long_run_title }}" finishes'
   become: yes
   include_role:
     name: 'watch'
