@@ -1,6 +1,7 @@
 ---
 
 - name: 'checking {{ watch_job }} status (recursive)'
+  become: yes
   include_tasks: 'loop.yml'
 
 - name: 'count ({{ watch_count | int + 1 }})'
@@ -22,5 +23,6 @@
   when: not watch_status.finished
 
 - name: 'call itself recursively'
+  become: yes
   include_tasks: 'recursive.yml'
   when: not watch_status.finished

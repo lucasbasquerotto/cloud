@@ -3,4 +3,5 @@
 - set_fact:
     watch_lines: 0
 
-- include_tasks: 'again.yml'
+- become: yes
+  include_tasks: 'again.yml'
