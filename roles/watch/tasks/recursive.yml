@@ -15,6 +15,9 @@
 - debug:
     msg: "watch_finished={{ watch_finished }}"
 
+- debug:
+    msg: "not watch_finished={{ not watch_finished }}"
+
 - name: 'count ({{ watch_count | int + 1 }})'
   set_fact:
     watch_count: '{{ watch_count | int + 1 }}'
