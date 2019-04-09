@@ -7,8 +7,7 @@
 
 - name: 'start the execution of "{{ long_run_title }}" -> "{{ long_run_cmd }}"'
   become: yes
-  shell: |
-    "{{ long_run_cmd }}" > "{{ long_run_output_path }}/output.log" 2&>1
+  shell: "{{ long_run_cmd }}"
   args:
     chdir: "{{ long_run_path }}"
   async: "{{ long_run_timeout | int }}"
