@@ -14,6 +14,9 @@
   poll: 0
   register: 'long_run_register'
 
+- debug: 
+    msg: "before: {{ ansible_date_time.date }}"
+
 - name: 'Watch "{{ long_run_output_path }}/output.log" until "{{ long_run_title }}" finishes'
   become: yes
   include_role:
@@ -23,3 +26,6 @@
     watch_job: 'long_run_register'
     watch_timeout: "{{ long_run_timeout | int }}"
     watch_poll: "{{ long_run_poll | int }}"
+
+- debug: 
+    msg: "after: {{ ansible_date_time.date }}"
