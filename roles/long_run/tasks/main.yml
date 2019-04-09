@@ -26,6 +26,7 @@
     name: 'watch'
   vars:
     watch_title: "{{ long_run_title }}"
+    watch_become: "{{ long_run_become }}"
     watch_file: '{{ long_run_output_path }}/output.log'
     watch_job: 'long_run_register'
     watch_timeout: "{{ long_run_timeout | int }}"
