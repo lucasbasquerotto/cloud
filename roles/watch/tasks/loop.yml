@@ -21,6 +21,7 @@
   - name: '{{ watch_output_lines }} lines captured'
     set_fact:
       watch_lines: '{{ watch_lines|int + watch_output_lines|int }}'
+    no_log: true
 
   - name: '{{ watch_file }}'
     debug:

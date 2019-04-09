@@ -4,6 +4,10 @@
   become: yes
   include_tasks: 'loop.yml'
 
+- name: 'set watch_finished'
+  set_fact:
+    watch_finished: watch_status.finished
+
 - name: 'count ({{ watch_count | int + 1 }})'
   set_fact:
     watch_count: '{{ watch_count | int + 1 }}'
@@ -15,14 +19,13 @@
 - name: 'timeout ({{ watch_timeout }} seconds)'
   fail: 
     msg: "Timeout of {{ watch_timeout }} seconds exceeded ({{ watch_retries }} retries)"
-  when: (not watch_status.finished) and (watch_count | int > watch_retries | int)
+  when: (not watch_finished) and (watch_count | int > watch_retries | int)
 
 - name: 'wait for {{ watch_poll }} seconds'
   wait_for:
     timeout: '{{ watch_poll | int }}'
-  when: not watch_status.finished
+  when: not watch_finished
 
 - name: 'call itself recursively'
-  become: yes
   include_tasks: 'recursive.yml'
-  when: not watch_status.finished
+  when: not watch_finished
