@@ -8,9 +8,10 @@
   become: yes
   include_tasks: 'recursive.yml'
 
-- name: 'watch_status is finished'
-  assert:
-    that: watch_status.finished
-
 - debug:
     var: watch_status
+
+- name: 'watch_status is finished'
+  become: yes
+  assert:
+    that: watch_status.finished

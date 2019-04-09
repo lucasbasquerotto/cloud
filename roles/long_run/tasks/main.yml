@@ -15,7 +15,7 @@
   register: 'long_run_register'
 
 - debug: 
-    msg: "before: {{ ansible_date_time.date }}"
+    msg: "before: {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
 
 - name: 'Watch "{{ long_run_output_path }}/output.log" until "{{ long_run_title }}" finishes'
   become: yes
@@ -28,4 +28,4 @@
     watch_poll: "{{ long_run_poll | int }}"
 
 - debug: 
-    msg: "after: {{ ansible_date_time.date }}"
+    msg: "after: {{ ansible_date_time.date }} {{ ansible_date_time.time }}"

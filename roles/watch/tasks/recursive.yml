@@ -5,6 +5,7 @@
   include_tasks: 'loop.yml'
 
 - name: 'set watch_finished'
+  become: yes
   set_fact:
     watch_finished: "{{ watch_status.finished }}"
 
