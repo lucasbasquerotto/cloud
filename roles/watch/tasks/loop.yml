@@ -1,7 +1,7 @@
 ---
   
 - name: '[{{ watch_title }}] - checking {{ watch_job }} status'
-  become: "{{ watch_become }}"
+  become: yes
   async_status:
     jid: '{{ job.ansible_job_id }}'
   register: 'watch_status'
