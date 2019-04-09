@@ -1,5 +1,5 @@
 - set_fact:
-    long_run_before: "{{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+    long_run_before: "{{ lookup('pipe', 'date +%Y-%m-%d %H:%M:%S') }}"
 
 - name: '[{{ long_run_title }}] - create the directory "{{ long_run_output_path }}" to run'
   become: "{{ long_run_become }}"
@@ -38,4 +38,4 @@
 
 - name: '[{{ long_run_title }}]'
   debug: 
-    msg: "after: {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+    msg: "after: {{ lookup('pipe', 'date +%Y-%m-%d %H:%M:%S') }}"
