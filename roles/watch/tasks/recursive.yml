@@ -7,7 +7,7 @@
 - name: 'set watch_finished'
   become: yes
   set_fact:
-    watch_finished: "{{ watch_status.finished }}"
+    watch_finished: "{{ watch_status.finished | bool }}"
 
 - debug:
     var: watch_status
