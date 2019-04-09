@@ -9,6 +9,9 @@
   set_fact:
     watch_finished: "{{ watch_status.finished }}"
 
+- debug:
+    var: watch_status
+
 - name: 'count ({{ watch_count | int + 1 }})'
   set_fact:
     watch_count: '{{ watch_count | int + 1 }}'
