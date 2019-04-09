@@ -1,12 +1,15 @@
-- name: 'create the directory "{{ long_run_output_path }}" to run "{{ long_run_title }}"'
-  become: yes
+- set_fact:
+    long_run_before: "{{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+
+- name: '[{{ long_run_title }}] - create the directory "{{ long_run_output_path }}" to run'
+  become: "{{ long_run_become }}"
   file:
     path: "{{ long_run_output_path }}"
     state: directory
     mode: 0744
 
-- name: 'start the execution of "{{ long_run_title }}" -> "{{ long_run_cmd }}"'
-  become: yes
+- name: '[{{ long_run_title }}] - start the execution of "{{ long_run_cmd }}"'
+  become: "{{ long_run_become }}"
   shell: "{{ long_run_cmd }}"
   args:
     chdir: "{{ long_run_path }}"
@@ -15,10 +18,10 @@
   register: 'long_run_register'
 
 - debug: 
-    msg: "before: {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+    msg: "before: {{ long_run_before }}"
 
-- name: 'Watch "{{ long_run_output_path }}/output.log" until "{{ long_run_title }}" finishes'
-  become: yes
+- name: '[{{ long_run_title }}] - Watch "{{ long_run_output_path }}/output.log" until finishes'
+  become: "{{ long_run_become }}"
   include_role:
     name: 'watch'
   vars:
@@ -27,5 +30,10 @@
     watch_timeout: "{{ long_run_timeout | int }}"
     watch_poll: "{{ long_run_poll | int }}"
 
-- debug: 
+- name: '[{{ long_run_title }}]'
+  debug: 
+    msg: "before: {{ long_run_before }}"
+
+- name: '[{{ long_run_title }}]'
+  debug: 
     msg: "after: {{ ansible_date_time.date }} {{ ansible_date_time.time }}"

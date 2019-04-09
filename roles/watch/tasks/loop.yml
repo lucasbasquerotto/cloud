@@ -1,7 +1,7 @@
 ---
   
-- name: 'checking {{ watch_job }} status'
-  become: yes
+- name: '[{{ watch_title }}] - checking {{ watch_job }} status'
+  become: "{{ watch_become }}"
   async_status:
     jid: '{{ job.ansible_job_id }}'
   register: 'watch_status'
@@ -9,8 +9,8 @@
     job: '{{ lookup("vars", watch_job) }}'
   when: 'job.ansible_job_id is defined'
 
-- name: 'tail -n +{{ watch_lines }} {{ watch_file }}'
-  become: yes
+- name: '[{{ watch_title }}] - tail -n +{{ watch_lines }} {{ watch_file }}'
+  become: "{{ watch_become }}"
   shell: 'tail -n +{{ watch_lines }} {{ watch_file }}'
   register: 'watch_tail'
   failed_when: false
@@ -18,14 +18,13 @@
 
 - block:
 
-  - name: '{{ watch_output_lines }} lines captured'
+  - name: '[{{ watch_title }}] - {{ watch_output_lines }} lines captured'
     set_fact:
       watch_lines: '{{ watch_lines|int + watch_output_lines|int }}'
-    no_log: true
 
-  - name: '{{ watch_file }}'
+  - name: '[{{ watch_title }}] - {{ watch_file }}'
     debug:
-      var: 'watch_output'
+      msg: '{{ watch_output }}'
 
   vars:
     watch_output: '{{ watch_tail.stdout_lines|default([]) }}'

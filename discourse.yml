@@ -258,12 +258,13 @@
   - name: Gathering facts
     setup: 
 
-  - name: prepare the machine
+  - name: 'prepare the machine (setup)'
     become: yes
     include_role: 
       name: long_run
     vars:
-      long_run_title: 'discourse setup'
+      long_run_title: 'prepare the machine (setup)'
+      long_run_become: yes
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './discourse-custom-setup'
@@ -298,12 +299,13 @@
   - name: Gathering facts
     setup: 
 
-  - name: (re)build and (re)start discourse
+  - name: '(re)build and (re)start discourse'
     become: yes
     include_role: 
       name: long_run
     vars:
-      long_run_title: 'discourse rebuild all containers'
+      long_run_title: '(re)build and (re)start discourse'
+      long_run_become: yes
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher rebuild {{ main_item }}'
@@ -371,12 +373,13 @@
   - name: Gathering facts
     setup: 
 
-  - name: bootstrap discourse web container
+  - name: 'bootstrap discourse web container'
     become: yes
     include_role: 
       name: long_run
     vars:
-      long_run_title: 'discourse bootstrap web container'
+      long_run_title: 'bootstrap discourse web container'
+      long_run_become: yes
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher bootstrap {{ main.web_container }}'
@@ -423,12 +426,13 @@
   - name: Gathering facts
     setup: 
 
-  - name: start discourse web container
+  - name: 'start discourse web container'
     become: yes
     include_role: 
       name: long_run
     vars:
-      long_run_title: 'discourse start web container'
+      long_run_title: 'start discourse web container'
+      long_run_become: yes
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher start {{ main.web_container }}'
@@ -474,12 +478,13 @@
   - name: Gathering facts
     setup: 
 
-  - name: stop discourse containers
+  - name: 'stop discourse containers'
     become: yes
     include_role: 
       name: long_run
     vars:
-      long_run_title: 'discourse stop all containers'
+      long_run_title: 'stop discourse containers'
+      long_run_become: yes
       long_run_output_path: '{{ main.env_location }}'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher stop {{ main_item }}'
