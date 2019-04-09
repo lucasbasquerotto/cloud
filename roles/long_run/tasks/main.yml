@@ -38,4 +38,4 @@
 
 - name: '[{{ long_run_title }}]'
   debug: 
-    msg: "after: {{ lookup('pipe', 'date +%Y-%m-%d %H:%M:%S') }}"
+    msg: "after: {{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
