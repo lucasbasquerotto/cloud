@@ -201,16 +201,16 @@
   #     account_email: "{{ main.discourse.cloudflare_email }}"
   #     account_api_token: "{{ main.discourse.cloudflare_token }}"
 
-  # - name: update the discourse DNS CDN record
-  #   cloudflare_dns:
-  #     zone: "{{ main.hostname }}"
-  #     proxied: "{{ main.discourse.cdn_proxied }}"
-  #     solo: true
-  #     type: CNAME
-  #     record: "{{ main.discourse.cdn_subdomain }}"
-  #     value: "{{ main.discourse.subdomain }}.{{ main.hostname }}"
-  #     account_email: "{{ main.discourse.cloudflare_email }}"
-  #     account_api_token: "{{ main.discourse.cloudflare_token }}"
+  - name: update the discourse DNS CDN record
+    cloudflare_dns:
+      zone: "{{ main.hostname }}"
+      proxied: "yes"
+      solo: true
+      type: CNAME
+      record: "{{ main.discourse.cdn_subdomain }}"
+      value: "{{ main.discourse.subdomain }}.{{ main.hostname }}"
+      account_email: "{{ main.discourse.cloudflare_email }}"
+      account_api_token: "{{ main.discourse.cloudflare_token }}"
 
 ###############################################################################
 
