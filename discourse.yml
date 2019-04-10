@@ -70,6 +70,7 @@
   - init
   - prepare
   - repo
+  - build-web
   vars_files: 
   - /home/main/env/env.yml
   vars:
@@ -220,6 +221,7 @@
   - init
   - prepare
   - repo
+  - build-web
   vars_files: 
   - /home/main/env/env.yml
   vars:
@@ -415,64 +417,11 @@
 
 ###############################################################################
 
-- name: Play 09 - Start the web container
+- name: Play 09 - Restart the web container
   hosts: discourse_web
   tags:
   - never
   - build-web
-  - start-web
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
-  gather_facts: no  
-  tasks:  
-  - name: Gathering facts
-    setup: 
-
-  - name: 'start discourse web container'
-    become: yes
-    include_role: 
-      name: long_run
-    vars:
-      long_run_title: 'start discourse web container'
-      long_run_become: yes
-      long_run_output_path: '{{ main.env_location }}'
-      long_run_output_file: '{{ main.web_container }}.log'
-      long_run_path: '{{ main.location }}'
-      long_run_cmd: './launcher start {{ main.web_container }}'
-
-  # - name: create the directory "{{ main.env_location }}"
-  #   file:
-  #     path: "{{ main.env_location }}"
-  #     state: directory
-  #     mode: 0755
-
-  # - name: start discourse web container
-  #   become: yes
-  #   shell: "./launcher start {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
-  #   args:
-  #     chdir: "{{ main.location }}"
-  #   async: 3600
-  #   poll: 0
-  #   register: 'setup'
-
-  # - name: 'Watch {{ main.env_location }}/output.log until the web start finishes'
-  #   become: yes
-  #   include_role:
-  #     name: 'watch'
-  #   vars:
-  #     watch_file: '{{ main.env_location }}/output.log'
-  #     watch_job: 'setup'
-  #     watch_timeout: 3600
-  #     watch_poll: 5
-
-###############################################################################
-
-- name: Play 10 - Restart the web container
-  hosts: discourse_web
-  tags:
-  - never
   - restart-web
   vars_files: 
   - /home/main/env/env.yml
@@ -503,7 +452,7 @@
 
 ###############################################################################
 
-- name: Play 11 - Stop Discourse
+- name: Play 10 - Stop Discourse
   hosts: discourse_web
   tags:
   - never
@@ -540,7 +489,7 @@
 
 ###############################################################################
 
-- name: Play 11.1 - Stop Discourse (Test)
+- name: Play 10.1 - Stop Discourse (Test)
   hosts: discourse_web
   tags:
   - never
