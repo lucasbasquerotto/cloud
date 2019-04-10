@@ -69,6 +69,7 @@
   tags:
   - init
   - prepare
+  - repo
   vars_files: 
   - /home/main/env/env.yml
   vars:
