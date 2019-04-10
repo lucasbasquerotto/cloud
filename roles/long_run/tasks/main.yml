@@ -10,7 +10,7 @@
 
 - name: '[{{ long_run_title }}] - start the execution of "{{ long_run_cmd }}"'
   become: "{{ long_run_become }}"
-  shell: "{{ long_run_cmd }}"
+  shell: "{{ long_run_cmd }} > {{ long_run_output_path }}/{{ long_run_output_file }}"
   args:
     chdir: "{{ long_run_path }}"
   async: "{{ long_run_timeout | int }}"
@@ -24,7 +24,7 @@
   vars:
     watch_title: "{{ long_run_title }}"
     watch_become: "{{ long_run_become }}"
-    watch_file: '{{ long_run_output_path }}/output.log'
+    watch_file: '{{ long_run_output_path }}/{{ long_run_output_file }}'
     watch_job: 'long_run_register'
     watch_timeout: "{{ long_run_timeout | int }}"
     watch_poll: "{{ long_run_poll | int }}"
