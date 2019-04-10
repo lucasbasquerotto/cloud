@@ -464,6 +464,33 @@
 
 ###############################################################################
 
+- name: Play 10 - Restart the web container
+  hosts: discourse_web
+  tags:
+  - never
+  - restart-web
+  vars_files: 
+  - /home/main/env/env.yml
+  vars:
+    main: "{{ env.discourse }}"
+  gather_facts: no  
+  tasks:  
+  - name: Gathering facts
+    setup: 
+
+  - name: 'restart discourse web container'
+    become: yes
+    include_role: 
+      name: long_run
+    vars:
+      long_run_title: 'restart discourse web container'
+      long_run_become: yes
+      long_run_output_path: '{{ main.env_location }}'
+      long_run_path: '{{ main.location }}'
+      long_run_cmd: './launcher restart {{ main.web_container }}'
+
+###############################################################################
+
 - name: Play 10 - Stop Discourse
   hosts: discourse_web
   tags:
