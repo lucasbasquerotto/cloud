@@ -130,6 +130,7 @@ echo "Main logic finished" >> "/var/log/setup.log"
 
 echo "Defining VPN DNS..." >> "/var/log/setup.log"
 
+apt update
 apt install -y resolvconf
 
 touch /etc/resolvconf/resolv.conf.d/head
