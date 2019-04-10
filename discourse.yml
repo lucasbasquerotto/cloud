@@ -487,12 +487,18 @@
     include_role: 
       name: long_run
     vars:
-      long_run_title: 'restart discourse web container'
+      long_run_title: 'restart discourse web container - {{ main_item }}'
       long_run_become: yes
       long_run_output_path: '{{ main.env_location }}'
       long_run_output_file: '{{ main.web_container }}.log'
       long_run_path: '{{ main.location }}'
-      long_run_cmd: './launcher restart {{ main.web_container }}'
+      long_run_cmd: './launcher {{ main_item }} {{ main.web_container }}'
+    loop: 
+    - "stop"
+    - "destroy"
+    - "start"
+    loop_control:
+      loop_var: main_item
 
 ###############################################################################
 
