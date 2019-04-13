@@ -5,20 +5,9 @@
   - setup
   vars_files: 
   - /home/main/env/env.yml
+  - settings/cloud.yml
+  - settings/settings.yml
   vars:
-    main: "{{ env }}"
-    main_discourse: "{{ main.discourse }}"
-    main_host_vars: 
-      web:
-        host_user: "{{ main.host_user }}"
-        host_pass: "{{ main.host_pass }}"
-        host_ssh_public_keys: "{{ main.host_ssh_public_keys }}"
-    main_aux:  
-      web_user_data: "{{ lookup('template', 'templates/setup/user_data.web.j2.sh', template_vars=dict(main_host_vars.web)) | trim }}"
-    main_droplet_list:
-      - group: "{{ main_discourse.web.group }}"
-        main_data: "{{ main_discourse.web }}"
-        user_data: "{{ main_aux.web_user_data }}" 
 
   gather_facts: no  
   tasks:  
@@ -26,21 +15,8 @@
     setup: 
 
   - include_role: 
-      name: droplets
-    vars:
-      droplets_hosts_group: "{{ main_item.group }}"
-      droplets_hosts_file: "{{ main.hosts_file }}"
-      droplets_api_token: "{{ main.api_token }}"
-      droplets_host_user: "{{ main.host_user }}"
-      droplets_host_pass: "{{ main.host_pass }}"
-      droplets_user_data: "{{ main_item.user_data }}"
-      droplets_info: "{{ main_item.main_data.info }}"
-      droplets_tags: "{{ main_item.main_data.tags }}"
-      droplets_list: "{{ main_item.main_data.droplets }}"
-    loop: "{{ main_droplet_list }}"
-    loop_control:
-      loop_var: main_item
-      label: "{{ main_item.group }}"
+      name: '{{ settings.cloud.role }}'
+      vars: '{{ settings.cloud.vars }}'
 
 ###############################################################################
 

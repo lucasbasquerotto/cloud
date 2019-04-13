@@ -1,0 +1,3 @@
+settings:
+  env: "{{ env.discourse }}"
+  cloud: "{{ cloud[env.discourse.cloud_layer][cloud_type] }}"

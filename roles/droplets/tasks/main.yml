@@ -1,4 +1,4 @@
-- name: create tags
+- name: '{{ droplets_title }} - create tags'
   digital_ocean_tag:
     api_token: "{{ droplets_api_token }}"
     name: "{{ item }}"
@@ -6,7 +6,7 @@
   with_items:
   - "{{ droplets_tags }}"
 
-- name: create droplets
+- name: '{{ droplets_title }} - create droplets'
   digital_ocean:
     unique_name: yes
     api_token: "{{ droplets_api_token }}"
@@ -14,11 +14,11 @@
     state: "{{ item.state }}"
     region_id: "{{ item.region_id }}"
     command: "droplet"
-    size_id: "{{ droplets_info.size_id }}"
-    image_id: "{{ droplets_info.image_id }}"
-    wait_timeout: "{{ droplets_info.wait_timeout }}"
-    private_networking: "{{ droplets_info.private_networking | default(omit) }}"
-    ipv6: "{{ droplets_info.ipv6 | default(omit) }}"
+    size_id: "{{ droplets_size_id }}"
+    image_id: "{{ droplets_image_id }}"
+    wait_timeout: "{{ droplets_wait_timeout }}"
+    private_networking: "{{ droplets_private_networking | default(omit) }}"
+    ipv6: "{{ droplets_ipv6 | default(omit) }}"
     user_data: "{{ droplets_user_data }}"
   with_items:
   - "{{ droplets_list }}"
@@ -26,16 +26,10 @@
     label: "{{ item.name }} - {{ item.state }}"
   register: droplets_details
 
-- name: Define value of droplets_active
+- name: '{{ droplets_title }} - Define value of droplets_active'
   set_fact: droplets_active="{{ droplets_details.results | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
 
-- debug: msg="IP of droplet {{ item.name }} is {{ item.ip_address }}"
-  with_items: 
-  - "{{ droplets_active }}"
-  loop_control:
-    label: "{{ item.name }}"
-
-- name: tag each droplet
+- name: '{{ droplets_title }} - tag each droplet'
   digital_ocean_tag:
     api_token: "{{ droplets_api_token }}"
     resource_id: "{{ item[0].id }}"
@@ -48,24 +42,35 @@
     label: "droplet: {{ item[0].name }} - tag: {{ item[1] }}"
 
 - set_fact: 
+    droplets_hosts_info_aux: ''
+
+- name: '{{ droplets_title }} - generate the hosts information with the droplets ips'
+  set_fact: 
+    droplets_hosts_info: {{ (droplets_hosts_info_aux | default('')) + ' ' + item.name=item.value }}
+  with_items: 
+  - "{{ droplets_host_data }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- set_fact: 
     droplets_hosts_info: ''
 
-- name: generate the hosts information with the droplets ips
+- name: '{{ droplets_title }} - generate the hosts information with the droplets ips'
   set_fact: 
     droplets_hosts_info: |
       {{ droplets_hosts_info | default('') }}
-      {{ item.name }} ansible_host={{ item.ip_address }} ansible_user={{ droplets_host_user }} ansible_become_pass={{ droplets_host_pass }}
+      {{ item.name }} ansible_host={{ item.ip_address }} ansible_user={{ droplets_host_user }} ansible_become_pass={{ droplets_host_pass }} {{ droplets_hosts_info }}
   with_items: 
   - "{{ droplets_active }}"
   loop_control:
     label: "{{ item.name }}"
 
-- name: Update the hosts file with the generated hosts
+- name: '{{ droplets_title }} - Update the hosts file with the generated hosts'
   blockinfile:
     path: "{{ droplets_hosts_file }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ droplets_hosts_group }}"
     insertafter: "\\[{{ droplets_hosts_group }}\\]"
     block: "{{ droplets_hosts_info }}"
 
-- name: refresh inventory
+- name: '{{ droplets_title }} - refresh inventory'
   meta: refresh_inventory

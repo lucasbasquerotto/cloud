@@ -1,0 +1,27 @@
+- set_fact:
+    main_do_cloud_instances: []
+
+- name: '{{ main_do_title }} - define instances to be created'
+  set_fact:
+    main_do_cloud_instances: "{{ main_do_cloud_instances + [{ 'name': main_do_instance_name + '-' + main_do_region + '-' + ('%03d'  | format(item)), 'region_id': main_do_region, state: (item <= main_do_instance_count) | ternary('present', 'deleted') }] }}"
+  loop: "{{ range(1, main_do_instance_max + 1) | list }}"
+
+- name: '{{ main_do_title }} - create droplets'
+  include_role: 
+    name: droplets
+  vars:
+    droplets_title: "{{ main_do_title }} - create droplets - {{ main_do_instance_group }}"
+    droplets_hosts_group: "{{ main_do_instance_group }}"
+    droplets_hosts_file: "{{ main_do_hosts_file }}"
+    droplets_api_token: "{{ main_do_api_token }}"
+    droplets_host_user: "{{ main_do_host_user }}"
+    droplets_host_pass: "{{ main_do_host_pass }}"
+    droplets_user_data: "{{ main_do_user_data }}"
+    droplets_size_id: "{{ main_do_size_id }}"
+    droplets_image_id: "{{ main_do_image_id }}"
+    droplets_private_networking: "{{ main_do_private_networking }}"
+    droplets_ipv6: "{{ main_do_ipv6 }}"
+    droplets_wait_timeout: "{{ main_do_wait_timeout }}"
+    droplets_tags: "{{ main_do_tags }}"
+    droplets_host_data: "{{ main_do_host_data }}"
+    droplets_list: "{{ main_do_cloud_instances }}"
