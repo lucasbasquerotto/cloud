@@ -46,11 +46,14 @@
 
 - name: '{{ droplets_title }} - generate the hosts information with the droplets ips'
   set_fact: 
-    droplets_hosts_info: "{{ (droplets_hosts_info_aux | default('')) + ' ' + item.name=item.value }}"
+    droplets_hosts_info_aux: "{{ (droplets_hosts_info_aux | default('')) + ' ' + item.name=item.value }}"
   with_items: 
   - "{{ droplets_host_data }}"
   loop_control:
     label: "{{ item.name }}"
+
+  debug:
+    var: droplets_hosts_info_aux
 
 - set_fact: 
     droplets_hosts_info: ''
@@ -59,7 +62,7 @@
   set_fact: 
     droplets_hosts_info: |
       {{ droplets_hosts_info | default('') }}
-      {{ item.name }} ansible_host={{ item.ip_address }} ansible_user={{ droplets_host_user }} ansible_become_pass={{ droplets_host_pass }} {{ droplets_hosts_info }}
+      {{ item.name }} ansible_host={{ item.ip_address }} ansible_user={{ droplets_host_user }} ansible_become_pass={{ droplets_host_pass }} {{ droplets_hosts_info_aux }}
   with_items: 
   - "{{ droplets_active }}"
   loop_control:
