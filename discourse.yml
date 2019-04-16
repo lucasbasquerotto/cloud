@@ -14,7 +14,7 @@
     setup: 
 
   - debug:
-      var: settings.cloud
+      var: settings
 
   - include_role: 
       name: '{{ settings.cloud.role }}'
