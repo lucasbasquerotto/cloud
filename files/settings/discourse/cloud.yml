@@ -4,7 +4,7 @@ cloud:
     - "app"
   layer1:
     digital_ocean:
-    - role: "main_do"
+      role: "main_do"
       vars:
         # main_do_title: "main_do"
         # main_do_api_token: "{{ env.discourse.cloud_api_token }}"
