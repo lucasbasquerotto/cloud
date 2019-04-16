@@ -17,7 +17,7 @@ main_do_region: "nyc"
 main_do_private_networking: yes
 main_do_ipv6: yes
 main_do_wait_timeout: 500  
-main_do_user_data_file: 'roles/main_do/templates/setup/user_data.docker.j2.sh'
+main_do_user_data_file: 'templates/user_data.docker.j2.sh'
 main_do_host_vars: 
   host_user: "{{ main_do_host_user }}"
   host_pass: "{{ main_do_host_pass }}"
