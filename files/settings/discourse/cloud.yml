@@ -6,11 +6,11 @@ cloud:
     digital_ocean:
       role: "main_do"
       vars:
-        # main_do_title: "main_do"
-        # main_do_api_token: "{{ env.discourse.cloud_api_token }}"
-        # main_do_host_user: "{{ env.discourse.cloud_host_user }}"
-        # main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
-        # main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+        main_do_title: "main_do"
+        main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+        main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+        main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+        main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
         main_do_tags: 
         - "host"
         - "worker"
