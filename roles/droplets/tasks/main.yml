@@ -52,7 +52,7 @@
   loop_control:
     label: "{{ item.name }}"
 
-  debug:
+- debug:
     var: droplets_hosts_info_aux
 
 - set_fact: 
