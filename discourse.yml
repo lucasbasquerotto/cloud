@@ -14,6 +14,12 @@
     setup: 
 
   - debug:
+      var: env
+
+  - debug:
+      var: cloud
+
+  - debug:
       var: settings
 
   - include_role: 
