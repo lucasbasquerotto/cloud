@@ -1,3 +1,7 @@
+- set_fact: { "{{ item.key }}": "{{ item.value }}" }
+  with_dict: "{{ cloud_handover }}"
+  when: cloud_handover is defined
+
 - set_fact:
     main_do_cloud_instances: []
 

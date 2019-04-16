@@ -15,7 +15,8 @@
 
   - include_role: 
       name: '{{ settings.cloud.role }}'
-    vars: '{{ settings.cloud.vars }}'
+    vars: 
+      cloud_handover: '{{ settings.cloud.vars }}'
 
 ###############################################################################
 
