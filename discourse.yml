@@ -5,8 +5,8 @@
   - setup
   vars_files: 
   - /home/main/env/env.yml
-  - settings/cloud.yml
-  - settings/settings.yml
+  - files/settings/cloud.yml
+  - files/settings/settings.yml
 
   gather_facts: no  
   tasks:  
