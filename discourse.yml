@@ -13,6 +13,9 @@
   - name: Gathering facts
     setup: 
 
+  - debug:
+      var: settings.cloud
+
   - include_role: 
       name: '{{ settings.cloud.role }}'
     vars: 
