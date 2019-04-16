@@ -1,4 +1,4 @@
-- name: Play 01 - Create droplets and define hosts
+- name: Play 01 - Create Cloud Instances
   hosts: main
   tags:
   - init
@@ -7,7 +7,6 @@
   - /home/main/env/env.yml
   - settings/cloud.yml
   - settings/settings.yml
-  vars:
 
   gather_facts: no  
   tasks:  
@@ -16,7 +15,7 @@
 
   - include_role: 
       name: '{{ settings.cloud.role }}'
-      vars: '{{ settings.cloud.vars }}'
+    vars: '{{ settings.cloud.vars }}'
 
 ###############################################################################
 
