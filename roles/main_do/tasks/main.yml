@@ -1,5 +1,7 @@
 - set_fact: { "{{ item.key }}": "{{ item.value }}" }
-  with_dict: "{{ cloud_handover }}"
+  loop: "{{ cloud_handover | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
   when: cloud_handover is defined
 
 - set_fact:
@@ -8,7 +10,7 @@
 - name: '{{ main_do_title }} - define instances to be created'
   set_fact:
     main_do_cloud_instances: "{{ main_do_cloud_instances + [{ 'name': main_do_instance_name + '-' + main_do_region + '-' + ('%03d'  | format(item)), 'region_id': main_do_region, state: (item <= main_do_instance_count) | ternary('present', 'deleted') }] }}"
-  loop: "{{ range(1, main_do_instance_max + 1) | list }}"
+  loop: "{{ range(1, (main_do_instance_max | int) + 1) | list }}"
 
 - name: '{{ main_do_title }} - create droplets'
   include_role: 
