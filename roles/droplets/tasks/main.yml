@@ -46,7 +46,7 @@
 
 - name: '{{ droplets_title }} - generate the hosts information with the droplets ips'
   set_fact: 
-    droplets_hosts_info_aux: "{{ (droplets_hosts_info_aux | default('')) + ' ' + item.name=item.value }}"
+    droplets_hosts_info_aux: "{{ (droplets_hosts_info_aux | default('')) + ' ' + item.name + '=' + item.value }}"
   with_items: 
   - "{{ droplets_host_data }}"
   loop_control:
