@@ -5,7 +5,7 @@ cloud:
         role: "main_do"
         vars:
           main_do_instance_type: "app"
-          main_do_title: "main_do"
+          main_do_title: "App Instance"
           main_do_hosts_file: "{{ env.discourse.hosts_file }}"
           main_do_api_token: "{{ env.discourse.cloud_api_token }}"
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
@@ -27,7 +27,49 @@ cloud:
         role: "main_do"
         vars:
           main_do_instance_type: "db"
-          main_do_title: "main_do"
+          main_do_title: "DB Instance"
+          main_do_hosts_file: "{{ env.discourse.hosts_file }}"
+          main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+          main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+          main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+          main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags: 
+          - "host"
+          - "worker"
+          - "db"
+          main_do_instance_count: 1
+          main_do_instance_max: 1
+          main_do_instance_group: "discourse_db"
+          main_do_instance_name: "discourse-db"
+          containers:
+          - "db"
+
+      redis:
+        role: "main_do"
+        vars:
+          main_do_instance_type: "redis"
+          main_do_title: "Redis Instance"
+          main_do_hosts_file: "{{ env.discourse.hosts_file }}"
+          main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+          main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+          main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+          main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags: 
+          - "host"
+          - "worker"
+          - "redis"
+          main_do_instance_count: 1
+          main_do_instance_max: 1
+          main_do_instance_group: "discourse_redis"
+          main_do_instance_name: "discourse-redis"
+          containers:
+          - "redis"
+
+      web:
+        role: "main_do"
+        vars:
+          main_do_instance_type: "web"
+          main_do_title: "Web Instance"
           main_do_hosts_file: "{{ env.discourse.hosts_file }}"
           main_do_api_token: "{{ env.discourse.cloud_api_token }}"
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
@@ -39,7 +81,7 @@ cloud:
           - "web"
           main_do_instance_count: 1
           main_do_instance_max: 1
-          main_do_instance_group: "discourse_db"
-          main_do_instance_name: "discourse-db"
+          main_do_instance_group: "discourse_web"
+          main_do_instance_name: "discourse-web"
           containers:
-          - "db"
+          - "web_only"
