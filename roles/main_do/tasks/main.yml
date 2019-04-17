@@ -19,6 +19,7 @@
     droplets_title: "{{ main_do_title }} - create droplets - {{ main_do_instance_group }}"
     droplets_hosts_group: "{{ main_do_instance_group }}"
     droplets_hosts_file: "{{ main_do_hosts_file }}"
+    droplets_instance_type: "{{ main_do_instance_type }}"
     droplets_api_token: "{{ main_do_api_token }}"
     droplets_host_user: "{{ main_do_host_user }}"
     droplets_host_pass: "{{ main_do_host_pass }}"

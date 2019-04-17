@@ -17,12 +17,32 @@ db_replica
 [web]
 
 [discourse:children]
+discourse_app
 discourse_db
-discourse_db_replica
+discourse_redis
 discourse_web
+discourse_db_master
+discourse_db_replica
+discourse_redis_master
+discourse_redis_replica
+discourse_web_replica
+
+[discourse_app]
 
 [discourse_db]
 
-[discourse_db_replica]
+[discourse_redis]
 
 [discourse_web]
+
+[discourse_db_master]
+
+[discourse_db_replica]
+
+[discourse_redis_master]
+
+[discourse_redis_replica]
+
+[discourse_web_replica]
+
+
