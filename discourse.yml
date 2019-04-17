@@ -41,6 +41,7 @@
   roles:
   - role: host_test
     vars:
+      host_test_title: "{{ inventory_hostname }}"
       host_test_log_file: "{{ main.log_file }}"
       host_test_setup_last_line: "{{ main.setup_last_line }}"
       host_test_initial_connection_timeout: "{{ main.initial_connection_timeout }}"
