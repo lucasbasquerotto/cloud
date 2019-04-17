@@ -15,7 +15,7 @@ cloud:
           - "host"
           - "worker"
           - "web"
-          main_do_instance_count: 1
+          main_do_instance_count: "{{ env.discourse.shutdown | ternary(0, 1)  }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_app"
           main_do_instance_name: "discourse-app"
@@ -37,7 +37,7 @@ cloud:
           - "host"
           - "worker"
           - "db"
-          main_do_instance_count: 1
+          main_do_instance_count: "{{ env.discourse.shutdown | ternary(0, 1)  }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_db"
           main_do_instance_name: "discourse-db"
@@ -58,7 +58,7 @@ cloud:
           - "host"
           - "worker"
           - "redis"
-          main_do_instance_count: 1
+          main_do_instance_count: "{{ env.discourse.shutdown | ternary(0, 1)  }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_redis"
           main_do_instance_name: "discourse-redis"
@@ -79,7 +79,7 @@ cloud:
           - "host"
           - "worker"
           - "web"
-          main_do_instance_count: 1
+          main_do_instance_count: "{{ env.discourse.shutdown | ternary(0, 1)  }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_web"
           main_do_instance_name: "discourse-web"
