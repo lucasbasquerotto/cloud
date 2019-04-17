@@ -7,6 +7,7 @@ cloud:
       role: "main_do"
       vars:
         main_do_title: "main_do"
+        main_do_hosts_file: "{{ env.discourse.hosts_file }}"
         main_do_api_token: "{{ env.discourse.cloud_api_token }}"
         main_do_host_user: "{{ env.discourse.cloud_host_user }}"
         main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"

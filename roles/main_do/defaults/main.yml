@@ -4,6 +4,7 @@ main_do_host_user: "{{ main.host_user }}"
 main_do_host_pass: "{{ main.host_pass }}"
 main_do_ssh_public_keys: "{{ main.host_ssh_public_keys }}"
 
+main_do_hosts_file: ""
 main_do_tags: []
 main_do_instance_count: 1
 main_do_instance_max: 1
