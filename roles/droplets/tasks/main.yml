@@ -41,9 +41,6 @@
   loop_control:
     label: "droplet: {{ item[0].name }} - tag: {{ item[1] }}"
 
-- debug:
-    var: droplets_hosts_info_aux
-
 - set_fact: 
     droplets_hosts_info: ''
 
