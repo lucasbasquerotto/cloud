@@ -13,7 +13,7 @@ main_do_instance_name: "droplet"
 main_do_image_id: ubuntu-18-04-x64
 main_do_size_id: "1gb"
 # main_do_size_id: "s-2vcpu-2gb"
-main_do_region: "nyc"
+main_do_region: "nyc1"
 main_do_private_networking: yes
 main_do_ipv6: yes
 main_do_wait_timeout: 500  
