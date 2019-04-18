@@ -13,10 +13,19 @@
   - name: Gathering facts
     setup: 
 
+  # - include_role: 
+  #     name: '{{ main_item.role }}'
+  #   vars: 
+  #     cloud_handover: '{{ main_item.vars }}'
+  #   loop: "{{ settings.cloud.values() | list }}"
+  #   loop_control:
+  #     loop_var: main_item
+
   - include_role: 
-      name: '{{ main_item.role }}'
+      name: 'cloud'
     vars: 
-      cloud_handover: '{{ main_item.vars }}'
+      cloud_role: '{{ main_item.role }}'
+      cloud_vars: '{{ main_item.vars }}'
     loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item

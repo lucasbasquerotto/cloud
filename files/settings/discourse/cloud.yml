@@ -36,7 +36,7 @@ cloud:
           main_do_tags: 
           - "host"
           - "worker"
-          - "db"
+          - "postgre"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1)  }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_db"
