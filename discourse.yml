@@ -67,6 +67,7 @@
 - name: Play 03 - Prepare the configuration file
   hosts: main
   tags:
+  - never
   - init
   - prepare
   - repo
