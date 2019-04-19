@@ -1,46 +1,34 @@
-- name: Play 01 - Create droplets and define hosts
+- name: Play 01 - Create Cloud Instances
   hosts: main
   tags:
   - init
   - setup
   vars_files: 
   - /home/main/env/env.yml
-  vars:
-    main: "{{ env }}"
-    main_discourse: "{{ main.discourse }}"
-    main_host_vars: 
-      web:
-        host_user: "{{ main.host_user }}"
-        host_pass: "{{ main.host_pass }}"
-        host_ssh_public_keys: "{{ main.host_ssh_public_keys }}"
-    main_aux:  
-      web_user_data: "{{ lookup('template', 'templates/setup/user_data.web.j2.sh', template_vars=dict(main_host_vars.web)) | trim }}"
-    main_droplet_list:
-      - group: "{{ main_discourse.web.group }}"
-        main_data: "{{ main_discourse.web }}"
-        user_data: "{{ main_aux.web_user_data }}" 
+  - files/settings/discourse/cloud.yml
+  - files/settings/discourse/settings.yml
 
   gather_facts: no  
   tasks:  
   - name: Gathering facts
     setup: 
 
+  # - include_role: 
+  #     name: '{{ main_item.role }}'
+  #   vars: 
+  #     cloud_handover: '{{ main_item.vars }}'
+  #   loop: "{{ settings.cloud.values() | list }}"
+  #   loop_control:
+  #     loop_var: main_item
+
   - include_role: 
-      name: droplets
-    vars:
-      droplets_hosts_group: "{{ main_item.group }}"
-      droplets_hosts_file: "{{ main.hosts_file }}"
-      droplets_api_token: "{{ main.api_token }}"
-      droplets_host_user: "{{ main.host_user }}"
-      droplets_host_pass: "{{ main.host_pass }}"
-      droplets_user_data: "{{ main_item.user_data }}"
-      droplets_info: "{{ main_item.main_data.info }}"
-      droplets_tags: "{{ main_item.main_data.tags }}"
-      droplets_list: "{{ main_item.main_data.droplets }}"
-    loop: "{{ main_droplet_list }}"
+      name: 'cloud'
+    vars: 
+      cloud_role: '{{ main_item.role }}'
+      cloud_vars: '{{ main_item.vars }}'
+    loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.group }}"
 
 ###############################################################################
 
@@ -51,12 +39,15 @@
   - setup
   vars_files: 
   - /home/main/env/env.yml
+  - files/settings/discourse/cloud.yml
+  - files/settings/discourse/settings.yml
   vars:
     main: "{{ env }}"
   gather_facts: no
   roles:
   - role: host_test
     vars:
+      host_test_title: "{{ inventory_hostname }}"
       host_test_log_file: "{{ main.log_file }}"
       host_test_setup_last_line: "{{ main.setup_last_line }}"
       host_test_initial_connection_timeout: "{{ main.initial_connection_timeout }}"
@@ -86,32 +77,6 @@
       path: "{{ main.env_location }}"
       state: directory
       mode: 0755
-
-  # - name: configure the discourse app.yml file
-  #   template:
-  #     src: "templates/discourse/app.yml"
-  #     dest: "{{ main.env_location }}/app.yml"
-  #     mode: 0700
-  #   vars:
-  #     hostname: "{{ main.hostname }}"
-  #     email: "{{ main.email }}"
-  #     smtp_address: "{{ main.smtp_address }}"
-  #     smtp_port: "{{ main.smtp_port }}"
-  #     smtp_user_name: "{{ main.smtp_user_name }}"
-  #     smtp_pass: "{{ main.smtp_pass }}"
-  #     ssl_prefix: "{{ main.ssl_prefix }}"
-  #     cf_prefix: "{{ main.cf_prefix }}"
-  #     ssl_email: "{{ main.ssl_email }}"
-  #     cdn_prefix: "{{ main.cdn_prefix }}"
-  #     cdn_url: "//{{ main.cdn_host }}"
-  #     lang: "{{ main.lang }}"
-  #     workers: "{{ main.workers }}"
-  #     text_search_config: "{{ main.text_search_config }}"
-  #     db_shared_buffers: "{{ main.db_shared_buffers }}"
-  #     http_port: "{{ main.http_port }}"
-  #     https_port: "{{ main.https_port }}"
-  #     host_shared_volume: "{{ main.host_shared_volume }}"
-  #     host_log_volume: "{{ main.host_log_volume }}"
 
   - name: configure the discourse {{ main_item }}.yml file
     template:
@@ -202,16 +167,16 @@
   #     account_email: "{{ main.discourse.cloudflare_email }}"
   #     account_api_token: "{{ main.discourse.cloudflare_token }}"
 
-  - name: update the discourse DNS CDN record
-    cloudflare_dns:
-      zone: "{{ main.hostname }}"
-      proxied: "yes"
-      solo: true
-      type: CNAME
-      record: "{{ main.discourse.cdn_subdomain }}"
-      value: "{{ main.discourse.subdomain }}.{{ main.hostname }}"
-      account_email: "{{ main.discourse.cloudflare_email }}"
-      account_api_token: "{{ main.discourse.cloudflare_token }}"
+  # - name: update the discourse DNS CDN record
+  #   cloudflare_dns:
+  #     zone: "{{ main.hostname }}"
+  #     proxied: "yes"
+  #     solo: true
+  #     type: CNAME
+  #     record: "{{ main.discourse.cdn_subdomain }}"
+  #     value: "{{ main.discourse.subdomain }}.{{ main.hostname }}"
+  #     account_email: "{{ main.discourse.cloudflare_email }}"
+  #     account_api_token: "{{ main.discourse.cloudflare_token }}"
 
 ###############################################################################
 

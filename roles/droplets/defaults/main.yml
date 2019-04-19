@@ -1,16 +1,17 @@
+droplets_title: 'droplets'
 droplets_hosts_file: "/home/main/env/hosts"
 droplets_host_user: "host" 
 droplets_hosts_group: "droplet"
-droplets_info:
-  size_id: '1gb'
-  image_id: 'ubuntu-18-04-x64'
-  private_networking: 'yes'
-  ipv6: 'yes'
-  wait_timeout: 500
+droplets_size_id: '1gb'
+droplets_image_id: 'ubuntu-18-04-x64'
+droplets_private_networking: 'yes'
+droplets_ipv6: 'yes'
+droplets_wait_timeout: 500
 droplets_user_data: "{{ omit }}"
 droplets_tags:
 - "host"
 - "worker"
+droplets_host_data: []
 droplets_list:
 - { name: 'server-001', region_id: 'nyc1', state: "deleted" }
 - { name: 'server-002', region_id: 'nyc1', state: "deleted" }
