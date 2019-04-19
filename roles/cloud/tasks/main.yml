@@ -23,12 +23,15 @@
     cloud_active_hosts: "{{ lookup('vars', cloud_role + '_active_hosts') }}"
     cloud_hosts_info: ""
 
+- debug:
+    var: cloud_active_hosts    
+
 - name: '{{ cloud_title }} - generate the hosts information with the instances ips'
   set_fact: 
     cloud_hosts_info: |
       {{ cloud_hosts_info | default('') }}
       {{ cloud_item.name }} ansible_host={{ cloud_item.ip_address }} ansible_user={{ cloud_host_user }} ansible_become_pass={{ cloud_host_pass }} instance_type={{ cloud_instance_type }}
-  with_items: 
+  loop: 
   - "{{ cloud_active_hosts }}"
   loop_control:
     loop_var: cloud_item
