@@ -46,3 +46,4 @@
   - "{{ droplets_active }}"
   loop_control:
     loop_var: main_do_item
+    label: "{{ main_do_item.name }}"
