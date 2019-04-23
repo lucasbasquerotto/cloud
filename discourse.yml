@@ -45,6 +45,7 @@
   - never
   - init
   - prepare
+  - prepare-hosts
   vars_files: 
   - /home/main/env/env.yml
   - files/settings/discourse/cloud.yml
