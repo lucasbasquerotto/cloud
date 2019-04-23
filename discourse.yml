@@ -42,6 +42,7 @@
 - name: Play 03 - Prepare the hosts
   hosts: host
   tags:
+  - never
   - init
   - prepare
   vars_files: 

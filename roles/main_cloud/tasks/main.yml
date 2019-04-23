@@ -28,8 +28,7 @@
     main_cloud_hosts_info: |
       {{ main_cloud_hosts_info | default('') }}
       {{ main_cloud_item.name }} ansible_host={{ main_cloud_item.ip_address }} ansible_user={{ main_cloud_host_user }} ansible_become_pass={{ main_cloud_host_pass }} instance_type={{ main_cloud_instance_type }}
-  with_items: 
-  - "{{ main_cloud_active_hosts }}"
+  loop: "{{ main_cloud_active_hosts }}"
   loop_control:
     loop_var: main_cloud_item
     label: "{{ main_cloud_item.name }}"

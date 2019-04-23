@@ -35,11 +35,14 @@
     droplets_host_data: "{{ main_do_host_data }}"
     droplets_list: "{{ main_do_cloud_instances }}"
 
-- name: '{{ main_do_title }} - Define value of main_do_active_hosts'
+- name: '{{ main_do_title }} - Init array main_do_active_hosts'
   set_fact: 
     main_do_active_hosts: []
+
+- name: '{{ main_do_title }} - Include items in main_do_active_hosts'
+  set_fact: 
     main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'ip_address': main_do_item.ip_address }] }}"
-  loop:
-  - "{{ droplets_active }}"
+  loop: "{{ droplets_active }}"
   loop_control:
     loop_var: main_do_item
+    label: "{{ main_do_item.name }}"
