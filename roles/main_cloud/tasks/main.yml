@@ -35,7 +35,7 @@
 
 - name: '{{ main_cloud_title }} - Update the hosts file with the generated hosts'
   blockinfile:
-    path: "{{ main_cloud.vars.hosts_file }}"
+    path: "{{ main_cloud_vars.hosts_file }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ main_cloud_instance_group }}"
     insertafter: "\\[{{ main_cloud_instance_group }}\\]"
     block: "{{ main_cloud_hosts_info }}"
