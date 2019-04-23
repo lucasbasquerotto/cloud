@@ -17,7 +17,7 @@
     vars: 
       main_cloud_role: '{{ main_item.role }}'
       main_cloud_vars: '{{ main_item.vars }}'
-    loop: "{{ settings.main_cloud.values() | list }}"
+    loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
 
@@ -56,7 +56,7 @@
     vars:
       discourse_containers: "{{ main_item.vars.containers }}"
       discourse_container_host_count: "{{ main_item.vars[main_item.name + '_instance_count'] }}"
-    loop: "{{ settings.main_cloud.values() | list }}"
+    loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
     
