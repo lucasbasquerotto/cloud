@@ -1,3 +1,9 @@
+cloud_vars:
+  app: "{{ env.discourse.containers.default | combine(env.discourse.containers.app) }}"
+  db_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.db_master) }}"
+  redis_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.redis_master) }}"
+  web: "{{ env.discourse.containers.default | combine(env.discourse.containers.web) }}"
+
 cloud:
   digital_ocean:
     layer1:
@@ -15,18 +21,34 @@ cloud:
           - "host"
           - "worker"
           - "web"
-          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1)  }}"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_app"
           main_do_instance_name: "discourse-app"
           containers:
-          - "app"
+          - name: "app"
+            vars:
+          # - name: "db"
+          #   vars:
+          # - name: "redis"
+          #   vars:
+          # - name: "web_only"
+          #   vars:
+          #     db_host: "db"
+          #     redis_host: "redis"
+          #     links:
+          #     - link:
+          #         name: db
+          #         alias: db
+          #     - link:
+          #         name: redis
+          #         alias: redis
 
     layer2:
-      db:
+      db_master:
         role: "main_do"
         vars:
-          main_do_instance_type: "db"
+          main_do_instance_type: "db_master"
           main_do_title: "DB Instance"
           main_do_hosts_file: "{{ env.discourse.hosts_file }}"
           main_do_api_token: "{{ env.discourse.cloud_api_token }}"
@@ -36,18 +58,19 @@ cloud:
           main_do_tags: 
           - "host"
           - "worker"
-          - "postgre"
-          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1)  }}"
+          - "postgres"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
-          main_do_instance_group: "discourse_db"
-          main_do_instance_name: "discourse-db"
+          main_do_instance_group: "discourse_db_master"
+          main_do_instance_name: "discourse-db-master"
           containers:
-          - "db"
+          - name: "db"
+            vars:
 
-      redis:
+      redis_master:
         role: "main_do"
         vars:
-          main_do_instance_type: "redis"
+          main_do_instance_type: "redis_master"
           main_do_title: "Redis Instance"
           main_do_hosts_file: "{{ env.discourse.hosts_file }}"
           main_do_api_token: "{{ env.discourse.cloud_api_token }}"
@@ -58,12 +81,13 @@ cloud:
           - "host"
           - "worker"
           - "redis"
-          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1)  }}"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
-          main_do_instance_group: "discourse_redis"
-          main_do_instance_name: "discourse-redis"
+          main_do_instance_group: "discourse_redis_master"
+          main_do_instance_name: "discourse-redis-master"
           containers:
-          - "redis"
+          - name: "redis"
+            vars:
 
       web:
         role: "main_do"
@@ -79,9 +103,16 @@ cloud:
           - "host"
           - "worker"
           - "web"
-          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1)  }}"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_web"
           main_do_instance_name: "discourse-web"
           containers:
-          - "web_only"
+          - name: "web_only"
+            dynamic_host_vars:
+            - name: "db_host"
+              group: "discourse_db_master"
+              count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+            - name: "redis_host"
+              group: "discourse_redis_master"
+              count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"

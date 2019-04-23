@@ -1,6 +1,9 @@
-discourse_env_location: "/tmp/main/discourse"
-discourse_repo: "https://github.com/discourse/discourse_docker.git"
+discourse_setup_location: "files/discourse"
+discourse_docker_repo: "https://github.com/discourse/discourse_docker.git"
 discourse_version: "HEAD"
 discourse_location: "/var/discourse"
 discourse_user: "host"
 discourse_group: "host"
+
+discourse_templates_containers_path: "roles/discourse/templates"
+discourse_container_host_count: 0

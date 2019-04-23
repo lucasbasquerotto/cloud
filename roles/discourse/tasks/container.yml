@@ -1,0 +1,40 @@
+- name: "discourse - {{ discourse_container_name }} - dynamic vars"
+  set_fact: { "discourse_container_vars[{{ item.name }}]": "{{ hostvars[groups[item.group][(discourse_container_index * item.count / discourse_max_host_count) | int]] }}" }
+  loop: "{{ discourse_container_dynamic_host_vars }}"
+
+- debug:
+    var: discourse_container_vars
+
+- name: "discourse - {{ discourse_container_name }} - all vars"
+  set_fact: { "discourse_var_{{ item.key }}": "{{ item.value }}" }
+  loop: "{{ discourse_container_vars | dict2items }}"
+
+- name: discourse - {{ discourse_container_name }} - transfer template file"
+  become: yes
+  template: 
+    src: "{{ discourse_templates_containers_path }}/{{ discourse_container_name }}.yml"
+    dest: "{{ discourse_location }}/containers/{{ discourse_container_name }}.yml"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0600
+  vars:
+    hostname: "{{ discourse_var_hostname | default(omit) }}"
+    email: "{{ discourse_var_email | default(omit) }}"
+    smtp_address: "{{ discourse_var_smtp_address | default(omit) }}"
+    smtp_port: "{{ discourse_var_smtp_port | default(omit) }}"
+    smtp_user_name: "{{ discourse_var_smtp_user_name | default(omit) }}"
+    smtp_pass: "{{ discourse_var_smtp_pass | default(omit) }}"
+    ssl_prefix: "{{ discourse_var_ssl_prefix | default(omit) }}"
+    cf_prefix: "{{ discourse_var_cf_prefix | default(omit) }}"
+    ssl_email: "{{ discourse_var_ssl_email | default(omit) }}"
+    cdn_prefix: "{{ discourse_var_cdn_prefix | default(omit) }}"
+    cdn_url: "//{{ discourse_var_cdn_url | default(omit) }}"
+    lang: "{{ discourse_var_lang | default(omit) }}"
+    workers: "{{ discourse_var_workers | default(omit) }}"
+    text_search_config: "{{ discourse_var_text_search_config | default(omit) }}"
+    db_shared_buffers: "{{ discourse_var_db_shared_buffers | default(omit) }}"
+    http_port: "{{ discourse_var_http_port | default(omit) }}"
+    https_port: "{{ discourse_var_https_port | default(omit) }}"
+    db_pass: "{{ discourse_var_db_pass | default(omit) }}"
+    db_host: "{{ discourse_var_db_host | default(omit) }}"
+    redis_host: "{{ discourse_var_redis_host | default(omit) }}"
