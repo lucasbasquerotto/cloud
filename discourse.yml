@@ -122,12 +122,6 @@
   - files/settings/discourse/settings.yml
   gather_facts: no
   tasks:
-  - debug:
-      msg: "title: {{ main_item.vars[main_item.role + '_instance_group'] }}"
-    loop: "{{ settings.cloud.values() | list }}"
-    loop_control:
-      loop_var: main_item
-
   - include_role: 
       name: 'discourse'
     vars:
@@ -137,47 +131,7 @@
     loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
-
-###############################################################################
-
-- name: Play 06 - Prepare machine
-  hosts: discourse_web
-  tags:
-  - never
-  - init
-  - bootstrap
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
-  gather_facts: no  
-  tasks:  
-  - name: Gathering facts
-    setup: 
-
-  - name: 'prepare the machine (setup)'
-    become: yes
-    include_role: 
-      name: long_run
-    vars:
-      long_run_title: 'prepare the machine (setup)'
-      long_run_become: yes
-      long_run_output_path: '{{ main.env_location }}'
-      long_run_output_file: 'setup.log'
-      long_run_path: '{{ main.location }}'
-      long_run_cmd: './discourse-custom-setup'
-
-  # - name: create the directory "{{ main.env_location }}"
-  #   file:
-  #     path: "{{ main.env_location }}"
-  #     state: directory
-  #     mode: 0755
-
-  # - name: prepare the machine
-  #   become: yes
-  #   shell: "./discourse-custom-setup > {{ main.env_location }}/output.log"
-  #   args:
-  #     chdir: "{{ main.location }}"
+      label: "{{ main_item.vars[main_item.role + '_instance_group'] }}"
 
 ###############################################################################
 
