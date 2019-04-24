@@ -21,7 +21,7 @@
   set_fact: { "discourse_var_{{ item.key }}": "{{ item.value }}" }
   loop: "{{ discourse_container_vars | dict2items }}"
 
-- name: discourse - {{ discourse_container_name }} - transfer template file"
+- name: "discourse - {{ discourse_container_name }} - transfer template file"
   become: yes
   template: 
     src: "{{ discourse_templates_containers_path }}/{{ discourse_container_name }}.yml"
