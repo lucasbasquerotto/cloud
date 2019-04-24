@@ -124,7 +124,10 @@
   tasks:
   - debug:
       msg: "title: {{ main_item.vars[main_item.role + '_instance_group'] }}"
-      
+    loop: "{{ settings.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+
   - include_role: 
       name: 'discourse'
     vars:
