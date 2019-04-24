@@ -1,8 +1,8 @@
 cloud_vars:
-  app: "{{ env.discourse.containers.default | combine(env.discourse.containers.app) }}"
-  db_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.db_master) }}"
-  redis_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.redis_master) }}"
-  web: "{{ env.discourse.containers.default | combine(env.discourse.containers.web) }}"
+  app: "{{ env.discourse.containers.default | combine(env.discourse.containers.app) | default({}) }}"
+  db_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.db_master) | default({}) }}"
+  redis_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.redis_master) | default({}) }}"
+  web: "{{ env.discourse.containers.default | combine(env.discourse.containers.web) | default({}) }}"
 
 cloud:
   digital_ocean:
@@ -27,7 +27,7 @@ cloud:
           main_do_instance_name: "discourse-app"
           containers:
           - name: "app"
-            vars: {}
+            vars: "{{ cloud_vars.app }}"
           # - name: "db"
           #   vars:
           # - name: "redis"
@@ -65,7 +65,7 @@ cloud:
           main_do_instance_name: "discourse-db-master"
           containers:
           - name: "db"
-            vars: {}
+            vars: "{{ cloud_vars.db_master }}"
 
       redis_master:
         role: "main_do"
@@ -87,7 +87,7 @@ cloud:
           main_do_instance_name: "discourse-redis-master"
           containers:
           - name: "redis"
-            vars: {}
+            vars: "{{ cloud_vars.redis_master }}"
 
       web:
         role: "main_do"
@@ -116,4 +116,4 @@ cloud:
             - name: "redis_host"
               group: "discourse_redis_master"
               count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-            vars: {}
+            vars: "{{ cloud_vars.web }}"
