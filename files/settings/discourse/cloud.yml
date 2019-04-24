@@ -116,3 +116,4 @@ cloud:
             - name: "redis_host"
               group: "discourse_redis_master"
               count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+            vars:

@@ -25,6 +25,7 @@
   include_tasks: 'container.yml'
   vars:
     discourse_container_name: "{{ discourse_item.name }}"
+    discourse_container_vars: "{{ discourse_item.vars | default({}) }}"
     discourse_container_dynamic_host_vars: "{{ discourse_item.dynamic_host_vars | default([]) }}"
     discourse_container_index: "{{ discourse_index }}"
     discourse_container_host_count: "{{ discourse_host_count }}"
