@@ -1,6 +1,6 @@
 - name: "discourse - {{ discourse_container_name }} - dynamic vars"
   set_fact: { "discourse_container_vars[{{ item.name }}]": "{{ hostvars[groups[item.group][(discourse_container_index * item.count / discourse_max_host_count) | int]] }}" }
-  loop: "{{ discourse_container_dynamic_host_vars | default([]) }}"
+  loop: "{{ discourse_container_dynamic_host_vars }}"
 
 - debug:
     var: discourse_container_vars

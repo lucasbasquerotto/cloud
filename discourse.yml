@@ -56,7 +56,7 @@
       name: 'discourse'
     vars:
       discourse_containers: "{{ main_item.vars.containers }}"
-      discourse_container_host_count: "{{ main_item.vars[main_item.name + '_instance_count'] }}"
+      discourse_host_count: "{{ main_item.vars[main_item.name + '_instance_count'] }}"
     loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
