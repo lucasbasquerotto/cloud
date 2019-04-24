@@ -27,7 +27,7 @@ cloud:
           main_do_instance_name: "discourse-app"
           containers:
           - name: "app"
-            vars:
+            vars: {}
           # - name: "db"
           #   vars:
           # - name: "redis"
@@ -65,7 +65,7 @@ cloud:
           main_do_instance_name: "discourse-db-master"
           containers:
           - name: "db"
-            vars:
+            vars: {}
 
       redis_master:
         role: "main_do"
@@ -87,7 +87,7 @@ cloud:
           main_do_instance_name: "discourse-redis-master"
           containers:
           - name: "redis"
-            vars:
+            vars: {}
 
       web:
         role: "main_do"
@@ -116,4 +116,4 @@ cloud:
             - name: "redis_host"
               group: "discourse_redis_master"
               count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-            vars:
+            vars: {}
