@@ -125,7 +125,7 @@
   - include_role: 
       name: 'discourse'
     vars:
-      discourse_title: "discourse - {{ main_item.vars[main_item.name + '_instance_group' }}"
+      discourse_title: "discourse - {{ main_item.vars[main_item.name + '_instance_group'] }}"
       discourse_containers: "{{ main_item.vars.containers }}"
       discourse_host_count: "{{ main_item.vars[main_item.name + '_instance_count'] }}"
     loop: "{{ settings.cloud.values() | list }}"
