@@ -21,7 +21,7 @@
     group: "{{ discourse_group }}"
     mode: 0755
  
-- name: copy discourse configuration .yml file(s) setting the parameters"
+- name: copy discourse configuration .yml file(s) setting the parameters
   include_tasks: 'container.yml'
   vars:
     discourse_container_name: "{{ discourse_item.name }}"
