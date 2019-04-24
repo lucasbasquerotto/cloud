@@ -1,10 +1,10 @@
-- name: ensure docker is running
+- name: "{{ discourse_title }} - ensure docker is running"
   become: yes
   service: 
     name: docker
     state: restarted
 
-- name: download docker git repo
+- name: "{{ discourse_title }} - download docker git repo"
   become: yes
   git:
     repo: "{{ discourse_docker_repo }}"
@@ -12,7 +12,7 @@
     dest: "{{ discourse_location }}"
     update: yes
    
-- name: copy discourse setup file
+- name: "{{ discourse_title }} - copy discourse setup file"
   become: yes
   copy: 
     src: "{{ discourse_setup_location }}/setup.sh"
@@ -21,7 +21,7 @@
     group: "{{ discourse_group }}"
     mode: 0755
  
-- name: copy discourse configuration .yml file(s) setting the parameters
+- name: "{{ discourse_title }} - copy discourse configuration .yml file(s) setting the parameters"
   include_tasks: 'container.yml'
   vars:
     discourse_container_name: "{{ discourse_item.name }}"
@@ -33,3 +33,15 @@
   loop_control:
     index_var: discourse_index
     loop_var: "discourse_item"
+
+- name: "{{ discourse_title }} - prepare the machine (setup)"
+  become: yes
+  include_role: 
+    name: long_run
+  vars:
+    long_run_title: '{{ discourse_title }} - prepare the machine (setup)'
+    long_run_become: "{{ discourse_setup_become }}"
+    long_run_output_path: "{{ discourse_setup_output_path }}"
+    long_run_output_file: "{{ discourse_setup_output_file }}"
+    long_run_path: "{{ discourse_location }}"
+    long_run_cmd: "{{ discourse_setup_cmd }}"
