@@ -1,8 +1,8 @@
 cloud_vars:
-  app: "{{ env.discourse.containers.default | combine(env.discourse.containers.app) | default({}) }}"
-  db_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.db_master) | default({}) }}"
-  redis_master: "{{ env.discourse.containers.default | combine(env.discourse.containers.redis_master) | default({}) }}"
-  web: "{{ env.discourse.containers.default | combine(env.discourse.containers.web) | default({}) }}"
+  app: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.app | default({})) }}"
+  db_master: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.db_master | default({})) }}"
+  redis_master: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.redis_master | default({})) }}"
+  web: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.web | default({})) }}"
 
 cloud:
   digital_ocean:
