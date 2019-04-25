@@ -3,6 +3,7 @@
   tags:
   - init
   - setup
+  - cloud
   vars_files: 
   - /home/main/env/env.yml
   - files/settings/discourse/cloud.yml
@@ -17,6 +18,8 @@
     vars: 
       main_cloud_role: '{{ main_item.role }}'
       main_cloud_vars: '{{ main_item.vars }}'
+      main_cloud_extra: '{{ main_item.extra }}'
+      main_cloud_dns: '{{ settings.dns }}'
     loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
@@ -28,6 +31,7 @@
   tags:
   - init
   - setup
+  - test
   vars_files: 
   - /home/main/env/env.yml
   - files/settings/discourse/cloud.yml
@@ -42,70 +46,29 @@
 - name: Play 03 - Update the DNS records
   hosts: discourse_web
   tags:
-  - never
   - init
-  - prepare
+  - setup
   - dns
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env }}"
   gather_facts: no  
   tasks:  
   - name: Gathering facts
     setup: 
-    
-  - name: set the discourse hosts vars
-    set_fact: 
-      main_web_host: "{{ hostvars[groups[main.discourse.web.group][0]] }}"
 
-  - name: update the discourse site DNS A record
-    cloudflare_dns:
-      zone: "{{ main.hostname }}"
-      proxied: "{{ main.discourse.cf_proxied }}"
-      type: A
-      solo: true
-      record: "{{ main.discourse.subdomain }}"
-      value: "{{ main_web_host.ansible_host }}"
-      account_email: "{{ main.discourse.cloudflare_email }}"
-      account_api_token: "{{ main.discourse.cloudflare_token }}"
-
-  - name: update the discourse DNS email records
-    cloudflare_dns:
-      zone: "{{ main.hostname }}"
-      proxied: no
-      type: CNAME
-      solo: true
-      record: "{{ main_item.host }}"
-      value: "{{ main_item.value }}"
-      account_email: "{{ main.discourse.cloudflare_email }}"
-      account_api_token: "{{ main.discourse.cloudflare_token }}"
-    loop: "{{ main.discourse.smtp_dns }}"
+  - name: "create the static dns records"
+    include_role: 
+      name: "main_dns"
+    vars: 
+      main_dns_title: "create the static dns records - {{ main_item.0.title }}"
+      main_dns_role: "{{ main_item.0.role }}"
+      main_dns_credentials: "{{ main_item.0.credentials }}"
+      main_dns_zone: "{{ main_item.0.zone }}"
+      main_dns_type: "{{ main_item.0.type }}"
+      main_dns_record: "{{ main_item.1.record }}"
+      main_dns_value: "{{ main_item.1.value }}"
+    loop: "{{ settings.dns.static | subelements('list') }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.host }}"
-
-  # - name: update the discourse DNS CDN record
-  #   cloudflare_dns:
-  #     zone: "{{ main.hostname }}"
-  #     proxied: "{{ main.discourse.cdn_proxied }}"
-  #     solo: true
-  #     type: A
-  #     record: "{{ main.discourse.cdn_subdomain }}"
-  #     value: "{{ main_web_host.ansible_host }}"
-  #     account_email: "{{ main.discourse.cloudflare_email }}"
-  #     account_api_token: "{{ main.discourse.cloudflare_token }}"
-
-  # - name: update the discourse DNS CDN record
-  #   cloudflare_dns:
-  #     zone: "{{ main.hostname }}"
-  #     proxied: "yes"
-  #     solo: true
-  #     type: CNAME
-  #     record: "{{ main.discourse.cdn_subdomain }}"
-  #     value: "{{ main.discourse.subdomain }}.{{ main.hostname }}"
-  #     account_email: "{{ main.discourse.cloudflare_email }}"
-  #     account_api_token: "{{ main.discourse.cloudflare_token }}"
+      label: "{{ main_item.1.record }}"
 
 ###############################################################################
 

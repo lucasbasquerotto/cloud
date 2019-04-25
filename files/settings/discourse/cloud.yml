@@ -4,117 +4,126 @@ cloud_vars:
   redis_master: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.redis_master | default({})) }}"
   web: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.web | default({})) }}"
 
+cloud_dns:
+  cloudflare:
+    role: "dns_cloudflare"
+    zone: "{{ env.discourse.zone }}"
+    credentials:
+      account_email: "{{ env.discourse.cloudflare_email }}"
+      account_api_token: "{{ env.discourse.cloudflare_token }}"
+    main_record: "{{ env.discourse.domain }}"
+    static:
+      - title: "smtp dns records"
+        type: "CNAME"
+        list: "{{ env.discourse.smtp_dns | default([]) }}"
+
 cloud:
-  main:
-    digital_ocean:
-      layer1:
-        app:
-          role: "main_do"
-          vars:
-            main_do_instance_type: "app"
-            main_do_title: "App Instance"
-            main_do_hosts_file: "{{ env.discourse.hosts_file }}"
-            main_do_api_token: "{{ env.discourse.cloud_api_token }}"
-            main_do_host_user: "{{ env.discourse.cloud_host_user }}"
-            main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
-            main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-            main_do_tags: 
-            - "host"
-            - "worker"
-            - "web"
-            main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-            main_do_instance_max: 1
-            main_do_instance_group: "discourse_app"
-            main_do_instance_name: "discourse-app"
-            containers:
-            - name: "app"
-              vars: "{{ cloud_vars.app }}"
-            # - name: "db"
-            #   vars:
-            # - name: "redis"
-            #   vars:
-            # - name: "web_only"
-            #   vars:
-            #     db_host: "db"
-            #     redis_host: "redis"
-            #     links:
-            #     - link:
-            #         name: db
-            #         alias: db
-            #     - link:
-            #         name: redis
-            #         alias: redis
+  digital_ocean:
+    layer1:
+      app:
+        role: "main_do"
+        vars:
+          main_do_instance_type: "app"
+          main_do_title: "App Instance"
+          main_do_hosts_file: "{{ env.discourse.hosts_file }}"
+          main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+          main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+          main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+          main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags: 
+          - "host"
+          - "worker"
+          - "web"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_max: 1
+          main_do_instance_group: "discourse_app"
+          main_do_instance_name: "discourse-app"
+          containers:
+          - name: "app"
+            vars: "{{ cloud_vars.app }}"
+        extra:
+          dmz: "{{ true | bool }}"
+          load_balance: "{{ false | bool }}"
 
-      layer2:
-        db_master:
-          role: "main_do"
-          vars:
-            main_do_instance_type: "db_master"
-            main_do_title: "DB Instance"
-            main_do_hosts_file: "{{ env.discourse.hosts_file }}"
-            main_do_api_token: "{{ env.discourse.cloud_api_token }}"
-            main_do_host_user: "{{ env.discourse.cloud_host_user }}"
-            main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
-            main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-            main_do_tags: 
-            - "host"
-            - "worker"
-            - "postgres"
-            main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-            main_do_instance_max: 1
-            main_do_instance_group: "discourse_db_master"
-            main_do_instance_name: "discourse-db-master"
-            containers:
-            - name: "db"
-              vars: "{{ cloud_vars.db_master }}"
+    layer2:
+      db_master:
+        role: "main_do"
+        vars:
+          main_do_instance_type: "db_master"
+          main_do_title: "DB Instance"
+          main_do_hosts_file: "{{ env.discourse.hosts_file }}"
+          main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+          main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+          main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+          main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags: 
+          - "host"
+          - "worker"
+          - "postgres"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_max: 1
+          main_do_instance_group: "discourse_db_master"
+          main_do_instance_name: "discourse-db-master"
+          containers:
+          - name: "db"
+            vars: "{{ cloud_vars.db_master }}"
+        extra:
+          dmz: "{{ false | bool }}"
+          load_balance: "{{ false | bool }}"
 
-        redis_master:
-          role: "main_do"
-          vars:
-            main_do_instance_type: "redis_master"
-            main_do_title: "Redis Instance"
-            main_do_hosts_file: "{{ env.discourse.hosts_file }}"
-            main_do_api_token: "{{ env.discourse.cloud_api_token }}"
-            main_do_host_user: "{{ env.discourse.cloud_host_user }}"
-            main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
-            main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-            main_do_tags: 
-            - "host"
-            - "worker"
-            - "redis"
-            main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-            main_do_instance_max: 1
-            main_do_instance_group: "discourse_redis_master"
-            main_do_instance_name: "discourse-redis-master"
-            containers:
-            - name: "redis"
-              vars: "{{ cloud_vars.redis_master }}"
+      redis_master:
+        role: "main_do"
+        vars:
+          main_do_instance_type: "redis_master"
+          main_do_title: "Redis Instance"
+          main_do_hosts_file: "{{ env.discourse.hosts_file }}"
+          main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+          main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+          main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+          main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags: 
+          - "host"
+          - "worker"
+          - "redis"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_max: 1
+          main_do_instance_group: "discourse_redis_master"
+          main_do_instance_name: "discourse-redis-master"
+          containers:
+          - name: "redis"
+            vars: "{{ cloud_vars.redis_master }}"
+        extra:
+          dmz: "{{ false | bool }}"
+          load_balance: "{{ false | bool }}"
 
-        web:
-          role: "main_do"
-          vars:
-            main_do_instance_type: "web"
-            main_do_title: "Web Instance"
-            main_do_hosts_file: "{{ env.discourse.hosts_file }}"
-            main_do_api_token: "{{ env.discourse.cloud_api_token }}"
-            main_do_host_user: "{{ env.discourse.cloud_host_user }}"
-            main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
-            main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-            main_do_tags: 
-            - "host"
-            - "worker"
-            - "web"
-            main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-            main_do_instance_max: 1
-            main_do_instance_group: "discourse_web"
-            main_do_instance_name: "discourse-web"
-            containers:
-            - name: "web_only"
-              dynamic_host_vars:
-              - name: "db_host"
-                group: "discourse_db_master"
-                count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-              - name: "redis_host"
-                group: "discourse_redis_master"
-                count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
-              vars: "{{ cloud_vars.web }}"
+      web:
+        role: "main_do"
+        vars:
+          main_do_instance_type: "web"
+          main_do_title: "Web Instance"
+          main_do_hosts_file: "{{ env.discourse.hosts_file }}"
+          main_do_api_token: "{{ env.discourse.cloud_api_token }}"
+          main_do_host_user: "{{ env.discourse.cloud_host_user }}"
+          main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
+          main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags: 
+          - "host"
+          - "worker"
+          - "web"
+          main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_max: 1
+          main_do_instance_group: "discourse_web"
+          main_do_instance_name: "discourse-web"
+          containers:
+          - name: "web_only"
+            dynamic_host_vars:
+            - name: "db_host"
+              group: "discourse_db_master"
+              count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+            - name: "redis_host"
+              group: "discourse_redis_master"
+              count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
+            vars: "{{ cloud_vars.web }}"
+        extra:
+          dmz: "{{ true | bool }}"
+          load_balance: "{{ false | bool }}"
