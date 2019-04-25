@@ -48,7 +48,7 @@
     name: "main_dns"
   vars: 
     main_dns_title: "{{ main_cloud_title }} - main dns"
-    main_dns_role: "{{ main_cloud_dns.role }}"
+    main_dns_task: "{{ main_cloud_dns.task }}"
     main_dns_credentials: "{{ main_cloud_dns.credentials }}"
     main_dns_zone: "{{ main_cloud_dns.zone }}"
     main_dns_type: "A"

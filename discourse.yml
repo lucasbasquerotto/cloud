@@ -59,7 +59,7 @@
       name: "main_dns"
     vars: 
       main_dns_title: "create the static dns records - {{ main_item.0.title }}"
-      main_dns_role: "{{ main_item.0.role }}"
+      main_dns_task: "{{ main_item.0.task }}"
       main_dns_credentials: "{{ main_item.0.credentials }}"
       main_dns_zone: "{{ main_item.0.zone }}"
       main_dns_type: "{{ main_item.0.type }}"

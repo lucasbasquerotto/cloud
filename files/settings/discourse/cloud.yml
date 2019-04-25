@@ -6,16 +6,16 @@ cloud_vars:
 
 cloud_dns:
   cloudflare:
-    role: "dns_cloudflare"
+    task: "cloudflare_dns"
     zone: "{{ env.discourse.zone }}"
     credentials:
       account_email: "{{ env.discourse.cloudflare_email }}"
       account_api_token: "{{ env.discourse.cloudflare_token }}"
     main_record: "{{ env.discourse.domain }}"
     static:
-      - title: "smtp dns records"
-        type: "CNAME"
-        list: "{{ env.discourse.smtp_dns | default([]) }}"
+    - title: "smtp dns records"
+      type: "CNAME"
+      list: "{{ env.discourse.smtp_dns | default([]) }}"
 
 cloud:
   digital_ocean:
