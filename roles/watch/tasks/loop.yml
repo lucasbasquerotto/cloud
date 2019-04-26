@@ -25,6 +25,7 @@
   - name: '[{{ watch_title }}] - {{ watch_file }}'
     debug:
       var: watch_output
+    tags: [print_action]
 
   vars:
     watch_output: '{{ watch_tail.stdout_lines|default([]) }}'
