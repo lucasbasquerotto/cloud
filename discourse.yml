@@ -27,7 +27,7 @@
 ###############################################################################
 
 - name: Play 02 - Wait for hosts to be ready
-  hosts: host
+  hosts: discourse
   tags:
   - init
   - setup
@@ -77,7 +77,7 @@
 ###############################################################################
 
 - name: Play 04 - Prepare the hosts
-  hosts: host
+  hosts: discourse
   tags:
   - never
   - init
@@ -102,8 +102,8 @@
 
 ###############################################################################
 
-- name: Play 07 - Build and run
-  hosts: discourse_web
+- name: Play 05 - Build and run
+  hosts: discourse
   tags:
   - never
   - init
@@ -111,70 +111,27 @@
   - run
   vars_files: 
   - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
+  - files/settings/discourse/cloud.yml
+  - files/settings/discourse/settings.yml
   gather_facts: no  
   tasks:  
   - name: Gathering facts
     setup: 
 
   - name: '(re)build and (re)start discourse'
-    become: yes
     include_role: 
       name: long_run
     vars:
-      long_run_title: '(re)build and (re)start discourse - {{ main_item }}'
+      long_run_title: '(re)build and (re)start discourse - {{ main_item.1.name }}'
       long_run_become: yes
-      long_run_output_path: '{{ main.env_location }}'
-      long_run_output_file: '{{ main_item }}.log'
-      long_run_path: '{{ main.location }}'
-      long_run_cmd: './launcher rebuild {{ main_item }}'
-    loop: "{{ main.containers }}"
+      long_run_output_path: '{{ settings.long_run_output_path }}'
+      long_run_output_file: '{{ main_item.1.name }}.log'
+      long_run_path: '{{ settings.long_run_path }}'
+      long_run_cmd: './launcher rebuild {{ main_item.1.name }}'
+    loop: "{{ settings.cloud.values() | subelements('vars.containers') }}"
     loop_control:
       loop_var: main_item
-
-  # - name: create the directory "{{ main.env_location }}"
-  #   file:
-  #     path: "{{ main.env_location }}"
-  #     state: directory
-  #     mode: 0755
-
-  # - name: set the shell inner command var
-  #   set_fact: 
-  #     inner_cmd_list: []
-
-  # - name: set the shell inner command var
-  #   set_fact: 
-  #     inner_cmd_list: "{{ inner_cmd_list + [' ./launcher rebuild ' + main_item + ';'] }}"
-  #   loop: "{{ main.containers }}"
-  #   loop_control:
-  #     loop_var: main_item
-
-  # - name: set the shell command var
-  #   set_fact: 
-  #     main_cmd: "{ {{ inner_cmd_list | join('') }} } &> {{ main.env_location }}/output.log" 
-
-  # - debug:
-  #     msg: 'main_cmd="{{ main_cmd }}"'
-
-  # - name: (re)build and (re)start discourse
-  #   become: yes
-  #   shell: "{{ main_cmd }}"
-  #   args:
-  #     chdir: "{{ main.location }}"
-  #   async: 3600
-  #   poll: 0
-  #   register: 'setup'
-
-  # - name: 'Watch {{ main.env_location }}/output.log until the rebuild finishes.'
-  #   become: yes
-  #   include_role:
-  #     name: 'watch'
-  #   vars:
-  #     watch_file: '{{ main.env_location }}/output.log'
-  #     watch_job: 'setup'
-  #     watch_timeout: 3600
-  #     watch_poll: 5
+      label: "{{ main_item.1.name }}"
 
 ###############################################################################
 
@@ -204,31 +161,6 @@
       long_run_output_file: '{{ main.web_container }}.log'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher bootstrap {{ main.web_container }}'
-
-  # - name: create the directory "{{ main.env_location }}"
-  #   file:
-  #     path: "{{ main.env_location }}"
-  #     state: directory
-  #     mode: 0755
-
-  # - name: bootstrap discourse web container
-  #   become: yes
-  #   shell: "./launcher bootstrap {{ main.web_container }} > {{ main.env_location }}/output.log 2&>1"
-  #   args:
-  #     chdir: "{{ main.location }}"
-  #   async: 3600
-  #   poll: 0
-  #   register: 'setup'
-
-  # - name: 'Watch {{ main.env_location }}/output.log until the web bootstrap finishes'
-  #   become: yes
-  #   include_role:
-  #     name: 'watch'
-  #   vars:
-  #     watch_file: '{{ main.env_location }}/output.log'
-  #     watch_job: 'setup'
-  #     watch_timeout: 3600
-  #     watch_poll: 5
 
 ###############################################################################
 
@@ -292,37 +224,6 @@
       long_run_output_file: '{{ main_item }}.log'
       long_run_path: '{{ main.location }}'
       long_run_cmd: './launcher stop {{ main_item }}'
-    loop: "{{ main.containers[::-1] }}"
-    loop_control:
-      loop_var: main_item
-
-  # - name: stop discourse
-  #   become: yes
-  #   command: "./launcher stop app"
-  #   args:
-  #     chdir: "{{ main.location }}"
-
-###############################################################################
-
-- name: Play 10.1 - Stop Discourse (Test)
-  hosts: discourse_web
-  tags:
-  - never
-  - stop2
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
-  gather_facts: no  
-  tasks:  
-  - name: Gathering facts
-    setup: 
-
-  - name: stop discourse
-    become: yes
-    command: "./launcher stop {{ main_item }}"
-    args:
-      chdir: "{{ main.location }}"
     loop: "{{ main.containers[::-1] }}"
     loop_control:
       loop_var: main_item

@@ -2,3 +2,6 @@ settings:
   # env: "{{ env.discourse }}"
   cloud: "{{ cloud[env.discourse.cloud_type][env.discourse.cloud_layer] }}"
   dns: "{{ cloud_dns[env.discourse.dns_type] }}"
+
+  long_run_path: '{{ env.discourse.long_run_path | default('/var/discourse') }}'
+  long_run_output_path: "{{ env.discourse.long_run_output_path | default('/tmp/main/discourse') }}"
