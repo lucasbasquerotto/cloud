@@ -49,6 +49,10 @@
   - init
   - setup
   - dns
+  vars_files: 
+  - /home/main/env/env.yml
+  - files/settings/discourse/cloud.yml
+  - files/settings/discourse/settings.yml
   gather_facts: no  
   tasks:  
   - name: Gathering facts
