@@ -44,7 +44,7 @@
 ###############################################################################
 
 - name: Play 03 - Update the DNS records
-  hosts: discourse_web
+  hosts: main
   tags:
   - init
   - setup
