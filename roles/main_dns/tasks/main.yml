@@ -1,12 +1,2 @@
 - name: "{{ main_dns_title }} - {{ main_dns_type }} record"
   include_tasks: "{{ main_dns_task }}.yml"
-  vars: 
-    main_dns_credentials: "{{ main_item.0.credentials }}"
-    main_dns_zone: "{{ main_item.0.zone }}"
-    main_dns_type: "{{ main_item.0.type }}"
-    main_dns_record: "{{ main_item.1.record }}"
-    main_dns_value: "{{ main_item.1.value }}"
-  loop: "{{ settings.dns.static | subelements('list') }}"
-  loop_control:
-    loop_var: main_item
-    label: "{{ main_item.1.record }}"
