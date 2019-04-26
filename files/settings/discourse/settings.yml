@@ -1,4 +1,4 @@
 settings:
-  env: "{{ env.discourse }}"
+  # env: "{{ env.discourse }}"
   cloud: "{{ cloud[env.discourse.cloud_type][env.discourse.cloud_layer] }}"
   dns: "{{ cloud_dns[env.discourse.dns_type] }}"

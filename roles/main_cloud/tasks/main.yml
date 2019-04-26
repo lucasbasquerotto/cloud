@@ -54,4 +54,4 @@
     main_dns_type: "A"
     main_dns_record: "{{ main_cloud_dns.main_record }}"
     main_dns_value: "{{ main_cloud_active_hosts[0].ip_address }}"
-  when: (main_cloud_active_hosts | length == 1) and main_cloud.extra.dmz
+  when: (main_cloud_active_hosts | length == 1) and main_cloud_extra.dmz
