@@ -1,3 +1,12 @@
+- name: '{{ main_do_title }} - create tags'
+  digital_ocean_tag:
+    api_token: "{{ main_do_api_token }}"
+    name: "{{ main_do_item }}"
+    state: "present"
+  loop: "{{ main_do_all_tags | default([]) }}"
+  loop_control:
+    loop_var: main_do_item
+
 - name: "{{ main_do_title }} - create firewalls"
   digital_ocean_firewall:
     api_token: "{{ main_do_api_token }}"
@@ -7,7 +16,7 @@
     tags: "{{ main_do_item.tags | default([]) }}"
     inbound_rules: "{{ main_do_item.inbound_rules | default([]) }}"
     outbound_rules: "{{ main_do_item.outbound_rules | default([]) }}"
-  loop: "{{ main_do_tags_details | default([]) }}"
+  loop: "{{ main_do_all_firewalls | default([]) }}"
   loop_control:
     loop_var: main_do_item
     label: "{{ main_do_item.name }}"

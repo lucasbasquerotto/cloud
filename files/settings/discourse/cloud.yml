@@ -7,6 +7,13 @@ cloud_vars:
 cloud_aux:
   digital_ocean:
     tags:
+    - "main"
+    - "host"
+    - "dmz"
+    - "web"
+    - "redis"
+    - "postgres"
+    firewalls:
     - name: "host"
       tags: ["host"]
       inbound_rules:
@@ -31,16 +38,16 @@ cloud_aux:
       - ports: "443"
         sources:
           tags: ["dmz"]
-    - name: "postgres"
-      tags: ["postgres"]
-      inbound_rules:
-      - ports: "5432"
-        sources:
-          tags: ["web"]
     - name: "redis"
       tags: ["redis"]
       inbound_rules:
       - ports: "6379"
+        sources:
+          tags: ["web"]
+    - name: "postgres"
+      tags: ["postgres"]
+      inbound_rules:
+      - ports: "5432"
         sources:
           tags: ["web"]
 
@@ -70,7 +77,8 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
           - "host"
           - "dmz"
@@ -96,7 +104,8 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
           - "host"
           - "postgres"
@@ -121,7 +130,8 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
           - "host"
           - "redis"
@@ -146,7 +156,8 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
-          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
+          main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
           - "host"
           - "web"
