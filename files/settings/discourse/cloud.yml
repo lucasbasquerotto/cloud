@@ -10,31 +10,31 @@ cloud_aux:
     - name: "host"
       tags: ["host"]
       inbound_rules:
-        ports: [22]
+      - ports: [22]
         sources:
           tags: ["main"]
     - name: "dmz"
       tags: ["dmz"]
       inbound_rules:
-        ports: [80, 443]
+      - ports: [80, 443]
         sources:
           addresses: ["0.0.0.0/0", "::/0"]
     - name: "web"
       tags: ["web"]
       inbound_rules:
-        ports: [80, 443]
+      - ports: [80, 443]
         sources:
           tags: ["dmz"]
     - name: "postgres"
       tags: ["postgres"]
       inbound_rules:
-        ports: [5432]
+      - ports: [5432]
         sources:
           tags: ["web"]
     - name: "redis"
       tags: ["redis"]
       inbound_rules:
-        ports: [6379]
+      - ports: [6379]
         sources:
           tags: ["web"]
 
