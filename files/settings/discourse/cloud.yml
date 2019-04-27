@@ -4,6 +4,40 @@ cloud_vars:
   redis_master: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.redis_master | default({})) }}"
   web: "{{ (env.discourse.containers.default | default({})) | combine(env.discourse.containers.web | default({})) }}"
 
+cloud_aux:
+  digital_ocean:
+    tags:
+    - name: "host"
+      tags: ["host"]
+      inbound_rules:
+        ports: [22]
+        sources:
+          tags: ["main"]
+    - name: "dmz"
+      tags: ["dmz"]
+      inbound_rules:
+        ports: [80, 443]
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
+    - name: "web"
+      tags: ["web"]
+      inbound_rules:
+        ports: [80, 443]
+        sources:
+          tags: ["dmz"]
+    - name: "postgres"
+      tags: ["postgres"]
+      inbound_rules:
+        ports: [5432]
+        sources:
+          tags: ["web"]
+    - name: "redis"
+      tags: ["redis"]
+      inbound_rules:
+        ports: [6379]
+        sources:
+          tags: ["web"]
+
 cloud_dns:
   cloudflare:
     task: "cloudflare_dns"
@@ -30,10 +64,10 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_tags: 
           - "host"
-          - "worker"
-          - "web"
+          - "dmz"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_app"
@@ -56,9 +90,9 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_tags: 
           - "host"
-          - "worker"
           - "postgres"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
@@ -81,9 +115,9 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_tags: 
           - "host"
-          - "worker"
           - "redis"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
@@ -106,10 +140,11 @@ cloud:
           main_do_host_user: "{{ env.discourse.cloud_host_user }}"
           main_do_host_pass: "{{ env.discourse.cloud_host_pass }}"
           main_do_ssh_public_keys: "{{ env.discourse.cloud_host_ssh_public_keys }}"
+          main_do_tags_details: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_tags: 
           - "host"
-          - "worker"
           - "web"
+          - "dmz"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_web"
