@@ -1,4 +1,4 @@
-- name: ""
+- name: "{{ main_do_title }} - create firewalls"
   digital_ocean_firewall:
     name: "{{ main_do_item.name }}"
     state: "present"
