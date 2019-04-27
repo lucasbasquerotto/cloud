@@ -22,15 +22,15 @@ cloud_aux:
           tags: ["main"]
       outbound_rules:
       - protocol: "tcp"
-        ports: "all"
+        ports: ""
         destinations:
           addresses: ["0.0.0.0/0", "::/0"]
       - protocol: "udp"
-        ports: "all"
+        ports: ""
         destinations:
           addresses: ["0.0.0.0/0", "::/0"]
       - protocol: "icmp"
-        ports: "all"
+        ports: ""
         destinations:
           addresses: ["0.0.0.0/0", "::/0"]
     - name: "dmz"
