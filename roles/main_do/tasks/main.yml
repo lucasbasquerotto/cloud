@@ -8,18 +8,18 @@
       protocol: "{{ (main_do_item.inbound_rules | default({})).protocol | default('tcp') }}"
       ports: "{{ (main_do_item.inbound_rules | default({})).ports | default([]) }}"
       sources:
-        addresses: "{{ ((main_do_item.inbound_rules | default({})).sources | default({}).addresses | default([]) }}"
-        droplet_ids: "{{ ((main_do_item.inbound_rules | default({})).sources | default({}).droplet_ids | default([]) }}"
-        load_balancer_uids: "{{ ((main_do_item.inbound_rules | default({})).sources | default({}).load_balancer_uids | default([]) }}"
-        tags: "{{ ((main_do_item.inbound_rules | default({})).sources | default({}).tags | default([]) }}"
+        addresses: "{{ (((main_do_item.inbound_rules | default({})).sources | default({})).addresses | default([]) }}"
+        droplet_ids: "{{ (((main_do_item.inbound_rules | default({})).sources | default({})).droplet_ids | default([]) }}"
+        load_balancer_uids: "{{ (((main_do_item.inbound_rules | default({})).sources | default({})).load_balancer_uids | default([]) }}"
+        tags: "{{ (((main_do_item.inbound_rules | default({})).sources | default({})).tags | default([]) }}"
     outbound_rules:
       protocol: "{{ (main_do_item.outbound_rules | default({})).protocol | default('tcp') }}"
       ports: "{{ (main_do_item.outbound_rules | default({})).ports | default([]) }}"
       destinations:
-        addresses: "{{ ((main_do_item.outbound_rules | default({})).destinations | default({}).addresses | default([]) }}"
-        droplet_ids: "{{ ((main_do_item.outbound_rules | default({})).destinations | default({}).droplet_ids | default([]) }}"
-        load_balancer_uids: "{{ ((main_do_item.outbound_rules | default({})).destinations | default({}).load_balancer_uids | default([]) }}"
-        tags: "{{ ((main_do_item.outbound_rules | default({})).destinations | default({}).tags | default([]) }}"
+        addresses: "{{ (((main_do_item.outbound_rules | default({})).destinations | default({})).addresses | default([]) }}"
+        droplet_ids: "{{ (((main_do_item.outbound_rules | default({})).destinations | default({})).droplet_ids | default([]) }}"
+        load_balancer_uids: "{{ (((main_do_item.outbound_rules | default({})).destinations | default({})).load_balancer_uids | default([]) }}"
+        tags: "{{ (((main_do_item.outbound_rules | default({})).destinations | default({})).tags | default([]) }}"
   loop: "{{ main_do_tags_details | default([]) }}"
   loop_control:
     loop_var: main_do_item
