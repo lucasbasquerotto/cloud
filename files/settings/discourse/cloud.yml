@@ -14,7 +14,7 @@ cloud_aux:
     - "redis"
     - "postgres"
     firewalls:
-    - name: "host"
+    - name: "ssh-internal"
       tags: ["host"]
       inbound_rules:
       - ports: "22"
