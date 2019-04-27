@@ -14,12 +14,25 @@ cloud_aux:
     - "redis"
     - "postgres"
     firewalls:
-    - name: "ssh-internal"
+    - name: "auto"
       tags: ["auto"]
       inbound_rules:
       - ports: "22"
         sources:
           tags: ["main"]
+      outbound_rules:
+      - protocol: "tcp"
+        ports: "all"
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
+      - protocol: "udp"
+        ports: "all"
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
+      - protocol: "icmp"
+        ports: "all"
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
     - name: "dmz"
       tags: ["dmz"]
       inbound_rules:
