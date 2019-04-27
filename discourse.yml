@@ -5,7 +5,7 @@
   - setup
   - cloud
   vars_files: 
-  - /home/main/env/env.yml
+  - "{{ env_file }}"
   - files/settings/discourse/cloud.yml
   - files/settings/discourse/settings.yml
   gather_facts: no  
@@ -33,7 +33,7 @@
   - setup
   - test
   vars_files: 
-  - /home/main/env/env.yml
+  - "{{ env_file }}"
   - files/settings/discourse/cloud.yml
   - files/settings/discourse/settings.yml
   gather_facts: no
@@ -50,7 +50,7 @@
   - setup
   - dns
   vars_files: 
-  - /home/main/env/env.yml
+  - "{{ env_file }}"
   - files/settings/discourse/cloud.yml
   - files/settings/discourse/settings.yml
   gather_facts: no  
@@ -84,7 +84,7 @@
   - prepare
   - prepare-hosts
   vars_files: 
-  - /home/main/env/env.yml
+  - "{{ env_file }}"
   - files/settings/discourse/cloud.yml
   - files/settings/discourse/settings.yml
   gather_facts: no
@@ -110,7 +110,7 @@
   - build
   - run
   vars_files: 
-  - /home/main/env/env.yml
+  - "{{ env_file }}"
   - files/settings/discourse/cloud.yml
   - files/settings/discourse/settings.yml
   gather_facts: no  
@@ -142,7 +142,7 @@
 #   - build-web
 #   - bootstrap-web
 #   vars_files: 
-#   - /home/main/env/env.yml
+#   - "{{ env_file }}"
 #   - files/settings/discourse/cloud.yml
 #   - files/settings/discourse/settings.yml
 #   gather_facts: no  
@@ -171,7 +171,7 @@
 #   - build-web
 #   - restart-web
 #   vars_files: 
-#   - /home/main/env/env.yml
+#   - "{{ env_file }}"
 #   - files/settings/discourse/cloud.yml
 #   - files/settings/discourse/settings.yml
 #   gather_facts: no  
@@ -205,7 +205,7 @@
 #   - never
 #   - stop
 #   vars_files: 
-#   - /home/main/env/env.yml
+#   - "{{ env_file }}"
 #   - files/settings/discourse/cloud.yml
 #   - files/settings/discourse/settings.yml
 #   gather_facts: no  
