@@ -1,5 +1,6 @@
 - name: "{{ main_do_title }} - create firewalls"
   digital_ocean_firewall:
+    api_token: "{{ main_do_api_token }}"
     name: "{{ main_do_item.name }}"
     state: "present"
     droplet_ids: "{{ main_do_item.droplet_ids | default([]) }}"
