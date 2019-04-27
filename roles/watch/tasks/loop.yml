@@ -8,6 +8,7 @@
   vars:
     job: '{{ lookup("vars", watch_job) }}'
   when: 'job.ansible_job_id is defined'
+  changed_when: false
 
 - name: '[{{ watch_title }}] - tail -n +{{ watch_lines }} {{ watch_file }}'
   become: "{{ watch_become }}"

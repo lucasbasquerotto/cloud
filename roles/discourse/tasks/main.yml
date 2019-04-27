@@ -2,7 +2,7 @@
   become: yes
   service: 
     name: docker
-    state: restarted
+    state: started
 
 - name: "{{ discourse_title }} - download docker git repo"
   become: yes
