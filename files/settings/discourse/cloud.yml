@@ -8,14 +8,14 @@ cloud_aux:
   digital_ocean:
     tags:
     - "main"
-    - "host"
+    - "auto"
     - "dmz"
     - "web"
     - "redis"
     - "postgres"
     firewalls:
     - name: "ssh-internal"
-      tags: ["host"]
+      tags: ["auto"]
       inbound_rules:
       - ports: "22"
         sources:
@@ -80,7 +80,7 @@ cloud:
           main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
-          - "host"
+          - "auto"
           - "dmz"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
@@ -107,7 +107,7 @@ cloud:
           main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
-          - "host"
+          - "auto"
           - "postgres"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
@@ -133,7 +133,7 @@ cloud:
           main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
-          - "host"
+          - "auto"
           - "redis"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
@@ -159,7 +159,7 @@ cloud:
           main_do_all_tags: "{{ cloud_aux.digital_ocean.tags }}"
           main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
-          - "host"
+          - "auto"
           - "web"
           - "dmz"
           main_do_instance_count: "{{ (env.discourse.shutdown == 1) | ternary(0, 1) }}"
