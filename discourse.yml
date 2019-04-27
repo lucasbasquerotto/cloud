@@ -135,95 +135,95 @@
 
 ###############################################################################
 
-- name: Play 08 - Bootstrap the web container
-  hosts: discourse_web
-  tags:
-  - never
-  - build-web
-  - bootstrap-web
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
-  gather_facts: no  
-  tasks:  
-  - name: Gathering facts
-    setup: 
+# - name: Play 08 - Bootstrap the web container
+#   hosts: discourse_web
+#   tags:
+#   - never
+#   - build-web
+#   - bootstrap-web
+#   vars_files: 
+#   - /home/main/env/env.yml
+#   - files/settings/discourse/cloud.yml
+#   - files/settings/discourse/settings.yml
+#   gather_facts: no  
+#   tasks:  
+#   - name: Gathering facts
+#     setup: 
 
-  - name: 'bootstrap discourse web container'
-    become: yes
-    include_role: 
-      name: long_run
-    vars:
-      long_run_title: 'bootstrap discourse web container'
-      long_run_become: yes
-      long_run_output_path: '{{ main.env_location }}'
-      long_run_output_file: '{{ main.web_container }}.log'
-      long_run_path: '{{ main.location }}'
-      long_run_cmd: './launcher bootstrap {{ main.web_container }}'
+#   - name: 'bootstrap discourse web container'
+#     become: yes
+#     include_role: 
+#       name: long_run
+#     vars:
+#       long_run_title: 'bootstrap discourse web container'
+#       long_run_become: yes
+#       long_run_output_path: '{{ main.env_location }}'
+#       long_run_output_file: '{{ main.web_container }}.log'
+#       long_run_path: '{{ main.location }}'
+#       long_run_cmd: './launcher bootstrap {{ main.web_container }}'
 
-###############################################################################
+# ###############################################################################
 
-- name: Play 09 - Restart the web container
-  hosts: discourse_web
-  tags:
-  - never
-  - build-web
-  - restart-web
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
-  gather_facts: no  
-  tasks:  
-  - name: Gathering facts
-    setup: 
+# - name: Play 09 - Restart the web container
+#   hosts: discourse_web
+#   tags:
+#   - never
+#   - build-web
+#   - restart-web
+#   vars_files: 
+#   - /home/main/env/env.yml
+#   - files/settings/discourse/cloud.yml
+#   - files/settings/discourse/settings.yml
+#   gather_facts: no  
+#   tasks:  
+#   - name: Gathering facts
+#     setup: 
 
-  - name: 'restart discourse web container'
-    become: yes
-    include_role: 
-      name: long_run
-    vars:
-      long_run_title: 'restart discourse web container - {{ main_item }}'
-      long_run_become: yes
-      long_run_output_path: '{{ main.env_location }}'
-      long_run_output_file: '{{ main.web_container }}.log'
-      long_run_path: '{{ main.location }}'
-      long_run_cmd: './launcher {{ main_item }} {{ main.web_container }}'
-    loop: 
-    - "stop"
-    - "destroy"
-    - "start"
-    loop_control:
-      loop_var: main_item
+#   - name: 'restart discourse web container'
+#     become: yes
+#     include_role: 
+#       name: long_run
+#     vars:
+#       long_run_title: 'restart discourse web container - {{ main_item }}'
+#       long_run_become: yes
+#       long_run_output_path: '{{ main.env_location }}'
+#       long_run_output_file: '{{ main.web_container }}.log'
+#       long_run_path: '{{ main.location }}'
+#       long_run_cmd: './launcher {{ main_item }} {{ main.web_container }}'
+#     loop: 
+#     - "stop"
+#     - "destroy"
+#     - "start"
+#     loop_control:
+#       loop_var: main_item
 
-###############################################################################
+# ###############################################################################
 
-- name: Play 10 - Stop Discourse
-  hosts: discourse_web
-  tags:
-  - never
-  - stop
-  vars_files: 
-  - /home/main/env/env.yml
-  vars:
-    main: "{{ env.discourse }}"
-  gather_facts: no  
-  tasks:  
-  - name: Gathering facts
-    setup: 
+# - name: Play 10 - Stop Discourse
+#   hosts: discourse_web
+#   tags:
+#   - never
+#   - stop
+#   vars_files: 
+#   - /home/main/env/env.yml
+#   - files/settings/discourse/cloud.yml
+#   - files/settings/discourse/settings.yml
+#   gather_facts: no  
+#   tasks:  
+#   - name: Gathering facts
+#     setup: 
 
-  - name: 'stop discourse containers'
-    become: yes
-    include_role: 
-      name: long_run
-    vars:
-      long_run_title: 'stop discourse containers - {{ main_item }}'
-      long_run_become: yes
-      long_run_output_path: '{{ main.env_location }}'
-      long_run_output_file: '{{ main_item }}.log'
-      long_run_path: '{{ main.location }}'
-      long_run_cmd: './launcher stop {{ main_item }}'
-    loop: "{{ main.containers[::-1] }}"
-    loop_control:
-      loop_var: main_item
+#   - name: 'stop discourse containers'
+#     become: yes
+#     include_role: 
+#       name: long_run
+#     vars:
+#       long_run_title: 'stop discourse containers - {{ main_item }}'
+#       long_run_become: yes
+#       long_run_output_path: '{{ main.env_location }}'
+#       long_run_output_file: '{{ main_item }}.log'
+#       long_run_path: '{{ main.location }}'
+#       long_run_cmd: './launcher stop {{ main_item }}'
+#     loop: "{{ main.containers[::-1] }}"
+#     loop_control:
+#       loop_var: main_item
