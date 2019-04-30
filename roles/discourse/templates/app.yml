@@ -22,29 +22,29 @@ templates:
 ## If you want Discourse to share a port with another webserver like Apache or nginx,
 ## see https://meta.discourse.org/t/17247 for details
 expose:
-  - "{{ http_port | default(80) }}:80"   # http
-  - "{{ https_port | default(443) }}:443" # https
+  - "{{ http_port | default(80, true) }}:80"   # http
+  - "{{ https_port | default(443, true) }}:443" # https
 
 params:
-  db_default_text_search_config: "{{ text_search_config | default('pg_catalog.english') }}"
+  db_default_text_search_config: "{{ text_search_config | default('pg_catalog.english', true) }}"
 
   ## Set db_shared_buffers to a max of 25% of the total memory.
   ## will be set automatically by bootstrap based on detected RAM, or you can override
-  db_shared_buffers: "{{ db_shared_buffers | default('128MB') }}"
+  db_shared_buffers: "{{ db_shared_buffers | default('128MB', true) }}"
 
   ## can improve sorting performance, but adds memory usage per-connection
   #db_work_mem: "40MB"
 
   ## Which Git revision should this container use? (default: tests-passed)
-  version: {{ version | default('tests-passed') }}
+  version: {{ version | default('tests-passed', true) }}
 
 env:
-  LANG: {{ lang | default('en_US.UTF-8') }}
-  DISCOURSE_DEFAULT_LOCALE: {{ locale | default('en') }}
+  LANG: {{ lang | default('en_US.UTF-8', true) }}
+  DISCOURSE_DEFAULT_LOCALE: {{ locale | default('en', true) }}
 
   ## How many concurrent web requests are supported? Depends on memory and CPU cores.
   ## will be set automatically by bootstrap based on detected CPUs, or you can override
-  UNICORN_WORKERS: {{ workers | default(2) }}
+  UNICORN_WORKERS: {{ workers | default(2, true) }}
 
   ## TODO: The domain name this Discourse instance will respond to
   ## Required. Discourse will not work with a bare IP number.
@@ -65,22 +65,22 @@ env:
   DISCOURSE_SMTP_PORT: {{ smtp_port }}
   DISCOURSE_SMTP_USER_NAME: {{ smtp_user_name }}
   DISCOURSE_SMTP_PASSWORD: "{{ smtp_pass }}"
-  DISCOURSE_SMTP_ENABLE_START_TLS: {{ start_tls | default('true') }}
+  DISCOURSE_SMTP_ENABLE_START_TLS: {{ start_tls | default('true', true) }}
 
   ## If you added the Lets Encrypt template, uncomment below to get a free SSL certificate
-  {{ use_ssl | ternary('', '#') }}LETSENCRYPT_ACCOUNT_EMAIL: {{ ssl_email | default('') }}
+  {{ use_ssl | ternary('', '#') }}LETSENCRYPT_ACCOUNT_EMAIL: {{ ssl_email | default('', true) }}
 
   ## The CDN address for this Discourse instance (configured to pull)
   ## see https://meta.discourse.org/t/14857 for details
-  {{ use_cdn | ternary('', '#') }}DISCOURSE_CDN_URL: {{ cdn_url | default('') }}
+  {{ use_cdn | ternary('', '#') }}DISCOURSE_CDN_URL: {{ cdn_url | default('', true) }}
 
 ## The Docker container is stateless; all data is stored in /shared
 volumes:
   - volume:
-      host: {{ host_shared_volume | default('/var/discourse/shared/app') }}
+      host: {{ host_shared_volume | default('/var/discourse/shared/app', true) }}
       guest: /shared
   - volume:
-      host: {{ host_log_volume | default('/var/discourse/shared/app/log/var-log') }}
+      host: {{ host_log_volume | default('/var/discourse/shared/app/log/var-log', true) }}
       guest: /var/log
 
 ## Plugins go here

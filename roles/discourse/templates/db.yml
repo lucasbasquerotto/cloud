@@ -3,31 +3,31 @@ templates:
   - "templates/postgres.template.yml"
 
 expose:
-  - "{{ db_port | default(5432) }}:5432"   # postgres
+  - "{{ db_port | default(5432, true) }}:5432"   # postgres
 
 # any extra arguments for Docker?
 # docker_args:
 
 params:
-  db_default_text_search_config: "{{ text_search_config | default('pg_catalog.english') }}"
+  db_default_text_search_config: "{{ text_search_config | default('pg_catalog.english', true) }}"
 
   ## Set db_shared_buffers to a max of 25% of the total memory.
   ## will be set automatically by bootstrap based on detected RAM, or you can override
-  db_shared_buffers: "{{ db_shared_buffers | default('128MB') }}"
+  db_shared_buffers: "{{ db_shared_buffers | default('128MB', true) }}"
 
   ## can improve sorting performance, but adds memory usage per-connection
   #db_work_mem: "40MB"
 
 env:
   # ensure locale exists in container, you may need to install it
-  LANG: {{ lang | default('en_US.UTF-8') }}
+  LANG: {{ lang | default('en_US.UTF-8', true) }}
 
 volumes:
   - volume:
-      host: {{ host_shared_volume | default('/var/discourse/shared/db') }}
+      host: {{ host_shared_volume | default('/var/discourse/shared/db', true) }}
       guest: /shared
   - volume:
-      host: {{ host_log_volume | default('/var/discourse/shared/db/log/var-log') }}
+      host: {{ host_log_volume | default('/var/discourse/shared/db/log/var-log, true') }}
       guest: /var/log
 
 # TODO: SOME_SECRET to a password for the discourse user

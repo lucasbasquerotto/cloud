@@ -2,18 +2,18 @@ templates:
   - "templates/redis.template.yml"
 
 expose:
-  - "{{ redis_port | default(6379) }}:6379"   # redis
+  - "{{ redis_port | default(6379, true) }}:6379"   # redis
 
 env:
-  LANG: {{ lang | default('en_US.UTF-8') }}
+  LANG: {{ lang | default('en_US.UTF-8', true) }}
 
 # any extra arguments for Docker?
 # docker_args:
 
 volumes:
   - volume:
-      host: {{ host_shared_volume | default('/var/discourse/shared/redis') }}
+      host: {{ host_shared_volume | default('/var/discourse/shared/redis', true) }}
       guest: /shared
   - volume:
-      host: {{ host_log_volume | default('/var/discourse/shared/redis/log/var-log') }}
+      host: {{ host_log_volume | default('/var/discourse/shared/redis/log/var-log', true) }}
       guest: /var/log

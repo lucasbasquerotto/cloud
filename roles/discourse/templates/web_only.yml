@@ -11,26 +11,26 @@ templates:
 ## If you want Discourse to share a port with another webserver like Apache or nginx,
 ## see https://meta.discourse.org/t/17247 for details
 expose:
-  - "{{ http_port | default(80) }}:80"   # http
-  - "{{ https_port | default(443) }}:443" # https
+  - "{{ http_port | default(80, true) }}:80"   # http
+  - "{{ https_port | default(443, true) }}:443" # https
 
 # Use 'links' key to link containers together, aka use Docker --link flag.
-links: "{{ links | default([]) }}"
+links: "{{ links | default([], true) }}"
 
 # any extra arguments for Docker?
 # docker_args:
 
 params:
   ## Which Git revision should this container use? (default: tests-passed)
-  version: {{ version | default('tests-passed') }}
+  version: {{ version | default('tests-passed', true) }}
 
 env:
-  LANG: {{ lang | default('en_US.UTF-8') }}
-  DISCOURSE_DEFAULT_LOCALE: {{ locale | default('en') }}
+  LANG: {{ lang | default('en_US.UTF-8', true) }}
+  DISCOURSE_DEFAULT_LOCALE: {{ locale | default('en', true) }}
 
   ## How many concurrent web requests are supported? Depends on memory and CPU cores.
   ## will be set automatically by bootstrap based on detected CPUs, or you can override
-  UNICORN_WORKERS: {{ workers | default(2) }}
+  UNICORN_WORKERS: {{ workers | default(2, true) }}
 
   ## TODO: The domain name this Discourse instance will respond to
   DISCOURSE_HOSTNAME: {{ hostname }}
@@ -50,14 +50,14 @@ env:
   DISCOURSE_SMTP_PORT: {{ smtp_port }}
   DISCOURSE_SMTP_USER_NAME: {{ smtp_user_name }}
   DISCOURSE_SMTP_PASSWORD: "{{ smtp_pass }}"
-  DISCOURSE_SMTP_ENABLE_START_TLS: {{ start_tls | default('true') }}
+  DISCOURSE_SMTP_ENABLE_START_TLS: {{ start_tls | default('true', true) }}
 
   ## If you added the Lets Encrypt template, uncomment below to get a free SSL certificate
-  {{ use_ssl | ternary('', '#') }}LETSENCRYPT_ACCOUNT_EMAIL: {{ ssl_email | default('') }}
+  {{ use_ssl | ternary('', '#') }}LETSENCRYPT_ACCOUNT_EMAIL: {{ ssl_email | default('', true) }}
 
   ## The http or https CDN address for this Discourse instance (configured to pull)
   ## see https://meta.discourse.org/t/14857 for details
-  {{ use_cdn | ternary('', '#') }}DISCOURSE_CDN_URL: {{ cdn_url | default('') }}
+  {{ use_cdn | ternary('', '#') }}DISCOURSE_CDN_URL: {{ cdn_url | default('', true) }}
 
   ## Connectivity to the databases
   DISCOURSE_DB_SOCKET: ''
@@ -72,10 +72,10 @@ env:
 
 volumes:
   - volume:
-      host: {{ host_shared_volume | default('/var/discourse/shared/web-only') }}
+      host: {{ host_shared_volume | default('/var/discourse/shared/web-only', true) }}
       guest: /shared
   - volume:
-      host: {{ host_log_volume | default('/var/discourse/shared/web-only/log/var-log') }}
+      host: {{ host_log_volume | default('/var/discourse/shared/web-only/log/var-log', true) }}
       guest: /var/log
 
 ## Plugins go here
