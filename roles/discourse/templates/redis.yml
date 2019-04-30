@@ -1,8 +1,11 @@
 templates:
   - "templates/redis.template.yml"
 
+expose:
+  - "{{ redis_port | default(6379) }}:6379"   # redis
+
 env:
-  LANG: {{ lang }}
+  LANG: {{ lang | default('en_US.UTF-8') }}
 
 # any extra arguments for Docker?
 # docker_args:

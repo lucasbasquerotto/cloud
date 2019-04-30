@@ -1,46 +1,36 @@
-# IMPORTANT: SET A SECRET PASSWORD in Postgres for the Discourse User
-# TODO: change SOME_SECRET in this template
-
 templates:
   - "templates/web.template.yml"
   - "templates/web.ratelimited.template.yml"
 ## Uncomment these two lines if you wish to add Lets Encrypt (https)
-  {{ ssl_prefix }}- "templates/web.ssl.template.yml"
-  {{ ssl_prefix }}- "templates/web.letsencrypt.ssl.template.yml"
+  {{ use_ssl | ternary('', '#') }}- "templates/web.ssl.template.yml"
+  {{ use_ssl | ternary('', '#') }}- "templates/web.letsencrypt.ssl.template.yml"
 ## Uncomment this line to add Cloudflare IPs to nginx
-  {{ cf_prefix }}- "templates/cloudflare.template.yml"
+  {{ use_cf | ternary('', '#') }}- "templates/cloudflare.template.yml"
 
 ## which TCP/IP ports should this container expose?
 ## If you want Discourse to share a port with another webserver like Apache or nginx,
 ## see https://meta.discourse.org/t/17247 for details
 expose:
-  - "{{ http_port }}:80"   # http
-  - "{{ https_port }}:443" # https
+  - "{{ http_port | default(80) }}:80"   # http
+  - "{{ https_port | default(443) }}:443" # https
 
 # Use 'links' key to link containers together, aka use Docker --link flag.
-links: "{{ links }}"
-# {{ use_links_prefix }}links:
-# {{ use_links_prefix }}  - link:
-# {{ use_links_prefix }}      name: db
-# {{ use_links_prefix }}      alias: db
-# {{ use_links_prefix }}  - link:
-# {{ use_links_prefix }}      name: redis
-# {{ use_links_prefix }}      alias: redis
+links: "{{ links | default([]) }}"
 
 # any extra arguments for Docker?
 # docker_args:
 
 params:
   ## Which Git revision should this container use? (default: tests-passed)
-  #version: tests-passed
+  version: {{ version | default('tests-passed') }}
 
 env:
-  LANG: {{ lang }}
-  # DISCOURSE_DEFAULT_LOCALE: en
+  LANG: {{ lang | default('en_US.UTF-8') }}
+  DISCOURSE_DEFAULT_LOCALE: {{ locale | default('en') }}
 
   ## How many concurrent web requests are supported? Depends on memory and CPU cores.
   ## will be set automatically by bootstrap based on detected CPUs, or you can override
-  UNICORN_WORKERS: {{ workers }}
+  UNICORN_WORKERS: {{ workers | default(2) }}
 
   ## TODO: The domain name this Discourse instance will respond to
   DISCOURSE_HOSTNAME: {{ hostname }}
@@ -60,12 +50,16 @@ env:
   DISCOURSE_SMTP_PORT: {{ smtp_port }}
   DISCOURSE_SMTP_USER_NAME: {{ smtp_user_name }}
   DISCOURSE_SMTP_PASSWORD: "{{ smtp_pass }}"
-  #DISCOURSE_SMTP_ENABLE_START_TLS: true           # (optional, default true)
+  DISCOURSE_SMTP_ENABLE_START_TLS: {{ start_tls | default('true') }}
 
   ## If you added the Lets Encrypt template, uncomment below to get a free SSL certificate
-  {{ ssl_prefix }}LETSENCRYPT_ACCOUNT_EMAIL: {{ ssl_email }}
+  {{ use_ssl | ternary('', '#') }}LETSENCRYPT_ACCOUNT_EMAIL: {{ ssl_email | default('') }}
 
-  ## TODO: configure connectivity to the databases
+  ## The http or https CDN address for this Discourse instance (configured to pull)
+  ## see https://meta.discourse.org/t/14857 for details
+  {{ use_cdn | ternary('', '#') }}DISCOURSE_CDN_URL: {{ cdn_url | default('') }}
+
+  ## Connectivity to the databases
   DISCOURSE_DB_SOCKET: ''
   #DISCOURSE_DB_USERNAME: discourse
   #DISCOURSE_DB_PORT: 5432
@@ -75,10 +69,6 @@ env:
   DISCOURSE_REDIS_HOST: {{ redis_host }}
   #DISCOURSE_REDIS_PORT: 6379
   DISCOURSE_REDIS_SLAVE_HOST: {{ redis_slave_host }}
-
-  ## The http or https CDN address for this Discourse instance (configured to pull)
-  ## see https://meta.discourse.org/t/14857 for details
-  {{ cdn_prefix }}DISCOURSE_CDN_URL: {{ cdn_url }}
 
 volumes:
   - volume:
@@ -96,7 +86,7 @@ hooks:
         cd: $home/plugins
         cmd:
           - git clone https://github.com/discourse/docker_manager.git
-          - git clone https://github.com/discourse/discourse-solved.git
+          #- git clone https://github.com/discourse/discourse-solved.git
 
 ## Remember, this is YAML syntax - you can only have one block with a name
 run:
