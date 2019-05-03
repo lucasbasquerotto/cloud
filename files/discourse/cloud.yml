@@ -104,7 +104,9 @@ cloud:
           main_do_instance_group: "discourse_app"
           main_do_instance_name: "discourse-app"
           containers:
-          - name: "app"
+          - name: "app-build"
+            vars: "{{ cloud_vars.app }}"
+          - name: "app-run"
             vars: "{{ cloud_vars.app }}"
         extra:
           dmz: "{{ true | bool }}"

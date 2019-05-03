@@ -20,6 +20,21 @@
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
     mode: 0755
+   
+- name: "{{ discourse_title }} - copy discourse templates files"
+  become: yes
+  copy: 
+    src: "{{ discourse_templates_location }}/{{ discourse_item }}"
+    dest: "{{ discourse_location }}/templates/{{ discourse_item }}"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0755
+  loop: 
+  - "web.template.validate.yml"
+  - "web.template.build.yml"
+  - "web.template.run.yml"
+  loop_control:
+    loop_var: "discourse_item"    
  
 - name: "{{ discourse_title }} - copy discourse configuration .yml file(s) setting the parameters"
   include_tasks: 'container.yml'
