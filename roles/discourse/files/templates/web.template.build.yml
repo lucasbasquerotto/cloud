@@ -120,11 +120,13 @@ run:
       hook: bundle_exec
       cmd:
         - su discourse -c 'bundle install --deployment --retry 3 --jobs 4 --verbose --without test development'
+        
   - exec:
       cd: $home
       hook: assets_precompile
       cmd:
         - su discourse -c 'bundle exec rake assets:precompile'
+
   - file:
      path: /usr/local/bin/discourse
      chmod: +x
