@@ -105,6 +105,7 @@ cloud:
           main_do_instance_name: "discourse-app"
           containers:
           - name: "app-build"
+            action: "bootstrap"
             vars: "{{ cloud_vars.app }}"
           - name: "app-run"
             vars: "{{ cloud_vars.app }}"

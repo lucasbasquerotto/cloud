@@ -125,7 +125,7 @@
       long_run_output_path: '{{ settings.long_run_output_path }}'
       long_run_output_file: '{{ main_item.1.name }}.log'
       long_run_path: '{{ settings.long_run_path }}'
-      long_run_cmd: './launcher rebuild {{ main_item.1.name }}'
+      long_run_cmd: './launcher {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
     loop: "{{ settings.cloud.values() | subelements('vars.containers') }}"
     loop_control:
       loop_var: main_item
