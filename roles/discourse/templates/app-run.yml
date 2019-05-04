@@ -12,8 +12,8 @@ base_image: "local_discourse/app-build"
 templates:
   - "templates/postgres.template.yml"
   - "templates/redis.template.yml"
-  - "templates/web.validate.template.yml"
-  - "templates/web.run.template.yml"
+  - "templates/web.template.validate.yml"
+  - "templates/web.template.run.yml"
   - "templates/web.ratelimited.template.yml"
 ## Uncomment these two lines if you wish to add Lets Encrypt (https)
   {{ use_ssl | ternary('', '#') }}- "templates/web.ssl.template.yml"

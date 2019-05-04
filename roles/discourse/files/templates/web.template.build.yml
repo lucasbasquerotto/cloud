@@ -1,3 +1,16 @@
+env:
+  # You can have redis on a different box
+  RAILS_ENV: 'production'
+  UNICORN_WORKERS: 3
+  UNICORN_SIDEKIQS: 1
+  # this gives us very good cache coverage, 96 -> 99
+  # in practice it is 1-2% perf improvement
+  RUBY_GLOBAL_METHOD_CACHE_SIZE: 131072
+  # stop heap doubling in size so aggressively, this conserves memory
+  RUBY_GC_HEAP_GROWTH_MAX_SLOTS: 40000
+  RUBY_GC_HEAP_INIT_SLOTS: 400000
+  RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR: 1.5
+  
 params:
   # SSH key is required for remote access into the container
   version: tests-passed
@@ -121,12 +134,6 @@ run:
       cmd:
         - su discourse -c 'bundle install --deployment --retry 3 --jobs 4 --verbose --without test development'
         
-  - exec:
-      cd: $home
-      hook: assets_precompile
-      cmd:
-        - su discourse -c 'bundle exec rake assets:precompile'
-
   - file:
      path: /usr/local/bin/discourse
      chmod: +x
