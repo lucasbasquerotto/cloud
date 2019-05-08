@@ -66,13 +66,13 @@ cloud_aux:
           tags: ["web"]
   
   docker:
-    image_owner: "{{ env.cloud_docker_image_owner }}"
-    image_name: "{{ env.cloud_docker_image_name }}"
+    image_owner: "{{ env.cloud_docker_image_owner | default('') }}"
+    image_name: "{{ env.cloud_docker_image_name | default('') }}"
     credentials: 
     - registry: "{{ env.cloud_docker_registry | default(None) }}"
-      username: "{{ env.cloud_docker_username }}"
-      password: "{{ env.cloud_docker_password }}"
-      reauthorize: "{{ env.cloud_docker_reauthorize | default(no) | bool }}"
+      username: "{{ env.cloud_docker_username | default('') }}"
+      password: "{{ env.cloud_docker_password | default('') }}"
+      reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"
 
 cloud_dns:
   cloudflare:
