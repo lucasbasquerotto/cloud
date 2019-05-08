@@ -1,0 +1,54 @@
+- set_fact: { "discourse_run_{{ discourse_run_item }}": "{{ discourse_run_vars[discourse_run_item]  }}" }
+  when: discourse_run_item is defined
+  loop: 
+  - "name"
+  - "action"
+  - "vars"
+  - "push"
+  - "push_credentials"
+  - "push_name"
+  - "push_tag"
+  - "output_path"
+  - "output_file"
+  - "path"
+  - "title"
+  loop_control:
+    loop_var: discourse_run_item
+
+- name: "{{ discourse_run_title }} - main action"
+  include_role: 
+    name: long_run
+  vars:
+    long_run_title: "{{ discourse_run_title }}"
+    long_run_become: yes
+    long_run_output_path: "{{ discourse_run_output_path }}"
+    long_run_output_file: "{{ discourse_run_output_file }}"
+    long_run_path: "{{ discourse_run_path }}"
+    long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+
+- set_fact: 
+    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
+
+- block:
+
+    - name: "{{ discourse_run_title }} - log into docker registry"
+      docker_login:
+        registry: "{{ discourse_run_push_credentials.registry }}"
+        username: "{{ discourse_run_push_credentials.username }}"
+        password: "{{ discourse_run_push_credentials.password }}"
+        reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
+
+    - set_fact: 
+        discourse_run_registry_prefix: "{{ discourse_run_push_credentials.registry | ternary(discourse_run_push_credentials.registry + '/', '') }}"
+        discourse_run_push_owner_prefix: "{{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}"
+
+    - set_fact:
+        discourse_run_push_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
+
+    - name: "{{ discourse_run_title }} - tag and push to docker registry"
+      docker_image:
+        name: "{{ discourse_run_name }}"
+        repository: "{{ discourse_run_push_repository }}"
+        push: yes
+
+  when: discourse_run_push_condition

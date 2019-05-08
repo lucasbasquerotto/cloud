@@ -13,6 +13,7 @@ cloud_aux:
     - "web"
     - "redis"
     - "postgres"
+    - "tmp"
     firewalls:
     - name: "auto"
       tags: ["auto"]
@@ -65,11 +66,13 @@ cloud_aux:
           tags: ["web"]
   
   docker:
+    image_owner: "{{ env.cloud_docker_image_owner }}"
+    image_name: "{{ env.cloud_docker_image_name }}"
     credentials: 
-    - docker_login_registry: "{{ env.docker_registry | default(omit) }}"
-      docker_login_username: "{{ env.docker_username }}"
-      docker_login_password: "{{ env.docker_password }}"
-      docker_login_reauthorize: "{{ env.docker_reauthorize | default(omit) }}"
+    - registry: "{{ env.cloud_docker_registry | default(None) }}"
+      username: "{{ env.cloud_docker_username }}"
+      password: "{{ env.cloud_docker_password }}"
+      reauthorize: "{{ env.cloud_docker_reauthorize | default(no) | bool }}"
 
 cloud_dns:
   cloudflare:
@@ -93,7 +96,7 @@ cloud:
       tmp:
         role: "main_do"
         vars:
-          main_do_instance_type: "main"
+          main_do_instance_type: "tmp"
           main_do_region: "{{ env.cloud_region | default('nyc1') }}"
           main_do_title: "Bootstrap Instance"
           main_do_hosts_file: "{{ inventory_file }}"
@@ -105,6 +108,7 @@ cloud:
           main_do_all_firewalls: "{{ cloud_aux.digital_ocean.firewalls }}"
           main_do_tags: 
           - "auto"
+          - "tmp"
           main_do_instance_count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_bootstrap"
@@ -116,10 +120,11 @@ cloud:
             vars: "{{ cloud_vars.app }}"
             push: "{{ true | bool }}"
             push_credentials: "{{ cloud_aux.docker.credentials }}"
-            push_name: "{{ cloud_aux.docker.image_name | default('discourse') }}"
+            push_owner: "{{ cloud_aux.docker.image_owner }}"
+            push_name: "{{ cloud_aux.docker.image_name }}"
             push_tag: "app-{{ env.cloud_docker_image_version.app }}"
         extra:
-          dmz: "{{ true | bool }}"
+          dmz: "{{ false | bool }}"
           load_balance: "{{ false | bool }}"
 
     layer1:
@@ -143,6 +148,7 @@ cloud:
           main_do_instance_max: 1
           main_do_instance_group: "discourse_app"
           main_do_instance_name: "discourse-app"
+          main_do_instance_tmp: "{{ false | bool }}"
           containers:
           - name: "app-build"
             action: "bootstrap"
@@ -174,6 +180,7 @@ cloud:
           main_do_instance_max: 1
           main_do_instance_group: "discourse_db_master"
           main_do_instance_name: "discourse-db-master"
+          main_do_instance_tmp: "{{ false | bool }}"
           containers:
           - name: "db"
             vars: "{{ cloud_vars.db_master }}"
@@ -201,6 +208,7 @@ cloud:
           main_do_instance_max: 1
           main_do_instance_group: "discourse_redis_master"
           main_do_instance_name: "discourse-redis-master"
+          main_do_instance_tmp: "{{ false | bool }}"
           containers:
           - name: "redis"
             vars: "{{ cloud_vars.redis_master }}"
@@ -229,6 +237,7 @@ cloud:
           main_do_instance_max: 1
           main_do_instance_group: "discourse_web"
           main_do_instance_name: "discourse-web"
+          main_do_instance_tmp: "{{ false | bool }}"
           containers:
           - name: "web_only"
             dynamic_host_vars:

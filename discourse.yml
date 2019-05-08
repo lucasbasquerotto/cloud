@@ -14,12 +14,12 @@
     setup: 
 
   - include_role: 
-      name: 'main_cloud'
+      name: "main_cloud"
     vars: 
-      main_cloud_role: '{{ main_item.role }}'
-      main_cloud_vars: '{{ main_item.vars }}'
-      main_cloud_extra: '{{ main_item.extra }}'
-      main_cloud_dns: '{{ settings.dns }}'
+      main_cloud_role: "{{ main_item.role }}"
+      main_cloud_vars: "{{ main_item.vars }}"
+      main_cloud_extra: "{{ main_item.extra }}"
+      main_cloud_dns: "{{ settings.dns }}"
     loop: "{{ settings.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
@@ -39,7 +39,7 @@
   gather_facts: no
   tasks:
   - include_role: 
-      name: 'host_test'
+      name: "host_test"
 
 ###############################################################################
 
@@ -89,7 +89,7 @@
   gather_facts: no
   tasks:
   - include_role: 
-      name: 'discourse'
+      name: "discourse"
     vars:
       discourse_title: "discourse - {{ main_item.vars[main_item.role + '_instance_group'] }}"
       discourse_containers: "{{ main_item.vars.containers }}"
@@ -116,20 +116,30 @@
   - name: Gathering facts
     setup: 
 
-  - name: '(re)build and (re)start discourse'
+  - name: '(re)build discourse'
     include_role: 
-      name: long_run
+      name: discourse_run
     vars:
-      long_run_title: '(re)build and (re)start discourse - {{ main_item.1.name }}'
-      long_run_become: yes
-      long_run_output_path: '{{ settings.long_run_output_path }}'
-      long_run_output_file: '{{ main_item.1.name }}.log'
-      long_run_path: '{{ settings.long_run_path }}'
-      long_run_cmd: './launcher {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
+      discourse_run_vars: "{{ main_item.1 }}"
     loop: "{{ settings.cloud.values() | subelements('vars.containers') }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.1.name }}"
+
+  # - name: '(re)build and (re)start discourse'
+  #   include_role: 
+  #     name: long_run
+  #   vars:
+  #     long_run_title: 'discourse - {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
+  #     long_run_become: yes
+  #     long_run_output_path: '{{ settings.long_run_output_path }}'
+  #     long_run_output_file: '{{ main_item.1.name }}.log'
+  #     long_run_path: '{{ settings.long_run_path }}'
+  #     long_run_cmd: './launcher {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
+  #   loop: "{{ settings.cloud.values() | subelements('vars.containers') }}"
+  #   loop_control:
+  #     loop_var: main_item
+  #     label: "{{ main_item.1.name }}"
 
 ###############################################################################
 

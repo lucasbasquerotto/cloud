@@ -24,6 +24,7 @@
     group: "{{ discourse_group }}"
     mode: 0600
   vars:
+    base_image: "{{ discourse_var_base_image | default('') }}"
     hostname: "{{ discourse_var_hostname | default('') }}"
     email: "{{ discourse_var_email | default('') }}"
     smtp_address: "{{ discourse_var_smtp_address | default('') }}"
