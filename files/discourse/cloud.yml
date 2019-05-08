@@ -122,7 +122,7 @@ cloud:
             push_credentials: "{{ cloud_aux.docker.credentials }}"
             push_owner: "{{ cloud_aux.docker.image_owner }}"
             push_name: "{{ cloud_aux.docker.image_name }}"
-            push_tag: "app-{{ env.cloud_docker_image_version.app }}"
+            push_tag: "app-{{ env.cloud_docker_image_version.app | default('') }}"
         extra:
           dmz: "{{ false | bool }}"
           load_balance: "{{ false | bool }}"
