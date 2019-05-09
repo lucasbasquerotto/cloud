@@ -3,7 +3,7 @@
   - { name: "name", default: "app" }
   - { name: "action", default: "rebuild" }
   - { name: "vars", default: {} }
-  - { name: "push", default: "{{ false | bool }}" }
+  - { name: "push", default: false }
   - { name: "push_credentials", default: "" }
   - { name: "push_name", default: "" }
   - { name: "push_tag", default: "" }
@@ -62,10 +62,10 @@
     - set_fact:
         discourse_run_push_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
 
-    - name: "{{ discourse_run_title }} - tag and push to docker registry"
-      docker_image:
-        name: "{{ discourse_run_name }}"
-        repository: "{{ discourse_run_push_repository }}"
-        push: yes
+    # - name: "{{ discourse_run_title }} - tag and push to docker registry"
+    #   docker_image:
+    #     name: "{{ discourse_run_name }}"
+    #     repository: "{{ discourse_run_push_repository }}"
+    #     push: yes
 
   when: discourse_run_push_condition
