@@ -1,12 +1,17 @@
-- name: Load environment vars
+- name: load environment vars
   include_vars:
     file: "{{ main_do_env_file }}"
     name: env
 
 - name: verify if platform match the one from the env variable
   fail:
-    file: "{{ env.platform }}"
-  name: (env.platform is not defined) or (env.platform != main_vars_platform)
+    msg: "platform is not defined in the environment vars"
+  name: env.platform is not defined
+
+- name: verify if platform match the one from the env variable
+  fail:
+    msg: "{{ main_vars_platform }} should be {{ env.platform }}"
+  name: env.platform != main_vars_platform
 
 - name: Load environment vars
   include_tasks:  "{{ env.platform }}.yml"
