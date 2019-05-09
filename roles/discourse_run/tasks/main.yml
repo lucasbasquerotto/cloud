@@ -59,6 +59,28 @@
 - debug: 
     var: discourse_run_vars[test_name]
 
+- set_fact: { "discourse_run_{{ test_name }}": "{{ discourse_run_vars[test_name] | default(test_default) }}" }
+
+- set_fact: 
+    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
+
+- debug: 
+    var: discourse_run_push_condition
+
+- debug: 
+    var: discourse_run_push
+
+- set_fact: { "discourse_run_push": "{{ discourse_run_vars['push'] | default(false) }}" }
+
+- set_fact: 
+    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
+
+- debug: 
+    var: discourse_run_push_condition
+
+- debug: 
+    var: discourse_run_push
+  
 - block:
 
     - name: "{{ discourse_run_title }} - log into docker registry"
