@@ -13,6 +13,5 @@
     msg: "{{ main_vars_platform }} should be {{ env.platform }}"
   when: env.platform != main_vars_platform
 
-- name: Load environment vars
-  include_tasks:  "{{ env.platform }}.yml"
+- include_tasks:  "{{ env.platform }}.yml"
   

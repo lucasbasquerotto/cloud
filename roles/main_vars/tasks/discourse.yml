@@ -1,12 +1,261 @@
-- name: Load cloud vars
-  include_vars:
-    file: "files/discourse/cloud.yml"
-    name: main_vars_cloud
+- set_fact:
+    main_vars_cloud_vars: "{{ env.container_vars | default({}) }}"
+
+- set_fact:
+    main_vars_cloud_aux:
+      digital_ocean:
+        tags:
+        - "main"
+        - "auto"
+        - "dmz"
+        - "web"
+        - "redis"
+        - "postgres"
+        - "tmp"
+        firewalls:
+        - name: "auto"
+          tags: ["auto"]
+          inbound_rules:
+          - ports: "22"
+            sources:
+              tags: ["main"]
+          outbound_rules:
+          - protocol: "tcp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - protocol: "udp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - protocol: "icmp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+        - name: "dmz"
+          tags: ["dmz"]
+          inbound_rules:
+          - ports: "80"
+            sources:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - ports: "443"
+            sources:
+              addresses: ["0.0.0.0/0", "::/0"]
+        - name: "web"
+          tags: ["web"]
+          inbound_rules:
+          - ports: "80"
+            sources:
+              tags: ["dmz"]
+          - ports: "443"
+            sources:
+              tags: ["dmz"]
+        - name: "redis"
+          tags: ["redis"]
+          inbound_rules:
+          - ports: "6379"
+            sources:
+              tags: ["web"]
+        - name: "postgres"
+          tags: ["postgres"]
+          inbound_rules:
+          - ports: "5432"
+            sources:
+              tags: ["web"]
+      
+      docker:
+        image_owner: "{{ env.cloud_docker_image_owner | default('') }}"
+        image_name: "{{ env.cloud_docker_image_name | default('') }}"
+        credentials: 
+        - registry: "{{ env.cloud_docker_registry | default(None) }}"
+          username: "{{ env.cloud_docker_username | default('') }}"
+          password: "{{ env.cloud_docker_password | default('') }}"
+          reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"
+
+- set_fact:
+    main_vars_cloud_dns:
+      cloudflare:
+        task: "cloudflare_dns"
+        zone: "{{ env.dns_zone }}"
+        credentials:
+          account_email: "{{ env.dns_cloudflare_email }}"
+          account_api_token: "{{ env.dns_cloudflare_token }}"
+        main_record: "{{ env.dns_record }}"
+        static:
+        - title: "DNS A records"
+          type: "A"
+          list: "{{ env.dns_a_list | default([]) }}"
+        - title: "DNS CNAME records"
+          type: "CNAME"
+          list: "{{ env.dns_cname_list | default([]) }}"
+
+- set_fact:
+    main_vars_cloud:
+      digital_ocean:
+        bootstrap:
+          tmp:
+            role: "main_do"
+            vars:
+              main_do_instance_type: "tmp"
+              main_do_region: "{{ env.cloud_region | default('nyc1') }}"
+              main_do_title: "Bootstrap Instance"
+              main_do_hosts_file: "{{ inventory_file }}"
+              main_do_api_token: "{{ env.cloud_api_token }}"
+              main_do_host_user: "{{ env.cloud_host_user }}"
+              main_do_host_pass: "{{ env.cloud_host_pass }}"
+              main_do_ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
+              main_do_all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
+              main_do_all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
+              main_do_tags: 
+              - "auto"
+              - "tmp"
+              main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+              main_do_instance_max: 1
+              main_do_instance_group: "discourse_bootstrap"
+              main_do_instance_name: "discourse-bootstrap"
+              main_do_instance_tmp: "{{ true | bool }}"
+              containers:
+              - name: "app-build"
+                action: "bootstrap"
+                vars: "{{ main_vars_cloud_vars }}"
+                push: "{{ true | bool }}"
+                push_credentials: "{{ main_vars_cloud_aux.docker.credentials }}"
+                push_owner: "{{ main_vars_cloud_aux.docker.image_owner }}"
+                push_name: "{{ main_vars_cloud_aux.docker.image_name }}"
+                push_tag: "app-{{ env.cloud_docker_image_version.app | default('') }}"
+            extra:
+              dmz: "{{ false | bool }}"
+              load_balance: "{{ false | bool }}"
+
+        layer1:
+          app:
+            role: "main_do"
+            vars:
+              main_do_instance_type: "app"
+              main_do_region: "{{ env.cloud_region | default('nyc1') }}"
+              main_do_title: "App Instance"
+              main_do_hosts_file: "{{ inventory_file }}"
+              main_do_api_token: "{{ env.cloud_api_token }}"
+              main_do_host_user: "{{ env.cloud_host_user }}"
+              main_do_host_pass: "{{ env.cloud_host_pass }}"
+              main_do_ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
+              main_do_all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
+              main_do_all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
+              main_do_tags: 
+              - "auto"
+              - "dmz"
+              main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+              main_do_instance_max: 1
+              main_do_instance_group: "discourse_app"
+              main_do_instance_name: "discourse-app"
+              main_do_instance_tmp: "{{ false | bool }}"
+              containers:
+              - name: "app-build"
+                action: "bootstrap"
+                vars: "{{ main_vars_cloud_vars }}"
+              - name: "app-run"
+                vars: "{{ main_vars_cloud_vars }}"
+            extra:
+              dmz: "{{ true | bool }}"
+              load_balance: "{{ false | bool }}"
+
+        layer2:
+          db_master:
+            role: "main_do"
+            vars:
+              main_do_instance_type: "db_master"
+              main_do_region: "{{ env.cloud_region | default('nyc1') }}"
+              main_do_title: "DB Instance"
+              main_do_hosts_file: "{{ inventory_file }}"
+              main_do_api_token: "{{ env.cloud_api_token }}"
+              main_do_host_user: "{{ env.cloud_host_user }}"
+              main_do_host_pass: "{{ env.cloud_host_pass }}"
+              main_do_ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
+              main_do_all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
+              main_do_all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
+              main_do_tags: 
+              - "auto"
+              - "postgres"
+              main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+              main_do_instance_max: 1
+              main_do_instance_group: "discourse_db_master"
+              main_do_instance_name: "discourse-db-master"
+              main_do_instance_tmp: "{{ false | bool }}"
+              containers:
+              - name: "db"
+                vars: "{{ main_vars_cloud_vars }}"
+            extra:
+              dmz: "{{ false | bool }}"
+              load_balance: "{{ false | bool }}"
+
+          redis_master:
+            role: "main_do"
+            vars:
+              main_do_instance_type: "redis_master"
+              main_do_region: "{{ env.cloud_region | default('nyc1') }}"
+              main_do_title: "Redis Instance"
+              main_do_hosts_file: "{{ inventory_file }}"
+              main_do_api_token: "{{ env.cloud_api_token }}"
+              main_do_host_user: "{{ env.cloud_host_user }}"
+              main_do_host_pass: "{{ env.cloud_host_pass }}"
+              main_do_ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
+              main_do_all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
+              main_do_all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
+              main_do_tags: 
+              - "auto"
+              - "redis"
+              main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+              main_do_instance_max: 1
+              main_do_instance_group: "discourse_redis_master"
+              main_do_instance_name: "discourse-redis-master"
+              main_do_instance_tmp: "{{ false | bool }}"
+              containers:
+              - name: "redis"
+                vars: "{{ main_vars_cloud_vars }}"
+            extra:
+              dmz: "{{ false | bool }}"
+              load_balance: "{{ false | bool }}"
+
+          web:
+            role: "main_do"
+            vars:
+              main_do_instance_type: "web"
+              main_do_region: "{{ env.cloud_region | default('nyc1') }}"
+              main_do_title: "Web Instance"
+              main_do_hosts_file: "{{ inventory_file }}"
+              main_do_api_token: "{{ env.cloud_api_token }}"
+              main_do_host_user: "{{ env.cloud_host_user }}"
+              main_do_host_pass: "{{ env.cloud_host_pass }}"
+              main_do_ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
+              main_do_all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
+              main_do_all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
+              main_do_tags: 
+              - "auto"
+              - "web"
+              - "dmz"
+              main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+              main_do_instance_max: 1
+              main_do_instance_group: "discourse_web"
+              main_do_instance_name: "discourse-web"
+              main_do_instance_tmp: "{{ false | bool }}"
+              containers:
+              - name: "web_only"
+                dynamic_host_vars:
+                - name: "db_host"
+                  group: "discourse_db_master"
+                  count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+                - name: "redis_host"
+                  group: "discourse_redis_master"
+                  count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
+                vars: "{{ main_vars_cloud_vars }}"
+            extra:
+              dmz: "{{ true | bool }}"
+              load_balance: "{{ false | bool }}"
 
 - set_fact:
     main_vars:
-      cloud: "{{ main_vars_cloud.cloud[env.cloud_type][env.cloud_layer] }}"
-      dns: "{{ main_vars_cloud.cloud_dns[env.dns_type] }}"
+      cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
+      dns: "{{ main_vars_cloud_dns[env.dns_type] }}"
 
 - debug:
     var: main_vars

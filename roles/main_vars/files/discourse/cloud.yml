@@ -1,8 +1,4 @@
-cloud_vars:
-  app: "{{ (env.containers.default | default({})) | combine(env.containers.app | default({})) }}"
-  db_master: "{{ (env.containers.default | default({})) | combine(env.containers.db_master | default({})) }}"
-  redis_master: "{{ (env.containers.default | default({})) | combine(env.containers.redis_master | default({})) }}"
-  web: "{{ (env.containers.default | default({})) | combine(env.containers.web | default({})) }}"
+cloud_vars: "{{ env.container_vars | default({}) }}"
 
 cloud_aux:
   digital_ocean:
@@ -117,7 +113,7 @@ cloud:
           containers:
           - name: "app-build"
             action: "bootstrap"
-            vars: "{{ cloud_vars.app }}"
+            vars: "{{ cloud_vars }}"
             push: "{{ true | bool }}"
             push_credentials: "{{ cloud_aux.docker.credentials }}"
             push_owner: "{{ cloud_aux.docker.image_owner }}"
@@ -152,9 +148,9 @@ cloud:
           containers:
           - name: "app-build"
             action: "bootstrap"
-            vars: "{{ cloud_vars.app }}"
+            vars: "{{ cloud_vars }}"
           - name: "app-run"
-            vars: "{{ cloud_vars.app }}"
+            vars: "{{ cloud_vars }}"
         extra:
           dmz: "{{ true | bool }}"
           load_balance: "{{ false | bool }}"
@@ -183,7 +179,7 @@ cloud:
           main_do_instance_tmp: "{{ false | bool }}"
           containers:
           - name: "db"
-            vars: "{{ cloud_vars.db_master }}"
+            vars: "{{ cloud_vars }}"
         extra:
           dmz: "{{ false | bool }}"
           load_balance: "{{ false | bool }}"
@@ -211,7 +207,7 @@ cloud:
           main_do_instance_tmp: "{{ false | bool }}"
           containers:
           - name: "redis"
-            vars: "{{ cloud_vars.redis_master }}"
+            vars: "{{ cloud_vars }}"
         extra:
           dmz: "{{ false | bool }}"
           load_balance: "{{ false | bool }}"
@@ -247,7 +243,7 @@ cloud:
             - name: "redis_host"
               group: "discourse_redis_master"
               count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
-            vars: "{{ cloud_vars.web }}"
+            vars: "{{ cloud_vars }}"
         extra:
           dmz: "{{ true | bool }}"
           load_balance: "{{ false | bool }}"
