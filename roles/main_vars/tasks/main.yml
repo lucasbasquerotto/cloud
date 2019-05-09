@@ -3,15 +3,21 @@
     file: "{{ main_vars_env_file }}"
     name: env
 
+- debug:
+    var: main_vars_env_file
+
+- debug:
+    var: env
+
 - name: verify if platform match the one from the env variable
   fail:
     msg: "platform is not defined in the environment vars"
-  name: env.platform is not defined
+  when: env.platform is not defined
 
 - name: verify if platform match the one from the env variable
   fail:
     msg: "{{ main_vars_platform }} should be {{ env.platform }}"
-  name: env.platform != main_vars_platform
+  when: env.platform != main_vars_platform
 
 - name: Load environment vars
   include_tasks:  "{{ env.platform }}.yml"
