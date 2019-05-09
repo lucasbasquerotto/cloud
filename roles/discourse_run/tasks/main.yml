@@ -41,10 +41,20 @@
     var: discourse_run_push
 
 - debug: 
-    var: discourse_run_vars['push'] | default(false)    
+    var: discourse_run_vars['push'] | default('false')    
 
 - debug: 
     var: discourse_run_vars['push']
+
+- set_fact: 
+    test_name: "push"
+    test_default: "false"
+
+- debug: 
+    var: discourse_run_vars[test_name] | default(test_default)    
+
+- debug: 
+    var: discourse_run_vars[test_name]
 
 - block:
 
