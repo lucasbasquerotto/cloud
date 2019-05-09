@@ -255,4 +255,4 @@
 - set_fact:
     main_vars:
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
-      dns: "{{ main_vars_dns[env.dns_type] }}"
+      dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
