@@ -6,14 +6,7 @@
   - cloud
   gather_facts: no  
   tasks:
-  - name: Gathering facts
-    setup: 
-
-  - include_role: 
-      name: "main_vars"
-    vars:
-      main_vars_env_file: "{{ env_file }}"
-      main_vars_platform: "discourse"
+  - include_tasks: "tasks/init_discourse.yml"
 
   - include_role: 
       name: "main_cloud"
@@ -37,12 +30,6 @@
   gather_facts: no
   tasks:
   - include_role: 
-      name: "main_vars"
-    vars:
-      main_vars_env_file: "{{ env_file }}"
-      main_vars_platform: "discourse"
-
-  - include_role: 
       name: "host_test"
 
 ###############################################################################
@@ -55,14 +42,7 @@
   - dns
   gather_facts: no  
   tasks:  
-  - name: Gathering facts
-    setup: 
-
-  - include_role: 
-      name: "main_vars"
-    vars:
-      main_vars_env_file: "{{ env_file }}"
-      main_vars_platform: "discourse"
+  - include_tasks: "tasks/init_discourse.yml"
 
   - name: "create the static dns records"
     include_role: 
@@ -90,14 +70,7 @@
   - prepare-hosts
   gather_facts: no
   tasks:
-  - name: Gathering facts
-    setup: 
-
-  - include_role: 
-      name: "main_vars"
-    vars:
-      main_vars_env_file: "{{ env_file }}"
-      main_vars_platform: "discourse"
+  - include_tasks: "tasks/init_discourse.yml"
 
   - include_role: 
       name: "discourse"
@@ -120,14 +93,7 @@
   - run
   gather_facts: no  
   tasks:
-  - name: Gathering facts
-    setup: 
-
-  - include_role: 
-      name: "main_vars"
-    vars:
-      main_vars_env_file: "{{ env_file }}"
-      main_vars_platform: "discourse"
+  - include_tasks: "tasks/init_discourse.yml"
 
   - name: '(re)build discourse'
     include_role: 
