@@ -2,11 +2,11 @@
     main_vars_dns:
       cloudflare:
         task: "cloudflare_dns"
-        zone: "{{ env.dns_zone }}"
+        zone: "{{ env.dns_zone | default('') }}"
         credentials:
-          account_email: "{{ env.dns_cloudflare_email }}"
-          account_api_token: "{{ env.dns_cloudflare_token }}"
-        main_record: "{{ env.dns_record }}"
+          account_email: "{{ env.dns_cloudflare_email | default('') }}"
+          account_api_token: "{{ env.dns_cloudflare_token | default('') }}"
+        main_record: "{{ env.dns_record | default('') }}"
         static:
         - title: "DNS A records"
           type: "A"
