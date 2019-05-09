@@ -1,5 +1,5 @@
 - set_fact: { "discourse_run_{{ discourse_run_item.name }}": "{{ discourse_run_vars[discourse_run_item.name] | default(discourse_run_item.default) }}" }
-  when: discourse_run_vars[discourse_run_item.name] is defined
+  when: "discourse_run_{{ discourse_run_item.name }} is not defined"
   loop: 
   - { name: "name", default: "app" }
   - { name: "action", default: "rebuild" }
