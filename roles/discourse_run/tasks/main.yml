@@ -3,7 +3,7 @@
   - { name: "name", default: "app" }
   - { name: "action", default: "rebuild" }
   - { name: "vars", default: {} }
-  - { name: "push", default: false }
+  - { name: "push", default: "false" }
   - { name: "push_credentials", default: "" }
   - { name: "push_name", default: "" }
   - { name: "push_tag", default: "" }
@@ -27,6 +27,9 @@
 #     long_run_output_file: "{{ discourse_run_output_file }}"
 #     long_run_path: "{{ discourse_run_path }}"
 #     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+
+- debug: 
+    var: discourse_run_title
 
 - set_fact: 
     discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
