@@ -77,10 +77,10 @@ cloud_aux:
 cloud_dns:
   cloudflare:
     task: "cloudflare_dns"
-    zone: "{{ env.zone }}"
+    zone: "{{ env.dns_zone }}"
     credentials:
-      account_email: "{{ env.cloudflare_email }}"
-      account_api_token: "{{ env.cloudflare_token }}"
+      account_email: "{{ env.dns_cloudflare_email }}"
+      account_api_token: "{{ env.dns_cloudflare_token }}"
     main_record: "{{ env.dns_record }}"
     static:
     - title: "DNS A records"
@@ -109,7 +109,7 @@ cloud:
           main_do_tags: 
           - "auto"
           - "tmp"
-          main_do_instance_count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_bootstrap"
           main_do_instance_name: "discourse-bootstrap"
@@ -144,7 +144,7 @@ cloud:
           main_do_tags: 
           - "auto"
           - "dmz"
-          main_do_instance_count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_app"
           main_do_instance_name: "discourse-app"
@@ -176,7 +176,7 @@ cloud:
           main_do_tags: 
           - "auto"
           - "postgres"
-          main_do_instance_count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_db_master"
           main_do_instance_name: "discourse-db-master"
@@ -204,7 +204,7 @@ cloud:
           main_do_tags: 
           - "auto"
           - "redis"
-          main_do_instance_count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_redis_master"
           main_do_instance_name: "discourse-redis-master"
@@ -233,7 +233,7 @@ cloud:
           - "auto"
           - "web"
           - "dmz"
-          main_do_instance_count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+          main_do_instance_count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
           main_do_instance_max: 1
           main_do_instance_group: "discourse_web"
           main_do_instance_name: "discourse-web"
@@ -243,10 +243,10 @@ cloud:
             dynamic_host_vars:
             - name: "db_host"
               group: "discourse_db_master"
-              count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+              count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
             - name: "redis_host"
               group: "discourse_redis_master"
-              count: "{{ (env.shutdown == 1) | ternary(0, 1) }}"
+              count: "{{ (env.cloud_shutdown == 1) | ternary(0, 1) }}"
             vars: "{{ cloud_vars.web }}"
         extra:
           dmz: "{{ true | bool }}"

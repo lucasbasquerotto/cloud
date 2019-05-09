@@ -4,14 +4,16 @@
   - init
   - setup
   - cloud
-  vars_files: 
-  - "{{ env_file }}"
-  - files/discourse/cloud.yml
-  - files/discourse/settings.yml
   gather_facts: no  
-  tasks:  
+  tasks:
   - name: Gathering facts
     setup: 
+
+  - include_role: 
+      name: "main_vars"
+    vars:
+      main_vars_env_file: "{{ env_file }}"
+      main_vars_platform: "discourse"
 
   - include_role: 
       name: "main_cloud"
@@ -19,8 +21,8 @@
       main_cloud_role: "{{ main_item.role }}"
       main_cloud_vars: "{{ main_item.vars }}"
       main_cloud_extra: "{{ main_item.extra }}"
-      main_cloud_dns: "{{ settings.dns }}"
-    loop: "{{ settings.cloud.values() | list }}"
+      main_cloud_dns: "{{ main_vars.dns }}"
+    loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
 
@@ -32,12 +34,14 @@
   - init
   - setup
   - test
-  vars_files: 
-  - "{{ env_file }}"
-  - files/discourse/cloud.yml
-  - files/discourse/settings.yml
   gather_facts: no
   tasks:
+  - include_role: 
+      name: "main_vars"
+    vars:
+      main_vars_env_file: "{{ env_file }}"
+      main_vars_platform: "discourse"
+
   - include_role: 
       name: "host_test"
 
@@ -49,27 +53,29 @@
   - init
   - setup
   - dns
-  vars_files: 
-  - "{{ env_file }}"
-  - files/discourse/cloud.yml
-  - files/discourse/settings.yml
   gather_facts: no  
   tasks:  
   - name: Gathering facts
     setup: 
+
+  - include_role: 
+      name: "main_vars"
+    vars:
+      main_vars_env_file: "{{ env_file }}"
+      main_vars_platform: "discourse"
 
   - name: "create the static dns records"
     include_role: 
       name: "main_dns"
     vars: 
       main_dns_title: "create the static dns records - {{ main_item.0.title }}"
-      main_dns_task: "{{ settings.dns.task }}"
-      main_dns_credentials: "{{ settings.dns.credentials }}"
-      main_dns_zone: "{{ settings.dns.zone }}"
+      main_dns_task: "{{ main_vars.dns.task }}"
+      main_dns_credentials: "{{ main_vars.dns.credentials }}"
+      main_dns_zone: "{{ main_vars.dns.zone }}"
       main_dns_type: "{{ main_item.0.type }}"
       main_dns_record: "{{ main_item.1.record }}"
       main_dns_value: "{{ main_item.1.value }}"
-    loop: "{{ settings.dns.static | subelements('list') }}"
+    loop: "{{ main_vars.dns.static | subelements('list') }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.1.record }}"
@@ -82,19 +88,24 @@
   - init
   - prepare
   - prepare-hosts
-  vars_files: 
-  - "{{ env_file }}"
-  - files/discourse/cloud.yml
-  - files/discourse/settings.yml
   gather_facts: no
   tasks:
+  - name: Gathering facts
+    setup: 
+
+  - include_role: 
+      name: "main_vars"
+    vars:
+      main_vars_env_file: "{{ env_file }}"
+      main_vars_platform: "discourse"
+
   - include_role: 
       name: "discourse"
     vars:
       discourse_title: "discourse - {{ main_item.vars[main_item.role + '_instance_group'] }}"
       discourse_containers: "{{ main_item.vars.containers }}"
       discourse_host_count: "{{ main_item.vars[main_item.role + '_instance_count'] }}"
-    loop: "{{ settings.cloud.values() | list }}"
+    loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.vars[main_item.role + '_instance_group'] }}"
@@ -107,21 +118,23 @@
   - init
   - build
   - run
-  vars_files: 
-  - "{{ env_file }}"
-  - files/discourse/cloud.yml
-  - files/discourse/settings.yml
   gather_facts: no  
-  tasks:  
+  tasks:
   - name: Gathering facts
     setup: 
+
+  - include_role: 
+      name: "main_vars"
+    vars:
+      main_vars_env_file: "{{ env_file }}"
+      main_vars_platform: "discourse"
 
   - name: '(re)build discourse'
     include_role: 
       name: discourse_run
     vars:
       discourse_run_vars: "{{ main_item.1 }}"
-    loop: "{{ settings.cloud.values() | subelements('vars.containers') }}"
+    loop: "{{ main_vars.cloud.values() | subelements('vars.containers') }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.1.name }}"
@@ -132,11 +145,11 @@
   #   vars:
   #     long_run_title: 'discourse - {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
   #     long_run_become: yes
-  #     long_run_output_path: '{{ settings.long_run_output_path }}'
+  #     long_run_output_path: '{{ main_vars.long_run_output_path }}'
   #     long_run_output_file: '{{ main_item.1.name }}.log'
-  #     long_run_path: '{{ settings.long_run_path }}'
+  #     long_run_path: '{{ main_vars.long_run_path }}'
   #     long_run_cmd: './launcher {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
-  #   loop: "{{ settings.cloud.values() | subelements('vars.containers') }}"
+  #   loop: "{{ main_vars.cloud.values() | subelements('vars.containers') }}"
   #   loop_control:
   #     loop_var: main_item
   #     label: "{{ main_item.1.name }}"
