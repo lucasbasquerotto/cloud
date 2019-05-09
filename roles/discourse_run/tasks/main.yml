@@ -32,6 +32,9 @@
 - set_fact: 
     discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
 
+debug: 
+  var: discourse_run_push_condition
+
 - block:
 
     - name: "{{ discourse_run_title }} - log into docker registry"
