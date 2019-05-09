@@ -36,6 +36,9 @@
     var: discourse_run_push_condition
 
 - debug: 
+    var: discourse_run_vars
+
+- debug: 
     var: discourse_run_push
 
 - block:
