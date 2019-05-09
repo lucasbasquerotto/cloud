@@ -12,21 +12,21 @@
   - { name: "path", default: "/var/discourse" }
   loop_control:
     loop_var: discourse_run_item
-    label: discourse_run_item.name
+    label: "{{ discourse_run_item.name }}"
     
 - set_fact: 
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
 
-- name: "{{ discourse_run_title }} - main action"
-  include_role: 
-    name: long_run
-  vars:
-    long_run_title: "{{ discourse_run_title }}"
-    long_run_become: yes
-    long_run_output_path: "{{ discourse_run_output_path }}"
-    long_run_output_file: "{{ discourse_run_output_file }}"
-    long_run_path: "{{ discourse_run_path }}"
-    long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+# - name: "{{ discourse_run_title }} - main action"
+#   include_role: 
+#     name: long_run
+#   vars:
+#     long_run_title: "{{ discourse_run_title }}"
+#     long_run_become: yes
+#     long_run_output_path: "{{ discourse_run_output_path }}"
+#     long_run_output_file: "{{ discourse_run_output_file }}"
+#     long_run_path: "{{ discourse_run_path }}"
+#     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
 
 - set_fact: 
     discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
@@ -39,6 +39,12 @@
 
 - debug: 
     var: discourse_run_push
+
+- debug: 
+    var: discourse_run_vars['push'] | default(false)    
+
+- debug: 
+    var: discourse_run_vars['push']
 
 - block:
 
