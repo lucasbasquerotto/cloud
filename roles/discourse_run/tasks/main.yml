@@ -35,6 +35,9 @@
 - debug: 
     var: discourse_run_push_condition
 
+- debug: 
+    var: discourse_run_push
+
 - block:
 
     - name: "{{ discourse_run_title }} - log into docker registry"
