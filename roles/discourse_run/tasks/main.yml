@@ -1,6 +1,3 @@
-- debug:
-    var: discourse_run_vars
-
 - set_fact: { "discourse_run_{{ discourse_run_item }}": "{{ discourse_run_vars[discourse_run_item] }}" }
   when: discourse_run_vars[discourse_run_item] is defined
   loop: 
