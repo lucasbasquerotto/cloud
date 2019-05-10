@@ -1,4 +1,5 @@
 discourse_run_vars: {}
+
 discourse_run_action: "rebuild"
 discourse_run_name: "app"
 discourse_run_output_path: "/tmp/main/discourse"
