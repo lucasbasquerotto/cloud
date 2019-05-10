@@ -54,8 +54,8 @@
   - name: "{{ discourse_run_title }} - tag and push to docker registry"
     become: yes
     docker_image:
-      name: "{{ discourse_run_name }}"
-      repository: "{{ discourse_run_push_repository }}"
+      name: "{{ discourse_run_push_repository }}"
+      repository: "{{ discourse_run_name }}"
       push: yes
 
   when: discourse_run_push_condition
