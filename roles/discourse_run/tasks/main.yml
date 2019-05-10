@@ -3,7 +3,7 @@
   - { name: "name", default: "app" }
   - { name: "action", default: "rebuild" }
 #   - { name: "vars", default: {} }
-#   - { name: "push", default: "false" }
+  - { name: "push", default: "false" }
 #   - { name: "push_credentials", default: {} }
   - { name: "push_name", default: "" }
   - { name: "push_tag", default: "" }
