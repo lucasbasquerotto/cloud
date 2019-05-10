@@ -49,11 +49,11 @@
       discourse_run_push_owner_prefix: "{{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}"
 
   - set_fact:
-      discourse_run_push_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}-error:{{ discourse_run_push_tag }}"
+      discourse_run_push_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
 
   - debug:
       var: discourse_run_push_repository
-      
+
   - name: "{{ discourse_run_title }} - tag and push to docker registry"
     become: yes
     docker_image:
