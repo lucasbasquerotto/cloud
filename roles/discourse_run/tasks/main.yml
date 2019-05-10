@@ -38,10 +38,10 @@
   - name: "{{ discourse_run_title }} - log into docker registry"
     become: yes
     docker_login:
+      registry: "{{ discourse_run_push_credentials.registry }}"
       username: "{{ discourse_run_push_credentials.username }}"
       password: "{{ discourse_run_push_credentials.password }}"
       reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
-    #   registry: "{{ discourse_run_push_credentials.registry }}"
 
   - set_fact: 
       discourse_run_registry_prefix: "{{ discourse_run_push_credentials.registry | ternary(discourse_run_push_credentials.registry + '/', '') }}"
