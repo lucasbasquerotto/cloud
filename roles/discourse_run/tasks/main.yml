@@ -34,10 +34,7 @@
     pip:
     - python-pip
     - python-setuptools 
-
-  - name: "{{ discourse_run_title }} - install the docker python module and other modules"
-    pip:
-      name: docker  
+    - docker  
 
   - name: "{{ discourse_run_title }} - log into docker registry"
     docker_login:
