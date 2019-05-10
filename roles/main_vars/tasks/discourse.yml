@@ -87,7 +87,7 @@
         - registry: "{{ env.cloud_docker_registry | default(None) }}"
           username: "{{ env.cloud_docker_username | default('') }}"
           password: "{{ env.cloud_docker_password | default('') }}"
-          reauthorize: "{{ env.cloud_docker_reauthorize | default(no) | bool }}"
+          reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"
 
 - set_fact:
     main_vars_cloud:
