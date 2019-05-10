@@ -33,8 +33,6 @@
   - name: "{{ discourse_run_title }} - install the docker python module and other modules"
     pip:
       name:
-      - python-pip
-      - python-setuptools 
       - docker  
 
   - name: "{{ discourse_run_title }} - log into docker registry"

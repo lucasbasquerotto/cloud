@@ -97,7 +97,7 @@ echo "Main logic finished" >> "/var/log/setup.log"
 echo "Preparing Ansible Host..." >> "/var/log/setup.log"
 
 apt update
-apt install -y python
+apt install -y python python-pip python-setuptools
 
 echo "Ansible Host Prepared" >> "/var/log/setup.log"
 
