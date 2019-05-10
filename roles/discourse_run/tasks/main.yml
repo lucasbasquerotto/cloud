@@ -15,6 +15,7 @@
     
 - set_fact: 
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
+    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
 
 # - name: "{{ discourse_run_title }} - main action"
 #   include_role: 
