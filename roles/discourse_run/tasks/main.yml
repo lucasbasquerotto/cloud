@@ -36,6 +36,7 @@
       - docker  
 
   - name: "{{ discourse_run_title }} - log into docker registry"
+    become: yes
     docker_login:
       username: "{{ discourse_run_push_credentials.username }}"
       password: "{{ discourse_run_push_credentials.password }}"
@@ -50,6 +51,7 @@
       discourse_run_push_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
 
   # - name: "{{ discourse_run_title }} - tag and push to docker registry"
+  #   become: yes
   #   docker_image:
   #     name: "{{ discourse_run_name }}"
   #     repository: "{{ discourse_run_push_repository }}"
