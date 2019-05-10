@@ -41,7 +41,7 @@
     docker_login:
     #   registry: "{{ discourse_run_push_credentials.registry }}"
       username: "{{ discourse_run_push_credentials.username }}"
-      password: "{{ discourse_run_push_credentials.password }}a"
+      password: "{{ discourse_run_push_credentials.password }}"
     #   reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
 
   - set_fact: 
