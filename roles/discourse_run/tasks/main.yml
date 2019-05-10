@@ -12,7 +12,7 @@
   - { name: "path", default: "/var/discourse" }
   loop_control:
     loop_var: discourse_run_item
-    label: "{{ discourse_run_item.name }}"
+    label: "{{ discourse_run_item.name }} - {{ discourse_run_vars[discourse_run_item.name] }}"
     
 - set_fact: 
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
