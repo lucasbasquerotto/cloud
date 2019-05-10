@@ -31,9 +31,9 @@
 - block:
 
   - name: "{{ discourse_run_title }} - install the docker python module and other modules"
+    become: yes
     pip:
-      name:
-      - docker  
+      name: docker  
 
   - name: "{{ discourse_run_title }} - log into docker registry"
     become: yes
