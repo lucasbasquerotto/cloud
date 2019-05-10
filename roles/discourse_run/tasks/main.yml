@@ -41,7 +41,7 @@
     docker_login:
     #   registry: "{{ discourse_run_push_credentials.registry }}"
       username: "{{ discourse_run_push_credentials.username }}"
-      password: "{{ discourse_run_push_credentials.password }}"
+      password: "{{ discourse_run_push_credentials.password }}a"
     #   reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
 
   - set_fact: 
@@ -54,7 +54,7 @@
   - name: "{{ discourse_run_title }} - tag and push to docker registry"
     become: yes
     docker_image:
-      name: "local_discourse/{{ discourse_run_name }}"
+      name: "local_discourse/{{ discourse_run_name }}a"
       repository: "{{ discourse_run_push_repository }}"
       push: yes
 
