@@ -1,3 +1,42 @@
+- set_fact: 
+    test_vars:
+      a: "123"
+      boolean1: true
+      xyz: "456"
+      boolean3: true
+
+- set_fact: { "test_var_{{ test_item.name }}": "{{ test_vars[test_item.name] | default(test_item.default) }}" }
+  loop: 
+  - { name: "a", default: "bcd" }
+  - { name: "efg", default: "hij" }
+  - { name: "boolean1", default: false }
+  - { name: "obj", default: {} }
+  - { name: "xyz", default: "abc" }
+  - { name: "def", default: "ghi" }
+  - { name: "boolean2", default: true }
+  - { name: "boolean3", default: false }
+  loop_control:
+    loop_var: test_item
+    label: "{{ test_item.name }} - {{ (test_vars[test_item.name] | default('---')) }}"
+
+- debug:
+    var: test_var_a
+- debug:
+    var: test_var_efg
+- debug:
+    var: test_var_boolean1
+- debug:
+    var: test_var_obj
+- debug:
+    var: test_var_xyz
+- debug:
+    var: test_var_def
+- debug:
+    var: test_var_boolean2
+- debug:
+    var: test_var_boolean3
+    
+
 - set_fact: { "discourse_run_{{ discourse_run_item.name }}": "{{ discourse_run_vars[discourse_run_item.name] | default(discourse_run_item.default) }}" }
   loop: 
   - { name: "name", default: "app" }
@@ -28,59 +67,6 @@
 #     long_run_path: "{{ discourse_run_path }}"
 #     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
 
-- debug: 
-    var: discourse_run_title
-
-- set_fact: 
-    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
-
-- debug: 
-    var: discourse_run_push_condition
-
-- debug: 
-    var: discourse_run_vars
-
-- debug: 
-    var: discourse_run_push
-
-- debug: 
-    var: discourse_run_vars['push'] | default('false')    
-
-- debug: 
-    var: discourse_run_vars['push']
-
-- set_fact: 
-    test_name: "push"
-    test_default: "false"
-
-- debug: 
-    var: discourse_run_vars[test_name] | default(test_default)    
-
-- debug: 
-    var: discourse_run_vars[test_name]
-
-- set_fact: { "discourse_run_{{ test_name }}": "{{ discourse_run_vars[test_name] | default(test_default) }}" }
-
-- set_fact: 
-    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
-
-- debug: 
-    var: discourse_run_push_condition
-
-- debug: 
-    var: discourse_run_push
-
-- set_fact: { "discourse_run_push": "{{ discourse_run_vars['push'] | default(false) }}" }
-
-- set_fact: 
-    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
-
-- debug: 
-    var: discourse_run_push_condition
-
-- debug: 
-    var: discourse_run_push
-  
 - block:
 
     - name: "{{ discourse_run_title }} - log into docker registry"
