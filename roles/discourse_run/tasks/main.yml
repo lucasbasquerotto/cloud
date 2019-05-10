@@ -18,16 +18,16 @@
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
     discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
 
-- name: "{{ discourse_run_title }} - main action"
-  include_role: 
-    name: long_run
-  vars:
-    long_run_title: "{{ discourse_run_title }}"
-    long_run_become: yes
-    long_run_output_path: "{{ discourse_run_output_path }}"
-    long_run_output_file: "{{ discourse_run_output_file }}"
-    long_run_path: "{{ discourse_run_path }}"
-    long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+# - name: "{{ discourse_run_title }} - main action"
+#   include_role: 
+#     name: long_run
+#   vars:
+#     long_run_title: "{{ discourse_run_title }}"
+#     long_run_become: yes
+#     long_run_output_path: "{{ discourse_run_output_path }}"
+#     long_run_output_file: "{{ discourse_run_output_file }}"
+#     long_run_path: "{{ discourse_run_path }}"
+#     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
 
 - block:
 
@@ -54,9 +54,10 @@
   - name: "{{ discourse_run_title }} - tag and push to docker registry"
     become: yes
     docker_image:
-      name: "{{ discourse_run_push_repository }}"
     #   name: "{{ discourse_run_push_repository }}"
     #   repository: "{{ discourse_run_name }}"
-    #   push: yes
+      name: "{{ discourse_run_name }}"
+      repository: "{{ discourse_run_push_repository }}"
+      push: yes
 
   when: discourse_run_push_condition
