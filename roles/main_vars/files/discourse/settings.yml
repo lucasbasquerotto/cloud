@@ -1,7 +1,0 @@
-settings:
-  # env: "{{ env }}"
-  cloud: "{{ cloud[env.cloud_type][env.cloud_layer] }}"
-  dns: "{{ cloud_dns[env.dns_type] }}"
-
-  # long_run_path: "{{ env.long_run_path | default('/var/discourse') }}"
-  # long_run_output_path: "{{ env.long_run_output_path | default('/tmp/main/discourse') }}"
