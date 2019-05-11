@@ -60,6 +60,6 @@
       name: "local_discourse/{{ discourse_run_name }}"
       repository: "{{ discourse_run_push_repository }}"
       push: yes
-      # force: yes
+      force: yes
 
   when: discourse_run_push_condition
