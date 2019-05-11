@@ -102,6 +102,9 @@
   
   - debug:
       var: app_run
+      
+  - debug: 
+      var: main_vars_container_vars_app_run
   
   - debug:
       var: base_image
