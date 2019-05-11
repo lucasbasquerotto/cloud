@@ -88,6 +88,12 @@ fi
 
 apt autoremove -y
 
+echo "
+ClientAliveInterval 60
+TCPKeepAlive yes
+ClientAliveCountMax 10000 
+" >> /etc/ssh/sshd_config
+
 echo "Main logic finished" >> "/var/log/setup.log"
 
 ########################
