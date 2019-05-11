@@ -63,7 +63,6 @@
     become: yes
     docker_image:
       name: "{{ discourse_run_push_local_repository }}"
-      repository: "{{ discourse_run_push_remote_repository }}"
       push: yes
 
   when: discourse_run_push_condition
