@@ -104,7 +104,7 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_item.1.name }}"
-    when: (not defined main_item.1.skip) or (not main_item.1.skip)
+    when: (not main_item.1.skip | default(false) | bool)
 
   # - name: '(re)build and (re)start discourse'
   #   include_role: 
