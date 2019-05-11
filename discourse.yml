@@ -96,8 +96,12 @@
   - include_tasks: "tasks/init_discourse.yml"
   
   - set_fact:
+      app_run: "{{ main_vars_containers.app_run }}"
       base_image: "{{ main_vars_containers.app_run.base_image | default('') }}"
       skip: "{{ (main_vars_containers.app_run.base_image | default('')) != '' }}"
+  
+  - debug:
+      var: app_run
   
   - debug:
       var: base_image
