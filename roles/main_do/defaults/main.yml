@@ -1,4 +1,5 @@
 main_do_title: "main_do"
+main_do_shutdown: 0
 main_do_api_token: "{{ main.api_token }}"
 main_do_host_user: "{{ main.host_user }}"
 main_do_host_pass: "{{ main.host_pass }}"
