@@ -168,7 +168,7 @@
               main_do_instance_tmp: "{{ false | bool }}"
               containers:
               - name: "app-build"
-                skip: "{{ ((env.cloud_remote_image | default({})).app | default('')) != '' }}"
+                skip: "{{ (main_vars_containers.app_run.base_image | default('')) != '' }}"
                 action: "bootstrap"
                 vars: "{{ main_vars_containers.app_build }}"
               - name: "app-run"
