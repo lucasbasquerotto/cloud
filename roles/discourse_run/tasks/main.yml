@@ -59,7 +59,6 @@
     docker_image:
       name: "local_discourse/{{ discourse_run_name }}"
       repository: "{{ discourse_run_push_repository }}"
-      pull: no
       push: yes
       force: yes
 
