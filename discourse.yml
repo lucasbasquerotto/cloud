@@ -94,7 +94,17 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init_discourse.yml"
-
+  
+  - set_fact:
+      base_image: "{{ main_vars_containers.app_run.base_image | default('') }}"
+      skip: "{{ (main_vars_containers.app_run.base_image | default('')) != '' }}"
+  
+  - debug:
+      var: base_image
+  
+  - debug:
+      var: skip
+      
   - name: '(re)build discourse'
     include_role: 
       name: discourse_run
