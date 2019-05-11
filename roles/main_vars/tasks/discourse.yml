@@ -29,7 +29,7 @@
 - set_fact:
     main_vars_containers: 
       app_build: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_build) | combine(main_vars_container_vars_app_build) }}"
-      app_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_app_build) }}"
+      app_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_app_run) }}"
       web_build: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_build) | combine(main_vars_container_vars_web_build) }}"
       web_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_web_run) }}"
       redis_master_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_redis_master_run) }}"
