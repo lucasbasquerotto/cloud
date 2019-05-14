@@ -134,6 +134,20 @@ apt install -y docker-ce=$DOCKER_CE_VERSION
 echo "Docker Installed" >> "/var/log/setup.log"
 
 ########################
+###      OTHERS      ###
+########################
+
+echo "Installing Other Depedencies..." >> "/var/log/setup.log"
+
+# First, update your existing list of packages
+apt update
+
+# Next, install jq
+apt install -y jq
+
+echo "Other Depedencies Installed" >> "/var/log/setup.log"
+
+########################
 ###       END        ###
 ########################
 

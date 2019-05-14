@@ -46,7 +46,7 @@
     template: 
       src: "{{ discourse_run_cmd_file_src_dir }}/docker-tag-exists.sh"
       dest: "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
-      mode: 0755
+      mode: 0750
     vars:
       discourse_run_tpl_registry_api_base_url: "{{ discourse_run_registry_api_base_url }}"
       discourse_run_tpl_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"

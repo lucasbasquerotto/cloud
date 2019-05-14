@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 REGISTRY_API_BASE_URL="{{ discourse_run_tpl_registry_api_base_url }}"
 REPOSITORY="{{ discourse_run_tpl_repository }}"
 VERSION="{{ discourse_run_tpl_version }}"
