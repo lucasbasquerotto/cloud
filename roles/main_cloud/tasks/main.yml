@@ -21,7 +21,7 @@
     var: main_cloud_shutdown
 
 - debug:
-    var: {{ main_cloud_role }}_shutdown
+    var: main_do_shutdown
 
 - name: '{{ main_cloud_title }} - execute role {{ main_cloud_role }}'
   include_role: 
