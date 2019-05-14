@@ -52,7 +52,7 @@
     become: yes
     command: 
     args:
-      chdir: somedir/
+      chdir: "{{ discourse_run_cmd_file_src_dir }}/"
       argv:
       - "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
       - "{{ discourse_run_registry_api_base_url }}"
