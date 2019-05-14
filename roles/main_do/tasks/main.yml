@@ -24,12 +24,9 @@
 - set_fact:
     main_do_cloud_instances: []
 
-- debug:
-    var: main_do_shutdown
-
 - name: '{{ main_do_title }} - define instances to be created'
   set_fact:
-    main_do_cloud_instances: "{{ main_do_cloud_instances + [{ 'name': main_do_instance_name + '-' + main_do_region + '-' + ('%03d'  | format(main_do_item)), 'region_id': main_do_region, 'state': (((main_do_item | int) <= (main_do_instance_count | int)) or not (main_do_shutdown | bool)) | ternary('present', 'deleted') }] }}"
+    main_do_cloud_instances: "{{ main_do_cloud_instances + [{ 'name': main_do_instance_name + '-' + main_do_region + '-' + ('%03d'  | format(main_do_item)), 'region_id': main_do_region, 'state': (((main_do_item | int) <= (main_do_instance_count | int)) and not (main_do_shutdown | bool)) | ternary('present', 'deleted') }] }}"
   loop: "{{ range(1, (main_do_instance_max | int) + 1) | list }}"
   loop_control:
     loop_var: main_do_item

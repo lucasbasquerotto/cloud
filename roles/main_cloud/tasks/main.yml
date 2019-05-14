@@ -17,12 +17,6 @@
 
 - set_fact: { "{{ main_cloud_role }}_shutdown": "{{ main_cloud_shutdown | default(false) }}" }
 
-- debug:
-    var: main_cloud_shutdown
-
-- debug:
-    var: main_do_shutdown
-
 - name: '{{ main_cloud_title }} - execute role {{ main_cloud_role }}'
   include_role: 
     name: '{{ main_cloud_role }}'
