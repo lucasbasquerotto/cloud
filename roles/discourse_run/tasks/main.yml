@@ -43,23 +43,22 @@
 
   - name: "{{ discourse_run_title }} - verify docker remote image - move the cmd file"
     become: yes
-    copy: 
+    template: 
       src: "{{ discourse_run_cmd_file_src_dir }}/docker-tag-exists.sh"
       dest: "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
       mode: 0755
+    vars:
+      discourse_run_tpl_registry_api_base_url: "{{ discourse_run_registry_api_base_url }}"
+      discourse_run_tpl_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"
+      discourse_run_tpl_version: "{{ discourse_run_push_tag }}"
+      discourse_run_tpl_uname: "{{ discourse_run_push_credentials.username }}"
+      discourse_run_tpl_upass: "{{ discourse_run_push_credentials.password }}"
 
   - name: "{{ discourse_run_title }} - verify docker remote image - run cmd"
     become: yes
-    command: 
+    command: "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
     args:
       chdir: "{{ discourse_run_cmd_file_dest_dir }}/"
-      argv:
-      - "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
-      - "{{ discourse_run_registry_api_base_url }}"
-      - "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"
-      - "{{ discourse_run_push_tag }}"
-      - "{{ discourse_run_push_credentials.username }}"
-      - "{{ discourse_run_push_credentials.password }}"
     register: discourse_run_out
 
   - debug:
