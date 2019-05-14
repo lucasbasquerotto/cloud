@@ -18,18 +18,15 @@
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
     discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
 
-- name: "{{ discourse_run_title }} - main action"
-  include_role: 
-    name: long_run
-  vars:
-    long_run_title: "{{ discourse_run_title }}"
-    long_run_become: yes
-    long_run_output_path: "{{ discourse_run_output_path }}"
-    long_run_output_file: "{{ discourse_run_output_file }}"
-    long_run_path: "{{ discourse_run_path }}"
-    long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
-
 - block:
+
+  - set_fact: 
+      discourse_run_registry_prefix: "{{ discourse_run_push_credentials.registry | ternary(discourse_run_push_credentials.registry + '/', '') }}"
+      discourse_run_push_owner_prefix: "{{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}"
+
+  - set_fact:
+      discourse_run_push_local_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
+      discourse_run_push_remote_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
 
   - name: "{{ discourse_run_title }} - install the docker python module and other modules"
     become: yes
@@ -44,25 +41,55 @@
       password: "{{ discourse_run_push_credentials.password }}"
       reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
 
-  - set_fact: 
-      discourse_run_registry_prefix: "{{ discourse_run_push_credentials.registry | ternary(discourse_run_push_credentials.registry + '/', '') }}"
-      discourse_run_push_owner_prefix: "{{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}"
-
-  - set_fact:
-      # see https://github.com/ansible/ansible/issues/44077#issuecomment-458013430
-      discourse_run_push_local_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
-      discourse_run_push_remote_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
-
-  - name: "{{ discourse_run_title }} - tag and push to docker registry"
+  - name: "{{ discourse_run_title }} - verify docker remote image - move the cmd file"
     become: yes
-    docker_image:
-      name: "local_discourse/{{ discourse_run_name }}"
-      repository: "{{ discourse_run_push_local_repository }}"
+    copy: 
+      src: "{{ discourse_run_cmd_file_src_dir }}/docker-tag-exists.sh"
+      dest: "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
+      mode: 0755
 
-  - name: "{{ discourse_run_title }} - tag and push to docker registry"
+  - name: "{{ discourse_run_title }} - verify docker remote image - run cmd"
     become: yes
-    docker_image:
-      name: "{{ discourse_run_push_local_repository }}"
-      push: yes
+    command: 
+    args:
+      chdir: somedir/
+      argv:
+      - "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
+      - "{{ discourse_run_registry_api_base_url }}"
+      - "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"
+      - "{{ discourse_run_push_tag }}"
+      - "{{ discourse_run_push_credentials.username }}"
+      - "{{ discourse_run_push_credentials.password }}"
+    register: discourse_run_out
+
+  - debug:
+      var: discourse_run_out
 
   when: discourse_run_push_condition
+
+# - name: "{{ discourse_run_title }} - main action"
+#   include_role: 
+#     name: long_run
+#   vars:
+#     long_run_title: "{{ discourse_run_title }}"
+#     long_run_become: yes
+#     long_run_output_path: "{{ discourse_run_output_path }}"
+#     long_run_output_file: "{{ discourse_run_output_file }}"
+#     long_run_path: "{{ discourse_run_path }}"
+#     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+
+# - block:
+
+#   - name: "{{ discourse_run_title }} - tag and push to docker registry"
+#     become: yes
+#     docker_image:
+#       name: "local_discourse/{{ discourse_run_name }}"
+#       repository: "{{ discourse_run_push_local_repository }}"
+
+#   - name: "{{ discourse_run_title }} - tag and push to docker registry"
+#     become: yes
+#     docker_image:
+#       name: "{{ discourse_run_push_local_repository }}"
+#       push: yes
+
+#   when: discourse_run_push_condition
