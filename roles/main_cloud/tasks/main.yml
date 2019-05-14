@@ -9,13 +9,13 @@
   loop_control:
     loop_var: main_cloud_item
 
-- set_fact: { "{{ main_cloud_role }}_shutdown": "{{ main_cloud_shutdown | default(false) }}" }
-
 - set_fact: { "{{ main_cloud_item.key }}": "{{ main_cloud_item.value }}" }
   loop: "{{ main_cloud_vars | dict2items }}"
   loop_control:
     loop_var: main_cloud_item
     label: "{{ main_cloud_item.key }}"
+
+- set_fact: { "{{ main_cloud_role }}_shutdown": "{{ main_cloud_shutdown | default(false) }}" }
 
 - name: '{{ main_cloud_title }} - execute role {{ main_cloud_role }}'
   include_role: 
