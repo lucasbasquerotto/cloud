@@ -7,6 +7,6 @@ discourse_run_output_file: "{{ discourse_run_name }}.log"
 discourse_run_path: "/var/discourse"
 discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
 
-discourse_run_cmd_file_src_dir: "templatesverify docker remote image"
+discourse_run_cmd_file_src_dir: "templates"
 discourse_run_cmd_file_dest_dir: "/usr/local/bin"
 discourse_run_registry_api_base_url: "https://hub.docker.com/v2"
