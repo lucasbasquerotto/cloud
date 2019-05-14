@@ -61,8 +61,11 @@
       chdir: "{{ discourse_run_cmd_file_dest_dir }}/"
     register: discourse_run_out
 
+  - set_fact: 
+      discourse_run_exists: "{{ register.stdout == '1' }}"
+
   - debug:
-      var: discourse_run_out
+      var: discourse_run_exists
 
   when: discourse_run_push_condition
 
@@ -77,18 +80,18 @@
 #     long_run_path: "{{ discourse_run_path }}"
 #     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
 
-# - block:
+- block:
 
-#   - name: "{{ discourse_run_title }} - tag and push to docker registry"
-#     become: yes
-#     docker_image:
-#       name: "local_discourse/{{ discourse_run_name }}"
-#       repository: "{{ discourse_run_push_local_repository }}"
+  - name: "{{ discourse_run_title }} - tag and push to docker registry"
+    become: yes
+    docker_image:
+      name: "local_discourse/{{ discourse_run_name }}"
+      repository: "{{ discourse_run_push_local_repository }}"
 
-#   - name: "{{ discourse_run_title }} - tag and push to docker registry"
-#     become: yes
-#     docker_image:
-#       name: "{{ discourse_run_push_local_repository }}"
-#       push: yes
+  - name: "{{ discourse_run_title }} - tag and push to docker registry"
+    become: yes
+    docker_image:
+      name: "{{ discourse_run_push_local_repository }}"
+      push: yes
 
-#   when: discourse_run_push_condition
+  when: discourse_run_push_condition and not discourse_run_exists
