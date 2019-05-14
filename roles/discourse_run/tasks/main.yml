@@ -62,7 +62,7 @@
     register: discourse_run_out
 
   - set_fact: 
-      discourse_run_exists: "{{ register.stdout == '1' }}"
+      discourse_run_exists: "{{ discourse_run_out.stdout == '1' }}"
 
   - debug:
       var: discourse_run_exists
