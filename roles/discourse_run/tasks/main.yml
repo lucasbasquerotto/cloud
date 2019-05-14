@@ -64,21 +64,19 @@
   - set_fact: 
       discourse_run_exists: "{{ discourse_run_out.stdout == '1' }}"
 
-  - debug:
-      var: discourse_run_exists
-
   when: discourse_run_push_condition
 
-# - name: "{{ discourse_run_title }} - main action"
-#   include_role: 
-#     name: long_run
-#   vars:
-#     long_run_title: "{{ discourse_run_title }}"
-#     long_run_become: yes
-#     long_run_output_path: "{{ discourse_run_output_path }}"
-#     long_run_output_file: "{{ discourse_run_output_file }}"
-#     long_run_path: "{{ discourse_run_path }}"
-#     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+- name: "{{ discourse_run_title }} - main action"
+  include_role: 
+    name: long_run
+  vars:
+    long_run_title: "{{ discourse_run_title }}"
+    long_run_become: yes
+    long_run_output_path: "{{ discourse_run_output_path }}"
+    long_run_output_file: "{{ discourse_run_output_file }}"
+    long_run_path: "{{ discourse_run_path }}"
+    long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+  when: (discourse_run_action != 'bootstrap') or (not discourse_run_exists)
 
 - block:
 
