@@ -94,7 +94,24 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init_discourse.yml"
-
+  
+  - set_fact:
+      app_run: "{{ main_vars_containers.app_run }}"
+      base_image: "{{ main_vars_containers.app_run.base_image | default('') }}"
+      skip: "{{ (main_vars_containers.app_run.base_image | default('')) != '' }}"
+  
+  - debug:
+      var: app_run
+      
+  - debug: 
+      var: main_vars_container_vars_app_run
+  
+  - debug:
+      var: base_image
+  
+  - debug:
+      var: skip
+      
   - name: '(re)build discourse'
     include_role: 
       name: discourse_run
@@ -106,20 +123,29 @@
       label: "{{ main_item.1.name }}"
     when: not (main_item.1.skip | default(false) | bool)
 
-  # - name: '(re)build and (re)start discourse'
-  #   include_role: 
-  #     name: long_run
-  #   vars:
-  #     long_run_title: 'discourse - {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
-  #     long_run_become: yes
-  #     long_run_output_path: '{{ main_vars.long_run_output_path }}'
-  #     long_run_output_file: '{{ main_item.1.name }}.log'
-  #     long_run_path: '{{ main_vars.long_run_path }}'
-  #     long_run_cmd: './launcher {{ main_item.1.action | default("rebuild") }} {{ main_item.1.name }}'
-  #   loop: "{{ main_vars.cloud.values() | subelements('vars.containers') }}"
-  #   loop_control:
-  #     loop_var: main_item
-  #     label: "{{ main_item.1.name }}"
+###############################################################################
+
+- name: Play 06 - Delete Temporary Cloud Instances
+  hosts: main
+  tags:
+  - init
+  - temp
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/init_discourse.yml"
+
+  - include_role: 
+      name: "main_cloud"
+    vars: 
+      main_cloud_role: "{{ main_item.role }}"
+      main_cloud_vars: "{{ main_item.vars }}"
+      main_cloud_extra: "{{ main_item.extra }}"
+      main_cloud_dns: "{{ main_vars.dns }}"
+      main_cloud_shutdown: true
+    loop: "{{ main_vars.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+    when: (main_item.vars[main_item.role + '_instance_tmp'] | default(false) | bool) == true
 
 ###############################################################################
 
