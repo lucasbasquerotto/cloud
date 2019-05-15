@@ -1,11 +1,10 @@
 - name: '{{ droplets_title }} - create droplets'
   digital_ocean_droplet:
     unique_name: yes
-    api_token: "{{ droplets_api_token }}"
+    oauth_token: "{{ droplets_api_token }}"
     name: "{{ item.name }}"
     state: "{{ item.state }}"
     region_id: "{{ item.region_id }}"
-    command: "droplet"
     size_id: "{{ droplets_size_id }}"
     image_id: "{{ droplets_image_id }}"
     wait_timeout: "{{ droplets_wait_timeout }}"
