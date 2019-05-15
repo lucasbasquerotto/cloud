@@ -204,13 +204,13 @@ address_spec = dict(
 inbound_spec = dict(
     protocol=dict(type='str', choices=['udp', 'tcp', 'icmp'], default='tcp'),
     ports=dict(type='str', required=True),
-    sources=dict(type='dict', required=True, elements='dict', options=address_spec),
+    sources=dict(type='dict', required=True, options=address_spec),
 )
 
 outbound_spec = dict(
     protocol=dict(type='str', choices=['udp', 'tcp', 'icmp'], default='tcp'),
     ports=dict(type='str', required=True),
-    destinations=dict(type='dict', required=True, elements='dict', options=address_spec),
+    destinations=dict(type='dict', required=True, options=address_spec),
 )
 
 
