@@ -1,5 +1,5 @@
 - name: '{{ droplets_title }} - create droplets'
-  digital_ocean:
+  digital_ocean_droplet:
     unique_name: yes
     api_token: "{{ droplets_api_token }}"
     name: "{{ item.name }}"
