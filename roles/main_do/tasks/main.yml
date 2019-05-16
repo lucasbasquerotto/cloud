@@ -65,4 +65,4 @@
     label: "{{ main_do_item.name }}"
 
 - debug:
-    var: droplets_active
+    var: main_do_active_hosts
