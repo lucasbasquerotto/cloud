@@ -18,7 +18,7 @@
   register: droplets_details
 
 - name: '{{ droplets_title }} - Define value of droplets_active'
-  set_fact: droplets_active="{{ droplets_details.results | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
+  set_fact: droplets_active="{{ droplets_details.results | map(attribute='data') | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
 
 - debug:
     var: droplets_details.results
