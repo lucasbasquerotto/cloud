@@ -55,7 +55,7 @@
 - name: '{{ main_do_title }} - Init array main_do_active_hosts'
   set_fact: 
     main_do_active_hosts: []
-
+    
 - name: '{{ main_do_title }} - Include items in main_do_active_hosts'
   set_fact: 
     main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'ip_address': main_do_item.ip_address }] }}"
@@ -63,3 +63,6 @@
   loop_control:
     loop_var: main_do_item
     label: "{{ main_do_item.name }}"
+
+- debug:
+    var: droplets_active
