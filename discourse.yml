@@ -128,6 +128,7 @@
     loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
+      label: "{{ main_item.vars[main_item.role + '_instance_group'] }}"
     when: (main_item.vars[main_item.role + '_instance_tmp'] | default(false) | bool) == true
 
 ###############################################################################
