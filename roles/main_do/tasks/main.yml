@@ -58,7 +58,7 @@
     
 - name: '{{ main_do_title }} - Include items in main_do_active_hosts'
   set_fact: 
-    main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'private_ip': (main_do_item.networks.v4 | selectattr('type', 'private') | map(attribute='ip_address') | list | first), 'public_ip': (main_do_item.networks.v4 | selectattr('type', 'public') | map(attribute='ip_address') | list | first) }] }}"
+    main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'private_ip': (main_do_item.networks.v4 | selectattr('type', 'equalto', 'private') | map(attribute='ip_address') | list | first), 'public_ip': (main_do_item.networks.v4 | selectattr('type', 'equalto', 'public') | map(attribute='ip_address') | list | first) }] }}"
   loop: "{{ droplets_active }}"
   loop_control:
     loop_var: main_do_item
