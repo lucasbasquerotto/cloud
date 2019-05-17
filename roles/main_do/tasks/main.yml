@@ -73,11 +73,11 @@
     
 - name: 'test_list loop'
   set_fact: 
-    test_list: "{{ test_list + [{ 'name': item.name }] }}"
+    test_list: "{{ test_list + [{ 'name': item.name, 'answer': item.answer }] }}"
   loop: 
-  - { name: "name1" }
-  - { name: "name2" }
-  - { name: "name3" }
+  - { name: "name1", answer: 42 }
+  - { name: "name2", answer: 42 }
+  - { name: "name3", answer: 42 }
   loop_control:
     label: "{{ item.name }}"
 
