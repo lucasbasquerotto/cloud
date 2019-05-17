@@ -58,7 +58,7 @@
     
 - name: '{{ main_do_title }} - Include items in main_do_active_hosts'
   set_fact: 
-    main_do_active_hosts: "{{ main_do_active_hosts + [{ \"name\": main_do_item.name, \"ip_address\": main_do_item.ip_address }] }}"
+    main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'ip_address': main_do_item.ip_address }] }}"
   loop: "{{ droplets_active }}"
   loop_control:
     loop_var: main_do_item
@@ -66,3 +66,23 @@
 
 - debug:
     var: main_do_active_hosts
+
+- name: 'test list'
+  set_fact: 
+    test_list: []
+    
+- name: 'test_list loop'
+  set_fact: 
+    test_list: "{{ test_list + [{ 'name': item.name }] }}"
+  loop: 
+  - { name: "name1" }
+  - { name: "name2" }
+  - { name: "name3" }
+  loop_control:
+    label: "{{ item.name }}"
+
+- debug:
+    var: test_list
+
+- debug:
+    var: test_list | list
