@@ -58,7 +58,7 @@
     
 - name: '{{ main_do_title }} - Include items in main_do_active_hosts'
   set_fact: 
-    main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'private_ip': (main_do_item.networks | json_query(\"v4[?type=='private'].ip_address\")), 'public_ip': (main_do_item.networks | json_query(\"v4[?type=='public'].ip_address\")) }] }}"
+    main_do_active_hosts: "{{ main_do_active_hosts + [{ 'name': main_do_item.name, 'private_ip': (main_do_item.networks.v4 | selectattr('type', 'private') | map(attribute='ip_address') | list | first), 'public_ip': (main_do_item.networks.v4 | selectattr('type', 'public') | map(attribute='ip_address') | list | first) }] }}"
   loop: "{{ droplets_active }}"
   loop_control:
     loop_var: main_do_item
@@ -67,36 +67,3 @@
 - debug:
     var: main_do_active_hosts
 
-- name: 'test list'
-  set_fact: 
-    test_list: []
-    
-- name: 'test_list loop'
-  set_fact: 
-    test_list: "{{ test_list + [{ 'name': item.name, 'answer': item.answer }] }}"
-  loop: 
-  - { name: "name1", answer: 42 }
-  - { name: "name2", answer: 42 }
-  - { name: "name3", answer: 42 }
-  loop_control:
-    label: "{{ item.name }}"
-
-- debug:
-    var: test_list
-
-- name: 'test list2'
-  set_fact: 
-    test_list2: []
-    
-- name: 'test_list2 loop'
-  set_fact: 
-    test_list2: "{{ test_list2 + [{ 'name': item.name, 'answer': item.answer }] }}"
-  loop: 
-  - { name: "name1", answer: 42 }
-  - { name: "name2", answer: 42 }
-  - { name: "name3" }
-  loop_control:
-    label: "{{ item.name }}"
-
-- debug:
-    var: test_list2

@@ -20,12 +20,6 @@
 - name: '{{ droplets_title }} - Define value of droplets_active'
   set_fact: droplets_active="{{ droplets_details.results | map(attribute='data') | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
 
-- debug:
-    var: droplets_details.results
-
-- debug:
-    var: droplets_active
-
 - name: '{{ droplets_title }} - tag each droplet'
   digital_ocean_tag:
     api_token: "{{ droplets_api_token }}"
