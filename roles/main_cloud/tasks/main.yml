@@ -45,9 +45,6 @@
 - name: '{{ main_cloud_title }} - refresh inventory'
   meta: refresh_inventory
 
-- debug:
-    var: main_cloud_dns
-
 - name: "create the main dns record point to the instance when in the dmz layer"
   include_role: 
     name: "main_dns"
