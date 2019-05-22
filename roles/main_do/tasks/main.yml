@@ -64,6 +64,4 @@
     loop_var: main_do_item
     label: "{{ main_do_item.name }}"
 
-- debug:
-    var: main_do_active_hosts
 

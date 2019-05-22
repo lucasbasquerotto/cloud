@@ -25,9 +25,6 @@
     main_cloud_active_hosts: "{{ lookup('vars', main_cloud_role + '_active_hosts') }}"
     main_cloud_hosts_info: ""
 
-- debug:
-    var: main_cloud_active_hosts | list
-
 - name: '{{ main_cloud_title }} - generate the hosts information with the instances ips'
   set_fact: 
     main_cloud_hosts_info: |
@@ -48,6 +45,9 @@
 - name: '{{ main_cloud_title }} - refresh inventory'
   meta: refresh_inventory
 
+- debug:
+    var: main_cloud_dns
+    
 - name: "create the main dns record point to the instance when in the dmz layer"
   include_role: 
     name: "main_dns"
