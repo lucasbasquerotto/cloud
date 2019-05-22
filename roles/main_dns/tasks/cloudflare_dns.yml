@@ -5,6 +5,6 @@
     type: "{{ main_dns_type }}"
     solo: true
     record: "{{ main_dns_record | default(omit, true) }}"
-    value: "{{ main_dns_value }}"
+    value: "{{ main_dns_value | default(omit, true) }}"
     account_email: "{{ main_dns_credentials.account_email }}"
     account_api_token: "{{ main_dns_credentials.account_api_token }}"
