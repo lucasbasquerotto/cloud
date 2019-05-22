@@ -50,7 +50,6 @@
     loop_var: "discourse_item"
 
 - name: "{{ discourse_title }} - prepare the machine (setup)"
-  become: yes
   include_role: 
     name: long_run
   vars:
