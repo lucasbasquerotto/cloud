@@ -18,7 +18,6 @@
   register: 'long_run_register'
 
 - name: '[{{ long_run_title }}] - Watch "{{ long_run_output_path }}/output.log" until finishes'
-  become: "{{ long_run_become }}"
   include_role:
     name: 'watch'
   vars:
