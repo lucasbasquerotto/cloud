@@ -2,6 +2,8 @@
 
 Setup for using **Ansible** to create droplets in **Digital Ocean** that run **Docker** containers and a MySQL database.
 
+Tested with Ansible 2.8.0.
+
 ### 1) Create an account in Digital Ocean (if you don't have already)
 
 ### 2) Generate a token in https://cloud.digitalocean.com/account/api/tokens
