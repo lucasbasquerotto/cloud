@@ -47,7 +47,7 @@
 
 - debug:
     var: main_cloud_dns
-    
+
 - name: "create the main dns record point to the instance when in the dmz layer"
   include_role: 
     name: "main_dns"
@@ -58,5 +58,5 @@
     main_dns_zone: "{{ main_cloud_dns.zone }}"
     main_dns_type: "A"
     main_dns_record: "{{ main_cloud_dns.main_record }}"
-    main_dns_value: "{{ main_cloud_active_hosts[0].ip_address }}"
+    main_dns_value: "{{ main_cloud_active_hosts[0].public_ip }}"
   when: (main_cloud_active_hosts | length == 1) and main_cloud_extra.dmz
