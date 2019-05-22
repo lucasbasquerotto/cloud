@@ -16,7 +16,7 @@
     
 - set_fact: 
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
-    discourse_run_push_condition: "{{ discourse_run_push | default(false) | bool }}"
+    discourse_run_push_condition: "{{ discourse_run_push | default(false) }}"
 
 - block:
 
@@ -64,7 +64,7 @@
   - set_fact: 
       discourse_run_exists: "{{ discourse_run_out.stdout == '1' }}"
 
-  when: discourse_run_push_condition
+  when: discourse_run_push_condition | bool
 
 - name: "{{ discourse_run_title }} - main action"
   include_role: 
@@ -92,4 +92,4 @@
       name: "{{ discourse_run_push_local_repository }}"
       push: yes
 
-  when: discourse_run_push_condition and not discourse_run_exists
+  when: (discourse_run_push_condition | bool) and (not discourse_run_exists)
