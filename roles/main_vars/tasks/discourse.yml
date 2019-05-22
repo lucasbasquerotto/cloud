@@ -273,6 +273,10 @@
               dmz: "{{ true | bool }}"
               load_balance: "{{ false | bool }}"
 
+- fail:
+    msg: "dns_type is not defined in the environment variables"
+  when: env.dns_type is not defined
+
 - name: main discourse vars
   set_fact:
     main_vars:
