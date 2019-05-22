@@ -1,10 +1,10 @@
 - name: "{{ main_dns_title }} - cloudflare dns"
   cloudflare_dns:
-    zone: "{{ main_dns_zone }}"
+    zone: "{{ main_dns_zone | default(omit, true) }}"
     proxied: no
     type: "{{ main_dns_type }}"
     solo: true
-    record: "{{ main_dns_record }}"
+    record: "{{ main_dns_record | default(omit, true) }}"
     value: "{{ main_dns_value }}"
     account_email: "{{ main_dns_credentials.account_email }}"
     account_api_token: "{{ main_dns_credentials.account_api_token }}"
