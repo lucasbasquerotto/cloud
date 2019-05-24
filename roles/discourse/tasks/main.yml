@@ -36,7 +36,7 @@
   loop_control:
     loop_var: "discourse_item"    
  
-- name: "{{ discourse_title }} - copy discourse configuration .yml file(s) setting the parameters"
+- name: "{{ discourse_title }} - copy discourse configuration .yml file(s) defining the parameters"
   include_tasks: 'container.yml'
   vars:
     discourse_container_name: "{{ discourse_item.name }}"

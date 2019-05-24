@@ -78,6 +78,8 @@
       discourse_title: "discourse - {{ main_item.vars[main_item.role + '_instance_group'] }}"
       discourse_containers: "{{ main_item.vars.containers }}"
       discourse_host_count: "{{ main_item.vars[main_item.role + '_instance_count'] }}"
+      discourse_docker_repo: "{{ main_vars.prepare.discourse_docker_repo }}"
+      discourse_docker_version: "{{ main_vars.prepare.discourse_docker_version }}"
     loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
