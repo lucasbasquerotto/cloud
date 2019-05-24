@@ -109,7 +109,7 @@ apt install -y python3-pip
 echo "Python Installed" >> "/var/log/setup.log"
 	
 sudo -u "$USERNAME" bash <<-EOF 
-	yes | pip3 install docker-py
+	yes | pip3 install docker
 EOF
 
 echo "Ansible Host Prepared" >> "/var/log/setup.log"
