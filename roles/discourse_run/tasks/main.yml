@@ -29,11 +29,6 @@
       discourse_run_push_local_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
       discourse_run_push_remote_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
 
-  - name: "{{ discourse_run_title }} - install the docker python module and other modules"
-    become: yes
-    pip:
-      name: docker  
-
   - name: "{{ discourse_run_title }} - log into docker registry"
     become: yes
     docker_login:
