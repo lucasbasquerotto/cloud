@@ -17,11 +17,11 @@
   failed_when: false
   changed_when: false
 
-  - debug:
-      var: watch_lines
+- debug:
+    var: watch_lines
  
-  - debug:
-      var: watch_output_lines
+- debug:
+    var: watch_output_lines
       
 - set_fact:
     watch_output_lines: 0
