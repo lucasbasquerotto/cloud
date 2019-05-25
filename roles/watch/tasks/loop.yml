@@ -18,6 +18,12 @@
   changed_when: false
 
 - block:
+ 
+  - debug:
+      var: watch_lines
+ 
+  - debug:
+      var: watch_output_lines
 
   - name: '[{{ watch_title }}] - {{ watch_output_lines }} lines captured'
     set_fact:
