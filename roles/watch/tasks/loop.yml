@@ -40,4 +40,4 @@
       var: watch_output
     tags: [print_action]
     
-  when: watch_output_lines > 0
+  when: (watch_output_lines | int) > 0
