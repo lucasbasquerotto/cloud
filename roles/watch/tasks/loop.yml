@@ -17,8 +17,20 @@
   failed_when: false
   changed_when: false
 
-- block:
+- set_fact:
+    watch_output: '{{ watch_tail.stdout_lines | default([]) }}'
+      
+- set_fact:
+    watch_output_lines: '{{ watch_output | length | int }}'
 
+- debug:
+    var: watch_lines
+ 
+- debug:
+    var: watch_output_lines
+      
+- block:
+ 
   - name: '[{{ watch_title }}] - {{ watch_output_lines }} lines captured'
     set_fact:
       watch_lines: '{{ watch_lines|int + watch_output_lines|int }}'
@@ -27,8 +39,5 @@
     debug:
       var: watch_output
     tags: [print_action]
-
-  vars:
-    watch_output: '{{ watch_tail.stdout_lines|default([]) }}'
-    watch_output_lines: '{{ watch_output|length|int }}'
-  when: 'watch_output_lines > 0'
+    
+  when: (watch_output_lines | int) > 0
