@@ -13,6 +13,6 @@ droplets_tags:
 - "worker"
 droplets_host_data: []
 droplets_list:
-- { name: 'server-001', region_id: 'nyc1', state: "deleted" }
-- { name: 'server-002', region_id: 'nyc1', state: "deleted" }
-- { name: 'server-003', region_id: 'nyc1', state: "deleted" }
+- { name: 'server-001', region_id: 'nyc1', state: "absent" }
+- { name: 'server-002', region_id: 'nyc1', state: "absent" }
+- { name: 'server-003', region_id: 'nyc1', state: "absent" }
