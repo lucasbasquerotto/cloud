@@ -108,7 +108,7 @@ apt install -y python3-pip
 
 echo "Python Installed" >> "/var/log/setup.log"
 
-yes | pip3 install docker
+pip3 install docker
 
 # sudo -u "$USERNAME" bash <<-EOF 
 # 	yes | pip3 install docker
