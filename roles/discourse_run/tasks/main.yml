@@ -76,16 +76,18 @@
 
 - block:
 
-  - name: "{{ discourse_run_title }} - tag and push to docker registry"
+  - name: "{{ discourse_run_title }} - tag image"
     become: yes
     docker_image:
       name: "local_discourse/{{ discourse_run_name }}"
       repository: "{{ discourse_run_push_local_repository }}"
+      source: "pull"
 
-  - name: "{{ discourse_run_title }} - tag and push to docker registry"
+  - name: "{{ discourse_run_title }} - push tagged image to docker registry"
     become: yes
     docker_image:
       name: "{{ discourse_run_push_local_repository }}"
+      source: "local"
       push: yes
 
   when: (discourse_run_push_condition | bool) and (not discourse_run_exists)
