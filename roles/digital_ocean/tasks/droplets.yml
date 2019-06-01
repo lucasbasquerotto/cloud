@@ -1,0 +1,35 @@
+- name: "{{ digital_ocean_droplets_title }} - create droplets"
+  digital_ocean_droplet:
+    unique_name: yes
+    oauth_token: "{{ digital_ocean_droplets_api_token }}"
+    name: "{{ digital_ocean_droplets_item.name }}"
+    state: "{{ digital_ocean_droplets_item.state }}"
+    region_id: "{{ digital_ocean_droplets_item.region_id }}"
+    size_id: "{{ digital_ocean_droplets_size_id }}"
+    image_id: "{{ digital_ocean_droplets_image_id }}"
+    wait_timeout: "{{ digital_ocean_droplets_wait_timeout }}"
+    private_networking: "{{ digital_ocean_droplets_private_networking | default(omit) }}"
+    ipv6: "{{ digital_ocean_droplets_ipv6 | default(omit) }}"
+    user_data: "{{ digital_ocean_droplets_user_data }}"
+  with_items:
+  - "{{ digital_ocean_droplets_list }}"
+  loop_control:
+    loop_var: digital_ocean_droplets_item
+    label: "{{ digital_ocean_droplets_item.name }} - {{ digital_ocean_droplets_item.state }}"
+  register: digital_ocean_droplets_details
+
+- name: "{{ digital_ocean_droplets_title }} - Define value of digital_ocean_droplets_active"
+  set_fact: digital_ocean_droplets_active="{{ digital_ocean_droplets_details.results | map(attribute='data') | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
+
+- name: "{{ digital_ocean_droplets_title }} - tag each droplet"
+  digital_ocean_tag:
+    api_token: "{{ digital_ocean_droplets_api_token }}"
+    resource_id: "{{ digital_ocean_droplets_item[0].id }}"
+    name: "{{ digital_ocean_droplets_item[1] }}"
+    state: present
+  with_nested:
+  - "{{ digital_ocean_droplets_active }}"
+  - "{{ digital_ocean_droplets_tags }}"
+  loop_control:
+    loop_var: digital_ocean_droplets_item
+    label: "droplet: {{ digital_ocean_droplets_item[0].name }} - tag: {{ digital_ocean_droplets_item[1] }}"

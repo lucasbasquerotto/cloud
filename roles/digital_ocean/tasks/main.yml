@@ -1,0 +1,69 @@
+- name: "{{ digital_ocean_title }} - create tags"
+  digital_ocean_tag:
+    api_token: "{{ digital_ocean_api_token }}"
+    name: "{{ digital_ocean_item }}"
+    state: "present"
+  loop: "{{ digital_ocean_all_tags | default([]) }}"
+  loop_control:
+    loop_var: digital_ocean_item
+
+- name: "{{ digital_ocean_title }} - create firewalls"
+  digital_ocean_firewall:
+    api_token: "{{ digital_ocean_api_token }}"
+    name: "{{ digital_ocean_item.name }}"
+    state: "present"
+    droplet_ids: "{{ digital_ocean_item.droplet_ids | default([]) }}"
+    tags: "{{ digital_ocean_item.tags | default([]) }}"
+    inbound_rules: "{{ digital_ocean_item.inbound_rules | default([]) }}"
+    outbound_rules: "{{ digital_ocean_item.outbound_rules | default([]) }}"
+  loop: "{{ digital_ocean_all_firewalls | default([]) }}"
+  loop_control:
+    loop_var: digital_ocean_item
+    label: "{{ digital_ocean_item.name }}"
+
+- set_fact:
+    digital_ocean_cloud_instances: []
+
+- name: "{{ digital_ocean_title }} - define instances to be created"
+  set_fact:
+    digital_ocean_cloud_instances: "{{ digital_ocean_cloud_instances + [{ 'name': digital_ocean_instance_name + '-' + digital_ocean_region + '-' + ('%03d'  | format(digital_ocean_item)), 'region_id': digital_ocean_region, 'state': (((digital_ocean_item | int) <= (digital_ocean_instance_count | int)) and not (digital_ocean_shutdown | bool)) | ternary('present', 'absent') }] }}"
+  loop: "{{ range(1, (digital_ocean_instance_max | int) + 1) | list }}"
+  loop_control:
+    loop_var: digital_ocean_item
+
+- name: "{{ digital_ocean_title }} - define digital_ocean_user_data"
+  set_fact:
+    digital_ocean_user_data: "{{ lookup('template', digital_ocean_user_data_file, template_vars=dict(digital_ocean_host_vars)) | trim }}"
+  when: (digital_ocean_user_data_file is defined) and (digital_ocean_user_data_file != '')
+
+- name: "{{ digital_ocean_title }} - create droplets"
+  include_tasks: "droplets.yml"
+  vars:
+    droplets_title: "{{ digital_ocean_title }} - create droplets - {{ digital_ocean_instance_group }}"
+    droplets_hosts_group: "{{ digital_ocean_instance_group }}"
+    droplets_hosts_file: "{{ digital_ocean_hosts_file }}"
+    droplets_instance_type: "{{ digital_ocean_instance_type }}"
+    droplets_api_token: "{{ digital_ocean_api_token }}"
+    droplets_host_user: "{{ digital_ocean_host_user }}"
+    droplets_host_pass: "{{ digital_ocean_host_pass }}"
+    droplets_user_data: "{{ digital_ocean_user_data }}"
+    droplets_size_id: "{{ digital_ocean_size_id }}"
+    droplets_image_id: "{{ digital_ocean_image_id }}"
+    droplets_private_networking: "{{ digital_ocean_private_networking }}"
+    droplets_ipv6: "{{ digital_ocean_ipv6 }}"
+    droplets_wait_timeout: "{{ digital_ocean_wait_timeout }}"
+    droplets_tags: "{{ digital_ocean_tags }}"
+    droplets_host_data: "{{ digital_ocean_host_data }}"
+    droplets_list: "{{ digital_ocean_cloud_instances }}"
+
+- name: "{{ digital_ocean_title }} - Init array digital_ocean_active_hosts"
+  set_fact: 
+    digital_ocean_active_hosts: []
+    
+- name: "{{ digital_ocean_title }} - Include items in digital_ocean_active_hosts"
+  set_fact: 
+    digital_ocean_active_hosts: "{{ digital_ocean_active_hosts + [{ 'name': digital_ocean_item.name, 'private_ip': (digital_ocean_item.networks.v4 | selectattr('type', 'equalto', 'private') | map(attribute='ip_address') | list | first), 'public_ip': (digital_ocean_item.networks.v4 | selectattr('type', 'equalto', 'public') | map(attribute='ip_address') | list | first) }] }}"
+  loop: "{{ digital_ocean_droplets_active }}"
+  loop_control:
+    loop_var: digital_ocean_item
+    label: "{{ digital_ocean_item.name }}"

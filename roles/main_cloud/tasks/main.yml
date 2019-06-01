@@ -1,4 +1,4 @@
-- set_fact: { "main_cloud_{{ main_cloud_item }}": "{{ main_cloud_vars[main_cloud_role + '_' + main_cloud_item] }}" }
+- set_fact: { "main_cloud_{{ main_cloud_item }}": "{{ main_cloud_vars[main_cloud_item] }}" }
   loop: 
   - "instance_type"
   - "title"
@@ -9,7 +9,7 @@
   loop_control:
     loop_var: main_cloud_item
 
-- set_fact: { "{{ main_cloud_item.key }}": "{{ main_cloud_item.value }}" }
+- set_fact: { "{{ main_cloud_role + '_' + main_cloud_item.key }}": "{{ main_cloud_item.value }}" }
   loop: "{{ main_cloud_vars | dict2items }}"
   loop_control:
     loop_var: main_cloud_item
@@ -37,7 +37,7 @@
 
 - name: '{{ main_cloud_title }} - Update the hosts file with the generated hosts'
   blockinfile:
-    path: "{{ main_cloud_vars[main_cloud_role + '_hosts_file'] }}"
+    path: "{{ main_cloud_vars.hosts_file }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ main_cloud_instance_group }}"
     insertafter: "\\[{{ main_cloud_instance_group }}\\]"
     block: "{{ main_cloud_hosts_info }}"
