@@ -1,6 +1,7 @@
 - set_fact:
     main_vars_cloud_shutdown: "{{ env.cloud_shutdown | default(0) }}"
     main_vars_cloud_user_data_file: "roles/main_vars/templates/ubuntu.j2.sh"
+    main_vars_cloud_prefix: "{{ env.cloud_prefix | ternary(env.cloud_prefix + '-', '') }}"
 
 - set_fact:
     main_vars_dns:
@@ -134,7 +135,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "discourse_bootstrap"
-                instance_name: "discourse-bootstrap"
+                instance_name: "{{ main_vars_cloud_prefix }}discourse-bootstrap"
                 instance_tmp: "{{ true | bool }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
@@ -172,7 +173,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "discourse_app"
-                instance_name: "discourse-app"
+                instance_name: "{{ main_vars_cloud_prefix }}discourse-app"
                 instance_tmp: "{{ false | bool }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
@@ -208,7 +209,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "discourse_db_master"
-                instance_name: "discourse-db-master"
+                instance_name: "{{ main_vars_cloud_prefix }}discourse-db-master"
                 instance_tmp: "{{ false | bool }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
@@ -239,7 +240,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "discourse_redis_master"
-                instance_name: "discourse-redis-master"
+                instance_name: "{{ main_vars_cloud_prefix }}discourse-redis-master"
                 instance_tmp: "{{ false | bool }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
@@ -271,7 +272,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "discourse_web"
-                instance_name: "discourse-web"
+                instance_name: "{{ main_vars_cloud_prefix }}discourse-web"
                 instance_tmp: "{{ false | bool }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
