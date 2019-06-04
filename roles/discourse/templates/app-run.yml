@@ -72,7 +72,7 @@ env:
   DISCOURSE_S3_ENDPOINT: "{{ s3_endpoint | default('', true) }}"
   DISCOURSE_S3_CDN_URL: "{{ s3_cdn_url | default('', true) }}"
 
-  DISCOURSE_FORCE_HTTPS: {{ force_https | default(true, true) }}
+  DISCOURSE_FORCE_HTTPS: {{ force_https | default(false, true) }}
   
   DISCOURSE_ENABLE_BACKUPS: {{ enable_backups | default(true, true) }}
   DISCOURSE_BACKUP_LOCATION: "{{ backup_location | default('', true) }}"
