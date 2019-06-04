@@ -59,6 +59,22 @@ env:
   ## see https://meta.discourse.org/t/14857 for details
   {{ use_cdn | ternary('', '#') }}DISCOURSE_CDN_URL: {{ cdn_url | default('', true) }}
 
+  DISCOURSE_ENABLE_S3_UPLOADS: {{ enable_s3_uploads | default(true, true) }}
+  DISCOURSE_S3_ACCESS_KEY_ID: "{{ s3_access_key_id | default('', true) }}"
+  DISCOURSE_S3_SECRET_ACCESS_KEY: "{{ s3_secret_access_key | default('', true) }}"
+  DISCOURSE_S3_REGION: "{{ s3_region | default('us-east-1', true) }}"
+  DISCOURSE_S3_UPLOAD_BUCKET: "{{ s3_upload_bucket | default('', true) }}"
+  DISCOURSE_S3_ENDPOINT: "{{ s3_endpoint | default('', true) }}"
+  DISCOURSE_S3_CDN_URL: "{{ s3_cdn_url | default('', true) }}"
+
+  DISCOURSE_FORCE_HTTPS: {{ force_https | default(true, true) }}
+  
+  DISCOURSE_ENABLE_BACKUPS: {{ enable_backups | default(true, true) }}
+  DISCOURSE_BACKUP_LOCATION: "{{ backup_location | default('', true) }}"
+  DISCOURSE_MAXIMUM_BACKUPS: {{ maximum_backups | default(5, true) }}
+  DISCOURSE_BACKUP_FREQUENCY: {{ backup_frequency | default(7, true) }}
+  DISCOURSE_S3_BACKUP_BUCKET: "{{ s3_backup_bucket | default('', true) }}"
+
   ## Connectivity to the databases
   DISCOURSE_DB_SOCKET: ''
   #DISCOURSE_DB_USERNAME: discourse
