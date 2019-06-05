@@ -22,13 +22,7 @@
       
 - set_fact:
     watch_output_lines: '{{ watch_output | length | int }}'
-
-- debug:
-    var: watch_lines
- 
-- debug:
-    var: watch_output_lines
-      
+  
 - block:
  
   - name: '[{{ watch_title }}] - {{ watch_output_lines }} lines captured'

@@ -4,16 +4,22 @@
 
 - name: "discourse - {{ discourse_container_name }} - debug"
   debug:
-    msg: "{{ discourse_container_index }} - {{ item.count }} - {{ discourse_max_host_count }} - {{ discourse_container_index * item.count / discourse_max_host_count) | int }}"
+    msg: "{{ discourse_container_index }} - {{ discourse_container_item.count }} - {{ discourse_max_host_count }} - {{ discourse_container_index * discourse_container_item.count / discourse_max_host_count) | int }}"
   loop: "{{ discourse_container_dynamic_host_vars }}"
+  loop_control:
+    loop_var: discourse_container_item
 
 - name: "discourse - {{ discourse_container_name }} - dynamic vars"
-  set_fact: { "discourse_container_vars[{{ item.name }}]": "{{ hostvars[groups[item.group][(discourse_container_index * item.count / discourse_max_host_count) | int]] }}" }
+  set_fact: { "discourse_container_vars[{{ discourse_container_item.name }}]": "{{ hostvars[groups[discourse_container_item.group][(discourse_container_index * discourse_container_item.count / discourse_max_host_count) | int]] }}" }
   loop: "{{ discourse_container_dynamic_host_vars }}"
+  loop_control:
+    loop_var: discourse_container_item
 
 - name: "discourse - {{ discourse_container_name }} - all vars"
-  set_fact: { "discourse_var_{{ item.key }}": "{{ item.value }}" }
+  set_fact: { "discourse_var_{{ discourse_container_item.key }}": "{{ discourse_container_item.value }}" }
   loop: "{{ discourse_container_vars | dict2items }}"
+  loop_control:
+    loop_var: discourse_container_item
 
 - name: "discourse - {{ discourse_container_name }} - transfer template file"
   become: yes
