@@ -145,8 +145,15 @@
   tasks:
   - include_tasks: "tasks/init_discourse.yml"
 
+  - name: Install S3 module dependencies
+    pip:
+      name:
+      - boto
+      - boto3
+      - botocore
+
   - name: Delete the bucket and all contents
-    s3:
+    aws_s3:
       s3_url: "{{ main_item.0.endpoint }}"
       access_key: "{{ main_item.0.access_key }}"
       secret_key: "{{ main_item.0.secret_key }}"
