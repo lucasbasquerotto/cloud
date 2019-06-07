@@ -115,6 +115,7 @@
   tags:
   - init
   - temp
+  - cloud
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init_discourse.yml"
@@ -132,6 +133,29 @@
       loop_var: main_item
       label: "{{ main_item.vars.cloud.instance_group }}"
     when: (main_item.vars.cloud.instance_tmp | default(false) | bool) == true
+
+###############################################################################
+
+- name: Play 07 - Delete Buckets
+  hosts: main
+  tags:
+  - never
+  - destroy
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/init_discourse.yml"
+
+  - name: Delete the bucket and all contents
+    s3:
+      s3_url: "{{ main_item.0.endpoint }}"
+      access_key: "{{ main_item.0.access_key }}"
+      secret_key: "{{ main_item.0.secret_key }}"
+      bucket: "{{ main_item.1 }}"
+      mode: delete
+    loop: "{{ main_vars.destroy.buckets | subelements('names') }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.1 }}"
 
 ###############################################################################
 
