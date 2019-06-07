@@ -136,7 +136,7 @@
 
 ###############################################################################
 
-- name: Play 07 - Delete Buckets
+- name: Play 07 - Delete everything that was previously created
   hosts: main
   tags:
   - never
@@ -144,6 +144,19 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init_discourse.yml"
+
+  - include_role: 
+      name: "main_cloud"
+    vars: 
+      main_cloud_role: "{{ main_item.role }}"
+      main_cloud_vars: "{{ main_item.vars.cloud }}"
+      main_cloud_extra: "{{ main_item.extra }}"
+      main_cloud_dns: "{{ main_vars.dns }}"
+      main_cloud_shutdown: true
+    loop: "{{ main_vars.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.vars.cloud.instance_group }}"
 
   - name: Install S3 module dependencies
     pip:

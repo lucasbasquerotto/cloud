@@ -2,7 +2,7 @@
     main_vars_cloud_shutdown: "{{ env.cloud_shutdown | default(0) }}"
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_env_name: "{{ env.name | ternary(env.name + '-', '') }}"
-    main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([{ endpoint: None, access_key_id: None, secret_access_key: None, names: [] }]) }}"
+    main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([{ endpoint: '', access_key_id: '', secret_access_key: '', names: [] }]) }}"
 
 - set_fact:
     main_vars_dns:
