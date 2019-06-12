@@ -92,7 +92,8 @@
     group: "{{ discourse_run_host_group }}"
     mode: 0600
 
-- name: "{{ discourse_run_title }} - get difference of two files (old and current)"
+- name: "{{ discourse_run_title }} - get the difference of two files (old and current)"
+  become: yes
   command: "diff {{ discourse_run_env_file }} {{ discourse_run_env_file_tmp }}"
   register: discourse_run_diff
   failed_when: discourse_run_diff.rc > 1
