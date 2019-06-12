@@ -70,6 +70,9 @@
 - debug:
     var: discourse_run_host_user
     
+- debug:
+    var: discourse_run_host_group
+
 - name: "{{ discourse_run_title }} - create the temporary directory '{{ discourse_run_tmp_path }}'"
   become: yes
   file:
