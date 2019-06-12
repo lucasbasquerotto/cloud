@@ -11,8 +11,6 @@
   - { name: "output_file", default: "app.log" }
   - { name: "path", default: "/var/discourse" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
-  - { name: "host_user", default: "host" }
-  - { name: "host_group", default: "host" }
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
