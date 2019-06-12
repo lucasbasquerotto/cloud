@@ -6,6 +6,8 @@ discourse_run_output_path: "/tmp/main/discourse"
 discourse_run_output_file: "{{ discourse_run_name }}.log"
 discourse_run_path: "/var/discourse"
 discourse_run_tmp_path: "/tmp/main/discourse/containers"
+discourse_run_host_user: "host"
+discourse_run_host_group: "host"
 discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
 
 discourse_run_cmd_file_src_dir: "templates"

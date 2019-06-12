@@ -101,6 +101,8 @@
     include_role: 
       name: discourse_run
     vars:
+      discourse_run_host_user: "{{ main_item.0.host_user }}"
+      discourse_run_host_group: "{{ main_item.0.host_user }}"
       discourse_run_vars: "{{ main_item.1 }}"
     loop: "{{ main_vars.cloud.values() | subelements('vars.discourse.containers') }}"
     loop_control:

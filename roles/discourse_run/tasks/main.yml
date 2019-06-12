@@ -11,6 +11,8 @@
   - { name: "output_file", default: "app.log" }
   - { name: "path", default: "/var/discourse" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
+  - { name: "host_user", default: "host" }
+  - { name: "host_group", default: "host" }
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
@@ -72,8 +74,8 @@
   file:
     path: "{{ discourse_run_tmp_path }}"
     state: directory
-    owner: "{{ discourse_user }}"
-    group: "{{ discourse_group }}"
+    owner: "{{ discourse_run_host_user }}"
+    group: "{{ discourse_run_host_group }}"
     mode: 0700
 
 - name: "{{ discourse_run_title }} - create empty env file into temporary directory if there is no file there"
@@ -82,8 +84,8 @@
     force: no
     content: ""
     dest: "{{ discourse_run_env_file_tmp }}"
-    owner: "{{ discourse_user }}"
-    group: "{{ discourse_group }}"
+    owner: "{{ discourse_run_host_user }}"
+    group: "{{ discourse_run_host_group }}"
     mode: 0600
 
 - name: "{{ discourse_run_title }} - get difference of two files (old and current)"
@@ -128,7 +130,7 @@
     remote_src: yes
     src: "{{ discourse_run_env_file }}"
     dest: "{{ discourse_run_env_file_tmp }}"
-    owner: "{{ discourse_user }}"
-    group: "{{ discourse_group }}"
+    owner: "{{ discourse_run_host_user }}"
+    group: "{{ discourse_run_host_group }}"
     mode: 0600
   when: discourse_run_diff.changed
