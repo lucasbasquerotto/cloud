@@ -67,6 +67,9 @@
     discourse_run_env_file: "{{ discourse_run_path }}/containers/{{ discourse_run_name }}.yml"
     discourse_run_env_file_tmp: "{{ discourse_run_tmp_path }}/{{ discourse_run_name }}.yml"
 
+- debug:
+    var: discourse_run_host_user
+    
 - name: "{{ discourse_run_title }} - create the temporary directory '{{ discourse_run_tmp_path }}'"
   become: yes
   file:
