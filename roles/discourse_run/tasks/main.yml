@@ -10,6 +10,7 @@
   - { name: "output_path", default: "/tmp/main/discourse" }
   - { name: "output_file", default: "app.log" }
   - { name: "path", default: "/var/discourse" }
+  - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
@@ -50,7 +51,7 @@
       discourse_run_tpl_uname: "{{ discourse_run_push_credentials.username }}"
       discourse_run_tpl_upass: "{{ discourse_run_push_credentials.password }}"
 
-  - name: "{{ discourse_run_title }} - verify docker remote image - run cmd"
+  - name: "{{ discourse_run_title }} - verify if docker remote image tag exists"
     become: yes
     command: "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
     args:
@@ -61,6 +62,35 @@
       discourse_run_exists: "{{ discourse_run_out.stdout == '1' }}"
 
   when: discourse_run_push_condition | bool
+    
+- set_fact: 
+    discourse_run_env_file: "{{ discourse_run_path }}/containers/{{ discourse_run_name }}.yml"
+    discourse_run_env_file_tmp: "{{ discourse_run_tmp_path }}/{{ discourse_run_name }}.yml"
+
+- name: "{{ discourse_run_title }} - create the temporary directory '{{ discourse_run_tmp_path }}'"
+  become: yes
+  file:
+    path: "{{ discourse_run_tmp_path }}"
+    state: directory
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0700
+
+- name: "{{ discourse_run_title }} - create empty env file into temporary directory if there is no file there"
+  become: yes
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ discourse_run_env_file_tmp }}"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0600
+
+- name: "{{ discourse_run_title }} - get difference of two files (old and current)"
+  command: "diff {{ discourse_run_env_file }} {{ discourse_run_env_file_tmp }}"
+  register: discourse_run_diff
+  failed_when: discourse_run_diff.rc > 1
+  changed_when: discourse_run_diff.rc == 1
 
 - name: "{{ discourse_run_title }} - main action"
   include_role: 
@@ -72,7 +102,7 @@
     long_run_output_file: "{{ discourse_run_output_file }}"
     long_run_path: "{{ discourse_run_path }}"
     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
-  when: (discourse_run_action != 'bootstrap') or (not discourse_run_exists)
+  when: discourse_run_diff.changed and ((discourse_run_action != 'bootstrap') or (not discourse_run_exists))
 
 - block:
 
@@ -90,4 +120,15 @@
       source: "local"
       push: yes
 
-  when: (discourse_run_push_condition | bool) and (not discourse_run_exists)
+  when: discourse_run_diff.changed and (discourse_run_push_condition | bool) and (not discourse_run_exists)
+
+- name: "discourse - {{ discourse_container_name }} - copy env file into temporary directory"
+  become: yes
+  copy: 
+    remote_src: yes
+    src: "{{ discourse_run_env_file }}"
+    dest: "{{ discourse_run_env_file_tmp }}"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0600
+  when: discourse_run_diff.changed
