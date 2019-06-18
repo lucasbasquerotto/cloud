@@ -29,7 +29,6 @@ digital_ocean_host_vars:
 digital_ocean_host_data: []
 
 digital_ocean_droplets_title: "droplets"
-digital_ocean_droplets_hosts_file: "/home/main/env/hosts"
 digital_ocean_droplets_host_user: "host" 
 digital_ocean_droplets_hosts_group: "droplet"
 digital_ocean_droplets_size_id: "1gb"
