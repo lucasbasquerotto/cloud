@@ -102,6 +102,8 @@ echo "Main logic finished" >> "/var/log/setup.log"
 
 echo "Preparing Ansible Host..." >> "/var/log/setup.log"
 
+export DEBIAN_FRONTEND=noninteractive
+
 apt update
 
 apt install -y python3-pip
