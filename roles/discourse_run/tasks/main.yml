@@ -1,4 +1,5 @@
-- set_fact: { "discourse_run_{{ discourse_run_item.name }}": "{{ discourse_run_vars[discourse_run_item.name] | default(discourse_run_item.default) }}" }
+- name: "discourse_run - set_fact - args"
+  set_fact: { "discourse_run_{{ discourse_run_item.name }}": "{{ discourse_run_vars[discourse_run_item.name] | default(discourse_run_item.default) }}" }
   loop: 
   - { name: "name", default: "app" }
   - { name: "action", default: "rebuild" }
@@ -14,26 +15,39 @@
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
-    
-- set_fact: 
+  
+- name: "discourse_run - set_fact - new args"
+  set_fact: 
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
     discourse_run_push_condition: "{{ discourse_run_push | default(false) }}"
     discourse_run_exists: false
 
 - block:
 
-  - set_fact: 
-      discourse_run_registry_prefix: "{{ discourse_run_push_credentials.registry | ternary(discourse_run_push_credentials.registry + '/', '') }}"
-      discourse_run_push_owner_prefix: "{{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}"
+  - name: "{{ discourse_run_title }} - set_fact"
+    set_fact: 
+      discourse_run_registry_prefix: >-
+        {{ 
+        discourse_run_push_credentials.registry | 
+        ternary(discourse_run_push_credentials.registry + '/', '') 
+        }}
+      discourse_run_push_owner_prefix: >-
+        {{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}
 
-  - set_fact:
-      discourse_run_push_local_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
-      discourse_run_push_remote_repository: "{{ discourse_run_registry_prefix }}{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}"
+  - name: "{{ discourse_run_title }} - set_fact"
+    set_fact:
+      discourse_run_push_local_repository: >-
+        {{ discourse_run_push_owner_prefix }}{{ ''
+        }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}
+      discourse_run_push_remote_repository: >-
+        {{ discourse_run_registry_prefix }}{{ ''
+        }}{{ discourse_run_push_owner_prefix }}{{ ''
+        }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}
 
   - name: "{{ discourse_run_title }} - log into docker registry"
     become: yes
     docker_login:
-    #   registry: "{{ discourse_run_push_credentials.registry }}"
+      registry: "{{ discourse_run_push_credentials.registry }}"
       username: "{{ discourse_run_push_credentials.username }}"
       password: "{{ discourse_run_push_credentials.password }}"
       reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
@@ -46,7 +60,8 @@
       mode: 0750
     vars:
       discourse_run_tpl_registry_api_base_url: "{{ discourse_run_registry_api_base_url }}"
-      discourse_run_tpl_repository: "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"
+      discourse_run_tpl_repository: >-
+        "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"
       discourse_run_tpl_version: "{{ discourse_run_push_tag }}"
       discourse_run_tpl_uname: "{{ discourse_run_push_credentials.username }}"
       discourse_run_tpl_upass: "{{ discourse_run_push_credentials.password }}"
@@ -67,7 +82,9 @@
     discourse_run_env_file: "{{ discourse_run_path }}/containers/{{ discourse_run_name }}.yml"
     discourse_run_env_file_tmp: "{{ discourse_run_tmp_path }}/{{ discourse_run_name }}.yml"
 
-- name: "{{ discourse_run_title }} - create the temporary directory '{{ discourse_run_tmp_path }}'"
+- name: >-
+    {{ discourse_run_title }} - create the temporary directory 
+    '{{ discourse_run_tmp_path }}'
   become: yes
   file:
     path: "{{ discourse_run_tmp_path }}"
@@ -76,7 +93,9 @@
     group: "{{ discourse_run_host_group }}"
     mode: 0700
 
-- name: "{{ discourse_run_title }} - create empty env file into temporary directory if there is no file there"
+- name: >-
+    {{ discourse_run_title }} - create empty env file into temporary directory
+    if there is no file there
   become: yes
   copy: 
     force: no
@@ -103,7 +122,9 @@
     long_run_output_file: "{{ discourse_run_output_file }}"
     long_run_path: "{{ discourse_run_path }}"
     long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
-  when: discourse_run_diff.changed and ((discourse_run_action != 'bootstrap') or (not discourse_run_exists))
+  when: >-
+    discourse_run_diff.changed and 
+    ((discourse_run_action != 'bootstrap') or (not discourse_run_exists))
 
 - block:
 
@@ -121,7 +142,10 @@
       source: "local"
       push: yes
 
-  when: discourse_run_diff.changed and (discourse_run_push_condition | bool) and (not discourse_run_exists)
+  when: >-
+    discourse_run_diff.changed and 
+    (discourse_run_push_condition | bool) and 
+    (not discourse_run_exists)
 
 - name: "discourse - {{ discourse_container_name }} - copy env file into temporary directory"
   become: yes

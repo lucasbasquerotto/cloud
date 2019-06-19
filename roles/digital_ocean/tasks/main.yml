@@ -39,7 +39,8 @@
 - name: "{{ digital_ocean_title }} - create droplets"
   include_tasks: "droplets.yml"
   vars:
-    digital_ocean_droplets_title: "{{ digital_ocean_title }} - create droplets - {{ digital_ocean_instance_group }}"
+    digital_ocean_droplets_title: >-
+      {{ digital_ocean_title }} - create droplets - {{ digital_ocean_instance_group }}
     digital_ocean_droplets_hosts_group: "{{ digital_ocean_instance_group }}"
     digital_ocean_droplets_hosts_file: "{{ digital_ocean_hosts_file }}"
     digital_ocean_droplets_instance_type: "{{ digital_ocean_instance_type }}"

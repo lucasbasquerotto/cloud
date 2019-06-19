@@ -1,4 +1,6 @@
-- name: '{{ host_test_title }} - Wait {{ host_test_initial_connection_timeout }} seconds for target connection to become reachable/usable'
+- name: >
+    {{ host_test_title }} - Wait {{ host_test_initial_connection_timeout }}
+    seconds for target connection to become reachable/usable
   wait_for_connection:
     delay: 0
     sleep: 1
@@ -7,14 +9,19 @@
 - name: '{{ host_test_title }} - Gathering facts'
   setup:
 
-- name: '{{ host_test_title }} - Make sure the file "{{ host_test_log_file }}" has "{{ host_test_setup_last_line }}" in it (wait {{ host_test_setup_finished_timeout }} seconds)'
+- name: >
+    {{ host_test_title }} - Make sure the file "{{ host_test_log_file }}"
+    has "{{ host_test_setup_last_line }}" in it
+    (wait {{ host_test_setup_finished_timeout }} seconds)
   wait_for:
     delay: 0
     sleep: 1
     timeout: "{{ host_test_setup_finished_timeout }}"
     path: "{{ host_test_log_file }}"
     search_regex: "{{ host_test_setup_last_line }}"
-    msg: Timeout to find "{{ host_test_setup_last_line }}" inside file "{{ host_test_log_file }}"
+    msg: >
+      Timeout to find "{{ host_test_setup_last_line }}" 
+      inside file "{{ host_test_log_file }}"
 
 - name: '{{ host_test_title }} - retrieve last line of "{{ host_test_log_file }}"'
   shell: tail -n 1 "{{ host_test_log_file }}"
@@ -28,5 +35,7 @@
   
 - name: '{{ host_test_title }} - verify if the setup was finished successfully'
   fail: 
-    msg: "Variable '{{ host_test_last_line }}' should be equal to '{{ host_test_setup_last_line }}'"
+    msg: >
+      Variable '{{ host_test_last_line }}' should be equal to 
+      '{{ host_test_setup_last_line }}'
   when: host_test_last_line != host_test_setup_last_line

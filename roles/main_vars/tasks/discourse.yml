@@ -22,24 +22,63 @@
           list: "{{ env.dns_cname_list | default([]) }}"
 
 - set_fact:
-    main_vars_container_vars_default: "{{ (env.container_vars | default({})).default | default({}) }}"
-    main_vars_container_vars_default_build: "{{ (env.container_vars | default({})).default_build | default({}) }}"
-    main_vars_container_vars_default_run: "{{ (env.container_vars | default({})).default_run | default({}) }}"
-    main_vars_container_vars_app_build: "{{ (env.container_vars | default({})).app_build | default({}) }}"
-    main_vars_container_vars_app_run: "{{ (env.container_vars | default({})).app_run | default({}) }}"
-    main_vars_container_vars_web_build: "{{ (env.container_vars | default({})).web_build | default({}) }}"
-    main_vars_container_vars_web_run: "{{ (env.container_vars | default({})).web_run | default({}) }}"
-    main_vars_container_vars_redis_master_run: "{{ (env.container_vars | default({})).redis_master_run | default({}) }}"
-    main_vars_container_vars_db_master_run: "{{ (env.container_vars | default({})).db_master_run | default({}) }}"
+    main_vars_container_vars_default: >-
+      {{ (env.container_vars | default({})).default | default({}) }}
+    main_vars_container_vars_default_build: >-
+      {{ (env.container_vars | default({})).default_build | default({}) }}
+    main_vars_container_vars_default_run: >-
+      {{ (env.container_vars | default({})).default_run | default({}) }}
+    main_vars_container_vars_app_build: >-
+      {{ (env.container_vars | default({})).app_build | default({}) }}
+    main_vars_container_vars_app_run: >-
+      {{ (env.container_vars | default({})).app_run | default({}) }}
+    main_vars_container_vars_web_build: >-
+      {{ (env.container_vars | default({})).web_build | default({}) }}
+    main_vars_container_vars_web_run: >-
+      {{ (env.container_vars | default({})).web_run | default({}) }}
+    main_vars_container_vars_redis_master_run: >-
+      {{ (env.container_vars | default({})).redis_master_run | default({}) }}
+    main_vars_container_vars_db_master_run: >-
+      {{ (env.container_vars | default({})).db_master_run | default({}) }}
 
 - set_fact:
     main_vars_containers: 
-      app_build: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_build) | combine(main_vars_container_vars_app_build) }}"
-      app_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_app_run) }}"
-      web_build: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_build) | combine(main_vars_container_vars_web_build) }}"
-      web_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_web_run) }}"
-      redis_master_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_redis_master_run) }}"
-      db_master_run: "{{ main_vars_container_vars_default | combine(main_vars_container_vars_default_run) | combine(main_vars_container_vars_db_master_run) }}"
+      app_build: >-
+        {{ 
+        main_vars_container_vars_default | 
+        combine(main_vars_container_vars_default_build) | 
+        combine(main_vars_container_vars_app_build) 
+        }}
+      app_run: >-
+        {{ 
+        main_vars_container_vars_default | 
+        combine(main_vars_container_vars_default_run) | 
+        combine(main_vars_container_vars_app_run) 
+        }}
+      web_build: >-
+        {{ 
+        main_vars_container_vars_default | 
+        combine(main_vars_container_vars_default_build) | 
+        combine(main_vars_container_vars_web_build) 
+        }}
+      web_run: >-
+        {{ 
+        main_vars_container_vars_default | 
+        combine(main_vars_container_vars_default_run) | 
+        combine(main_vars_container_vars_web_run) 
+        }}
+      redis_master_run: >-
+        {{ 
+        main_vars_container_vars_default | 
+        combine(main_vars_container_vars_default_run) | 
+        combine(main_vars_container_vars_redis_master_run) 
+        }}
+      db_master_run: >-
+        {{ 
+        main_vars_container_vars_default | 
+        combine(main_vars_container_vars_default_run) | 
+        combine(main_vars_container_vars_db_master_run) 
+        }}
 
 - set_fact:
     main_vars_cloud_aux:
@@ -107,7 +146,8 @@
         image_owner: "{{ env.cloud_docker_image_owner | default('') }}"
         image_name: "{{ env.cloud_docker_image_name | default('') }}"
         credentials: 
-          registry: "{{ env.cloud_docker_registry | default(None) }}"
+          registry: >-
+            {{ env.cloud_docker_registry | default('https://index.docker.io/v1/') }}
           username: "{{ env.cloud_docker_username | default('') }}"
           password: "{{ env.cloud_docker_password | default('') }}"
           reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"
@@ -148,7 +188,10 @@
                   push_credentials: "{{ main_vars_cloud_aux.docker.credentials }}"
                   push_owner: "{{ main_vars_cloud_aux.docker.image_owner }}"
                   push_name: "{{ main_vars_cloud_aux.docker.image_name }}"
-                  push_tag: "app-{{ (env.cloud_docker_image_version | default({})).app | default('') }}"
+                  push_tag: >-
+                    app-{{ 
+                      (env.cloud_docker_image_version | default({})).app | default('')
+                    }}
             extra:
               dmz: "{{ false | bool }}"
               load_balance: "{{ false | bool }}"
