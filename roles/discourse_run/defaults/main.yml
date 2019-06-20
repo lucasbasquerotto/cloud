@@ -12,4 +12,5 @@ discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_na
 
 discourse_run_cmd_file_src_dir: "templates"
 discourse_run_cmd_file_dest_dir: "/usr/local/bin"
+discourse_run_registry_default: "https://index.docker.io/v1/"
 discourse_run_registry_api_base_url: "https://hub.docker.com/v2"

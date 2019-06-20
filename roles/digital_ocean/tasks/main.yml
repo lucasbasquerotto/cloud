@@ -26,14 +26,29 @@
 
 - name: "{{ digital_ocean_title }} - define instances to be created"
   set_fact:
-    digital_ocean_cloud_instances: "{{ digital_ocean_cloud_instances + [{ 'name': digital_ocean_instance_name + '-' + digital_ocean_region + '-' + ('%03d'  | format(digital_ocean_item)), 'region_id': digital_ocean_region, 'state': (((digital_ocean_item | int) <= (digital_ocean_instance_count | int)) and not (digital_ocean_shutdown | bool)) | ternary('present', 'absent') }] }}"
+    digital_ocean_cloud_instances: >-
+      {{ digital_ocean_cloud_instances +
+      [{ 'name':
+      digital_ocean_instance_name + '-' +
+      digital_ocean_region + '-' +
+      ('%03d' | format(digital_ocean_item)),
+      'region_id': digital_ocean_region,
+      'state':
+      (((digital_ocean_item | int) <= (digital_ocean_instance_count | int))
+      and not (digital_ocean_shutdown | bool)) | ternary('present', 'absent') }] }}
   loop: "{{ range(1, (digital_ocean_instance_max | int) + 1) | list }}"
   loop_control:
     loop_var: digital_ocean_item
 
 - name: "{{ digital_ocean_title }} - define digital_ocean_user_data"
   set_fact:
-    digital_ocean_user_data: "{{ lookup('template', digital_ocean_user_data_file, template_vars=dict(digital_ocean_host_vars)) | trim }}"
+    digital_ocean_user_data: >-
+      {{ lookup(
+      'template', 
+      digital_ocean_user_data_file, 
+      template_vars=dict(digital_ocean_host_vars)
+      ) | trim 
+      }}
   when: (digital_ocean_user_data_file is defined) and (digital_ocean_user_data_file != '')
 
 - name: "{{ digital_ocean_title }} - create droplets"
@@ -63,7 +78,17 @@
     
 - name: "{{ digital_ocean_title }} - Include items in digital_ocean_active_hosts"
   set_fact: 
-    digital_ocean_active_hosts: "{{ digital_ocean_active_hosts + [{ 'name': digital_ocean_item.name, 'private_ip': (digital_ocean_item.networks.v4 | selectattr('type', 'equalto', 'private') | map(attribute='ip_address') | list | first), 'public_ip': (digital_ocean_item.networks.v4 | selectattr('type', 'equalto', 'public') | map(attribute='ip_address') | list | first) }] }}"
+    digital_ocean_active_hosts: >-
+      {{ digital_ocean_active_hosts +
+      [{ 'name': digital_ocean_item.name,
+      'private_ip':
+      (digital_ocean_item.networks.v4 |
+      selectattr('type', 'equalto', 'private') |
+      map(attribute='ip_address') | list | first),
+      'public_ip':
+      (digital_ocean_item.networks.v4 |
+      selectattr('type', 'equalto', 'public') |
+      map(attribute='ip_address') | list | first) }] }}
   loop: "{{ digital_ocean_droplets_active }}"
   loop_control:
     loop_var: digital_ocean_item

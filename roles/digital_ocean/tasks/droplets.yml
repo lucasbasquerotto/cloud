@@ -20,7 +20,14 @@
 
 - name: "{{ digital_ocean_droplets_title }} - Define value of digital_ocean_droplets_active"
   set_fact: 
-    digital_ocean_droplets_active: "{{ digital_ocean_droplets_details.results | map(attribute='data') | selectattr('droplet', 'defined') | map(attribute='droplet') | list }}"
+    digital_ocean_droplets_active: >-
+      {{ 
+      digital_ocean_droplets_details.results | 
+      map(attribute='data') | 
+      selectattr('droplet', 'defined') | 
+      map(attribute='droplet') | 
+      list 
+      }}
 
 - name: "{{ digital_ocean_droplets_title }} - tag each droplet"
   digital_ocean_tag:

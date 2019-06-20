@@ -12,6 +12,8 @@
   - { name: "output_file", default: "app.log" }
   - { name: "path", default: "/var/discourse" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
+  - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
+  - { name: "registry_api_base_url", default: "https://hub.docker.com/v2" }
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
@@ -21,16 +23,13 @@
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
     discourse_run_push_condition: "{{ discourse_run_push | default(false) }}"
     discourse_run_exists: false
+    discourse_run_registry: >-
+      {{ discourse_run_push_credentials.registry | default(discourse_run_registry_default) }}
 
 - block:
 
   - name: "{{ discourse_run_title }} - set_fact"
     set_fact: 
-      discourse_run_registry_prefix: >-
-        {{ 
-        discourse_run_push_credentials.registry | 
-        ternary(discourse_run_push_credentials.registry + '/', '') 
-        }}
       discourse_run_push_owner_prefix: >-
         {{ discourse_run_push_owner | ternary(discourse_run_push_owner + '/', '') }}
 
@@ -40,7 +39,7 @@
         {{ discourse_run_push_owner_prefix }}{{ ''
         }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}
       discourse_run_push_remote_repository: >-
-        {{ discourse_run_registry_prefix }}{{ ''
+        {{ discourse_run_registry }}{{ ''
         }}{{ discourse_run_push_owner_prefix }}{{ ''
         }}{{ discourse_run_push_name }}:{{ discourse_run_push_tag }}
 
@@ -73,14 +72,18 @@
       chdir: "{{ discourse_run_cmd_file_dest_dir }}/"
     register: discourse_run_out
 
-  - set_fact: 
+  - name: "{{ discourse_run_title }} - set_fact"
+    set_fact: 
       discourse_run_exists: "{{ discourse_run_out.stdout == '1' }}"
 
   when: discourse_run_push_condition | bool
     
-- set_fact: 
-    discourse_run_env_file: "{{ discourse_run_path }}/containers/{{ discourse_run_name }}.yml"
-    discourse_run_env_file_tmp: "{{ discourse_run_tmp_path }}/{{ discourse_run_name }}.yml"
+- name: "{{ discourse_run_title }} - set_fact"
+  set_fact: 
+    discourse_run_env_file: >-
+      {{ discourse_run_path }}/containers/{{ discourse_run_name }}.yml
+    discourse_run_env_file_tmp: >-
+      {{ discourse_run_tmp_path }}/{{ discourse_run_name }}.yml
 
 - name: >-
     {{ discourse_run_title }} - create the temporary directory 
@@ -147,7 +150,7 @@
     (discourse_run_push_condition | bool) and 
     (not discourse_run_exists)
 
-- name: "discourse - {{ discourse_container_name }} - copy env file into temporary directory"
+- name: "{{ discourse_run_title }} - copy env file into temporary directory"
   become: yes
   copy: 
     remote_src: yes
