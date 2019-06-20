@@ -1,9 +1,8 @@
 - name: "main_cloud - set_fact - args"
-  set_fact: { "main_cloud_{{ main_cloud_item }}": "{{ main_cloud_vars[main_cloud_item] }}" }
-  # set_fact: { 
-  #   "main_cloud_{{ main_cloud_item }}": 
-  #   "{{ main_cloud_vars[main_cloud_item] }}" 
-  #   }
+  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  vars:
+    main_cloud_item_key: "main_cloud_{{ main_cloud_item }}"
+    main_cloud_item_value: "{{ main_cloud_vars[main_cloud_item] }}"
   loop: 
   - "instance_type"
   - "title"
@@ -15,14 +14,20 @@
     loop_var: main_cloud_item
 
 - name: "{{ main_cloud_title }} - set_fact"
-  set_fact: { "{{ main_cloud_role + '_' + main_cloud_item.key }}": "{{ main_cloud_item.value }}" }
+  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  vars:
+    main_cloud_item_key: "{{ main_cloud_role + '_' + main_cloud_item.key }}"
+    main_cloud_item_value: "{{ main_cloud_item.value }}"
   loop: "{{ main_cloud_vars | dict2items }}"
   loop_control:
     loop_var: main_cloud_item
     label: "{{ main_cloud_item.key }}"
 
 - name: "{{ main_cloud_title }} - set_fact"
-  set_fact: { "{{ main_cloud_role }}_shutdown": "{{ main_cloud_shutdown | default(false) }}" }
+  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  vars:
+    main_cloud_item_key: "{{ main_cloud_role }}_shutdown"
+    main_cloud_item_value: "{{ main_cloud_shutdown | default(false) }}"
 
 - name: "{{ main_cloud_title }} - execute role {{ main_cloud_role }}"
   include_role: 

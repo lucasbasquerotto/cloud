@@ -3,14 +3,23 @@
     discourse_container_vars: "{{ discourse_container_vars | default({}) }}"
 
 - name: "discourse - {{ discourse_container_name }} - dynamic vars"
-  set_fact: { "discourse_container_vars[{{ discourse_container_item.name }}]": "{{ hostvars[groups[discourse_container_item.group][(discourse_container_index * discourse_container_item.count / discourse_max_host_count) | int]] }}" }
+  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  vars:
+    main_cloud_item_key: "discourse_container_vars[{{ discourse_container_item.name }}]"
+    main_cloud_item_value: >-
+      {{ hostvars[groups[
+      discourse_container_item.group][(discourse_container_index *
+      discourse_container_item.count / discourse_max_host_count) | int]] }}
   loop: "{{ discourse_container_dynamic_host_vars }}"
   loop_control:
     loop_var: discourse_container_item
     label: "{{ discourse_container_item.name }}"
 
 - name: "discourse - {{ discourse_container_name }} - all vars"
-  set_fact: { "discourse_var_{{ discourse_container_item.key }}": "{{ discourse_container_item.value }}" }
+  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  vars:
+    main_cloud_item_key: "discourse_var_{{ discourse_container_item.key }}"
+    main_cloud_item_value: "{{ discourse_container_item.value }}"
   loop: "{{ discourse_container_vars | dict2items }}"
   loop_control:
     loop_var: discourse_container_item
