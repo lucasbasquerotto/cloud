@@ -148,6 +148,8 @@
         credentials: 
           registry: >-
             {{ env.cloud_docker_registry | default('https://index.docker.io/v1/') }}
+          api_base_url: >-
+            {{ env.cloud_docker_api_base_url | default('https://hub.docker.com/v2') }}
           username: "{{ env.cloud_docker_username | default('') }}"
           password: "{{ env.cloud_docker_password | default('') }}"
           reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"

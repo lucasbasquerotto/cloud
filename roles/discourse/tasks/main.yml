@@ -11,17 +11,47 @@
     version: "{{ discourse_version }}"
     dest: "{{ discourse_location }}"
     update: yes
+    
+- name: "{{ discourse_title }} - set_fact"
+  set_fact: 
+    discourse_setup_file_path: >-
+      {{ discourse_location }}/{{ discourse_setup_file }}
+    discourse_setup_tmp_file_path: >-
+      {{ discourse_setup_tmp_file_dir }}/{{ discourse_setup_file }}
+
+- name: >-
+    {{ discourse_title }} - create the temporary directory 
+    '{{ discourse_setup_tmp_file_dir }}'
+  become: yes
+  file:
+    path: "{{ discourse_setup_tmp_file_dir }}"
+    state: directory
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0700
+
+- name: >-
+    {{ discourse_title }} - create empty setup file into temporary directory
+    if there is no file there
+  become: yes
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ discourse_setup_tmp_file_path }}"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0600
    
 - name: "{{ discourse_title }} - copy discourse setup file"
   become: yes
   copy: 
     src: "{{ discourse_setup_location }}/setup.sh"
-    dest: "{{ discourse_location }}/{{ discourse_setup_file }}"
+    dest: "{{ discourse_setup_file_path }}"
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
     mode: 0755
    
-- name: "{{ discourse_title }} - copy discourse templates files"
+- name: "{{ discourse_title }} - copy the discourse templates files"
   become: yes
   copy: 
     src: "{{ discourse_templates_location }}/{{ discourse_item }}"
@@ -52,6 +82,13 @@
     index_var: discourse_index
     loop_var: "discourse_item"
 
+- name: "{{ discourse_title }} - get the difference of two files (old and current)"
+  become: yes
+  command: "diff {{ discourse_setup_file_path }} {{ discourse_setup_tmp_file_path }}"
+  register: discourse_diff
+  failed_when: discourse_diff.rc > 1
+  changed_when: discourse_diff.rc == 1
+
 - name: "{{ discourse_title }} - prepare the machine (setup)"
   include_role: 
     name: long_run
@@ -62,3 +99,14 @@
     long_run_output_file: "{{ discourse_setup_output_file }}"
     long_run_path: "{{ discourse_location }}"
     long_run_cmd: "{{ discourse_setup_cmd }}"
+  when: "discourse_diff.changed" 
+   
+- name: "{{ discourse_title }} - backup the discourse setup file"
+  become: yes
+  copy: 
+    remote_src: yes
+    src: "{{ discourse_setup_file_path }}"
+    dest: "{{ discourse_setup_tmp_file_path }}"
+    owner: "{{ discourse_user }}"
+    group: "{{ discourse_group }}"
+    mode: 0755

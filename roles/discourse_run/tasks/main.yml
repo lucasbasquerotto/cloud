@@ -18,7 +18,6 @@
   - { name: "path", default: "/var/discourse" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
-  - { name: "registry_api_base_url", default: "https://hub.docker.com/v2" }
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
@@ -30,6 +29,11 @@
     discourse_run_exists: false
     discourse_run_registry: >-
       {{ discourse_run_push_credentials.registry | default(discourse_run_registry_default) }}
+    discourse_run_api_base_url: >-
+      {{ 
+      discourse_run_push_credentials.api_base_url | 
+      default(discourse_run_api_base_url_default) 
+      }}
 
 - block:
 
@@ -63,7 +67,7 @@
       dest: "{{ discourse_run_cmd_file_dest_dir }}/docker-tag-exists"
       mode: 0750
     vars:
-      discourse_run_tpl_registry_api_base_url: "{{ discourse_run_registry_api_base_url }}"
+      discourse_run_tpl_registry_api_base_url: "{{ discourse_run_api_base_url }}"
       discourse_run_tpl_repository: >-
         "{{ discourse_run_push_owner_prefix }}{{ discourse_run_push_name }}"
       discourse_run_tpl_version: "{{ discourse_run_push_tag }}"
