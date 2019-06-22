@@ -160,12 +160,12 @@
       loop_var: main_item
       label: "{{ main_item.vars.cloud.instance_group }}"
 
-  - name: Install S3 module dependencies
-    pip:
-      name:
-      - boto
-      - boto3
-      - botocore
+  # - name: Install S3 module dependencies
+  #   pip:
+  #     name:
+  #     - boto
+  #     - boto3
+  #     - botocore
 
   - name: Delete the bucket and all contents
     aws_s3:
