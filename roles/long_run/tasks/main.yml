@@ -18,7 +18,7 @@
 - name: '[{{ long_run_title }}] - start the execution of "{{ long_run_cmd }}"'
   become: "{{ long_run_become }}"
   shell: >-
-    {{ long_run_cmd }} | tee --append {{ long_run_output_path }}/{{ long_run_output_file }}
+    {{ long_run_cmd }} 2>&1 | tee --append {{ long_run_output_path }}/{{ long_run_output_file }}
   args:
     chdir: "{{ long_run_path }}"
   async: "{{ long_run_timeout | int }}"
