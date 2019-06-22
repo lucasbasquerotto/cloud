@@ -59,6 +59,7 @@
       username: "{{ discourse_run_push_credentials.username }}"
       password: "{{ discourse_run_push_credentials.password }}"
       reauthorize: "{{ discourse_run_push_credentials.reauthorize }}"
+    tags: ["print_action"]
 
   - name: "{{ discourse_run_title }} - verify docker remote image - move the cmd file"
     become: yes
@@ -80,6 +81,7 @@
     args:
       chdir: "{{ discourse_run_cmd_file_dest_dir }}/"
     register: discourse_run_out
+    tags: ["print_action"]
 
   - name: "{{ discourse_run_title }} - set_fact"
     set_fact: 
@@ -146,6 +148,7 @@
       name: "local_discourse/{{ discourse_run_name }}"
       repository: "{{ discourse_run_push_local_repository }}"
       source: "pull"
+    tags: ["print_action"]
 
   - name: "{{ discourse_run_title }} - push tagged image to docker registry"
     become: yes
@@ -153,6 +156,7 @@
       name: "{{ discourse_run_push_local_repository }}"
       source: "local"
       push: yes
+    tags: ["print_action"]
 
   when: >-
     discourse_run_diff.changed and 

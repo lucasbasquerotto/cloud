@@ -8,9 +8,17 @@
     state: directory
     mode: 0744
 
+- name: '[{{ long_run_title }}] - clear output file before run'
+  become: "{{ long_run_become }}"
+  copy: 
+    content: ""
+    dest: "{{ long_run_output_path }}/{{ long_run_output_file }}"
+    mode: 0600
+
 - name: '[{{ long_run_title }}] - start the execution of "{{ long_run_cmd }}"'
   become: "{{ long_run_become }}"
-  shell: "{{ long_run_cmd }} > {{ long_run_output_path }}/{{ long_run_output_file }}"
+  shell: >-
+    {{ long_run_cmd }} | tee --append {{ long_run_output_path }}/{{ long_run_output_file }}
   args:
     chdir: "{{ long_run_path }}"
   async: "{{ long_run_timeout | int }}"

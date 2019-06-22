@@ -5,6 +5,7 @@
     delay: 0
     sleep: 1
     timeout: "{{ host_test_initial_connection_timeout }}"
+  tags: ["print_action"]
 
 - name: '{{ host_test_title }} - Gathering facts'
   setup:
@@ -22,6 +23,7 @@
     msg: >
       Timeout to find "{{ host_test_setup_last_line }}" 
       inside file "{{ host_test_log_file }}"
+  tags: ["print_action"]
 
 - name: '{{ host_test_title }} - retrieve last line of "{{ host_test_log_file }}"'
   shell: tail -n 1 "{{ host_test_log_file }}"

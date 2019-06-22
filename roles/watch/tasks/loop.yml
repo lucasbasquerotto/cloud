@@ -29,9 +29,9 @@
     set_fact:
       watch_lines: '{{ watch_lines|int + watch_output_lines|int }}'
 
-  - name: '[{{ watch_title }}] - {{ watch_file }}'
+  - name: '[{{ watch_title }}] - {{ watch_file }} - {{ watch_output_lines }} lines captured'
     debug:
       var: watch_output
-    tags: [print_action]
+    tags: ["print_action"]
     
   when: (watch_output_lines | int) > 0

@@ -17,6 +17,7 @@
     loop_var: digital_ocean_droplets_item
     label: "{{ digital_ocean_droplets_item.name }} - {{ digital_ocean_droplets_item.state }}"
   register: digital_ocean_droplets_details
+  tags: ["print_action"]
 
 - name: "{{ digital_ocean_droplets_title }} - Define value of digital_ocean_droplets_active"
   set_fact: 
@@ -43,3 +44,4 @@
     label: >-
       droplet: {{ digital_ocean_droplets_item[0].name }} -
       tag: {{ digital_ocean_droplets_item[1] }}
+  tags: ["print_action"]

@@ -62,9 +62,11 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ main_cloud_instance_group }}"
     insertafter: "\\[{{ main_cloud_instance_group }}\\]"
     block: "{{ main_cloud_hosts_info }}"
+  tags: ["print_action"]
 
 - name: '{{ main_cloud_title }} - refresh inventory'
   meta: refresh_inventory
+  tags: ["print_action"]
 
 - name: "create the main dns record point to the instance when in the dmz layer"
   include_role: 
@@ -78,3 +80,4 @@
     main_dns_record: "{{ main_cloud_dns.main_record }}"
     main_dns_value: "{{ main_cloud_active_hosts[0].public_ip }}"
   when: (main_cloud_active_hosts | length == 1) and main_cloud_extra.dmz
+  tags: ["print_action"]

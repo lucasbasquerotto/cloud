@@ -8,3 +8,4 @@
     value: "{{ main_dns_value | default(omit, true) }}"
     account_email: "{{ main_dns_credentials.account_email }}"
     account_api_token: "{{ main_dns_credentials.account_api_token }}"
+  tags: ["print_action"]
