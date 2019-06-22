@@ -6,6 +6,7 @@
   loop: "{{ digital_ocean_all_tags | default([]) }}"
   loop_control:
     loop_var: digital_ocean_item
+  when: ((digital_ocean_instance_count | int) > 0) and not (digital_ocean_shutdown | bool)
 
 - name: "{{ digital_ocean_title }} - create firewalls"
   digital_ocean_firewall:
@@ -20,6 +21,7 @@
   loop_control:
     loop_var: digital_ocean_item
     label: "{{ digital_ocean_item.name }}"
+  when: ((digital_ocean_instance_count | int) > 0) and not (digital_ocean_shutdown | bool)
 
 - set_fact:
     digital_ocean_cloud_instances: []
