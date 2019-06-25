@@ -34,7 +34,7 @@ digital_ocean_droplets_hosts_group: "droplet"
 digital_ocean_droplets_size_id: "1gb"
 digital_ocean_droplets_image_id: "ubuntu-18-04-x64"
 digital_ocean_droplets_private_networking: "yes"
-digital_ocean_droplets_ipv6: "yes"
+digital_ocean_droplets_ipv6: "no"
 digital_ocean_droplets_wait_timeout: 500
 digital_ocean_droplets_user_data: "{{ omit }}"
 digital_ocean_droplets_tags:

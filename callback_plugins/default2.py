@@ -132,7 +132,7 @@ class CallbackModule(CallbackBase):
         else:
             self._clean_results(result._result, result._task.action)
 
-            if self._run_is_verbose(result):
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
@@ -149,7 +149,7 @@ class CallbackModule(CallbackBase):
                 self._process_items(result)
             else:
                 msg = "skipping: [%s]" % result._host.get_name()
-                if self._run_is_verbose(result):
+                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
 
@@ -228,9 +228,9 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self._task_start(task, prefix='RUNNING HANDLER')
 
-    def v2_runner_on_start(self, host, task):
-        if self.get_option('show_per_host_start'):
-            self._display.display(" [started %s on %s]" % (task, host), color=C.COLOR_OK)
+    # def v2_runner_on_start(self, host, task):
+    #     if self.get_option('show_per_host_start'):
+    #         self._display.display(" [started %s on %s]" % (task, host), color=C.COLOR_OK)
 
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
@@ -289,7 +289,7 @@ class CallbackModule(CallbackBase):
 
         msg += " => (item=%s)" % (self._get_item_label(result._result),)
 
-        if self._run_is_verbose(result):
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
@@ -317,7 +317,7 @@ class CallbackModule(CallbackBase):
 
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
-            if self._run_is_verbose(result):
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % self._dump_results(result._result)
             self._display.display(msg, color=C.COLOR_SKIP)
 

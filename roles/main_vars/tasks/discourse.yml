@@ -3,6 +3,7 @@
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_env_name: "{{ env.name | ternary(env.name + '-', '') }}"
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
+    main_vars_ipv6: "{{ env.ipv6 | default('no') }}"
 
 - set_fact:
     main_vars_dns:
@@ -180,6 +181,7 @@
                 instance_group: "discourse_bootstrap"
                 instance_name: "{{ main_vars_env_name }}discourse-bootstrap"
                 instance_tmp: "{{ true | bool }}"
+                ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
                 containers:
@@ -221,6 +223,7 @@
                 instance_group: "discourse_app"
                 instance_name: "{{ main_vars_env_name }}discourse-app"
                 instance_tmp: "{{ false | bool }}"
+                ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
                 containers:
@@ -257,6 +260,7 @@
                 instance_group: "discourse_db_master"
                 instance_name: "{{ main_vars_env_name }}discourse-db-master"
                 instance_tmp: "{{ false | bool }}"
+                ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
                 containers:
@@ -288,6 +292,7 @@
                 instance_group: "discourse_redis_master"
                 instance_name: "{{ main_vars_env_name }}discourse-redis-master"
                 instance_tmp: "{{ false | bool }}"
+                ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
                 containers:
@@ -320,6 +325,7 @@
                 instance_group: "discourse_web"
                 instance_name: "{{ main_vars_env_name }}discourse-web"
                 instance_tmp: "{{ false | bool }}"
+                ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
                 containers:
