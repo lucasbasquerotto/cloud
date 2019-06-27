@@ -3,7 +3,7 @@
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_env_name: "{{ env.name | ternary(env.name + '-', '') }}"
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
-    main_vars_ipv6: "{{ env.ipv6 | default('no') }}"
+    main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
 
 - set_fact:
     main_vars_dns:

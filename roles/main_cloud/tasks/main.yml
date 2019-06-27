@@ -43,13 +43,13 @@
       {{ main_cloud_hosts_info | default('') }}
 
       {{ main_cloud_item.name }}
-      ansible_host={{ main_cloud_item.public_ip }}
+      ansible_host={{ main_cloud_item.public_ipv4 }}
       ansible_user={{ main_cloud_host_user }}
       ansible_become_pass={{ main_cloud_host_pass }}
       instance_type={{ main_cloud_instance_type }}
       ansible_host_service={{ 
       main_cloud_extra.dmz | 
-      ternary(main_cloud_item.public_ip, main_cloud_item.private_ip) 
+      ternary(main_cloud_item.public_ipv4, main_cloud_item.private_ip) 
       }}
   loop: "{{ main_cloud_active_hosts | list }}"
   loop_control:
@@ -68,16 +68,36 @@
   meta: refresh_inventory
   tags: ["print_action"]
 
-- name: "create the main dns record point to the instance when in the dmz layer"
+- name: "create the main dns record (IPv6) point to the instance when in the dmz layer"
   include_role: 
     name: "main_dns"
   vars: 
-    main_dns_title: "{{ main_cloud_title }} - main dns"
+    main_dns_title: "{{ main_cloud_title }} - main dns - IPv6"
+    main_dns_task: "{{ main_cloud_dns.task }}"
+    main_dns_credentials: "{{ main_cloud_dns.credentials }}"
+    main_dns_zone: "{{ main_cloud_dns.zone }}"
+    main_dns_type: "AAAA"
+    main_dns_record: "{{ main_cloud_dns.main_record }}"
+    main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv6 }}"
+  when: >-
+    (main_cloud_active_hosts | length == 1) and 
+    main_cloud_extra.dmz and 
+    (main_cloud_active_hosts[0].public_ipv6 is defined)
+  tags: ["print_action"]
+
+- name: "create the main dns record (IPv4) point to the instance when in the dmz layer"
+  include_role: 
+    name: "main_dns"
+  vars: 
+    main_dns_title: "{{ main_cloud_title }} - main dns - IPv4"
     main_dns_task: "{{ main_cloud_dns.task }}"
     main_dns_credentials: "{{ main_cloud_dns.credentials }}"
     main_dns_zone: "{{ main_cloud_dns.zone }}"
     main_dns_type: "A"
     main_dns_record: "{{ main_cloud_dns.main_record }}"
-    main_dns_value: "{{ main_cloud_active_hosts[0].public_ip }}"
-  when: (main_cloud_active_hosts | length == 1) and main_cloud_extra.dmz
+    main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv4 }}"
+  when: >-
+    (main_cloud_active_hosts | length == 1) and 
+    main_cloud_extra.dmz and 
+    (main_cloud_active_hosts[0].public_ipv4 is defined)
   tags: ["print_action"]
