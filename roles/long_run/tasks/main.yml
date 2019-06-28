@@ -17,9 +17,11 @@
 
 - name: '[{{ long_run_title }}] - start the execution of "{{ long_run_cmd }}"'
   become: "{{ long_run_become }}"
-  shell: >-
+  shell: |
+    set -o pipefail
     {{ long_run_cmd }} 2>&1 | tee --append {{ long_run_output_path }}/{{ long_run_output_file }}
   args:
+    executable: /bin/bash
     chdir: "{{ long_run_path }}"
   async: "{{ long_run_timeout | int }}"
   poll: 0
