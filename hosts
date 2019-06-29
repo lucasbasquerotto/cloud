@@ -20,6 +20,7 @@ db_replica
 discourse_db
 discourse_redis
 discourse_web
+discourse_web_replica
 discourse_app
 
 [discourse_db:children]
@@ -39,5 +40,7 @@ discourse_redis_replica
 [discourse_redis_replica]
 
 [discourse_web]
+
+[discourse_web_replica]
 
 [discourse_app]

@@ -33,7 +33,6 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
-
 # from http://stackoverflow.com/a/15423007/115478
 def should_use_block(value):
     """Returns true if string should be in block format"""

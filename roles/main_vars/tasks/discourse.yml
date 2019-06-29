@@ -196,6 +196,17 @@
                     app-{{ 
                       (env.cloud_docker_image_version | default({})).app | default('')
                     }}
+                - name: "web-build"
+                  action: "bootstrap"
+                  vars: "{{ main_vars_containers.web_build }}"
+                  push: "{{ true | bool }}"
+                  push_credentials: "{{ main_vars_cloud_aux.docker.credentials }}"
+                  push_owner: "{{ main_vars_cloud_aux.docker.image_owner }}"
+                  push_name: "{{ main_vars_cloud_aux.docker.image_name }}"
+                  push_tag: >-
+                    web-{{ 
+                      (env.cloud_docker_image_version | default({})).web | default('')
+                    }}
             extra:
               dmz: "{{ false | bool }}"
               load_balance: "{{ false | bool }}"
@@ -329,7 +340,11 @@
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
               discourse:
                 containers:
-                - name: "web_only"
+                - name: "web-build"
+                  skip: "{{ (main_vars_containers.web_run.base_image | default('')) != '' }}"
+                  action: "bootstrap"
+                  vars: "{{ main_vars_containers.web_build }}"
+                - name: "web-run"
                   dynamic_host_vars:
                   - name: "db_host"
                     group: "discourse_db_master"

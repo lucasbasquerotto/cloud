@@ -14,9 +14,7 @@
   - { name: "push_name", default: "" }
   - { name: "push_tag", default: "" }
   - { name: "output_path", default: "/tmp/main/discourse" }
-  - { name: "output_file", default: "app.log" }
   - { name: "path", default: "/var/discourse" }
-  - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
   loop_control:
     loop_var: discourse_run_item
@@ -25,6 +23,7 @@
 - name: "discourse_run - set_fact - new args"
   set_fact: 
     discourse_run_title: "discourse - {{ discourse_run_action }} {{ discourse_run_name }}"
+    discourse_run_output_file: "{{ discourse_run_name }}.log"
     discourse_run_push_condition: "{{ discourse_run_push | default(false) }}"
     discourse_run_exists: false
     discourse_run_registry: >-

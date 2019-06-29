@@ -88,15 +88,15 @@
       'private_ip':
       (digital_ocean_item.networks.v4 |
       selectattr('type', 'equalto', 'private') |
-      map(attribute='ip_address') | list | first),
+      map(attribute='ip_address') | list | first | default('')),
       'public_ipv4':
       (digital_ocean_item.networks.v4 |
       selectattr('type', 'equalto', 'public') |
-      map(attribute='ip_address') | list | first),
+      map(attribute='ip_address') | list | first | default('')),
       'public_ipv6':
       (digital_ocean_item.networks.v6 |
       selectattr('type', 'equalto', 'public') |
-      map(attribute='ip_address') | list | first) }] }}
+      map(attribute='ip_address') | list | first | default('')) }] }}
   loop: "{{ digital_ocean_droplets_active }}"
   loop_control:
     loop_var: digital_ocean_item
