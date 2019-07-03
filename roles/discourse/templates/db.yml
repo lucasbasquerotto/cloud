@@ -27,7 +27,7 @@ volumes:
       host: {{ host_shared_volume | default('/var/discourse/shared/db', true) }}
       guest: /shared
   - volume:
-      host: {{ host_log_volume | default('/var/discourse/shared/db/log/var-log, true') }}
+      host: {{ host_log_volume | default('/var/discourse/shared/db/log/var-log', true) }}
       guest: /var/log
 
 hooks:

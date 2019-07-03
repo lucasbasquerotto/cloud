@@ -141,34 +141,6 @@
   - include_tasks: "tasks/discourse_init.yml"
   - include_tasks: "tasks/discourse_run.yml"
 
-#-----------------------------------------------------------------------------#
-
-- name: Play 05.5 - Build and run - DB Replica
-  hosts: discourse_db_replica
-  serial: 1
-  tags:
-  - init
-  - run
-  - run_db_replica
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/discourse_init.yml"
-  - include_tasks: "tasks/discourse_run.yml"
-
-#-----------------------------------------------------------------------------#
-
-- name: Play 05.6 - Build and run - Redis Replica
-  hosts: discourse_redis_replica
-  serial: 1
-  tags:
-  - init
-  - run
-  - run_redis_replica
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/discourse_init.yml"
-  - include_tasks: "tasks/discourse_run.yml"
-
 ###############################################################################
 
 - name: Play 06 - Delete Temporary Cloud Instances
