@@ -347,11 +347,11 @@
                 - name: "web-run"
                   dynamic_host_vars:
                   - name: "db_host"
-                    group: "discourse_db_master"
-                    count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
+                    instance_type: "db_master"
+                    hostvar: "ansible_host_service"
                   - name: "redis_host"
-                    group: "discourse_redis_master"
-                    count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
+                    instance_type: "redis_master"
+                    hostvar: "ansible_host_service"
                   vars: "{{ main_vars_containers.web_run }}"
             extra:
               dmz: "{{ true | bool }}"

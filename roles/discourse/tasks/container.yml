@@ -2,19 +2,6 @@
   set_fact: 
     discourse_container_vars: "{{ discourse_container_vars | default({}) }}"
 
-- name: "discourse - {{ discourse_container_name }} - dynamic vars"
-  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
-  vars:
-    main_cloud_item_key: "discourse_container_vars[{{ discourse_container_item.name }}]"
-    main_cloud_item_value: >-
-      {{ hostvars[groups[
-      discourse_container_item.group][(discourse_container_index *
-      discourse_container_item.count / discourse_max_host_count) | int]] }}
-  loop: "{{ discourse_container_dynamic_host_vars }}"
-  loop_control:
-    loop_var: discourse_container_item
-    label: "{{ discourse_container_item.name }}"
-
 - name: "discourse - {{ discourse_container_name }} - all vars"
   set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
   vars:
@@ -24,6 +11,65 @@
   loop_control:
     loop_var: discourse_container_item
     label: "{{ discourse_container_item.key }}"
+
+# - name: "discourse - {{ discourse_container_name }} - dynamic vars"
+#   debug: 
+#     msg: >-
+#       {{ my_groups | length | default(-1) }} -
+#       {{ my_index | default('') }} -
+#       {{ my_count | default('') }} -
+#       {{ my_max_count | default('') }} -
+#       {{ my_calc | default('') }}
+#   vars:
+#     my_groups: "{{ groups[discourse_container_item.group] }}"
+#     my_index: "{{ discourse_container_index }}"
+#     my_count: "{{ discourse_container_item.count }}"
+#     my_max_count: "{{ discourse_container_host_count }}"
+#     my_calc: >-
+#       {{ ((discourse_container_index | int) *
+#       (discourse_container_item.count | int) /
+#       (discourse_container_host_count | int)) | int }}
+#   loop: "{{ discourse_container_dynamic_host_vars }}"
+#   loop_control:
+#     index_var: discourse_container_index
+#     loop_var: discourse_container_item
+#     label: "{{ discourse_container_item.name }}"
+#   tags: ["print_action"]
+
+- name: "discourse - {{ discourse_container_name }} - dynamic vars"
+  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  vars:
+    main_cloud_item_key: "discourse_var_{{ discourse_container_item.name }}"
+    main_cloud_item_value: >-
+      {{ hostvars[
+      groups[
+      discourse_cloud[
+      discourse_container_item.instance_type].vars.cloud.instance_group][
+      ((instance_index | int) *
+      ((discourse_cloud[
+      discourse_container_item.instance_type].vars.cloud.instance_max | int) / 
+      (discourse_container_instance_max | int))) 
+      | int]
+      ][discourse_container_item.hostvar] | default('') }}
+  loop: "{{ discourse_container_dynamic_host_vars }}"
+  loop_control:
+    loop_var: discourse_container_item
+    label: "{{ discourse_container_item.name }}"
+
+- name: "discourse - {{ discourse_container_name }} - dynamic vars"
+  debug:
+    var: discourse_container_item.value
+  loop: 
+  - { name: "discourse_container_index", value: "{{ discourse_container_index | default('') }}" }
+  - { name: "discourse_container_instance_max", value: "{{ discourse_container_instance_max | default('') }}" }
+  - { name: "db_host", value: "{{ discourse_var_db_host | default('') }}" }
+  - { name: "db_replica_host", value: "{{ discourse_var_db_replica_host | default('') }}" }
+  - { name: "redis_host", value: "{{ discourse_var_redis_host | default('') }}" }
+  - { name: "redis_slave_host", value: "{{ discourse_var_redis_slave_host | default('') }}" }
+  loop_control:
+    loop_var: discourse_container_item
+    label: "{{ discourse_container_item.name }}"
+  tags: ["print_action"]
 
 - name: "discourse - {{ discourse_container_name }} - transfer template file"
   become: yes
@@ -54,7 +100,9 @@
     https_port: "{{ discourse_var_https_port | default('') }}"
     db_pass: "{{ discourse_var_db_pass | default('') }}"
     db_host: "{{ discourse_var_db_host | default('') }}"
+    db_replica_host: "{{ discourse_var_db_replica_host | default('') }}"
     redis_host: "{{ discourse_var_redis_host | default('') }}"
+    redis_slave_host: "{{ discourse_var_redis_slave_host | default('') }}"
     enable_s3_uploads: "{{ discourse_var_enable_s3_uploads | default('') }}"
     s3_access_key_id: "{{ discourse_var_s3_access_key_id | default('') }}"
     s3_secret_access_key: "{{ discourse_var_s3_secret_access_key | default('') }}"

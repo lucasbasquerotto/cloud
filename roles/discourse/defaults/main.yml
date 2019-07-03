@@ -9,7 +9,7 @@ discourse_user: "host"
 discourse_group: "host"
 
 discourse_templates_containers_path: "roles/discourse/templates"
-discourse_container_host_count: 0
+discourse_container_instance_max: 0
 
 discourse_setup_become: "yes"
 discourse_setup_output_path: "/tmp/main/discourse/out"

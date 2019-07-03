@@ -80,6 +80,9 @@
       discourse_host_count: "{{ main_item.vars.cloud.instance_count }}"
       discourse_docker_repo: "{{ main_vars.prepare.discourse_docker_repo }}"
       discourse_docker_version: "{{ main_vars.prepare.discourse_docker_version }}"
+      discourse_index: "{{ instance_index }}"
+      discourse_instance_max: "{{ main_item.vars.cloud.instance_max }}"
+      discourse_cloud: "{{ main_vars.cloud }}"
     loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item

@@ -77,10 +77,9 @@
     discourse_container_dynamic_host_vars: >
       {{ discourse_item.dynamic_host_vars | default([]) }}
     discourse_container_index: "{{ discourse_index }}"
-    discourse_container_host_count: "{{ discourse_host_count }}"
+    discourse_container_instance_max: "{{ discourse_instance_max }}"
   loop: "{{ discourse_containers | flatten(levels=1) }}"
   loop_control:
-    index_var: discourse_index
     loop_var: "discourse_item"
 
 - name: "{{ discourse_title }} - get the difference of two files (old and current)"
