@@ -1,29 +1,69 @@
-- name: "{{ digital_ocean_title }} - create tags"
-  digital_ocean_tag:
-    api_token: "{{ digital_ocean_api_token }}"
-    name: "{{ digital_ocean_item }}"
-    state: "present"
-  loop: "{{ digital_ocean_all_tags | default([]) }}"
-  loop_control:
-    loop_var: digital_ocean_item
-  when: ((digital_ocean_instance_count | int) > 0) and not (digital_ocean_shutdown | bool)
-  tags: ["print_action"]
+- block:
 
-- name: "{{ digital_ocean_title }} - create firewalls"
-  digital_ocean_firewall:
-    api_token: "{{ digital_ocean_api_token }}"
-    name: "{{ digital_ocean_item.name }}"
-    state: "present"
-    droplet_ids: "{{ digital_ocean_item.droplet_ids | default([]) }}"
-    tags: "{{ digital_ocean_item.tags | default([]) }}"
-    inbound_rules: "{{ digital_ocean_item.inbound_rules | default([]) }}"
-    outbound_rules: "{{ digital_ocean_item.outbound_rules | default([]) }}"
-  loop: "{{ digital_ocean_all_firewalls | default([]) }}"
-  loop_control:
-    loop_var: digital_ocean_item
-    label: "{{ digital_ocean_item.name }}"
-  when: ((digital_ocean_instance_count | int) > 0) and not (digital_ocean_shutdown | bool)
-  tags: ["print_action"]
+  - name: >-
+      {{ digital_ocean_title }} - create the temporary directory 
+      '{{ digital_ocean_tmp_dir }}'
+    file:
+      path: "{{ digital_ocean_tmp_dir }}"
+      state: directory
+      mode: 0700
+
+  - name: "{{ digital_ocean_title }} - tags tmp file src"
+    copy: 
+      content: "{{ digital_ocean_all_tags | default([]) }}" 
+      dest: "{{ digital_ocean_tmp_file_tags_src }}"
+
+  - name: "{{ digital_ocean_title }} - tags tmp file dest if empty"
+    copy: 
+      force: no
+      content: ""
+      dest: "{{ digital_ocean_tmp_file_tags_dest }}"
+      mode: 0600
+
+  - name: "{{ digital_ocean_title }} - get the difference of two files (old and current)"
+    command: >-
+      diff {{ digital_ocean_tmp_file_tags_src }} {{ digital_ocean_tmp_file_tags_dest }}
+    register: digital_ocean_diff
+    failed_when: digital_ocean_diff.rc > 1
+    changed_when: digital_ocean_diff.rc == 1
+
+  - name: "{{ digital_ocean_title }} - create tags"
+    digital_ocean_tag:
+      api_token: "{{ digital_ocean_api_token }}"
+      name: "{{ digital_ocean_item }}"
+      state: "present"
+    loop: "{{ digital_ocean_all_tags | default([]) }}"
+    loop_control:
+      loop_var: digital_ocean_item
+    when: digital_ocean_diff.changed and ((digital_ocean_instance_count | int) > 0)
+    tags: ["print_action"]
+
+  - name: "{{ digital_ocean_title }} - tags tmp file dest"
+    copy: 
+      remote_src: yes
+      src: "{{ digital_ocean_tmp_file_tags_src }}" 
+      dest: "{{ digital_ocean_tmp_file_tags_dest }}"
+      mode: 0600
+    when: digital_ocean_diff.changed
+
+  #TODO
+  - name: "{{ digital_ocean_title }} - create firewalls"
+    digital_ocean_firewall:
+      api_token: "{{ digital_ocean_api_token }}"
+      name: "{{ digital_ocean_item.name }}"
+      state: "present"
+      droplet_ids: "{{ digital_ocean_item.droplet_ids | default([]) }}"
+      tags: "{{ digital_ocean_item.tags | default([]) }}"
+      inbound_rules: "{{ digital_ocean_item.inbound_rules | default([]) }}"
+      outbound_rules: "{{ digital_ocean_item.outbound_rules | default([]) }}"
+    loop: "{{ digital_ocean_all_firewalls | default([]) }}"
+    loop_control:
+      loop_var: digital_ocean_item
+      label: "{{ digital_ocean_item.name }}"
+    when: ((digital_ocean_instance_count | int) > 0)
+    tags: ["print_action"]
+
+  when: not (digital_ocean_shutdown | bool)
 
 - set_fact:
     digital_ocean_cloud_instances: []

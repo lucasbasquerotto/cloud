@@ -3,15 +3,15 @@
     file: "{{ main_vars_env_file }}"
     name: env
 
-- name: verify if platform match the one from the env variable
+- name: verify if type match the one from the env variable
   fail:
-    msg: "platform is not defined in the environment vars"
-  when: env.platform is not defined
+    msg: "type is not defined in the environment vars"
+  when: env.type is not defined
 
-- name: verify if platform match the one from the env variable
+- name: verify if type match the one from the env variable
   fail:
-    msg: "{{ main_vars_platform }} should be {{ env.platform }}"
-  when: env.platform != main_vars_platform
+    msg: "{{ main_vars_type }} should be {{ env.type }}"
+  when: env.type != main_vars_type
 
-- include_tasks:  "{{ env.platform }}.yml"
+- include_tasks:  "{{ env.type }}.yml"
   

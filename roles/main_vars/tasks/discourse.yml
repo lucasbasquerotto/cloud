@@ -2,6 +2,8 @@
     main_vars_cloud_shutdown: "{{ env.cloud_shutdown | default(0) }}"
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_env_name: "{{ env.name | ternary(env.name + '-', '') }}"
+    main_vars_instance_groups_to_destroy: >-
+      {{ env.cloud_instance_groups_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
 
@@ -369,4 +371,5 @@
       dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
       prepare: "{{ main_vars_prepare }}"
       destroy: 
+        instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"

@@ -45,3 +45,9 @@ digital_ocean_droplets_list:
 - { name: "server-001", region_id: "nyc1", state: "absent" }
 - { name: "server-002", region_id: "nyc1", state: "absent" }
 - { name: "server-003", region_id: "nyc1", state: "absent" }
+
+digital_ocean_tmp_dir: "/tmp/main/do"
+digital_ocean_tmp_file_tags_src: "{{ digital_ocean_tmp_dir }}/tags.src.txt"
+digital_ocean_tmp_file_tags_dest: "{{ digital_ocean_tmp_dir }}/tags.dest.txt"
+digital_ocean_tmp_file_firewalls_src: "{{ digital_ocean_tmp_dir }}/firewalls.src.txt"
+digital_ocean_tmp_file_firewalls_dest: "{{ digital_ocean_tmp_dir }}/firewalls.dest.txt"
