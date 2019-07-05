@@ -46,7 +46,27 @@
       mode: 0600
     when: digital_ocean_diff.changed
 
-  #TODO
+  - name: "{{ digital_ocean_title }} - firewalls tmp file src"
+    copy: 
+      content: "{{ digital_ocean_all_firewalls | default([]) }}" 
+      dest: "{{ digital_ocean_tmp_file_firewalls_src }}"
+
+  - name: "{{ digital_ocean_title }} - firewalls tmp file dest if empty"
+    copy: 
+      force: no
+      content: ""
+      dest: "{{ digital_ocean_tmp_file_firewalls_dest }}"
+      mode: 0600
+
+  - name: "{{ digital_ocean_title }} - get the difference of two files (old and current)"
+    command: >-
+      diff 
+      {{ digital_ocean_tmp_file_firewalls_src }} 
+      {{ digital_ocean_tmp_file_firewalls_dest }}
+    register: digital_ocean_diff
+    failed_when: digital_ocean_diff.rc > 1
+    changed_when: digital_ocean_diff.rc == 1
+
   - name: "{{ digital_ocean_title }} - create firewalls"
     digital_ocean_firewall:
       api_token: "{{ digital_ocean_api_token }}"
@@ -60,8 +80,16 @@
     loop_control:
       loop_var: digital_ocean_item
       label: "{{ digital_ocean_item.name }}"
-    when: ((digital_ocean_instance_count | int) > 0)
+    when: digital_ocean_diff.changed and ((digital_ocean_instance_count | int) > 0)
     tags: ["print_action"]
+
+  - name: "{{ digital_ocean_title }} - firewalls tmp file dest"
+    copy: 
+      remote_src: yes
+      src: "{{ digital_ocean_tmp_file_firewalls_src }}" 
+      dest: "{{ digital_ocean_tmp_file_firewalls_dest }}"
+      mode: 0600
+    when: digital_ocean_diff.changed
 
   when: not (digital_ocean_shutdown | bool)
 

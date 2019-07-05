@@ -1,8 +1,8 @@
 - name: "discourse_run - set_fact - args"
-  set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
+  set_fact: { "{{ discourse_run_key }}": "{{ discourse_run_value }}" }
   vars:
-    main_cloud_item_key: "discourse_run_{{ discourse_run_item.name }}"
-    main_cloud_item_value: >-
+    discourse_run_key: "discourse_run_{{ discourse_run_item.name }}"
+    discourse_run_value: >-
       {{ discourse_run_vars[discourse_run_item.name] | 
       default(discourse_run_item.default) }}
   loop: 
@@ -16,6 +16,7 @@
   - { name: "output_path", default: "/tmp/main/discourse" }
   - { name: "path", default: "/var/discourse" }
   - { name: "tmp_path", default: "/tmp/main/discourse/containers" }
+  - { name: "dynamic_host_vars", default: [] }
   loop_control:
     loop_var: discourse_run_item
     label: "{{ discourse_run_item.name }}"
@@ -125,16 +126,45 @@
   failed_when: discourse_run_diff.rc > 1
   changed_when: discourse_run_diff.rc == 1
 
-- name: "{{ discourse_run_title }} - main action"
-  include_role: 
-    name: long_run
-  vars:
-    long_run_title: "{{ discourse_run_title }}"
-    long_run_become: yes
-    long_run_output_path: "{{ discourse_run_output_path }}"
-    long_run_output_file: "{{ discourse_run_output_file }}"
-    long_run_path: "{{ discourse_run_path }}"
-    long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+- block:
+
+  - name: "{{ discourse_run_title }} - Wait for external hosts to be accessible"
+    wait_for:
+      host: "{{ discourse_run_host }}"
+      port: "{{ discourse_run_item.port | int }}"
+      connect_timeout: 3
+      delay: 3
+      timeout: 600
+    vars:
+      discourse_run_host: >-
+        {{ hostvars[
+        groups[
+        discourse_run_cloud[
+        discourse_run_item.instance_type].vars.cloud.instance_group][
+        ((discourse_run_index | int) *
+        ((discourse_run_cloud[
+        discourse_run_item.instance_type].vars.cloud.instance_max | int) / 
+        (discourse_run_instance_max | int))) 
+        | int]
+        ][discourse_run_item.hostvar] | default('') }}
+    loop: "{{ discourse_run_dynamic_host_vars | default([]) }}"
+    loop_control:
+      loop_var: discourse_run_item
+      label: "{{ discourse_run_item.name }}"
+    when: discourse_run_item.port is defined
+    tags: ["print_action"]
+
+  - name: "{{ discourse_run_title }} - main action"
+    include_role: 
+      name: long_run
+    vars:
+      long_run_title: "{{ discourse_run_title }}"
+      long_run_become: yes
+      long_run_output_path: "{{ discourse_run_output_path }}"
+      long_run_output_file: "{{ discourse_run_output_file }}"
+      long_run_path: "{{ discourse_run_path }}"
+      long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+
   when: >-
     discourse_run_diff.changed and 
     ((discourse_run_action != 'bootstrap') or (not discourse_run_exists))

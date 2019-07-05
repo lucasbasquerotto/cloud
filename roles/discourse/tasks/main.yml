@@ -8,7 +8,7 @@
   become: yes
   git:
     repo: "{{ discourse_docker_repo }}"
-    version: "{{ discourse_version }}"
+    version: "{{ discourse_docker_version }}"
     dest: "{{ discourse_location }}"
     update: yes
   tags: ["print_action"]
@@ -65,8 +65,8 @@
   - "web.template.build.yml"
   - "web.template.run.yml"
   loop_control:
-    loop_var: "discourse_item"    
- 
+    loop_var: "discourse_item"
+
 - name: >-
     {{ discourse_title }} -
     copy discourse configuration .yml file(s) defining the parameters
@@ -78,9 +78,12 @@
       {{ discourse_item.dynamic_host_vars | default([]) }}
     discourse_container_index: "{{ discourse_index }}"
     discourse_container_instance_max: "{{ discourse_instance_max }}"
+    discourse_container_docker_git_repo: "{{ discourse_docker_repo }}"
+    discourse_container_docker_git_repo_version: "{{ discourse_docker_version }}"
   loop: "{{ discourse_containers | flatten(levels=1) }}"
   loop_control:
     loop_var: "discourse_item"
+  when: not (discourse_item.skip | default(false) | bool)
 
 - name: "{{ discourse_title }} - get the difference of two files (old and current)"
   become: yes

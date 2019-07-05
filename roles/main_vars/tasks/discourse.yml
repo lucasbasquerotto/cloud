@@ -351,9 +351,11 @@
                   - name: "db_host"
                     instance_type: "db_master"
                     hostvar: "ansible_host_service"
+                    port: 5432
                   - name: "redis_host"
                     instance_type: "redis_master"
                     hostvar: "ansible_host_service"
+                    port: 6379
                   vars: "{{ main_vars_containers.web_run }}"
             extra:
               dmz: "{{ true | bool }}"

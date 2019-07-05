@@ -1,4 +1,5 @@
 # A container for all things Data in a Postgres database
+# {{ docker_git_repo }}@{{ docker_git_repo_version }}
 templates:
   - "templates/postgres.template.yml"
 
