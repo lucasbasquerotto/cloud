@@ -3,8 +3,11 @@ localhost ansible_connection=local
 
 [host:children]
 db
+redis
 web
-discourse
+web_replica
+app
+bootstrap
 
 [db:children]
 db_master
@@ -14,33 +17,18 @@ db_replica
 
 [db_replica]
 
+[redis:children]
+redis_master
+redis_replica
+
+[redis_master]
+
+[redis_replica]
+
 [web]
 
-[discourse:children]
-discourse_db
-discourse_redis
-discourse_web
-discourse_web_replica
-discourse_app
+[web_replica]
 
-[discourse_db:children]
-discourse_db_master
-discourse_db_replica
+[app]
 
-[discourse_db_master]
-
-[discourse_db_replica]
-
-[discourse_redis:children]
-discourse_redis_master
-discourse_redis_replica
-
-[discourse_redis_master]
-
-[discourse_redis_replica]
-
-[discourse_web]
-
-[discourse_web_replica]
-
-[discourse_app]
+[bootstrap]

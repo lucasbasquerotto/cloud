@@ -25,65 +25,6 @@
           list: "{{ env.dns_cname_list | default([]) }}"
 
 - set_fact:
-    main_vars_container_vars_default: >-
-      {{ (env.container_vars | default({})).default | default({}) }}
-    main_vars_container_vars_default_build: >-
-      {{ (env.container_vars | default({})).default_build | default({}) }}
-    main_vars_container_vars_default_run: >-
-      {{ (env.container_vars | default({})).default_run | default({}) }}
-    main_vars_container_vars_app_build: >-
-      {{ (env.container_vars | default({})).app_build | default({}) }}
-    main_vars_container_vars_app_run: >-
-      {{ (env.container_vars | default({})).app_run | default({}) }}
-    main_vars_container_vars_web_build: >-
-      {{ (env.container_vars | default({})).web_build | default({}) }}
-    main_vars_container_vars_web_run: >-
-      {{ (env.container_vars | default({})).web_run | default({}) }}
-    main_vars_container_vars_redis_master_run: >-
-      {{ (env.container_vars | default({})).redis_master_run | default({}) }}
-    main_vars_container_vars_db_master_run: >-
-      {{ (env.container_vars | default({})).db_master_run | default({}) }}
-
-- set_fact:
-    main_vars_containers: 
-      app_build: >-
-        {{ 
-        main_vars_container_vars_default | 
-        combine(main_vars_container_vars_default_build) | 
-        combine(main_vars_container_vars_app_build) 
-        }}
-      app_run: >-
-        {{ 
-        main_vars_container_vars_default | 
-        combine(main_vars_container_vars_default_run) | 
-        combine(main_vars_container_vars_app_run) 
-        }}
-      web_build: >-
-        {{ 
-        main_vars_container_vars_default | 
-        combine(main_vars_container_vars_default_build) | 
-        combine(main_vars_container_vars_web_build) 
-        }}
-      web_run: >-
-        {{ 
-        main_vars_container_vars_default | 
-        combine(main_vars_container_vars_default_run) | 
-        combine(main_vars_container_vars_web_run) 
-        }}
-      redis_master_run: >-
-        {{ 
-        main_vars_container_vars_default | 
-        combine(main_vars_container_vars_default_run) | 
-        combine(main_vars_container_vars_redis_master_run) 
-        }}
-      db_master_run: >-
-        {{ 
-        main_vars_container_vars_default | 
-        combine(main_vars_container_vars_default_run) | 
-        combine(main_vars_container_vars_db_master_run) 
-        }}
-
-- set_fact:
     main_vars_cloud_aux:
       digital_ocean:
         tags:
@@ -92,8 +33,7 @@
         - "dmz"
         - "web"
         - "redis"
-        - "postgres"
-        - "tmp"
+        - "mysql"
         firewalls:
         - name: "auto"
           tags: ["auto"]
@@ -138,81 +78,16 @@
           - ports: "6379"
             sources:
               tags: ["web"]
-        - name: "postgres"
-          tags: ["postgres"]
+        - name: "mysql"
+          tags: ["mysql"]
           inbound_rules:
-          - ports: "5432"
+          - ports: "3306"
             sources:
               tags: ["web"]
-      
-      docker:
-        image_owner: "{{ env.cloud_docker_image_owner | default('') }}"
-        image_name: "{{ env.cloud_docker_image_name | default('') }}"
-        credentials: 
-          registry: >-
-            {{ env.cloud_docker_registry | default('https://index.docker.io/v1/') }}
-          api_base_url: >-
-            {{ env.cloud_docker_api_base_url | default('https://hub.docker.com/v2') }}
-          username: "{{ env.cloud_docker_username | default('') }}"
-          password: "{{ env.cloud_docker_password | default('') }}"
-          reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"
 
 - set_fact:
     main_vars_cloud:
-      digital_ocean:
-        bootstrap:
-          tmp:
-            role: "digital_ocean"
-            vars:
-              cloud:
-                instance_type: "tmp"
-                region: "{{ env.cloud_region | default('nyc1') }}"
-                title: "Discourse Bootstrap Instance"
-                hosts_file: "{{ inventory_file }}"
-                api_token: "{{ env.cloud_api_token }}"
-                host_user: "{{ env.cloud_host_user }}"
-                host_pass: "{{ env.cloud_host_pass }}"
-                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
-                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
-                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
-                tags: 
-                - "auto"
-                - "tmp"
-                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
-                instance_max: 1
-                instance_group: "bootstrap"
-                instance_name: "{{ main_vars_env_name }}discourse-bootstrap"
-                instance_tmp: true
-                ipv6: "{{ main_vars_ipv6 }}"
-                user_data_file: "{{ main_vars_cloud_user_data_file }}"
-              discourse:
-                containers:
-                - name: "app-build"
-                  action: "bootstrap"
-                  vars: "{{ main_vars_containers.app_build }}"
-                  push: true
-                  push_credentials: "{{ main_vars_cloud_aux.docker.credentials }}"
-                  push_owner: "{{ main_vars_cloud_aux.docker.image_owner }}"
-                  push_name: "{{ main_vars_cloud_aux.docker.image_name }}"
-                  push_tag: >-
-                    app-{{ 
-                      (env.cloud_docker_image_version | default({})).app | default('')
-                    }}
-                - name: "web-build"
-                  action: "bootstrap"
-                  vars: "{{ main_vars_containers.web_build }}"
-                  push: true
-                  push_credentials: "{{ main_vars_cloud_aux.docker.credentials }}"
-                  push_owner: "{{ main_vars_cloud_aux.docker.image_owner }}"
-                  push_name: "{{ main_vars_cloud_aux.docker.image_name }}"
-                  push_tag: >-
-                    web-{{ 
-                      (env.cloud_docker_image_version | default({})).web | default('')
-                    }}
-            extra:
-              dmz: false
-              load_balance: false
-
+      digital_ocean:      
         layer1:
           app:
             role: "digital_ocean"
@@ -238,14 +113,6 @@
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
-              discourse:
-                containers:
-                - name: "app-build"
-                  skip: "{{ (main_vars_containers.app_run.base_image | default('')) != '' }}"
-                  action: "bootstrap"
-                  vars: "{{ main_vars_containers.app_build }}"
-                - name: "app-run"
-                  vars: "{{ main_vars_containers.app_run }}"
             extra:
               dmz: true
               load_balance: false
@@ -267,7 +134,7 @@
                 all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
                 tags: 
                 - "auto"
-                - "postgres"
+                - "mysql"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "db_master"
@@ -275,10 +142,6 @@
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
-              discourse:
-                containers:
-                - name: "db"
-                  vars: "{{ main_vars_containers.db_master_run }}"
             extra:
               dmz: false
               load_balance: false
@@ -307,10 +170,6 @@
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
-              discourse:
-                containers:
-                - name: "redis"
-                  vars: "{{ main_vars_containers.redis_master_run }}"
             extra:
               dmz: false
               load_balance: false
@@ -340,38 +199,15 @@
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
-              discourse:
-                containers:
-                - name: "web-build"
-                  skip: "{{ (main_vars_containers.web_run.base_image | default('')) != '' }}"
-                  action: "bootstrap"
-                  vars: "{{ main_vars_containers.web_build }}"
-                - name: "web-run"
-                  dynamic_host_vars:
-                  - name: "db_host"
-                    instance_type: "db_master"
-                    hostvar: "ansible_host_service"
-                    port: 5432
-                  - name: "redis_host"
-                    instance_type: "redis_master"
-                    hostvar: "ansible_host_service"
-                    port: 6379
-                  vars: "{{ main_vars_containers.web_run }}"
             extra:
               dmz: true
               load_balance: false
-
-- set_fact:
-    main_vars_prepare:
-      discourse_docker_repo: "{{ env.discourse_docker_repo }}"
-      discourse_docker_version: "{{ env.discourse_docker_version }}"
 
 - name: main discourse vars
   set_fact:
     main_vars:
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
       dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
-      prepare: "{{ main_vars_prepare }}"
       destroy: 
         instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"

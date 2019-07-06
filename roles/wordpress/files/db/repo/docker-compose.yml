@@ -1,0 +1,26 @@
+version: '3.4'
+
+networks:
+  internet:
+    driver: bridge
+    
+x-logging: 
+  main: &mainlog
+    options:
+      max-size: 50m
+      
+services:
+  nginx:
+    build: 
+      context: ./nginx
+      args:
+        NGINX_VERSION: $NGINX_VERSION
+    restart: on-failure
+    volumes:
+    - /tmp:/www/data:ro
+    # - /tmp/backup:/www/data/backup:ro
+    ports:
+    - "8080:8080"
+    networks:
+    - internet
+    logging: *mainlog

@@ -22,7 +22,7 @@
 ###############################################################################
 
 - name: Play 02 - Wait for hosts to be ready
-  hosts: discourse
+  hosts: host
   tags:
   - init
   - setup
@@ -63,7 +63,7 @@
 ###############################################################################
 
 - name: Play 04 - Prepare the hosts
-  hosts: discourse
+  hosts: host
   tags:
   - init
   - prepare
@@ -92,7 +92,7 @@
 ###############################################################################
 
 - name: Play 05.1 - Build and run - DB Master
-  hosts: discourse_db_master
+  hosts: db_master
   tags:
   - init
   - run
@@ -105,7 +105,7 @@
 #-----------------------------------------------------------------------------#
 
 - name: Play 05.2 - Build and run - Redis Master
-  hosts: discourse_redis_master
+  hosts: redis_master
   tags:
   - init
   - run
@@ -118,7 +118,9 @@
 #-----------------------------------------------------------------------------#
 
 - name: Play 05.3 - Build and run - Web
-  hosts: discourse_web
+  hosts: 
+  - web
+  - web_replica
   tags:
   - init
   - run
@@ -131,7 +133,7 @@
 #-----------------------------------------------------------------------------#
 
 - name: Play 05.4 - Build and run - App
-  hosts: discourse_app
+  hosts: app
   tags:
   - init
   - run
