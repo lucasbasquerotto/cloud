@@ -133,7 +133,9 @@
 #-----------------------------------------------------------------------------#
 
 - name: Play 05.4 - Build and run - App
-  hosts: app
+  hosts: 
+  - app
+  - bootstrap
   tags:
   - init
   - run
