@@ -9,15 +9,11 @@
     wordpress_env_file_path: "{{ wordpress_env_location }}/.env"
     wordpress_env_file_path_backup: "{{ wordpress_env_location_backup }}/.env"
     wordpresss_repo_dir: "roles/wordpress/files/repo"
-    wordpress_compose_file: >-
-      {{ wordpress_env.docker_compose_file | 
-      ternary(wordpress_repo_location + '/' + wordpress_env.docker_compose_file, '') 
-      }}
 
 - name: "{{ wordpress_title }} - verify if docker compose file is defined"
   fail:
     msg: "[Error] Specify the environment repo variable: docker_compose_file"
-  when: (wordpress_compose_file is not defined) or (wordpress_compose_file == '')
+  when: (wordpress_env.docker_compose_file is not defined) or (wordpress_env.docker_compose_file == '')
 
 - name: "{{ wordpress_title }} - create the env directories"
   become: yes
@@ -53,19 +49,6 @@
     owner: "{{ wordpress_host_user }}"
     group: "{{ wordpress_host_group }}"
     mode: 0600
-  vars:
-    compose_file: "{{ wordpress_compose_file | default('', true) }}"
-    perl_version: "{{ wordpress_env.perl_version | default('', true) }}"
-    nginx_version: "{{ wordpress_env.nginx_version | default('', true) }}"
-    wp_version: "{{ wordpress_env.wp_version | default('', true) }}"
-    pma_version: "{{ wordpress_env.pma_version | default('', true) }}"
-    mysql_image: "{{ wordpress_env.mysql_image | default('', true) }}"
-    mysql_version: "{{ wordpress_env.mysql_version | default('', true) }}"
-    db_host: "{{ wordpress_env.db_host | default('', true) }}"
-    db_port: "{{ wordpress_env.db_port | default('', true) }}"
-    wp_db_user: "{{ wordpress_env.wp_db_user | default('', true) }}"
-    wp_db_pass: "{{ wordpress_env.wp_db_pass | default('', true) }}"
-    mysql_root_pass: "{{ wordpress_env.mysql_root_pass | default('', true) }}"
   loop:
   - "{{ wordpress_env_location }}"
   - "{{ wordpress_env_location_tmp }}"

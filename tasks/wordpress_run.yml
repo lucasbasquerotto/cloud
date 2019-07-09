@@ -8,8 +8,6 @@
   loop: "{{ main_vars.cloud.values() }}"
   loop_control:
     loop_var: main_item
-    label: "{{ main_item.1.name }}"
-  when: >-
-    (main_item.0.vars.cloud.instance_type == instance_type) and 
-    not (main_item.1.skip | default(false) | bool)
+    label: "{{ main_item.role }}"
+  when: (main_item.vars.cloud.instance_type == instance_type)
   tags: [print_action]
