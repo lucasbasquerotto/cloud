@@ -109,7 +109,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "app"
-                instance_name: "{{ main_vars_env_name }}discourse-app"
+                instance_name: "{{ main_vars_env_name }}wordpress-app"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -138,7 +138,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "db_master"
-                instance_name: "{{ main_vars_env_name }}discourse-db-master"
+                instance_name: "{{ main_vars_env_name }}wordpress-db-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -166,7 +166,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "redis_master"
-                instance_name: "{{ main_vars_env_name }}discourse-redis-master"
+                instance_name: "{{ main_vars_env_name }}wordpress-redis-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -195,7 +195,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "web"
-                instance_name: "{{ main_vars_env_name }}discourse-web"
+                instance_name: "{{ main_vars_env_name }}wordpress-web"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -220,7 +220,7 @@
         db_host: "{{ env.wordpress.db_host | default('mysql', true) }}"
         db_port: "{{ env.wordpress.db_port | default('3306', true) }}"
 
-- name: main discourse vars
+- name: main wordpress vars
   set_fact:
     main_vars:
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
