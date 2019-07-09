@@ -3,6 +3,9 @@ version: '3.4'
 networks:
   internet:
     driver: bridge
+  local:
+    driver: bridge
+    internal: true
     
 x-logging: 
   main: &mainlog
@@ -24,6 +27,7 @@ services:
      - "8080:8080"
     networks:
       - internet
+      - local
     logging: *mainlog
 
   wordpress:
@@ -35,6 +39,7 @@ services:
      - WORDPRESS_DB_PASSWORD=$WP_DB_PASS
     networks:
       - internet
+      - local
     logging: *mainlog
 
   phpmyadmin:
@@ -44,5 +49,18 @@ services:
      - PMA_HOST=$DB_HOST
      - PMA_PORT=$DB_PORT
     networks:
-      - internet
+      - local
+    logging: *mainlog
+
+  mysql:
+    build: 
+      context: ./mysql
+      args:
+        MYSQL_IMAGE: $MYSQL_IMAGE
+        MYSQL_VERSION: $MYSQL_VERSION
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASS
+    networks:
+      - local
     logging: *mainlog

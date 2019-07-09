@@ -1,0 +1,127 @@
+- name: "{{ wordpress_title }} - ensure docker is running"
+  become: yes
+  service: 
+    name: docker
+    state: started
+    
+- name: "{{ wordpress_title }} - set_fact"
+  set_fact: 
+    wordpress_env_file_path: "{{ wordpress_env_location }}/.env"
+    wordpress_env_file_path_backup: "{{ wordpress_env_location_backup }}/.env"
+    wordpresss_repo_dir: "roles/wordpress/files/repo"
+    wordpress_compose_file: >-
+      {{ wordpress_env.docker_compose_file | 
+      ternary(wordpress_repo_location + '/' + wordpress_env.docker_compose_file, '') 
+      }}
+
+- name: "{{ wordpress_title }} - verify if docker compose file is defined"
+  fail:
+    msg: "[Error] Specify the environment repo variable: docker_compose_file"
+  when: (wordpress_compose_file is not defined) or (wordpress_compose_file == '')
+
+- name: "{{ wordpress_title }} - create the env directories"
+  become: yes
+  file:
+    path: "{{ wordpress_item }}"
+    state: directory
+    owner: "{{ wordpress_host_user }}"
+    group: "{{ wordpress_host_group }}"
+    mode: 0700
+  loop:
+  - "{{ wordpress_env_location }}"
+  - "{{ wordpress_env_location_backup }}"
+  loop_control:
+    var: wordpress_item
+
+- name: >-
+    {{ wordpress_title }} - create empty env file in backup directory
+    if there is no file there
+  become: yes
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ wordpress_env_file_path_backup }}"
+    owner: "{{ wordpress_host_user }}"
+    group: "{{ wordpress_host_group }}"
+    mode: 0600
+
+- name: "{{ wordpress_title }} - transfer the env template file"
+  become: yes
+  template: 
+    src: "roles/wordpress/templates/.env"
+    dest: "{{ wordpress_item }}"
+    owner: "{{ wordpress_host_user }}"
+    group: "{{ wordpress_host_group }}"
+    mode: 0600
+  vars:
+    compose_file: "{{ wordpress_compose_file | default('', true) }}"
+    perl_version: "{{ wordpress_env.perl_version | default('', true) }}"
+    nginx_version: "{{ wordpress_env.nginx_version | default('', true) }}"
+    wp_version: "{{ wordpress_env.wp_version | default('', true) }}"
+    pma_version: "{{ wordpress_env.pma_version | default('', true) }}"
+    mysql_image: "{{ wordpress_env.mysql_image | default('', true) }}"
+    mysql_version: "{{ wordpress_env.mysql_version | default('', true) }}"
+    db_host: "{{ wordpress_env.db_host | default('', true) }}"
+    db_port: "{{ wordpress_env.db_port | default('', true) }}"
+    wp_db_user: "{{ wordpress_env.wp_db_user | default('', true) }}"
+    wp_db_pass: "{{ wordpress_env.wp_db_pass | default('', true) }}"
+    mysql_root_pass: "{{ wordpress_env.mysql_root_pass | default('', true) }}"
+  loop:
+  - "{{ wordpress_env_location }}"
+  - "{{ wordpress_env_location_tmp }}"
+  loop_control:
+    var: wordpress_item
+
+- name: "{{ wordpress_title }} - get the difference of the 2 env files (old and current)"
+  become: yes
+  command: "diff {{ wordpress_env_file_path }} {{ wordpress_env_file_path_backup }}"
+  register: wordpress_diff
+  failed_when: wordpress_diff.rc > 1
+  changed_when: wordpress_diff.rc == 1
+
+- block:
+
+  - name: "{{ wordpress_title }} - update the temporary repo directory"
+    become: yes
+    include_role:
+      name: sync_dir
+    vars:
+      sync_dir_host_user: "{{ wordpress_host_user }}"
+      sync_dir_src: "{{ wordpresss_repo_dir }}/"
+      sync_dir_dest: "{{ wordpress_repo_location_tmp }}"
+
+  - name: "{{ wordpress_title }} - prepare the temporary images (pull and build)"
+    command: docker-compose pull
+    args:
+      chdir: "{{ wordpress_env_location_tmp }}/"
+    loop:
+    - "docker-compose pull"
+    - "docker-compose build --pull"
+    loop_control:
+      var: wordpress_item
+
+  - name: "{{ wordpress_title }} - update the repo directory"
+    become: yes
+    include_role:
+      name: sync_dir
+    vars:
+      sync_dir_host_user: "{{ wordpress_host_user }}"
+      sync_dir_src: "{{ wordpresss_repo_dir }}/"
+      sync_dir_dest: "{{ wordpress_repo_location }}"
+
+  - name: "{{ wordpress_title }} - prepare the images (build)"
+    command: docker-compose build
+    args:
+      chdir: "{{ wordpress_env_location }}/"
+    
+  - name: "{{ wordpress_title }} - backup the wordpress env file"
+    become: yes
+    copy: 
+      remote_src: yes
+      src: "{{ wordpress_env_file_path }}"
+      dest: "{{ wordpress_env_file_path_backup }}"
+    owner: "{{ wordpress_host_user }}"
+    group: "{{ wordpress_host_group }}"
+      mode: 0755
+
+  when: "wordpress_diff.changed" 

@@ -1,0 +1,8 @@
+wordpress_title: "wordpress"
+wordpress_host_user: "host"
+wordpress_host_group: "host"
+wordpress_repo_location: "/main/repo"
+wordpress_repo_location_tmp: "/main/tmp/repo"
+wordpress_env_location: "/main/env"
+wordpress_env_location_tmp: "/main/tmp/env"
+wordpress_env_location_backup: "/tmp/main/env"

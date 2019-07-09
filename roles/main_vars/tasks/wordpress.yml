@@ -203,11 +203,28 @@
               dmz: true
               load_balance: false
 
+- set_fact:
+    main_vars_prepare:
+      env:
+        docker_compose_file: "{{ env.docker_compose_file }}"
+        perl_version: "{{ env.perl_version | default('', true) }}"
+        nginx_version: "{{ env.nginx_version | default('', true) }}"
+        wp_version: "{{ env.wp_version | default('', true) }}"
+        pma_version: "{{ env.pma_version | default('', true) }}"
+        mysql_image: "{{ env.mysql_image | default('', true) }}"
+        mysql_version: "{{ env.mysql_version | default('', true) }}"
+        db_host: "{{ env.db_host | default('', true) }}"
+        db_port: "{{ env.db_port | default('', true) }}"
+        wp_db_user: "{{ env.wp_db_user | default('', true) }}"
+        wp_db_pass: "{{ env.wp_db_pass | default('', true) }}"
+        mysql_root_pass: "{{ env.mysql_root_pass | default('', true) }}"
+
 - name: main discourse vars
   set_fact:
     main_vars:
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
       dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
+      prepare: "{{ main_vars_prepare }}"
       destroy: 
         instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"

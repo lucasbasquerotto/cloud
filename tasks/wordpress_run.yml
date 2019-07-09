@@ -1,0 +1,15 @@
+- name: wordpress run
+  include_role: 
+    name: wordpress_run
+  vars:
+    wordpress_run_index: "{{ instance_index }}"
+    wordpress_run_instance_max: "{{ main_item.vars.cloud.instance_max }}"
+    wordpress_run_cloud: "{{ main_vars.cloud }}"
+  loop: "{{ main_vars.cloud.values() }}"
+  loop_control:
+    loop_var: main_item
+    label: "{{ main_item.1.name }}"
+  when: >-
+    (main_item.0.vars.cloud.instance_type == instance_type) and 
+    not (main_item.1.skip | default(false) | bool)
+  tags: [print_action]

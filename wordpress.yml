@@ -1,0 +1,204 @@
+- name: Play 01 - Create Cloud Instances
+  hosts: main
+  tags:
+  - init
+  - setup
+  - cloud
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/wordpress_init.yml"
+
+  - include_role: 
+      name: "main_cloud"
+    vars: 
+      main_cloud_role: "{{ main_item.role }}"
+      main_cloud_vars: "{{ main_item.vars.cloud }}"
+      main_cloud_extra: "{{ main_item.extra }}"
+      main_cloud_dns: "{{ main_vars.dns }}"
+    loop: "{{ main_vars.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+
+###############################################################################
+
+- name: Play 02 - Wait for hosts to be ready
+  hosts: host
+  tags:
+  - init
+  - setup
+  - test
+  gather_facts: no
+  tasks:
+  - include_role: 
+      name: "host_test"
+
+###############################################################################
+
+- name: Play 03 - Update the DNS records
+  hosts: main
+  tags:
+  - init
+  - setup
+  - dns
+  gather_facts: no  
+  tasks:  
+  - include_tasks: "tasks/wordpress_init.yml"
+
+  - name: "create the static dns records"
+    include_role: 
+      name: "main_dns"
+    vars: 
+      main_dns_title: "create the static dns records - {{ main_item.0.title }}"
+      main_dns_task: "{{ main_vars.dns.task }}"
+      main_dns_credentials: "{{ main_vars.dns.credentials }}"
+      main_dns_zone: "{{ main_vars.dns.zone }}"
+      main_dns_type: "{{ main_item.0.type }}"
+      main_dns_record: "{{ main_item.1.record }}"
+      main_dns_value: "{{ main_item.1.value }}"
+    loop: "{{ (main_vars.dns.static | default([])) | subelements('list') }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.1.record }}"
+
+###############################################################################
+
+- name: Play 04 - Prepare the hosts
+  hosts: host
+  tags:
+  - init
+  - prepare
+  - prepare-hosts
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/wordpress_init.yml"
+
+  - include_role: 
+      name: "wordpress"
+    vars:
+      wordpress_title: "wordpress - {{ main_item.vars.cloud.instance_group }}"
+      wordpress_env: "{{ main_vars.prepare.env }}"
+    loop: "{{ main_vars.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.vars.cloud.instance_group }}"
+    when: main_item.vars.cloud.instance_type == instance_type
+
+###############################################################################
+
+- name: Play 05.1 - Run - DB Master
+  hosts: db_master
+  tags:
+  - init
+  - run
+  - run_db_master
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/wordpress_run.yml"
+
+#-----------------------------------------------------------------------------#
+
+- name: Play 05.2 - Run - Redis Master
+  hosts: redis_master
+  tags:
+  - init
+  - run
+  - run_redis_master
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/wordpress_run.yml"
+
+#-----------------------------------------------------------------------------#
+
+- name: Play 05.3 - Run - Web
+  hosts: 
+  - web
+  - web_replica
+  tags:
+  - init
+  - run
+  - run_web
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/wordpress_run.yml"
+
+#-----------------------------------------------------------------------------#
+
+- name: Play 05.4 - Run - App
+  hosts: 
+  - app
+  tags:
+  - init
+  - run
+  - run_app
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/wordpress_run.yml"
+
+###############################################################################
+
+- name: Play 06 - Delete Temporary Cloud Instances
+  hosts: main
+  tags:
+  - init
+  - temp
+  - cloud
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/discourse_init.yml"
+
+  - include_role: 
+      name: "main_cloud"
+    vars: 
+      main_cloud_role: "{{ main_item.role }}"
+      main_cloud_vars: "{{ main_item.vars.cloud }}"
+      main_cloud_extra: "{{ main_item.extra }}"
+      main_cloud_dns: "{{ main_vars.dns }}"
+      main_cloud_shutdown: true
+    loop: "{{ main_vars.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.vars.cloud.instance_group }}"
+    when: (main_item.vars.cloud.instance_tmp | default(false) | bool) == true
+
+###############################################################################
+
+- name: Play 07 - Delete everything that was previously created
+  hosts: main
+  tags:
+  - never
+  - destroy
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/discourse_init.yml"
+
+  - include_role: 
+      name: "main_cloud"
+    vars: 
+      main_cloud_role: "{{ main_item.role }}"
+      main_cloud_vars: "{{ main_item.vars.cloud }}"
+      main_cloud_extra: "{{ main_item.extra }}"
+      main_cloud_dns: "{{ main_vars.dns }}"
+      main_cloud_shutdown: true
+    loop: "{{ main_vars.cloud.values() | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.vars.cloud.instance_group }}"
+    when: main_item.vars.cloud.instance_group in main_vars.destroy.instance_groups
+
+  - name: Delete the bucket and all contents
+    aws_s3:
+      s3_url: "{{ main_item.0.endpoint }}"
+      access_key: "{{ main_item.0.access_key }}"
+      secret_key: "{{ main_item.0.secret_key }}"
+      bucket: "{{ main_item.1 }}"
+      mode: delete
+    loop: "{{ main_vars.destroy.buckets | subelements('names') }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.1 }}"
+
+###############################################################################
