@@ -148,7 +148,7 @@
   - cloud
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/discourse_init.yml"
+  - include_tasks: "tasks/wordpress_init.yml"
 
   - include_role: 
       name: "main_cloud"
@@ -173,7 +173,7 @@
   - destroy
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/discourse_init.yml"
+  - include_tasks: "tasks/wordpress_init.yml"
 
   - include_role: 
       name: "main_cloud"

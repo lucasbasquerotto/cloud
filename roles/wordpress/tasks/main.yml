@@ -25,9 +25,10 @@
     mode: 0700
   loop:
   - "{{ wordpress_env_location }}"
+  - "{{ wordpress_env_location_tmp }}"
   - "{{ wordpress_env_location_backup }}"
   loop_control:
-    var: wordpress_item
+    loop_var: wordpress_item
 
 - name: >-
     {{ wordpress_title }} - create empty env file in backup directory
@@ -53,7 +54,7 @@
   - "{{ wordpress_env_location }}"
   - "{{ wordpress_env_location_tmp }}"
   loop_control:
-    var: wordpress_item
+    loop_var: wordpress_item
 
 - name: "{{ wordpress_title }} - get the difference of the 2 env files (old and current)"
   become: yes
@@ -65,7 +66,6 @@
 - block:
 
   - name: "{{ wordpress_title }} - update the temporary repo directory"
-    become: yes
     include_role:
       name: sync_dir
     vars:
@@ -74,6 +74,7 @@
       sync_dir_dest: "{{ wordpress_repo_location_tmp }}"
 
   - name: "{{ wordpress_title }} - prepare the temporary images (pull and build)"
+    become: yes
     command: docker-compose pull
     args:
       chdir: "{{ wordpress_env_location_tmp }}/"
@@ -81,10 +82,9 @@
     - "docker-compose pull"
     - "docker-compose build --pull"
     loop_control:
-      var: wordpress_item
+      loop_var: wordpress_item
 
   - name: "{{ wordpress_title }} - update the repo directory"
-    become: yes
     include_role:
       name: sync_dir
     vars:
@@ -93,6 +93,7 @@
       sync_dir_dest: "{{ wordpress_repo_location }}"
 
   - name: "{{ wordpress_title }} - prepare the images (build)"
+    become: yes
     command: docker-compose build
     args:
       chdir: "{{ wordpress_env_location }}/"
@@ -103,8 +104,8 @@
       remote_src: yes
       src: "{{ wordpress_env_file_path }}"
       dest: "{{ wordpress_env_file_path_backup }}"
-    owner: "{{ wordpress_host_user }}"
-    group: "{{ wordpress_host_group }}"
+      owner: "{{ wordpress_host_user }}"
+      group: "{{ wordpress_host_group }}"
       mode: 0755
 
   when: "wordpress_diff.changed" 

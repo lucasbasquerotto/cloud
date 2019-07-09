@@ -206,18 +206,19 @@
 - set_fact:
     main_vars_prepare:
       env:
-        docker_compose_file: "{{ env.docker_compose_file }}"
-        perl_version: "{{ env.perl_version | default('', true) }}"
-        nginx_version: "{{ env.nginx_version | default('', true) }}"
-        wp_version: "{{ env.wp_version | default('', true) }}"
-        pma_version: "{{ env.pma_version | default('', true) }}"
-        mysql_image: "{{ env.mysql_image | default('', true) }}"
-        mysql_version: "{{ env.mysql_version | default('', true) }}"
-        db_host: "{{ env.db_host | default('', true) }}"
-        db_port: "{{ env.db_port | default('', true) }}"
-        wp_db_user: "{{ env.wp_db_user | default('', true) }}"
-        wp_db_pass: "{{ env.wp_db_pass | default('', true) }}"
-        mysql_root_pass: "{{ env.mysql_root_pass | default('', true) }}"
+        docker_compose_file: "{{ env.wordpress.docker_compose_file }}"
+        wp_db_pass: "{{ env.wordpress.wp_db_pass }}"
+        mysql_root_password: "{{ env.wordpress.mysql_root_password }}"
+        perl_version: "{{ env.wordpress.perl_version | default('5.26.3-slim', true) }}"
+        nginx_version: "{{ env.wordpress.nginx_version | default('1.14.2-alpine', true) }}"
+        wp_version: "{{ env.wordpress.wp_version | default('5.0.3-php7.3-apache', true) }}"
+        pma_version: "{{ env.wordpress.pma_version | default('4.8.5', true) }}"
+        mysql_image: "{{ env.wordpress.mysql_image | default('mysql', true) }}"
+        mysql_version: "{{ env.wordpress.mysql_version | default('8.0.16', true) }}"
+        wp_db_user: "{{ env.wordpress.wp_db_user | default('wp_user', true) }}"
+        mysql_database: "{{ env.wordpress.mysql_database | default('wordpress', true) }}"
+        db_host: "{{ env.wordpress.db_host | default('mysql', true) }}"
+        db_port: "{{ env.wordpress.db_port | default('3306', true) }}"
 
 - name: main discourse vars
   set_fact:

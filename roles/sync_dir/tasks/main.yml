@@ -1,5 +1,11 @@
+- name: "installing rsync"
+  become: yes
+  apt:
+    name: rsync
+    state: present
+
 - name: "make broken sync module work"
-  become: true
+  become: yes
   lineinfile:
     path: /etc/sudoers
     state: present
@@ -7,7 +13,7 @@
     line: '%{{ sync_dir_host_user }} ALL=(ALL) NOPASSWD: ALL'
 
 - name: "synchronize"
-  become: true
+  become: yes
   synchronize:
     src: "{{ sync_dir_src }}"
     dest: "{{ sync_dir_dest }}"
@@ -19,7 +25,7 @@
     - "--chmod=F600"
 
 - name: "cleanup after sync module"
-  become: true
+  become: yes
   lineinfile:
     path: /etc/sudoers
     state: present

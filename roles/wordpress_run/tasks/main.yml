@@ -14,7 +14,7 @@
   loop:
   - "{{ wordpress_run_env_location_backup }}"
   loop_control:
-    var: wordpress_run_item
+    loop_var: wordpress_run_item
 
 - name: >-
     {{ wordpress_run_title }} - create empty env file in backup directory
@@ -38,6 +38,7 @@
 - block:
 
   - name: "{{ wordpress_run_title }} - run the images"
+    become: yes
     command: docker-compose up -d
     args:
       chdir: "{{ wordpress_run_env_location }}/"
@@ -48,8 +49,8 @@
       remote_src: yes
       src: "{{ wordpress_run_env_file_path }}"
       dest: "{{ wordpress_run_env_file_path_backup }}"
-    owner: "{{ wordpress_run_host_user }}"
-    group: "{{ wordpress_run_host_group }}"
+      owner: "{{ wordpress_run_host_user }}"
+      group: "{{ wordpress_run_host_group }}"
       mode: 0755
 
   when: "wordpress_run_diff.changed" 
