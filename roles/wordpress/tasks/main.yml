@@ -48,6 +48,7 @@
     wordpress_git_commit: "{{ wordpress_git_result.after }}"
 
 - name: "{{ wordpress_title }} - fetch template from single remote host"
+  become: yes
   run_once: true
   fetch:
     src: "{{ wordpress_repo_location_tmp }}/templates/.env"
