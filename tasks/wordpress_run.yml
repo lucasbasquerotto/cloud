@@ -2,6 +2,7 @@
   include_role: 
     name: wordpress_run
   vars:
+    wordpress_run_docker_compose_file: "{{ main_vars.prepare.docker_compose_file }}"
     wordpress_run_index: "{{ instance_index }}"
     wordpress_run_instance_max: "{{ main_item.vars.cloud.instance_max }}"
     wordpress_run_cloud: "{{ main_vars.cloud }}"

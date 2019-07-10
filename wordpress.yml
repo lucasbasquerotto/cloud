@@ -76,7 +76,11 @@
       name: "wordpress"
     vars:
       wordpress_title: "wordpress - {{ main_item.vars.cloud.instance_group }}"
+      wordpress_docker_repo: "{{ main_vars.prepare.docker_repo }}"
+      wordpress_docker_repo_version: "{{ main_vars.prepare.docker_repo_version }}"
+      wordpress_docker_compose_file: "{{ main_vars.prepare.docker_compose_file }}"
       wordpress_env: "{{ main_vars.prepare.env }}"
+      wordpress_local_tmp_dir: "{{ env_tmp_dir }}"
     loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item

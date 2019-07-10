@@ -1,8 +1,3 @@
-- name: "{{ wordpress_run_title }} - set_fact"
-  set_fact: 
-    wordpress_run_env_file_path: "{{ wordpress_run_env_location }}/.env"
-    wordpress_run_env_file_path_backup: "{{ wordpress_run_env_location_backup }}/.env"
-
 - name: "{{ wordpress_run_title }} - create the env directories"
   become: yes
   file:
@@ -23,34 +18,37 @@
   copy: 
     force: no
     content: ""
-    dest: "{{ wordpress_run_env_file_path_backup }}"
+    dest: "{{ wordpress_run_env_location_backup }}/.env"
     owner: "{{ wordpress_run_host_user }}"
     group: "{{ wordpress_run_host_group }}"
     mode: 0600
 
 - name: "{{ wordpress_run_title }} - get the difference of the 2 env files (old and current)"
   become: yes
-  command: "diff {{ wordpress_run_env_file_path }} {{ wordpress_run_env_file_path_backup }}"
+  command: "diff {{ wordpress_run_repo_location }}/.env {{ wordpress_run_env_location_backup }}/.env"
   register: wordpress_run_diff
   failed_when: wordpress_run_diff.rc > 1
   changed_when: wordpress_run_diff.rc == 1
 
 - block:
 
+  - set_fact:
+      wordpress_run_docker_compose_cmd: "docker-compose -f {{ wordpress_run_docker_compose_file }}"
+
   - name: "{{ wordpress_run_title }} - run the images"
     become: yes
-    command: docker-compose up -d
+    command: "{{ wordpress_run_docker_compose_cmd }} up -d"
     args:
-      chdir: "{{ wordpress_run_env_location }}/"
+      chdir: "{{ wordpress_run_repo_location }}/"
     
   - name: "{{ wordpress_run_title }} - backup the wordpress env run file"
     become: yes
     copy: 
       remote_src: yes
-      src: "{{ wordpress_run_env_file_path }}"
-      dest: "{{ wordpress_run_env_file_path_backup }}"
+      src: "{{ wordpress_run_repo_location }}/.env"
+      dest: "{{ wordpress_run_env_location_backup }}/.env"
       owner: "{{ wordpress_run_host_user }}"
       group: "{{ wordpress_run_host_group }}"
-      mode: 0755
+      mode: 0600
 
   when: "wordpress_run_diff.changed" 

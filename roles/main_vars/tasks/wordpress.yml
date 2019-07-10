@@ -205,20 +205,22 @@
 
 - set_fact:
     main_vars_prepare:
+      docker_repo: "{{ env.docker_repo }}"
+      docker_repo_version: "{{ env.docker_repo_version }}"
+      docker_compose_file: "{{ env.docker_compose_file }}"
       env:
-        docker_compose_file: "{{ env.wordpress.docker_compose_file }}"
         wp_db_pass: "{{ env.wordpress.wp_db_pass }}"
         mysql_root_password: "{{ env.wordpress.mysql_root_password }}"
-        perl_version: "{{ env.wordpress.perl_version | default('5.26.3-slim', true) }}"
-        nginx_version: "{{ env.wordpress.nginx_version | default('1.14.2-alpine', true) }}"
-        wp_version: "{{ env.wordpress.wp_version | default('5.0.3-php7.3-apache', true) }}"
-        pma_version: "{{ env.wordpress.pma_version | default('4.8.5', true) }}"
-        mysql_image: "{{ env.wordpress.mysql_image | default('mysql', true) }}"
-        mysql_version: "{{ env.wordpress.mysql_version | default('8.0.16', true) }}"
-        wp_db_user: "{{ env.wordpress.wp_db_user | default('wp_user', true) }}"
-        mysql_database: "{{ env.wordpress.mysql_database | default('wordpress', true) }}"
-        db_host: "{{ env.wordpress.db_host | default('mysql', true) }}"
-        db_port: "{{ env.wordpress.db_port | default('3306', true) }}"
+        perl_version: "{{ env.wordpress.perl_version | default('', true) }}"
+        nginx_version: "{{ env.wordpress.nginx_version | default('', true) }}"
+        wp_version: "{{ env.wordpress.wp_version | default('', true) }}"
+        pma_version: "{{ env.wordpress.pma_version | default('', true) }}"
+        mysql_image: "{{ env.wordpress.mysql_image | default('', true) }}"
+        mysql_version: "{{ env.wordpress.mysql_version | default('', true) }}"
+        wp_db_user: "{{ env.wordpress.wp_db_user | default('', true) }}"
+        mysql_database: "{{ env.wordpress.mysql_database | default('', true) }}"
+        db_host: "{{ env.wordpress.db_host | default('', true) }}"
+        db_port: "{{ env.wordpress.db_port | default('', true) }}"
 
 - name: main wordpress vars
   set_fact:
