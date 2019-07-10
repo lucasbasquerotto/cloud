@@ -37,7 +37,7 @@
 
   - name: "{{ wordpress_run_title }} - run the images"
     become: yes
-    command: "{{ wordpress_run_docker_compose_cmd }} up -d"
+    command: "{{ wordpress_run_docker_compose_cmd }} up -d --remove-orphans"
     args:
       chdir: "{{ wordpress_run_repo_location }}/"
     
