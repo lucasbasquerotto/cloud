@@ -14,4 +14,5 @@
   when: env.type != main_vars_type
 
 - include_tasks:  "{{ env.type }}.yml"
+  when: env.type != 'local'
   

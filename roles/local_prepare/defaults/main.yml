@@ -1,2 +1,1 @@
 local_prepare_title: "local - prepare"
-local_prepare_repo_location: "/main/dev/{{ local_prepare_env.name }}"

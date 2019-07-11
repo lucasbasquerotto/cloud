@@ -3,13 +3,27 @@
     msg: "[Error] Specify the environment repo variable: docker_compose_file"
   when: (local_prepare_docker_compose_file is not defined) or (local_prepare_docker_compose_file == '')
 
+- name: "{{ local_prepare_title }} - verify if the 'name' environment variable is defined"
+  fail:
+    msg: "[Error] Specify the environment variable: 'name' (will be the repo name)"
+  when: (local_prepare_repo_name is not defined) or (local_prepare_repo_name == '')
+
+- name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
+  set_fact:
+    local_prepare_repo_location: "/main/dev/{{ local_prepare_repo_name }}"
+
+- name: "{{ local_prepare_title }} - verify if docker compose file is defined"
+  fail:
+    msg: "[Error] Specify the environment repo variable: docker_compose_file"
+  when: (local_prepare_docker_compose_file is not defined) or (local_prepare_docker_compose_file == '')
+
 - name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
   file:
     path: "{{ local_prepare_repo_location }}"
     state: directory
     mode: 0700
 
-- name: "{{ local_prepare_title }} - update the temporary repo directory"
+- name: "{{ local_prepare_title }} - update the repo directory"
   git:
     repo: "{{ local_prepare_docker_repo }}"
     version: "{{ local_prepare_docker_repo_version }}"
@@ -18,13 +32,27 @@
   register: local_prepare_git_result
   tags: ["print_action"]
 
-- set_fact:
+- name: "{{ local_prepare_title }} - get owner of file"
+  stat:
+    path: "{{ local_prepare_repo_location }}/templates/.env"
+  register: local_prepare_stat
+
+- debug:
+    var: local_prepare_stat
+  tags: ["print_action"]
+
+- name: "{{ local_prepare_title }} - set_fact"
+  set_fact:
     local_prepare_git_commit: "{{ local_prepare_git_result.after }}"
+    local_prepare_owner: "{{ local_prepare_stat.stat.uid }}"
+    local_prepare_group: "{{ local_prepare_stat.stat.gid }}"
 
 - name: "{{ local_prepare_title }} - transfer the env template file"
   template: 
     src: "{{ local_prepare_repo_location }}/templates/.env"
     dest: "{{ local_prepare_repo_location }}/.env"
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
     mode: 0600
   vars:
     compose_prepare_docker_repo: "{{ local_prepare_docker_repo }}"
@@ -32,4 +60,5 @@
     compose_prepare_docker_compose_file: "{{ local_prepare_docker_compose_file }}"
     compose_prepare_git_commit: "{{ local_prepare_git_commit }}"
     compose_prepare_env: "{{ local_prepare_env }}"
+
     
