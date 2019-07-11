@@ -1,0 +1,54 @@
+- name: "{{ compose_run_title }} - create the env directories"
+  become: yes
+  file:
+    path: "{{ compose_run_item }}"
+    state: directory
+    owner: "{{ compose_run_host_user }}"
+    group: "{{ compose_run_host_group }}"
+    mode: 0700
+  loop:
+  - "{{ compose_run_env_location_backup }}"
+  loop_control:
+    loop_var: compose_run_item
+
+- name: >-
+    {{ compose_run_title }} - create empty env file in backup directory
+    if there is no file there
+  become: yes
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ compose_run_env_location_backup }}/.env"
+    owner: "{{ compose_run_host_user }}"
+    group: "{{ compose_run_host_group }}"
+    mode: 0600
+
+- name: "{{ compose_run_title }} - get the difference of the 2 env files (old and current)"
+  become: yes
+  command: "diff {{ compose_run_repo_location }}/.env {{ compose_run_env_location_backup }}/.env"
+  register: compose_run_diff
+  failed_when: compose_run_diff.rc > 1
+  changed_when: compose_run_diff.rc == 1
+
+- block:
+
+  - set_fact:
+      compose_run_docker_compose_cmd: "docker-compose -f {{ compose_run_docker_compose_file }}"
+
+  - name: "{{ compose_run_title }} - run the images"
+    become: yes
+    command: "{{ compose_run_docker_compose_cmd }} up -d --remove-orphans"
+    args:
+      chdir: "{{ compose_run_repo_location }}/"
+    
+  - name: "{{ compose_run_title }} - backup the env run file"
+    become: yes
+    copy: 
+      remote_src: yes
+      src: "{{ compose_run_repo_location }}/.env"
+      dest: "{{ compose_run_env_location_backup }}/.env"
+      owner: "{{ compose_run_host_user }}"
+      group: "{{ compose_run_host_group }}"
+      mode: 0600
+
+  when: "compose_run_diff.changed" 

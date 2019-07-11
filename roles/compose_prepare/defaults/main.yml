@@ -1,0 +1,6 @@
+compose_prepare_title: "compose - prepare"
+compose_prepare_host_user: "host"
+compose_prepare_host_group: "host"
+compose_prepare_repo_location: "/main/repo"
+compose_prepare_repo_location_tmp: "/main/tmp/repo"
+compose_prepare_env_location_backup: "/tmp/main/env"

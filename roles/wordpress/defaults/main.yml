@@ -1,8 +1,0 @@
-wordpress_title: "wordpress"
-wordpress_host_user: "host"
-wordpress_host_group: "host"
-wordpress_repo_location: "/main/repo"
-wordpress_repo_location_tmp: "/main/tmp/repo"
-wordpress_env_location_backup: "/tmp/main/env"
-wordpress_docker_repo: "https://github.com/lucasbasquerotto/wordpress-docker"
-wordpress_docker_repo_version: "master"

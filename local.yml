@@ -1,0 +1,17 @@
+- name: Play 01 - Prepare the local environment
+  hosts: host
+  tags:
+  - init
+  - prepare
+  - prepare-hosts
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+
+  - include_role: 
+      name: "local_prepare"
+    vars:
+      local_prepare_docker_repo: "{{ env.docker_repo }}"
+      local_prepare_docker_repo_version: "{{ env.docker_repo_version }}"
+      local_prepare_docker_compose_file: "{{ env.docker_compose_file }}"
+      local_prepare_env: "{{ env.env }}"

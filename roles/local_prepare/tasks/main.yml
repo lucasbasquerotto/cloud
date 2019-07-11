@@ -1,0 +1,2 @@
+- name: "{{ local_prepare_title }} - {{ local_prepare_subtype }}"
+  include_tasks: "{{ local_prepare_subtype }}.yml"

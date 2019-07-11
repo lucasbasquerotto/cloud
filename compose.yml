@@ -6,7 +6,7 @@
   - cloud
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/compose_init.yml"
 
   - include_role: 
       name: "main_cloud"
@@ -42,7 +42,7 @@
   - dns
   gather_facts: no  
   tasks:  
-  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/compose_init.yml"
 
   - name: "create the static dns records"
     include_role: 
@@ -70,17 +70,17 @@
   - prepare-hosts
   gather_facts: no
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/compose_init.yml"
 
   - include_role: 
-      name: "wordpress"
+      name: "compose_prepare"
     vars:
-      wordpress_title: "wordpress - {{ main_item.vars.cloud.instance_group }}"
-      wordpress_docker_repo: "{{ main_vars.prepare.docker_repo }}"
-      wordpress_docker_repo_version: "{{ main_vars.prepare.docker_repo_version }}"
-      wordpress_docker_compose_file: "{{ main_vars.prepare.docker_compose_file }}"
-      wordpress_env: "{{ main_vars.prepare.env }}"
-      wordpress_local_tmp_dir: "{{ env_tmp_dir }}"
+      compose_prepare_title: "compose - {{ main_item.vars.cloud.instance_group }}"
+      compose_prepare_docker_repo: "{{ main_vars.prepare.docker_repo }}"
+      compose_prepare_docker_repo_version: "{{ main_vars.prepare.docker_repo_version }}"
+      compose_prepare_docker_compose_file: "{{ main_vars.prepare.docker_compose_file }}"
+      compose_prepare_env: "{{ main_vars.prepare.env }}"
+      compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}"
     loop: "{{ main_vars.cloud.values() | list }}"
     loop_control:
       loop_var: main_item
@@ -97,8 +97,8 @@
   - run_db_master
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
-  - include_tasks: "tasks/wordpress_run.yml"
+  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/compose_run.yml"
 
 #-----------------------------------------------------------------------------#
 
@@ -110,8 +110,8 @@
   - run_redis_master
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
-  - include_tasks: "tasks/wordpress_run.yml"
+  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/compose_run.yml"
 
 #-----------------------------------------------------------------------------#
 
@@ -125,8 +125,8 @@
   - run_web
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
-  - include_tasks: "tasks/wordpress_run.yml"
+  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/compose_run.yml"
 
 #-----------------------------------------------------------------------------#
 
@@ -139,8 +139,8 @@
   - run_app
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
-  - include_tasks: "tasks/wordpress_run.yml"
+  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/compose_run.yml"
 
 ###############################################################################
 
@@ -152,7 +152,7 @@
   - cloud
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/compose_init.yml"
 
   - include_role: 
       name: "main_cloud"
@@ -177,7 +177,7 @@
   - destroy
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/wordpress_init.yml"
+  - include_tasks: "tasks/compose_init.yml"
 
   - include_role: 
       name: "main_cloud"

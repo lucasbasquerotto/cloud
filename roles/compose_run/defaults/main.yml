@@ -1,0 +1,5 @@
+compose_run_title: "compose - run"
+compose_run_host_user: "host"
+compose_run_host_group: "host"
+compose_run_repo_location: "/main/repo"
+compose_run_env_location_backup: "/tmp/main/env-run"

@@ -109,7 +109,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "app"
-                instance_name: "{{ main_vars_env_name }}wordpress-app"
+                instance_name: "{{ main_vars_env_name }}compose-app"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -138,7 +138,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "db_master"
-                instance_name: "{{ main_vars_env_name }}wordpress-db-master"
+                instance_name: "{{ main_vars_env_name }}compose-db-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -166,7 +166,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "redis_master"
-                instance_name: "{{ main_vars_env_name }}wordpress-redis-master"
+                instance_name: "{{ main_vars_env_name }}compose-redis-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -195,7 +195,7 @@
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
                 instance_group: "web"
-                instance_name: "{{ main_vars_env_name }}wordpress-web"
+                instance_name: "{{ main_vars_env_name }}compose-web"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
@@ -209,20 +209,20 @@
       docker_repo_version: "{{ env.docker_repo_version }}"
       docker_compose_file: "{{ env.docker_compose_file }}"
       env:
-        wp_db_pass: "{{ env.wordpress.wp_db_pass }}"
-        mysql_root_password: "{{ env.wordpress.mysql_root_password }}"
-        perl_version: "{{ env.wordpress.perl_version | default('', true) }}"
-        nginx_version: "{{ env.wordpress.nginx_version | default('', true) }}"
-        wp_version: "{{ env.wordpress.wp_version | default('', true) }}"
-        pma_version: "{{ env.wordpress.pma_version | default('', true) }}"
-        mysql_image: "{{ env.wordpress.mysql_image | default('', true) }}"
-        mysql_version: "{{ env.wordpress.mysql_version | default('', true) }}"
-        wp_db_user: "{{ env.wordpress.wp_db_user | default('', true) }}"
-        mysql_database: "{{ env.wordpress.mysql_database | default('', true) }}"
-        db_host: "{{ env.wordpress.db_host | default('', true) }}"
-        db_port: "{{ env.wordpress.db_port | default('', true) }}"
+        wp_db_pass: "{{ env.env.wp_db_pass }}"
+        mysql_root_password: "{{ env.env.mysql_root_password }}"
+        perl_version: "{{ env.env.perl_version | default('', true) }}"
+        nginx_version: "{{ env.env.nginx_version | default('', true) }}"
+        wp_version: "{{ env.env.wp_version | default('', true) }}"
+        pma_version: "{{ env.env.pma_version | default('', true) }}"
+        mysql_image: "{{ env.env.mysql_image | default('', true) }}"
+        mysql_version: "{{ env.env.mysql_version | default('', true) }}"
+        wp_db_user: "{{ env.env.wp_db_user | default('', true) }}"
+        mysql_database: "{{ env.env.mysql_database | default('', true) }}"
+        db_host: "{{ env.env.db_host | default('', true) }}"
+        db_port: "{{ env.env.db_port | default('', true) }}"
 
-- name: main wordpress vars
+- name: main compose vars
   set_fact:
     main_vars:
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"

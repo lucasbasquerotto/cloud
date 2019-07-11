@@ -5,4 +5,4 @@
     name: "main_vars"
   vars:
     main_vars_env_file: "{{ env_file }}"
-    main_vars_type: "wordpress"
+    main_vars_type: "compose"

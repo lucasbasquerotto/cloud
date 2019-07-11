@@ -1,0 +1,134 @@
+- name: "{{ compose_prepare_title }} - verify if docker compose file is defined"
+  fail:
+    msg: "[Error] Specify the environment repo variable: docker_compose_file"
+  when: (compose_prepare_docker_compose_file is not defined) or (compose_prepare_docker_compose_file == '')
+
+- name: "{{ compose_prepare_title }} - verify if the temporary dir is specified"
+  fail:
+    msg: "The parameter compose_prepare_local_tmp_dir must be specified"
+  when: (compose_prepare_local_tmp_dir is not defined) or (compose_prepare_local_tmp_dir == '')
+
+- name: "{{ compose_prepare_title }} - ensure docker is running"
+  become: yes
+  service: 
+    name: docker
+    state: started
+
+- name: "{{ compose_prepare_title }} - copy the docker compose executable file"
+  become: yes
+  copy: 
+    src: "roles/compose_prepare/files/docker-compose.sh"
+    dest: "/usr/local/bin/docker-compose"
+    mode: 0755
+
+- name: "{{ compose_prepare_title }} - create the repo directories"
+  become: yes
+  file:
+    path: "{{ compose_prepare_item }}"
+    state: directory
+    mode: 0700
+  loop:
+  - "{{ compose_prepare_repo_location }}"
+  - "{{ compose_prepare_repo_location_tmp }}"
+  - "{{ compose_prepare_env_location_backup }}"
+  loop_control:
+    loop_var: compose_prepare_item
+
+- name: "{{ compose_prepare_title }} - update the temporary repo directory"
+  become: yes
+  git:
+    repo: "{{ compose_prepare_docker_repo }}"
+    version: "{{ compose_prepare_docker_repo_version }}"
+    dest: "{{ compose_prepare_repo_location_tmp }}"
+    update: yes
+  register: compose_prepare_git_result
+  tags: ["print_action"]
+
+- set_fact:
+    compose_prepare_git_commit: "{{ compose_prepare_git_result.after }}"
+
+- name: "{{ compose_prepare_title }} - fetch template from single remote host"
+  become: yes
+  run_once: true
+  fetch:
+    src: "{{ compose_prepare_repo_location_tmp }}/templates/.env"
+    dest: "{{ compose_prepare_local_tmp_dir }}/.env"
+    flat: yes
+    fail_on_missing: yes
+
+- name: "{{ compose_prepare_title }} - transfer the env template file"
+  become: yes
+  template: 
+    src: "{{ compose_prepare_local_tmp_dir }}/.env"
+    dest: "{{ compose_prepare_repo_location_tmp }}/.env"
+    mode: 0600
+
+- name: >-
+    {{ compose_prepare_title }} - create empty env file in backup directory
+    if there is no file there
+  become: yes
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ compose_prepare_env_location_backup }}/.env"
+    mode: 0600
+
+- name: "{{ compose_prepare_title }} - get the difference of the 2 env files (old and current)"
+  become: yes
+  command: >-
+    diff {{ compose_prepare_repo_location_tmp }}/.env {{ compose_prepare_env_location_backup }}/.env
+  register: compose_prepare_diff
+  failed_when: compose_prepare_diff.rc > 1
+  changed_when: compose_prepare_diff.rc == 1
+  tags: ["print_action"]
+
+- block:
+
+  - set_fact:
+      compose_prepare_docker_compose_cmd: "docker-compose -f {{ compose_prepare_docker_compose_file }}"
+
+  - name: "{{ compose_prepare_title }} - prepare the temporary images (pull and build)"
+    become: yes
+    command: "{{ compose_prepare_item }}"
+    args:
+      chdir: "{{ compose_prepare_repo_location_tmp }}/"
+    loop:
+    - "{{ compose_prepare_docker_compose_cmd }} pull"
+    - "{{ compose_prepare_docker_compose_cmd }} build --pull"
+    loop_control:
+      loop_var: compose_prepare_item
+    tags: ["print_action"]
+
+  - name: "{{ compose_prepare_title }} - update the repo directory"
+    become: yes
+    git:
+      repo: "{{ compose_prepare_docker_repo }}"
+      version: "{{ compose_prepare_docker_repo_version }}"
+      dest: "{{ compose_prepare_repo_location }}"
+      update: yes
+    tags: ["print_action"]
+
+  - name: "{{ compose_prepare_title }} - copy the env file"
+    become: yes
+    copy: 
+      remote_src: yes
+      src: "{{ compose_prepare_repo_location_tmp }}/.env"
+      dest: "{{ compose_prepare_repo_location }}/.env"
+      mode: 0600
+
+  - name: "{{ compose_prepare_title }} - prepare the images (build)"
+    become: yes
+    command: "{{ compose_prepare_docker_compose_cmd }} build"
+    args:
+      chdir: "{{ compose_prepare_repo_location }}/"
+    tags: ["print_action"]
+    
+  - name: "{{ compose_prepare_title }} - backup the env file"
+    become: yes
+    copy: 
+      remote_src: yes
+      src: "{{ compose_prepare_repo_location }}/.env"
+      dest: "{{ compose_prepare_env_location_backup }}/.env"
+      mode: 0600
+
+  when: "compose_prepare_diff.changed" 
