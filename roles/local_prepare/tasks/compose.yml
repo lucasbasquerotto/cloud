@@ -12,11 +12,6 @@
   set_fact:
     local_prepare_repo_location: "/main/dev/{{ local_prepare_repo_name }}"
 
-- name: "{{ local_prepare_title }} - verify if docker compose file is defined"
-  fail:
-    msg: "[Error] Specify the environment repo variable: docker_compose_file"
-  when: (local_prepare_docker_compose_file is not defined) or (local_prepare_docker_compose_file == '')
-
 - name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
   file:
     path: "{{ local_prepare_repo_location }}"
@@ -34,12 +29,8 @@
 
 - name: "{{ local_prepare_title }} - get owner of file"
   stat:
-    path: "{{ local_prepare_repo_location }}/templates/.env"
+    path: "{{ local_prepare_repo_location }}/.gitignore"
   register: local_prepare_stat
-
-- debug:
-    var: local_prepare_stat
-  tags: ["print_action"]
 
 - name: "{{ local_prepare_title }} - set_fact"
   set_fact:
@@ -47,18 +38,48 @@
     local_prepare_owner: "{{ local_prepare_stat.stat.uid }}"
     local_prepare_group: "{{ local_prepare_stat.stat.gid }}"
 
-- name: "{{ local_prepare_title }} - transfer the env template file"
+- name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}/env"
+  file:
+    path: "{{ local_prepare_repo_location }}/env"
+    state: directory
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0700
+
+- name: "{{ local_prepare_title }} - create directories for the templates"
+  file:
+    path: "{{ local_prepare_item_file | dirname }}"
+    state: directory
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0700
+  vars: 
+    local_prepare_item_file: >-
+      {{ local_prepare_repo_location }}/{{ (local_prepare_item == '.env') 
+      | ternary('.env', 'env/' + local_prepare_item) }}
+  loop: "{{ local_prepare_templates | default([]) }}"
+  loop_control:
+    loop_var: local_prepare_item
+    label: "{{ local_prepare_item_file | dirname }}"
+
+- name: "{{ local_prepare_title }} - transfer the template files"
   template: 
-    src: "{{ local_prepare_repo_location }}/templates/.env"
-    dest: "{{ local_prepare_repo_location }}/.env"
+    src: "{{ local_prepare_repo_location }}/templates/{{ local_prepare_item }}"
+    dest: >-
+      {{ local_prepare_repo_location }}/{{ (local_prepare_item == '.env') 
+      | ternary('.env', 'env/' + local_prepare_item) }}
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
     mode: 0600
   vars:
-    compose_prepare_docker_repo: "{{ local_prepare_docker_repo }}"
-    compose_prepare_docker_repo_version: "{{ local_prepare_docker_repo_version }}"
-    compose_prepare_docker_compose_file: "{{ local_prepare_docker_compose_file }}"
-    compose_prepare_git_commit: "{{ local_prepare_git_commit }}"
-    compose_prepare_env: "{{ local_prepare_env }}"
+    tpl_docker_repo: "{{ local_prepare_docker_repo }}"
+    tpl_docker_repo_version: "{{ local_prepare_docker_repo_version }}"
+    tpl_docker_compose_file: "{{ local_prepare_docker_compose_file }}"
+    tpl_git_commit: "{{ local_prepare_git_commit }}"
+    tpl: "{{ local_prepare_vars }}"
+  loop: "{{ local_prepare_templates | default([]) }}"
+  loop_control:
+    loop_var: local_prepare_item
+  tags: ["print_action"]
 
     
