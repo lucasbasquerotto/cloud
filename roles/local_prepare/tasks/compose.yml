@@ -82,4 +82,13 @@
     loop_var: local_prepare_item
   tags: ["print_action"]
 
+- name: "{{ local_prepare_title }} - copy the docker compose file"
+  copy: 
+    src: "{{ local_prepare_repo_location }}/compose/{{ local_prepare_docker_compose_file }}"
+    dest: "{{ local_prepare_repo_location }}/docker-compose.yml"
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0644
+  tags: ["print_action"]
+
     
