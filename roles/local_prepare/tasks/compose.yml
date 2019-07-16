@@ -1,8 +1,3 @@
-- name: "{{ local_prepare_title }} - verify if docker compose file is defined"
-  fail:
-    msg: "[Error] Specify the environment repo variable: docker_compose_file"
-  when: (local_prepare_docker_compose_file is not defined) or (local_prepare_docker_compose_file == '')
-
 - name: "{{ local_prepare_title }} - verify if the 'name' environment variable is defined"
   fail:
     msg: "[Error] Specify the environment variable: 'name' (will be the repo name)"
@@ -46,28 +41,45 @@
     group: "{{ local_prepare_group }}"
     mode: 0700
 
-- name: "{{ local_prepare_title }} - create directories for the templates"
+- name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - empty"
+  set_fact:
+    local_prepare_tpl_list: []
+
+- name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - fill"
+  set_fact:
+    local_prepare_tpl_list: >-
+      {{ 
+      local_prepare_tpl_list
+      + [{ 'src': local_prepare_item_src, 'dest': local_prepare_item_dest }] 
+      }}
+  vars: 
+    local_prepare_item_src: "{{ local_prepare_repo_location }}/templates/{{ local_prepare_item.src }}"
+    local_prepare_item_dest: >-
+      {{ local_prepare_repo_location }}/{{ 
+      ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+      + (local_prepare_item.dest | default(local_prepare_item.src)) 
+      }}
+  loop: "{{ local_prepare_templates | default([]) }}"
+  loop_control:
+    loop_var: local_prepare_item
+    label: "{{ local_prepare_item.dest | default(local_prepare_item.src) }}"
+
+- name: "{{ local_prepare_title }} - create directories for the repository templates"
   file:
-    path: "{{ local_prepare_item_file | dirname }}"
+    path: "{{ local_prepare_item.dest | dirname }}"
     state: directory
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
     mode: 0700
-  vars: 
-    local_prepare_item_file: >-
-      {{ local_prepare_repo_location }}/{{ (local_prepare_item == '.env') 
-      | ternary('.env', 'env/' + local_prepare_item) }}
-  loop: "{{ local_prepare_templates | default([]) }}"
+  loop: "{{ local_prepare_tpl_list | default([]) }}"
   loop_control:
     loop_var: local_prepare_item
-    label: "{{ local_prepare_item_file | dirname }}"
+    label: "{{ local_prepare_item.dest | dirname }}"
 
-- name: "{{ local_prepare_title }} - transfer the template files"
+- name: "{{ local_prepare_title }} - transfer the repository template files"
   template: 
-    src: "{{ local_prepare_repo_location }}/templates/{{ local_prepare_item }}"
-    dest: >-
-      {{ local_prepare_repo_location }}/{{ (local_prepare_item == '.env') 
-      | ternary('.env', 'env/' + local_prepare_item) }}
+    src: "{{ local_prepare_item.src }}"
+    dest: "{{ local_prepare_item.dest }}"
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
     mode: 0600
@@ -77,18 +89,8 @@
     tpl_docker_compose_file: "{{ local_prepare_docker_compose_file }}"
     tpl_git_commit: "{{ local_prepare_git_commit }}"
     tpl: "{{ local_prepare_vars }}"
-  loop: "{{ local_prepare_templates | default([]) }}"
+  loop: "{{ local_prepare_tpl_list | default([]) }}"
   loop_control:
     loop_var: local_prepare_item
+    label: "{{ local_prepare_item.dest }}"
   tags: ["print_action"]
-
-- name: "{{ local_prepare_title }} - copy the docker compose file"
-  copy: 
-    src: "{{ local_prepare_repo_location }}/compose/{{ local_prepare_docker_compose_file }}"
-    dest: "{{ local_prepare_repo_location }}/docker-compose.yml"
-    owner: "{{ local_prepare_owner }}"
-    group: "{{ local_prepare_group }}"
-    mode: 0644
-  tags: ["print_action"]
-
-    
