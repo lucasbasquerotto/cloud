@@ -19,5 +19,6 @@
       local_prepare_docker_repo: "{{ env.docker_repo }}"
       local_prepare_docker_repo_version: "{{ env.docker_repo_version }}"
       local_prepare_docker_compose_file: "{{ env.docker_compose_file }}"
+      local_prepare_volumes: "{{ env.volumes | default([]) }}"
       local_prepare_templates: "{{ env.templates | default([]) }}"
       local_prepare_vars: "{{ env.vars | default({}) }}"
