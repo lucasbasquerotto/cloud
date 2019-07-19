@@ -33,7 +33,7 @@
     dest: "{{ local_prepare_tmp_dir }}/local_prepare_vars.yml"
     mode: 0600
   vars:
-    params: "{{ local_prepare_env_params }}"
+    params: "{{ local_prepare_env_params.params }}"
     params_aux:
       docker_repo: "{{ local_prepare_docker_repo }}"
       docker_repo_version: "{{ local_prepare_docker_repo_version }}"
