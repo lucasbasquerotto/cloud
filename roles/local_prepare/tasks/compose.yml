@@ -3,6 +3,11 @@
     msg: "[Error] Specify the environment variable: 'name' (will be the repo name)"
   when: (local_prepare_repo_name is not defined) or (local_prepare_repo_name == '')
 
+- name: "{{ local_prepare_title }} - verify if the 'vars_template_dir' environment variable is defined"
+  fail:
+    msg: "[Error] Specify the directory of the template with variables: 'vars_template_dir'"
+  when: ((local_prepare_vars_template_dir | default('')) == '')
+
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
   set_fact:
     local_prepare_repo_location: "/main/dev/{{ local_prepare_repo_name }}"
@@ -22,6 +27,24 @@
   register: local_prepare_git_result
   tags: ["print_action"]
 
+- name: "{{ local_prepare_title }} - get template file with variables from the repo directory"
+  template: 
+    src: "{{ local_prepare_repo_location }}/{{ local_prepare_vars_template_dir }}/app.yml"
+    dest: "{{ local_prepare_tmp_dir }}/local_prepare_vars.yml"
+    mode: 0600
+  vars:
+    params: "{{ local_prepare_env_params }}"
+    params_aux:
+      docker_repo: "{{ local_prepare_docker_repo }}"
+      docker_repo_version: "{{ local_prepare_docker_repo_version }}"
+      git_commit: "{{ local_prepare_git_result.after }}"
+  tags: ["print_action"]
+
+- name: load environment vars
+  include_vars:
+    file: "{{ local_prepare_tmp_dir }}/local_prepare_vars.yml"
+    name: local_prepare_vars
+
 - name: "{{ local_prepare_title }} - get owner of file"
   stat:
     path: "{{ local_prepare_repo_location }}/.gitignore"
@@ -29,7 +52,6 @@
 
 - name: "{{ local_prepare_title }} - set_fact"
   set_fact:
-    local_prepare_git_commit: "{{ local_prepare_git_result.after }}"
     local_prepare_owner: "{{ local_prepare_stat.stat.uid }}"
     local_prepare_group: "{{ local_prepare_stat.stat.gid }}"
 
@@ -41,6 +63,16 @@
     group: "{{ local_prepare_group }}"
     mode: 0700
 
+- name: "{{ local_prepare_title }} - create the volume directories"
+  file:
+    state: directory
+    path: "{{ local_prepare_item.path }}"
+    mode: "{{ local_prepare_item.mode }}"
+  loop: "{{ local_prepare_vars.volumes | default([]) }}"
+  loop_control:
+    loop_var: local_prepare_item
+    label: "{{ local_prepare_item.path }}"
+
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - empty"
   set_fact:
     local_prepare_tpl_list: []
@@ -50,7 +82,11 @@
     local_prepare_tpl_list: >-
       {{ 
       local_prepare_tpl_list
-      + [{ 'src': local_prepare_item_src, 'dest': local_prepare_item_dest }] 
+      + [{ 
+      'src': local_prepare_item_src, 
+      'dest': local_prepare_item_dest, 
+      'params': local_prepare_item_params
+      }] 
       }}
   vars: 
     local_prepare_item_src: "{{ local_prepare_repo_location }}/templates/{{ local_prepare_item.src }}"
@@ -59,21 +95,11 @@
       ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
       + (local_prepare_item.dest | default(local_prepare_item.src)) 
       }}
-  loop: "{{ local_prepare_templates | default([]) }}"
+    local_prepare_item_params: "{{ local_prepare_item.params | default({}) }}"
+  loop: "{{ local_prepare_vars.templates | default([]) }}"
   loop_control:
     loop_var: local_prepare_item
     label: "{{ local_prepare_item.dest | default(local_prepare_item.src) }}"
-
-- name: "{{ local_prepare_title }} - create the volume directories"
-  become: yes
-  file:
-    state: directory
-    path: "{{ local_prepare_item.path }}"
-    mode: "{{ local_prepare_item.mode }}"
-  loop: "{{ local_prepare_volumes | default([]) }}"
-  loop_control:
-    loop_var: local_prepare_item
-    label: "{{ local_prepare_item.path }}"
 
 - name: "{{ local_prepare_title }} - create directories for the repository templates"
   file:
@@ -95,11 +121,7 @@
     group: "{{ local_prepare_group }}"
     mode: 0600
   vars:
-    tpl_docker_repo: "{{ local_prepare_docker_repo }}"
-    tpl_docker_repo_version: "{{ local_prepare_docker_repo_version }}"
-    tpl_docker_compose_file: "{{ local_prepare_docker_compose_file }}"
-    tpl_git_commit: "{{ local_prepare_git_commit }}"
-    tpl: "{{ local_prepare_vars }}"
+    params: "{{ local_prepare_item.params }}"
   loop: "{{ local_prepare_tpl_list | default([]) }}"
   loop_control:
     loop_var: local_prepare_item
