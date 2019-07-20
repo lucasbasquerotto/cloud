@@ -84,15 +84,6 @@
       templates: "{{ local_prepare_vars_templates }}"
       env_files: "{{ local_prepare_vars_env_files }}"
 
-- name: "{{ local_prepare_title }} - create the temporary file to verify if there was a change"
-  copy: 
-    force: no
-    content: "{{ local_prepare_vars_full | to_yaml }}"
-    dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
-    owner: "{{ local_prepare_owner }}"
-    group: "{{ local_prepare_group }}"
-    mode: 0600
-
 - name: >-
     {{ local_prepare_title }} - create the file to verify if there was a change, 
     if it was not created before
@@ -100,6 +91,14 @@
     force: no
     content: ""
     dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0600
+
+- name: "{{ local_prepare_title }} - create the temporary file to verify if there was a change"
+  copy: 
+    content: "{{ local_prepare_vars_full | to_nice_yaml }}"
+    dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
     mode: 0600
@@ -234,7 +233,7 @@
       mode: 0600
     tags: ["print_action"]
 
-  when: local_prepare_diff.changed
+  when: local_prepare_diff.changed or True
 
 - name: "{{ local_prepare_title }} - debug"
   debug: 

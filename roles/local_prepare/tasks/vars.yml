@@ -1,4 +1,4 @@
-- name: "{{ local_prepare_title }} - populate vars from templates (inner)"
+- name: "{{ local_prepare_title }} - populate vars from templates ({{ local_prepare_item.name }})"
   template: 
     src: >-
       {{ local_prepare_repo_location }}/{{ local_prepare_vars_dir }}/{{ local_prepare_item.name }}.yml
@@ -12,12 +12,12 @@
       git_commit: "{{ local_prepare_git_result.after }}"
       data_dir: "{{ local_prepare_data_dir }}"
 
-- name: "{{ local_prepare_title }} - load environment vars"
+- name: "{{ local_prepare_title }} - load environment vars ({{ local_prepare_item.name }})"
   include_vars:
     file: "{{ local_prepare_tmp_dir }}/local_prepare_vars_{{ local_prepare_item.name }}.yml"
     name: local_prepare_inner_vars
 
-- name: "{{ local_prepare_title }} - set_fact - (inner)"
+- name: "{{ local_prepare_title }} - set_fact ({{ local_prepare_item.name }})"
   set_fact:
     local_prepare_vars_volumes: >-
       {{ local_prepare_vars_volumes + (local_prepare_inner_vars.volumes | default([])) }}
