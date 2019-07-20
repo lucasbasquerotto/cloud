@@ -1,2 +1,243 @@
-- name: "{{ local_prepare_title }} - {{ local_prepare_subtype }}"
-  include_tasks: "{{ local_prepare_subtype }}.yml"
+- name: "{{ local_prepare_title }} - verify if the 'name' environment variable is defined"
+  fail:
+    msg: "[Error] Specify the environment variable: 'name' (will be the repo name)"
+  when: (local_prepare_repo_name is not defined) or (local_prepare_repo_name == '')
+
+- name: "{{ local_prepare_title }} - verify if the 'vars_dir' environment variable is defined"
+  fail:
+    msg: "[Error] Specify the directory of the templates with variables: 'vars_dir'"
+  when: ((local_prepare_vars_dir | default('')) == '')
+
+- name: >-
+    {{ local_prepare_title }} - verify if there's at least 
+    1 template file with variables defined for the local pod
+  fail:
+    msg: "[Error] There must be at least 1 template file with variables defined for the local pod"
+  when: ((local_prepare_pod_vars_files | length) == 0)  
+
+- name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
+  set_fact:
+    local_prepare_repo_location: "/main/dev/{{ local_prepare_repo_name }}"
+
+- name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
+  file:
+    path: "{{ local_prepare_repo_location }}"
+    state: directory
+    mode: 0700
+
+- name: "{{ local_prepare_title }} - update the repo directory"
+  git:
+    repo: "{{ local_prepare_docker_repo }}"
+    version: "{{ local_prepare_docker_repo_version }}"
+    dest: "{{ local_prepare_repo_location }}"
+    update: no
+  register: local_prepare_git_result
+  tags: ["print_action"]
+
+- name: "{{ local_prepare_title }} - get owner of file"
+  stat:
+    path: "{{ local_prepare_repo_location }}/.gitignore"
+  register: local_prepare_stat
+
+- name: "{{ local_prepare_title }} - set_fact - owner"
+  set_fact:
+    local_prepare_owner: "{{ local_prepare_stat.stat.uid }}"
+    local_prepare_group: "{{ local_prepare_stat.stat.gid }}"
+
+- name: "{{ local_prepare_title }} - create the repo env directories"
+  file:
+    state: directory
+    path: "{{ local_prepare_repo_location }}/{{ local_prepare_item }}"
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0700
+  loop:
+  - "env"
+  - "env/tmp"
+  loop_control:
+    loop_var: local_prepare_item
+
+- name: "{{ local_prepare_title }} - set_fact - vars"
+  set_fact:
+    local_prepare_vars_volumes: []
+    local_prepare_vars_files: []
+    local_prepare_vars_templates: []
+    local_prepare_vars_env_files: []
+
+- name: "{{ local_prepare_title }} - populate vars from templates (debug)"
+  debug: 
+    msg: "populate vars from templates"
+  tags: ["print_action"]
+
+- name: "{{ local_prepare_title }} - populate vars from templates (outer)"
+  include_tasks: "vars.yml"
+  loop: "{{ local_prepare_pod_vars_files }}"
+  loop_control:
+    loop_var: local_prepare_item
+    label: "{{ local_prepare_item.name }}"
+
+- name: "{{ local_prepare_title }} - set_fact - vars_full"
+  set_fact:
+    local_prepare_vars_full:
+      volumes: "{{ local_prepare_vars_volumes }}"
+      files: "{{ local_prepare_vars_files }}"
+      templates: "{{ local_prepare_vars_templates }}"
+      env_files: "{{ local_prepare_vars_env_files }}"
+
+- name: "{{ local_prepare_title }} - create the temporary file to verify if there was a change"
+  copy: 
+    force: no
+    content: "{{ local_prepare_vars_full | to_yaml }}"
+    dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0600
+
+- name: >-
+    {{ local_prepare_title }} - create the file to verify if there was a change, 
+    if it was not created before
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
+    owner: "{{ local_prepare_owner }}"
+    group: "{{ local_prepare_group }}"
+    mode: 0600
+
+- name: "{{ local_prepare_title }} - get the difference of the 2 files (old and current)"
+  command: >-
+    diff 
+    {{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml 
+    {{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml
+  register: local_prepare_diff
+  failed_when: local_prepare_diff.rc > 1
+  changed_when: local_prepare_diff.rc == 1
+
+- block:
+
+  - name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - empty"
+    set_fact:
+      local_prepare_tpl_list: []
+
+  - name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - fill"
+    set_fact:
+      local_prepare_tpl_list: >-
+        {{ 
+        local_prepare_tpl_list
+        + [{ 
+        'src': local_prepare_item_src_full, 
+        'dest': local_prepare_item_dest_full, 
+        'params': local_prepare_item_params
+        }] 
+        }}
+    vars: 
+      local_prepare_item_src_full: >-
+        {{ local_prepare_repo_location }}/templates/{{ local_prepare_item.src }}
+      local_prepare_item_dest_full: >-
+        {{ local_prepare_repo_location }}/{{ 
+        ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        + (local_prepare_item.dest | default(local_prepare_item.src)) 
+        }}
+      local_prepare_item_params: "{{ local_prepare_item.params | default({}) }}"
+    loop: "{{ local_prepare_vars_templates | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest | default(local_prepare_item.src) }}"
+
+  - name: "{{ local_prepare_title }} - create directories for the repository templates"
+    file:
+      path: "{{ local_prepare_item.dest | dirname }}"
+      state: directory
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: 0700
+    loop: "{{ local_prepare_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest | dirname }}"
+
+  - name: "{{ local_prepare_title }} - create the volume directories"
+    file:
+      state: directory
+      path: "{{ local_prepare_item.path }}"
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: "{{ local_prepare_item.mode }}"
+    loop: "{{ local_prepare_vars_volumes | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.path }}"
+
+  - name: "{{ local_prepare_title }} - copy the files to the specified locations"
+    copy:
+      src: "{{ local_prepare_item_src_full }}"
+      dest: "{{ local_prepare_item_dest_full }}"
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: 0600
+    vars: 
+      local_prepare_item_src_full: >-
+        {{ local_prepare_repo_location }}/files/{{ local_prepare_item.src }}
+      local_prepare_item_dest_full: >-
+        {{ local_prepare_repo_location }}/{{ 
+        ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        + (local_prepare_item.dest | default(local_prepare_item.src)) 
+        }}
+    loop: "{{ local_prepare_vars_files | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest | default(local_prepare_item.src) }}"
+    tags: ["print_action"]
+
+  - name: "{{ local_prepare_title }} - transfer the templates to the specified locations"
+    template: 
+      src: "{{ local_prepare_item.src }}"
+      dest: "{{ local_prepare_item.dest }}"
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: 0600
+    vars:
+      params: "{{ local_prepare_item.params }}"
+    loop: "{{ local_prepare_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest }}"
+    tags: ["print_action"]
+
+  - name: "{{ local_prepare_title }} - copy the environment files to the specified locations"
+    copy:
+      src: "{{ local_prepare_item_src_full }}"
+      dest: "{{ local_prepare_item_dest_full }}"
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: 0600
+    vars: 
+      local_prepare_item_src_full: "{{ local_prepare_env_dir }}/{{ local_prepare_item.src }}"
+      local_prepare_item_dest_full: >-
+        {{ local_prepare_repo_location }}/{{ 
+        ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        + local_prepare_item.dest
+        }}
+    loop: "{{ local_prepare_vars_env_files | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest }}"
+    tags: ["print_action"]
+
+  - name: "{{ local_prepare_title }} - create the file to verify if there was a change (for newer runs)"
+    copy: 
+      remote_src: yes
+      src: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
+      dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: 0600
+    tags: ["print_action"]
+
+  when: local_prepare_diff.changed
+
+- name: "{{ local_prepare_title }} - debug"
+  debug: 
+    msg: "variables unchanged"
+  when: not local_prepare_diff.changed
+  tags: ["print_action"]

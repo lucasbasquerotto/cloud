@@ -179,7 +179,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
 
-        if self.display_skipped_hosts:
+        if self.display_skipped_hosts or ('print_skipped_action' in result._task.tags):
 
             self._clean_results(result._result, result._task.action)
 
@@ -348,7 +348,7 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
-        if self.display_skipped_hosts:
+        if self.display_skipped_hosts or ('print_skipped_action' in result._task.tags):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
