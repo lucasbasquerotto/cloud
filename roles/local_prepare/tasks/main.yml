@@ -1,11 +1,6 @@
-- name: "{{ local_prepare_title }} - verify if the 'name' environment variable is defined"
+- name: "{{ local_prepare_title }} - verify if the 'pod.vars_dir' environment variable is defined"
   fail:
-    msg: "[Error] Specify the environment variable: 'name' (will be the repo name)"
-  when: (local_prepare_repo_name is not defined) or (local_prepare_repo_name == '')
-
-- name: "{{ local_prepare_title }} - verify if the 'vars_dir' environment variable is defined"
-  fail:
-    msg: "[Error] Specify the directory of the templates with variables: 'vars_dir'"
+    msg: "[Error] Specify the directory of the templates with variables: 'pod.vars_dir'"
   when: ((local_prepare_vars_dir | default('')) == '')
 
 - name: >-
@@ -18,9 +13,7 @@
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
   set_fact:
     local_prepare_repo_location: >-
-      {{ local_prepare_cloud_dir_inside }}/{{ local_prepare_repo_name }}
-    local_prepare_app_repo_location: >-
-      {{ local_prepare_app_dir_inside }}/{{ local_prepare_app_repo_name }}
+      {{ local_prepare_cloud_dir_inside }}/{{ local_prepare_pod_dir }}
 
 - name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
   file:
@@ -41,9 +34,9 @@
   git:
     repo: "{{ local_prepare_item.docker_repo }}"
     version: "{{ local_prepare_item.docker_repo_version }}"
-    dest: "{{ lookup('vars', 'local_app_dir_' + local_prepare_item.name )}}"
+    dest: "{{ local_prepare_item.dir }}"
     update: no
-  loop: "{{ local_prepare_apps }}"
+  loop: "{{ local_prepare_apps_info }}"
   loop_control:
     loop_var: local_prepare_item
     label: "{{ local_prepare_item.name }}"

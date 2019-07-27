@@ -11,16 +11,28 @@
       main_vars_env_file: "{{ env_file }}"
       main_vars_type: "local"
 
+  - name: "local - set_fact"
+    set_fact:
+      local_apps_info: []
+      
+  - name: "local - set_fact"
+    set_fact:
+      local_apps_info: "{{ local_apps_info + [ local_item | combine({ 'dir': lookup('vars', 'local_app_dir_' + local_item.name) }) ] }}"
+    loop: "{{ env.apps }}"
+    loop_control:
+      loop_var: local_item
+      label: "{{ local_item.name }}"
+
   - include_role: 
       name: "local_prepare"
     vars:
       local_prepare_subtype: "{{ env.subtype }}"
-      local_prepare_repo_name: "{{ env.local_name }}"
-      local_prepare_app_repo_name: "{{ env.app_local_name }}"
-      local_prepare_docker_repo: "{{ env.docker_repo }}"
-      local_prepare_docker_repo_version: "{{ env.docker_repo_version }}"
+      local_prepare_docker_repo: "{{ env.pod.docker_repo }}"
+      local_prepare_docker_repo_version: "{{ env.pod.docker_repo_version }}"
       local_prepare_vars_dir: "{{ env.pod.vars_dir | default('') }}"
       local_prepare_pod_vars_files: "{{ env.pods_vars_files.local | default([]) }}"
-      local_prepare_apps: "{{ env.apps }}"
+      local_prepare_pod_dir: "{{ lookup('vars', 'local_pod_dir') }}"
+      local_prepare_apps_info: "{{ local_apps_info }}"
       local_prepare_env_dir: "{{ env_dir }}"
       local_prepare_tmp_dir: "{{ env_tmp_dir }}"
+      local_prepare_repo_name: "{{ env_local_repo }}"
