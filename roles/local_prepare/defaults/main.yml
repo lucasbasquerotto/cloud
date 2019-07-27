@@ -1,1 +1,4 @@
 local_prepare_title: "local - prepare"
+local_prepare_cloud_dir_inside: "/main/"
+local_prepare_app_dir_inside: "/main/app/"
+local_prepare_data_dir_outside: "../../data"

@@ -10,7 +10,7 @@
       docker_repo: "{{ local_prepare_docker_repo }}"
       docker_repo_version: "{{ local_prepare_docker_repo_version }}"
       git_commit: "{{ local_prepare_git_result.after }}"
-      data_dir: "{{ local_prepare_data_dir }}"
+      data_dir: "{{ local_prepare_data_dir_outside }}/{{ local_prepare_repo_name }}"
 
 - name: "{{ local_prepare_title }} - load environment vars ({{ local_prepare_item.name }})"
   include_vars:

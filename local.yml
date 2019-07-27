@@ -16,6 +16,7 @@
     vars:
       local_prepare_subtype: "{{ env.subtype }}"
       local_prepare_repo_name: "{{ env.local_name }}"
+      local_prepare_app_repo_name: "{{ env.app_local_name }}"
       local_prepare_docker_repo: "{{ env.docker_repo }}"
       local_prepare_docker_repo_version: "{{ env.docker_repo_version }}"
       local_prepare_vars_dir: "{{ env.vars_dir | default('') }}"

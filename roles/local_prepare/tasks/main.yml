@@ -17,7 +17,10 @@
 
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
   set_fact:
-    local_prepare_repo_location: "/main/dev/{{ local_prepare_repo_name }}"
+    local_prepare_repo_location: >-
+      {{ local_prepare_cloud_dir_inside }}/{{ local_prepare_repo_name }}
+    local_prepare_app_repo_location: >-
+      {{ local_prepare_app_dir_inside }}/{{ local_prepare_app_repo_name }}
 
 - name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
   file:
@@ -32,6 +35,15 @@
     dest: "{{ local_prepare_repo_location }}"
     update: no
   register: local_prepare_git_result
+  tags: ["print_action"]
+
+- name: "{{ local_prepare_title }} - update the repo directory of the app"
+  git:
+    repo: "{{ local_prepare_app_docker_repo }}"
+    version: "{{ local_prepare_app_docker_repo_version }}"
+    dest: "{{ local_prepare_app_repo_location }}"
+    update: no
+  register: local_prepare_app_git_result
   tags: ["print_action"]
 
 - name: "{{ local_prepare_title }} - get owner of file"
