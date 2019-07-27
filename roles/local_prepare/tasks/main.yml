@@ -37,13 +37,16 @@
   register: local_prepare_git_result
   tags: ["print_action"]
 
-- name: "{{ local_prepare_title }} - update the repo directory of the app"
+- name: "{{ local_prepare_title }} - update the repo directories of the apps"
   git:
-    repo: "{{ local_prepare_app_docker_repo }}"
-    version: "{{ local_prepare_app_docker_repo_version }}"
-    dest: "{{ local_prepare_app_repo_location }}"
+    repo: "{{ local_prepare_item.docker_repo }}"
+    version: "{{ local_prepare_item.docker_repo_version }}"
+    dest: "{{ lookup('vars', 'local_app_dir_' + local_prepare_item.name )}}"
     update: no
-  register: local_prepare_app_git_result
+  loop: "{{ local_prepare_apps }}"
+  loop_control:
+    loop_var: local_prepare_item
+    label: "{{ local_prepare_item.name }}"
   tags: ["print_action"]
 
 - name: "{{ local_prepare_title }} - get owner of file"
