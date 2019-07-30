@@ -5,14 +5,14 @@
 
 - name: verify if type match the one from the env variable
   fail:
-    msg: "type is not defined in the environment vars"
-  when: env.type is not defined
+    msg: "cloud.type is not defined in the environment vars"
+  when: env.cloud.type is not defined
 
 - name: verify if type match the one from the env variable
   fail:
-    msg: "{{ main_vars_type }} should be {{ env.type }}"
-  when: env.type != main_vars_type
+    msg: "{{ main_vars_type }} should be {{ env.cloud.type }}"
+  when: env.cloud.type != main_vars_type
 
-- include_tasks:  "{{ env.type }}.yml"
-  when: env.type != 'local'
+- include_tasks:  "{{ env.cloud.type }}.yml"
+  when: env.cloud.type != 'local'
   

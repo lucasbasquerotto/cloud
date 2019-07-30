@@ -205,8 +205,8 @@
 
 - set_fact:
     main_vars_prepare:
-      docker_repo: "{{ env.docker_repo }}"
-      docker_repo_version: "{{ env.docker_repo_version }}"
+      pod_repo: "{{ env.pod_repo }}"
+      pod_repo_version: "{{ env.pod_repo_version }}"
       docker_compose_file: "{{ env.docker_compose_file }}"
       env:
         wp_db_pass: "{{ env.env.wp_db_pass }}"

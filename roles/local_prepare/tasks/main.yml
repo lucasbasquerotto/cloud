@@ -12,8 +12,7 @@
 
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
   set_fact:
-    local_prepare_repo_location: >-
-      {{ local_prepare_cloud_dir_inside }}/{{ local_prepare_pod_dir }}
+    local_prepare_repo_location: "{{ local_prepare_pod_dir }}"
 
 - name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
   file:
@@ -23,8 +22,8 @@
 
 - name: "{{ local_prepare_title }} - update the repo directory"
   git:
-    repo: "{{ local_prepare_docker_repo }}"
-    version: "{{ local_prepare_docker_repo_version }}"
+    repo: "{{ local_prepare_pod_repo }}"
+    version: "{{ local_prepare_pod_repo_version }}"
     dest: "{{ local_prepare_repo_location }}"
     update: no
   register: local_prepare_git_result
@@ -32,8 +31,8 @@
 
 - name: "{{ local_prepare_title }} - update the repo directories of the apps"
   git:
-    repo: "{{ local_prepare_item.docker_repo }}"
-    version: "{{ local_prepare_item.docker_repo_version }}"
+    repo: "{{ local_prepare_item.repo }}"
+    version: "{{ local_prepare_item.repo_version }}"
     dest: "{{ local_prepare_item.dir }}"
     update: no
   loop: "{{ local_prepare_apps_info }}"

@@ -76,8 +76,8 @@
       name: "compose_prepare"
     vars:
       compose_prepare_title: "compose - {{ main_item.vars.cloud.instance_group }}"
-      compose_prepare_docker_repo: "{{ main_vars.prepare.docker_repo }}"
-      compose_prepare_docker_repo_version: "{{ main_vars.prepare.docker_repo_version }}"
+      compose_prepare_pod_repo: "{{ main_vars.prepare.pod_repo }}"
+      compose_prepare_pod_repo_version: "{{ main_vars.prepare.pod_repo_version }}"
       compose_prepare_docker_compose_file: "{{ main_vars.prepare.docker_compose_file }}"
       compose_prepare_env: "{{ main_vars.prepare.env }}"
       compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}"

@@ -37,8 +37,8 @@
 - name: "{{ compose_prepare_title }} - update the temporary repo directory"
   become: yes
   git:
-    repo: "{{ compose_prepare_docker_repo }}"
-    version: "{{ compose_prepare_docker_repo_version }}"
+    repo: "{{ compose_prepare_pod_repo }}"
+    version: "{{ compose_prepare_pod_repo_version }}"
     dest: "{{ compose_prepare_repo_location_tmp }}"
     update: yes
   register: compose_prepare_git_result
@@ -102,8 +102,8 @@
   - name: "{{ compose_prepare_title }} - update the repo directory"
     become: yes
     git:
-      repo: "{{ compose_prepare_docker_repo }}"
-      version: "{{ compose_prepare_docker_repo_version }}"
+      repo: "{{ compose_prepare_pod_repo }}"
+      version: "{{ compose_prepare_pod_repo_version }}"
       dest: "{{ compose_prepare_repo_location }}"
       update: yes
     tags: ["print_action"]
