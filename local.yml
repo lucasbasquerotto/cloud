@@ -13,6 +13,14 @@
 
   - name: "local - set_fact"
     set_fact:
+      local_pod:
+        repo: "{{ env.pod.repo }}"
+        repo_version: "{{ env.pod.repo_version }}"
+        dir_rel: "{{ local_pod_dir_rel }}"
+        dir: "{{ local_pod_dir }}"
+
+  - name: "local - set_fact"
+    set_fact:
       local_apps_info: []
       
   - name: "local - set_fact"
@@ -21,7 +29,10 @@
         {{ local_apps_info + 
         [ 
         local_item 
-        | combine({ 'dir': lookup('vars', 'local_app_dir_' + local_item.name) }) 
+        | combine({ 
+        'dir_rel': lookup('vars', 'local_app_dir_rel_' + local_item.name),
+        'dir': lookup('vars', 'local_app_dir_' + local_item.name) 
+        }) 
         ] 
         }}
     loop: "{{ env.apps }}"
@@ -33,11 +44,9 @@
       name: "local_prepare"
     vars:
       local_prepare_subtype: "{{ env.cloud.subtype }}"
-      local_prepare_pod_repo: "{{ env.pod.repo }}"
-      local_prepare_pod_repo_version: "{{ env.pod.repo_version }}"
+      local_prepare_pod: "{{ local_pod }}"
       local_prepare_vars_dir: "{{ env.pod.vars_dir | default('') }}"
       local_prepare_pod_vars_files: "{{ env.pods_vars_files.local | default([]) }}"
-      local_prepare_pod_dir: "{{ lookup('vars', 'local_pod_dir') }}"
       local_prepare_apps_info: "{{ local_apps_info }}"
       local_prepare_env_dir: "{{ env_dir }}"
       local_prepare_tmp_dir: "{{ env_tmp_dir }}"

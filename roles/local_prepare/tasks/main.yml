@@ -12,7 +12,7 @@
 
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
   set_fact:
-    local_prepare_repo_location: "{{ local_prepare_pod_dir }}"
+    local_prepare_repo_location: "{{ local_prepare_pod.dir }}"
 
 - name: "{{ local_prepare_title }} - create the repo directory {{ local_prepare_repo_location }}"
   file:
@@ -22,8 +22,8 @@
 
 - name: "{{ local_prepare_title }} - update the repo directory"
   git:
-    repo: "{{ local_prepare_pod_repo }}"
-    version: "{{ local_prepare_pod_repo_version }}"
+    repo: "{{ local_prepare_pod.repo }}"
+    version: "{{ local_prepare_pod.repo_version }}"
     dest: "{{ local_prepare_repo_location }}"
     update: no
   register: local_prepare_git_result
@@ -70,6 +70,24 @@
     local_prepare_vars_files: []
     local_prepare_vars_templates: []
     local_prepare_vars_env_files: []
+    local_prepare_app_dict: {}
+
+- name: "{{ local_prepare_title }} - set_fact - local_prepare_app_dict"
+  set_fact:
+    local_prepare_app_dict: >-
+      {{ local_prepare_app_dict
+      | combine( 
+      { local_prepare_item.name: {
+      'repo': local_prepare_item.repo,
+      'repo_version': local_prepare_item.repo_version,
+      'dir_rel': local_prepare_item.dir_rel,
+      'dir': local_prepare_item.dir
+      }
+      } ) }}
+  loop: "{{ local_prepare_apps_info | default([]) }}"
+  loop_control:
+    loop_var: local_prepare_item
+    label: "{{ local_prepare_item.name }}"
 
 - name: "{{ local_prepare_title }} - populate vars from templates (debug)"
   debug: 
@@ -133,6 +151,7 @@
         + [{ 
         'src': local_prepare_item_src_full, 
         'dest': local_prepare_item_dest_full, 
+        'mode': local_prepare_item.mode | default('', true), 
         'params': local_prepare_item_params
         }] 
         }}
@@ -201,7 +220,7 @@
       dest: "{{ local_prepare_item.dest }}"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: 0600
+      mode: "{{ local_prepare_item.mode | default('0600', true) }}"
     vars:
       params: "{{ local_prepare_item.params }}"
     loop: "{{ local_prepare_tpl_list | default([]) }}"
@@ -216,7 +235,7 @@
       dest: "{{ local_prepare_item_dest_full }}"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: 0600
+      mode: "{{ local_prepare_item.mode | default('0600', true) }}"
     vars: 
       local_prepare_item_src_full: "{{ local_prepare_env_dir }}/{{ local_prepare_item.src }}"
       local_prepare_item_dest_full: >-
