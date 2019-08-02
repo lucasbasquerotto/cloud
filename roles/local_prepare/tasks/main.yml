@@ -48,8 +48,8 @@
 
 - name: "{{ local_prepare_title }} - set_fact - owner"
   set_fact:
-    local_prepare_owner: "{{ local_prepare_stat.stat.uid }}"
-    local_prepare_group: "{{ local_prepare_stat.stat.gid }}"
+    local_prepare_owner: "{{ local_prepare_stat.stat.uid | string }}"
+    local_prepare_group: "{{ local_prepare_stat.stat.gid | string }}"
 
 - name: "{{ local_prepare_title }} - create the repo env directories"
   file:
