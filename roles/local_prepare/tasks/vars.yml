@@ -6,12 +6,6 @@
     mode: 0600
   vars:
     params: "{{ local_prepare_item.params }}"
-    params_aux:
-      pod: "{{ local_prepare_pod }}"
-      app: "{{ local_prepare_app_dict }}"
-      git_commit: "{{ local_prepare_git_result.after }}"
-      repo_name: "{{ local_prepare_repo_name }}"
-      data_dir: "{{ local_prepare_data_dir_outside }}/{{ local_prepare_repo_name }}"
 
 - name: "{{ local_prepare_title }} - load environment vars ({{ local_prepare_item.name }})"
   include_vars:
