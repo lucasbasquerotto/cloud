@@ -1,28 +1,40 @@
-- name: "{{ compose_prepare_title }} - verify if docker compose file is defined"
+- name: "{{ compose_prepare_title }} - verify if the pod environment variables"
   fail:
-    msg: "[Error] Specify the environment repo variable: docker_compose_file"
-  when: (compose_prepare_docker_compose_file is not defined) or (compose_prepare_docker_compose_file == '')
+    msg: "[Error] Specify the environment repo variable: pod[{{ compose_prepare_item }}]"
+  when: ((compose_prepare_pod[compose_prepare_item] | default('')) == '')
+  loop:
+  - "repo"
+  - "repo_version"
+  - "ctx_dir"
+  - "vars_dir"
+  loop_control:
+    loop_var: compose_prepare_item
 
 - name: "{{ compose_prepare_title }} - verify if the temporary dir is specified"
   fail:
     msg: "The parameter compose_prepare_local_tmp_dir must be specified"
-  when: (compose_prepare_local_tmp_dir is not defined) or (compose_prepare_local_tmp_dir == '')
+  when: ((compose_prepare_local_tmp_dir | default('')) == '')
 
 - name: "{{ compose_prepare_title }} - ensure docker is running"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   service: 
     name: docker
     state: started
 
 - name: "{{ compose_prepare_title }} - copy the docker compose executable file"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   copy: 
     src: "roles/compose_prepare/files/docker-compose.sh"
     dest: "/usr/local/bin/docker-compose"
     mode: 0755
 
+- name: "{{ compose_prepare_title }} - set_fact"
+    compose_prepare_repo_location: "/main/{{ compose_prepare_context.name }}"
+    compose_prepare_repo_location_tmp: "/main/tmp/{{ compose_prepare_context.name }}"
+    compose_prepare_env_location_backup: "/tmp/main/{{ compose_prepare_context.name }}/env"
+
 - name: "{{ compose_prepare_title }} - create the repo directories"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   file:
     path: "{{ compose_prepare_item }}"
     state: directory
@@ -35,10 +47,10 @@
     loop_var: compose_prepare_item
 
 - name: "{{ compose_prepare_title }} - update the temporary repo directory"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   git:
-    repo: "{{ compose_prepare_pod_repo }}"
-    version: "{{ compose_prepare_pod_repo_version }}"
+    repo: "{{ compose_prepare_pod.repo }}"
+    version: "{{ compose_prepare_pod.repo_version }}"
     dest: "{{ compose_prepare_repo_location_tmp }}"
     update: yes
   register: compose_prepare_git_result
@@ -47,8 +59,16 @@
 - set_fact:
     compose_prepare_git_commit: "{{ compose_prepare_git_result.after }}"
 
+- name: "{{ compose_prepare_title }} - set_fact - vars"
+  set_fact:
+    compose_prepare_vars_volumes: []
+    compose_prepare_vars_files: []
+    compose_prepare_vars_templates: []
+    compose_prepare_vars_env_files: []
+    compose_prepare_app_dict: {}
+
 - name: "{{ compose_prepare_title }} - fetch template from single remote host"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   run_once: true
   fetch:
     src: "{{ compose_prepare_repo_location_tmp }}/templates/.env"
@@ -57,7 +77,7 @@
     fail_on_missing: yes
 
 - name: "{{ compose_prepare_title }} - transfer the env template file"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   template: 
     src: "{{ compose_prepare_local_tmp_dir }}/.env"
     dest: "{{ compose_prepare_repo_location_tmp }}/.env"
@@ -66,7 +86,7 @@
 - name: >-
     {{ compose_prepare_title }} - create empty env file in backup directory
     if there is no file there
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   copy: 
     force: no
     content: ""
@@ -74,7 +94,7 @@
     mode: 0600
 
 - name: "{{ compose_prepare_title }} - get the difference of the 2 env files (old and current)"
-  become: yes
+  become: "{{ compose_prepare_docker_become }}"
   command: >-
     diff {{ compose_prepare_repo_location_tmp }}/.env {{ compose_prepare_env_location_backup }}/.env
   register: compose_prepare_diff
@@ -88,7 +108,7 @@
       compose_prepare_docker_compose_cmd: "docker-compose -f {{ compose_prepare_docker_compose_file }}"
 
   - name: "{{ compose_prepare_title }} - prepare the temporary images (pull and build)"
-    become: yes
+    become: "{{ compose_prepare_docker_become }}"
     command: "{{ compose_prepare_item }}"
     args:
       chdir: "{{ compose_prepare_repo_location_tmp }}/"
@@ -100,7 +120,7 @@
     tags: ["print_action"]
 
   - name: "{{ compose_prepare_title }} - update the repo directory"
-    become: yes
+    become: "{{ compose_prepare_docker_become }}"
     git:
       repo: "{{ compose_prepare_pod_repo }}"
       version: "{{ compose_prepare_pod_repo_version }}"
@@ -109,7 +129,7 @@
     tags: ["print_action"]
 
   - name: "{{ compose_prepare_title }} - copy the env file"
-    become: yes
+    become: "{{ compose_prepare_docker_become }}"
     copy: 
       remote_src: yes
       src: "{{ compose_prepare_repo_location_tmp }}/.env"
@@ -117,14 +137,14 @@
       mode: 0600
 
   - name: "{{ compose_prepare_title }} - prepare the images (build)"
-    become: yes
+    become: "{{ compose_prepare_docker_become }}"
     command: "{{ compose_prepare_docker_compose_cmd }} build"
     args:
       chdir: "{{ compose_prepare_repo_location }}/"
     tags: ["print_action"]
     
   - name: "{{ compose_prepare_title }} - backup the env file"
-    become: yes
+    become: "{{ compose_prepare_docker_become }}"
     copy: 
       remote_src: yes
       src: "{{ compose_prepare_repo_location }}/.env"

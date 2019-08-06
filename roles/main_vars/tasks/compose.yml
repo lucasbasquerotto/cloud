@@ -205,22 +205,10 @@
 
 - set_fact:
     main_vars_prepare:
-      pod_repo: "{{ env.pod_repo }}"
-      pod_repo_version: "{{ env.pod_repo_version }}"
-      docker_compose_file: "{{ env.docker_compose_file }}"
-      env:
-        wp_db_pass: "{{ env.env.wp_db_pass }}"
-        mysql_root_password: "{{ env.env.mysql_root_password }}"
-        perl_version: "{{ env.env.perl_version | default('', true) }}"
-        nginx_version: "{{ env.env.nginx_version | default('', true) }}"
-        wp_version: "{{ env.env.wp_version | default('', true) }}"
-        pma_version: "{{ env.env.pma_version | default('', true) }}"
-        mysql_image: "{{ env.env.mysql_image | default('', true) }}"
-        mysql_version: "{{ env.env.mysql_version | default('', true) }}"
-        wp_db_user: "{{ env.env.wp_db_user | default('', true) }}"
-        mysql_database: "{{ env.env.mysql_database | default('', true) }}"
-        db_host: "{{ env.env.db_host | default('', true) }}"
-        db_port: "{{ env.env.db_port | default('', true) }}"
+      pod: "{{ env.pod }}"
+      contexts: "{{ env.contexts }}"
+      params: "{{ env.params }}"
+      docker_become: "{{ env.docker_become }}"
 
 - name: main compose vars
   set_fact:

@@ -1,0 +1,30 @@
+- name: >-
+    {{ compose_prepare_title }} - 
+    populate vars from templates ({{ compose_prepare_item.name }})
+  template: 
+    src: >-
+      {{ compose_prepare_repo_location }}/{{
+      }}{{ compose_prepare_vars_dir }}/{{
+      }}{{ compose_prepare_item.name }}.yml
+    dest: >-
+      {{ compose_prepare_tmp_dir }}/compose_prepare_vars_{{ compose_prepare_item.name }}.yml
+    mode: 0600
+  vars:
+    params: "{{ compose_prepare_item.params }}"
+
+- name: "{{ compose_prepare_title }} - load environment vars ({{ compose_prepare_item.name }})"
+  include_vars:
+    file: >-
+      {{ compose_prepare_tmp_dir }}/compose_prepare_vars_{{ compose_prepare_item.name }}.yml
+    name: compose_prepare_inner_vars
+
+- name: "{{ compose_prepare_title }} - set_fact ({{ compose_prepare_item.name }})"
+  set_fact:
+    compose_prepare_vars_volumes: >-
+      {{ compose_prepare_vars_volumes + (compose_prepare_inner_vars.volumes | default([])) }}
+    compose_prepare_vars_files: >-
+      {{ compose_prepare_vars_files + (compose_prepare_inner_vars.files | default([])) }}
+    compose_prepare_vars_templates: >-
+      {{ compose_prepare_vars_templates + (compose_prepare_inner_vars.templates | default([])) }}
+    compose_prepare_vars_env_files: >-
+      {{ compose_prepare_vars_env_files + (compose_prepare_inner_vars.env_files | default([])) }}
