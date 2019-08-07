@@ -80,7 +80,8 @@
       compose_prepare_context: "{{ main_item }}"
       compose_prepare_params: "{{ main_vars.prepare.params[main_item.name] }}"
       compose_prepare_docker_become: "{{ main_vars.prepare.docker_become }}"
-      compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}"
+      compose_prepare_local_env_dir: "{{ env_dir }}/{{ main_item.name }}"
+      compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
     loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
     loop_control:
       loop_var: main_item

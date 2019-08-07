@@ -1,22 +1,51 @@
+- name: "{{ compose_prepare_title }} - set_fact - vars"
+  set_fact:
+    compose_prepare_vars_tpl_src_remote: >-
+      {{ compose_prepare_repo_location }}/{{
+      }}{{ compose_prepare_vars_dir }}/{{
+      }}{{ compose_prepare_item.name }}.yml
+    compose_prepare_vars_tpl_src: >-
+      {{ compose_prepare_local_tmp_dir }}/vars/compose_prepare/{{
+      }}{{ compose_prepare_item.name }}.tpl.yml
+    compose_prepare_vars_tpl_dest: >-
+      {{ compose_prepare_local_tmp_dir }}/vars/compose_prepare/{{
+      }}{{ compose_prepare_item.name }}.yml
+
+- name: >-
+    {{ compose_prepare_title }} - 
+    create the local directories for the vars template 
+    ({{ compose_prepare_item.name }})
+  file:
+    path: "{{ compose_prepare_vars_tpl_src | dirname }}"
+    state: directory
+    mode: 0600
+  delegate_to: localhost
+
+- name: "{{ compose_prepare_title }} - fetch template from a single remote host"
+  become: "{{ compose_prepare_docker_become }}"
+  run_once: true
+  fetch:
+    src: "{{ compose_prepare_vars_tpl_src_remote }}"
+    dest: "{{ compose_prepare_vars_tpl_src }}"
+    flat: yes
+    fail_on_missing: yes
+
 - name: >-
     {{ compose_prepare_title }} - 
     populate vars from templates ({{ compose_prepare_item.name }})
   template: 
-    src: >-
-      {{ compose_prepare_repo_location }}/{{
-      }}{{ compose_prepare_vars_dir }}/{{
-      }}{{ compose_prepare_item.name }}.yml
-    dest: >-
-      {{ compose_prepare_tmp_dir }}/compose_prepare_vars_{{ compose_prepare_item.name }}.yml
+    src: "{{ compose_prepare_ctx_vars_src }}"
+    dest: "{{ compose_prepare_ctx_vars_dest }}"
     mode: 0600
   vars:
     params: "{{ compose_prepare_item.params }}"
+  delegate_to: localhost
 
 - name: "{{ compose_prepare_title }} - load environment vars ({{ compose_prepare_item.name }})"
   include_vars:
-    file: >-
-      {{ compose_prepare_tmp_dir }}/compose_prepare_vars_{{ compose_prepare_item.name }}.yml
+    file: "{{ compose_prepare_ctx_vars_dest }}"
     name: compose_prepare_inner_vars
+  delegate_to: localhost
 
 - name: "{{ compose_prepare_title }} - set_fact ({{ compose_prepare_item.name }})"
   set_fact:

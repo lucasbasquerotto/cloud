@@ -1,3 +1,5 @@
+### Validation ###
+
 - name: "{{ local_prepare_title }} - verify if the 'pod.ctx_dir' environment variable is defined"
   fail:
     msg: "[Error] Specify the directory of the templates with variables: 'pod.ctx_dir'"
@@ -14,6 +16,8 @@
   fail:
     msg: "[Error] There must be at least 1 template file with variables defined for the local pod"
   when: ((local_prepare_params | length) == 0)  
+
+### Prepare the directories and repository ###
 
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_repo_location"
   set_fact:
@@ -69,12 +73,15 @@
   loop_control:
     loop_var: local_prepare_item
 
-- name: "{{ local_prepare_title }} - set_fact - vars"
+### Generate the environment pod context variables ###
+
+- name: "{{ local_prepare_title }} - populate vars from templates (debug)"
+  debug: 
+    msg: "populate vars from templates"
+  tags: ["print_action"]
+
+- name: "{{ local_prepare_title }} - set_fact - owner"
   set_fact:
-    local_prepare_vars_volumes: []
-    local_prepare_vars_files: []
-    local_prepare_vars_templates: []
-    local_prepare_vars_env_files: []
     local_prepare_app_dict: {}
 
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_app_dict"
@@ -94,15 +101,20 @@
     loop_var: local_prepare_item
     label: "{{ local_prepare_item.name }}"
 
-- name: "{{ local_prepare_title }} - populate vars from templates (debug)"
-  debug: 
-    msg: "populate vars from templates"
-  tags: ["print_action"]
+- name: "{{ compose_prepare_title }} - set_fact - vars"
+  set_fact:
+    local_prepare_ctx_tpl_src: >-
+      {{ local_prepare_repo_location }}/{{
+      }}{{ local_prepare_ctx_dir }}/{{
+      }}{{ local_prepare_subtype }}.local.yml"
+    local_prepare_ctx_tpl_dest: >-
+      {{ local_prepare_tmp_dir }}/{{
+      }}local_prepare_ctx_{{ local_prepare_subtype }}.local.yml"
   
 - name: "{{ local_prepare_title }} - get the context variables from templates"
   template: 
-    src: "{{ local_prepare_repo_location }}/{{ local_prepare_ctx_dir }}/{{ local_prepare_subtype }}.local.yml"
-    dest: "{{ local_prepare_tmp_dir }}/local_prepare_ctx_{{ local_prepare_subtype }}.local.yml"
+    src: "{{ local_prepare_ctx_tpl_src }}"
+    dest: "{{ local_prepare_ctx_tpl_dest }}"
     mode: 0600
   vars:
     params: "{{ local_prepare_params }}"
@@ -113,10 +125,19 @@
       repo_name: "{{ local_prepare_repo_name }}"
       data_dir: "{{ local_prepare_data_dir_outside }}/{{ local_prepare_repo_name }}"
 
-- name: "{{ local_prepare_title }} - load ctx environment vars ({{ local_prepare_subtype }}.local}})"
+- name: "{{ local_prepare_title }} - load ctx environment vars ({{ local_prepare_subtype }}.local)"
   include_vars:
-    file: "{{ local_prepare_tmp_dir }}/local_prepare_ctx_{{ local_prepare_subtype }}.local.yml"
+    file: "{{ local_prepare_ctx_tpl_dest }}"
     name: local_prepare_ctx_outer_params
+
+### Generate the environment pod expanded variables ###
+
+- name: "{{ local_prepare_title }} - set_fact - vars"
+  set_fact:
+    local_prepare_vars_volumes: []
+    local_prepare_vars_files: []
+    local_prepare_vars_templates: []
+    local_prepare_vars_env_files: []
 
 - name: "{{ local_prepare_title }} - set_fact - local_prepare_ctx_params"
   set_fact:
@@ -128,6 +149,8 @@
   loop_control:
     loop_var: local_prepare_item
     label: "{{ local_prepare_item.name }}"
+
+### Generate a file with all the environment pod expanded variables ###
 
 - name: "{{ local_prepare_title }} - set_fact - vars_full"
   set_fact:
@@ -164,6 +187,8 @@
   register: local_prepare_diff
   failed_when: local_prepare_diff.rc > 1
   changed_when: local_prepare_diff.rc == 1
+
+### Use the environment pod expanded variables to generate the pod files when changed ###
 
 - block:
 
