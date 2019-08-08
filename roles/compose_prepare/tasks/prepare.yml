@@ -178,6 +178,7 @@
     loop_control:
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.path }}"
+    tags: ["print_action"]
 
   - name: "{{ compose_prepare_title }} - copy the files to the specified locations"
     become: "{{ compose_prepare_docker_become }}"
@@ -214,7 +215,7 @@
       label: "{{ compose_prepare_item.dest | dirname }}"
     delegate_to: localhost
 
-  - name: "{{ compose_prepare_title }} - create directories for the repository templates"
+  - name: "{{ compose_prepare_title }} - create the directories for the repository templates"
     become: "{{ compose_prepare_docker_become }}"
     file:
       path: "{{ compose_prepare_item.dest | dirname }}"

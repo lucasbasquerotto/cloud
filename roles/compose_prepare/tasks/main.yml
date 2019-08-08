@@ -35,15 +35,14 @@
 - name: "{{ compose_prepare_title }} - set_fact - locations"
   set_fact:
     compose_prepare_data_dir: "{{ compose_prepare_base_dir }}/data"
-    compose_prepare_env_location_backup: "{{ compose_prepare_base_dir }}/tmp/env"
     compose_prepare_ctx_dir: "{{ compose_prepare_pod.ctx_dir }}"
     compose_prepare_vars_dir: "{{ compose_prepare_pod.vars_dir }}"
     compose_prepare_owner: "{{ compose_prepare_host_user }}"
     compose_prepare_group: "{{ compose_prepare_host_group }}"
     compose_prepare_backup_file: >-
-      {{ compose_prepare_env_location_backup }}/compose_prepare_vars_full.yml
+      {{ compose_prepare_base_dir }}/{{ compose_prepare_file_env_vars_relative }}
     compose_prepare_backup_file_tmp: >-
-      {{ compose_prepare_env_location_backup }}/compose_prepare_vars_full_tmp.yml
+      {{ compose_prepare_base_dir }}/{{ compose_prepare_file_env_vars_relative }}.tmp
     
 ### Prepare the directories ###
 
@@ -62,13 +61,15 @@
 - name: "{{ compose_prepare_title }} - create the remote directories"
   become: "{{ compose_prepare_docker_become }}"
   file:
-    path: "{{ compose_prepare_item }}"
+    path: "{{ compose_prepare_item | dirname }}"
     state: directory
     mode: 0700
   loop:
-  - "{{ compose_prepare_env_location_backup }}"
+  - "{{ compose_prepare_backup_file }}"
+  - "{{ compose_prepare_backup_file_tmp }}"
   loop_control:
     loop_var: compose_prepare_item
+    label: "{{ compose_prepare_item | dirname }}"
 
 - name: >-
     {{ compose_prepare_title }} - create the file to verify if there was a change, 
@@ -77,7 +78,7 @@
   copy: 
     force: no
     content: ""
-    dest: "{{ compose_prepare_env_location_backup }}/compose_prepare_vars_full.yml"
+    dest: "{{ compose_prepare_backup_file }}"
     owner: "{{ compose_prepare_owner }}"
     group: "{{ compose_prepare_group }}"
     mode: 0600

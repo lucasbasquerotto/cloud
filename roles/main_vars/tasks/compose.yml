@@ -209,6 +209,10 @@
       contexts: "{{ env.contexts }}"
       params: "{{ env.params }}"
       docker_become: "{{ env.docker_become }}"
+      file_env_vars_relative: "tmp/env/compose_prepare_vars_full.yml"
+    main_vars_run:
+      docker_become: "{{ env.docker_become }}"
+      file_env_vars_relative: "tmp/env/compose_run_vars_full.yml"
 
 - name: main compose vars
   set_fact:
@@ -216,6 +220,7 @@
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
       dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
       prepare: "{{ main_vars_prepare }}"
+      run: "{{ main_vars_run }}"
       destroy: 
         instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
