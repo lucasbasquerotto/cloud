@@ -1,14 +1,14 @@
 - name: "{{ compose_prepare_title }} - set_fact - vars"
   set_fact:
     compose_prepare_vars_tpl_src_remote: >-
-      {{ compose_prepare_repo_location }}/{{
-      }}{{ compose_prepare_vars_dir }}/{{
+      {{ compose_prepare_repo_location }}/{{ ''
+      }}{{ compose_prepare_vars_dir }}/{{ ''
       }}{{ compose_prepare_item.name }}.yml
     compose_prepare_vars_tpl_src: >-
-      {{ compose_prepare_local_tmp_dir }}/vars/compose_prepare/{{
+      {{ compose_prepare_local_tmp_dir }}/vars/compose_prepare/{{ ''
       }}{{ compose_prepare_item.name }}.tpl.yml
     compose_prepare_vars_tpl_dest: >-
-      {{ compose_prepare_local_tmp_dir }}/vars/compose_prepare/{{
+      {{ compose_prepare_local_tmp_dir }}/vars/compose_prepare/{{ ''
       }}{{ compose_prepare_item.name }}.yml
 
 - name: >-
@@ -34,8 +34,8 @@
     {{ compose_prepare_title }} - 
     populate vars from templates ({{ compose_prepare_item.name }})
   template: 
-    src: "{{ compose_prepare_ctx_vars_src }}"
-    dest: "{{ compose_prepare_ctx_vars_dest }}"
+    src: "{{ compose_prepare_vars_tpl_src }}"
+    dest: "{{ compose_prepare_vars_tpl_dest }}"
     mode: 0600
   vars:
     params: "{{ compose_prepare_item.params }}"
@@ -43,7 +43,7 @@
 
 - name: "{{ compose_prepare_title }} - load environment vars ({{ compose_prepare_item.name }})"
   include_vars:
-    file: "{{ compose_prepare_ctx_vars_dest }}"
+    file: "{{ compose_prepare_vars_tpl_dest }}"
     name: compose_prepare_inner_vars
   delegate_to: localhost
 

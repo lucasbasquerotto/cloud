@@ -75,7 +75,7 @@
   - include_role: 
       name: "compose_prepare"
     vars:
-      compose_prepare_title: "compose - {{ main_item.vars.cloud.instance_group }}"
+      compose_prepare_title: "compose prepare - {{ main_item.group }} - {{ main_item.name }}"
       compose_prepare_pod: "{{ main_vars.prepare.pod }}"
       compose_prepare_context: "{{ main_item }}"
       compose_prepare_base_dir: "/var/main/{{ main_item.name | default('') }}"
@@ -85,6 +85,7 @@
       compose_prepare_docker_become: "{{ main_vars.prepare.docker_become }}"
       compose_prepare_local_env_dir: "{{ env_dir }}/{{ main_item.name }}"
       compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
+      compose_prepare_repo_name: "{{ env_local_repo }}"
     loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
     loop_control:
       loop_var: main_item
