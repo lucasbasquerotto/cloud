@@ -29,7 +29,7 @@
     state: directory
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
-    mode: 0700
+    mode: 0751
 
 - name: >-
     {{ discourse_title }} - create empty setup file into temporary directory
@@ -41,7 +41,7 @@
     dest: "{{ discourse_setup_tmp_file_path }}"
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
-    mode: 0600
+    mode: 0640
    
 - name: "{{ discourse_title }} - copy discourse setup file"
   become: yes

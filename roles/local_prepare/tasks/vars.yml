@@ -3,7 +3,7 @@
     src: >-
       {{ local_prepare_repo_location }}/{{ local_prepare_vars_dir }}/{{ local_prepare_item.name }}.yml
     dest: "{{ local_prepare_tmp_dir }}/local_prepare_vars_{{ local_prepare_item.name }}.yml"
-    mode: 0600
+    mode: 0640
   vars:
     params: "{{ local_prepare_item.params }}"
 

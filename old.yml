@@ -125,7 +125,7 @@
     template: 
       src: "{{ item.src }}" 
       dest: "{{ dest_local_repo }}/{{ item.dest_suffix }}"
-      mode: 0600  
+      mode: 0640  
     vars:
       db_host: "{{ db_master_host.ansible_host }}"
       db_port: "{{ main.db_port }}"
@@ -186,7 +186,7 @@
     template: 
       src: "{{ item.src }}" 
       dest: "{{ dest_local_repo }}/{{ item.dest_suffix }}"
-      mode: 0600  
+      mode: 0640  
     vars:
       db_host: "{{ db_master_host.ansible_host }}"
       db_port: "{{ main.db_port }}"
@@ -304,7 +304,7 @@
     template:
       src: "{{ main.docker_compose_bin_src }}"
       dest: "/usr/local/bin/docker-compose"
-      mode: 0700
+      mode: 0751
 
   - name: create the directory "{{ main.docker_compose_repo_dest }}"
     become: true
@@ -328,9 +328,9 @@
     register: chmod_result
     changed_when: 'chmod_result.stdout != ""'
 
-  - name: Ensure files are 0600
+  - name: Ensure files are 0640
     become: true
-    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0600 {} \;
+    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0640 {} \;
     register: chmod_result
     changed_when: 'chmod_result.stdout != ""'
 
@@ -363,7 +363,7 @@
     template:
       src: "{{ main.docker_compose_bin_src }}"
       dest: "/usr/local/bin/docker-compose"
-      mode: 0700
+      mode: 0751
 
   - name: create the directory "{{ main.docker_compose_repo_dest }}"
     become: true
@@ -387,9 +387,9 @@
     register: chmod_result
     changed_when: 'chmod_result.stdout != ""'
 
-  - name: Ensure files are 0600
+  - name: Ensure files are 0640
     become: true
-    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0600 {} \;
+    command: find {{ main.docker_compose_repo_dest }} -type f -exec chmod -c 0640 {} \;
     register: chmod_result
     changed_when: 'chmod_result.stdout != ""'
 

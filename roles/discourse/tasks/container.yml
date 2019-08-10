@@ -39,7 +39,7 @@
     dest: "{{ discourse_location }}/containers/{{ discourse_container_name }}.yml"
     owner: "{{ discourse_user }}"
     group: "{{ discourse_group }}"
-    mode: 0600
+    mode: 0640
   vars:
     docker_git_repo: "{{ discourse_container_docker_git_repo | default('') }}"
     docker_git_repo_version: "{{ discourse_container_docker_git_repo_version | default('') }}"

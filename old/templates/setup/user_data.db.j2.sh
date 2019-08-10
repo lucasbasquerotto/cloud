@@ -79,8 +79,8 @@ for pub_key in "${OTHER_PUBLIC_KEYS_TO_ADD[@]}"; do
 done
 
 # Adjust SSH configuration ownership and permissions
-chmod 0700 "${home_directory}/.ssh"
-chmod 0600 "${home_directory}/.ssh/authorized_keys"
+chmod 0751 "${home_directory}/.ssh"
+chmod 0640 "${home_directory}/.ssh/authorized_keys"
 chown --recursive "${USERNAME}":"${USERNAME}" "${home_directory}/.ssh"
 
 # Disable root SSH login with password

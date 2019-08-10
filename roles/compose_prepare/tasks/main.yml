@@ -50,7 +50,7 @@
   file:
     path: "{{ compose_prepare_item }}"
     state: directory
-    mode: 0700
+    mode: 0751
   loop:
   - "{{ compose_prepare_local_tmp_dir }}"
   - "{{ compose_prepare_local_tmp_dir }}/templates"
@@ -63,7 +63,7 @@
   file:
     path: "{{ compose_prepare_item | dirname }}"
     state: directory
-    mode: 0700
+    mode: 0751
   loop:
   - "{{ compose_prepare_backup_file }}"
   - "{{ compose_prepare_backup_file_tmp }}"
@@ -81,7 +81,7 @@
     dest: "{{ compose_prepare_backup_file }}"
     owner: "{{ compose_prepare_owner }}"
     group: "{{ compose_prepare_group }}"
-    mode: 0600
+    mode: 0640
 
 ### Ensure docker is running and update the docker-compose executable ###
 
@@ -133,7 +133,7 @@
       dest: "{{ compose_prepare_backup_file }}"
       owner: "{{ compose_prepare_owner }}"
       group: "{{ compose_prepare_group }}"
-      mode: 0600
+      mode: 0640
     tags: ["print_action"]
 
   when: compose_prepare_diff.changed

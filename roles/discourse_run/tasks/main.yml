@@ -105,7 +105,7 @@
     state: directory
     owner: "{{ discourse_run_host_user }}"
     group: "{{ discourse_run_host_group }}"
-    mode: 0700
+    mode: 0751
 
 - name: >-
     {{ discourse_run_title }} - create empty env file into temporary directory
@@ -117,7 +117,7 @@
     dest: "{{ discourse_run_env_file_tmp }}"
     owner: "{{ discourse_run_host_user }}"
     group: "{{ discourse_run_host_group }}"
-    mode: 0600
+    mode: 0640
 
 - name: "{{ discourse_run_title }} - get the difference of two files (old and current)"
   become: yes
@@ -200,5 +200,5 @@
     dest: "{{ discourse_run_env_file_tmp }}"
     owner: "{{ discourse_run_host_user }}"
     group: "{{ discourse_run_host_group }}"
-    mode: 0600
+    mode: 0640
   when: discourse_run_diff.changed

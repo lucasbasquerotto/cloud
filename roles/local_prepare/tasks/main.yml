@@ -27,7 +27,7 @@
   file:
     path: "{{ local_prepare_repo_location }}"
     state: directory
-    mode: 0700
+    mode: 0751
 
 - name: "{{ local_prepare_title }} - update the repo directory"
   git:
@@ -66,7 +66,7 @@
     path: "{{ local_prepare_repo_location }}/{{ local_prepare_item }}"
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
-    mode: 0700
+    mode: 0751
   loop:
   - "env"
   - "env/tmp"
@@ -115,7 +115,7 @@
   template: 
     src: "{{ local_prepare_ctx_tpl_src }}"
     dest: "{{ local_prepare_ctx_tpl_dest }}"
-    mode: 0600
+    mode: 0640
   vars:
     params: "{{ local_prepare_params }}"
     params_aux:
@@ -169,7 +169,7 @@
     dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
-    mode: 0600
+    mode: 0640
 
 - name: "{{ local_prepare_title }} - create the temporary file to verify if there was a change"
   copy: 
@@ -177,7 +177,7 @@
     dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
-    mode: 0600
+    mode: 0640
 
 - name: "{{ local_prepare_title }} - get the difference of the 2 files (old and current)"
   command: >-
@@ -228,7 +228,7 @@
       state: directory
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: 0700
+      mode: 0751
     loop: "{{ local_prepare_tpl_list | default([]) }}"
     loop_control:
       loop_var: local_prepare_item
@@ -252,7 +252,7 @@
       dest: "{{ local_prepare_item_dest_full }}"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: 0600
+      mode: 0640
     vars: 
       local_prepare_item_src_full: >-
         {{ local_prepare_repo_location }}/files/{{ local_prepare_item.src }}
@@ -273,7 +273,7 @@
       dest: "{{ local_prepare_item.dest }}"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: "{{ local_prepare_item.mode | default('0600', true) }}"
+      mode: "{{ local_prepare_item.mode | default('0640', true) }}"
     vars:
       params: "{{ local_prepare_item.params }}"
     loop: "{{ local_prepare_tpl_list | default([]) }}"
@@ -288,7 +288,7 @@
       dest: "{{ local_prepare_item_dest_full }}"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: "{{ local_prepare_item.mode | default('0600', true) }}"
+      mode: "{{ local_prepare_item.mode | default('0640', true) }}"
     vars: 
       local_prepare_item_src_full: "{{ local_prepare_env_dir }}/{{ local_prepare_item.src }}"
       local_prepare_item_dest_full: >-
@@ -309,7 +309,7 @@
       dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: 0600
+      mode: 0640
     tags: ["print_action"]
 
   when: local_prepare_diff.changed or True
