@@ -101,15 +101,15 @@
     loop_var: local_prepare_item
     label: "{{ local_prepare_item.name }}"
 
-- name: "{{ compose_prepare_title }} - set_fact - vars"
+- name: "{{ local_prepare_title }} - set_fact - vars"
   set_fact:
     local_prepare_ctx_tpl_src: >-
-      {{ local_prepare_repo_location }}/{{
-      }}{{ local_prepare_ctx_dir }}/{{
-      }}{{ local_prepare_subtype }}.local.yml"
+      {{ local_prepare_repo_location }}/{{ ''
+      }}{{ local_prepare_ctx_dir }}/{{ ''
+      }}{{ local_prepare_subtype }}.local.yml
     local_prepare_ctx_tpl_dest: >-
-      {{ local_prepare_tmp_dir }}/{{
-      }}local_prepare_ctx_{{ local_prepare_subtype }}.local.yml"
+      {{ local_prepare_tmp_dir }}/{{ ''
+      }}local_prepare_ctx_{{ local_prepare_subtype }}.local.yml
   
 - name: "{{ local_prepare_title }} - get the context variables from templates"
   template: 
