@@ -123,6 +123,7 @@
       app: "{{ local_prepare_app_dict }}"
       git_commit: "{{ local_prepare_git_result.after }}"
       repo_name: "{{ local_prepare_repo_name }}"
+      data_dir_inside: "{{ local_prepare_data_dir_inside }}/{{ local_prepare_repo_name }}"
       data_dir: "{{ local_prepare_data_dir_outside }}/{{ local_prepare_repo_name }}"
 
 - name: "{{ local_prepare_title }} - load ctx environment vars ({{ local_prepare_subtype }}.local)"
