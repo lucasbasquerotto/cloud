@@ -43,6 +43,19 @@
 
 - block:
 
+  - name: "{{ compose_run_title }} - check if there is a run file"
+    stat: 
+      path: "{{ compose_run_repo_location }}/run"
+    register: compose_run_file
+
+  - name: "{{ compose_run_title }} - run the setup script"
+    become: "{{ compose_run_docker_become }}"
+    command: "./run setup"
+    args:
+      chdir: "{{ compose_run_repo_location }}/"
+    when: compose_run_file.stat.exists == true
+    tags: ["print_action"]
+
   - name: "{{ compose_run_title }} - run the images"
     become: "{{ compose_run_docker_become }}"
     command: "docker-compose up -d --remove-orphans"
