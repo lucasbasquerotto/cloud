@@ -34,6 +34,7 @@
 
 - name: "{{ compose_prepare_title }} - set_fact - locations"
   set_fact:
+    compose_prepare_ctx_name: "{{ compose_prepare_context.name }}"
     compose_prepare_data_dir: "{{ compose_prepare_base_dir }}/data"
     compose_prepare_ctx_dir: "{{ compose_prepare_pod.ctx_dir }}"
     compose_prepare_vars_dir: "{{ compose_prepare_pod.vars_dir }}"

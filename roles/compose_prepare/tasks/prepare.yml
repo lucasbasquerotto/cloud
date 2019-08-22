@@ -61,6 +61,7 @@
 - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_params_aux"
   set_fact:
     compose_prepare_params_aux:
+      ctx_name: "{{ compose_prepare_ctx_name }}"
       pod: "{{ compose_prepare_pod }}"
       git_commit: "{{ compose_prepare_git_result.after }}"
       repo_name: "{{ compose_prepare_repo_name }}"

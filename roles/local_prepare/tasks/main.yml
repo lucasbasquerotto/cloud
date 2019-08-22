@@ -119,6 +119,7 @@
   vars:
     params: "{{ local_prepare_params }}"
     params_aux:
+      ctx_name: "{{ local_prepare_repo_name }}"
       pod: "{{ local_prepare_pod }}"
       app: "{{ local_prepare_app_dict }}"
       git_commit: "{{ local_prepare_git_result.after }}"
