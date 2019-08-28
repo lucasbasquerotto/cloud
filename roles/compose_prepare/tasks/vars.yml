@@ -18,7 +18,7 @@
   file:
     path: "{{ compose_prepare_vars_tpl_src | dirname }}"
     state: directory
-    mode: 0640
+    mode: 0755
   delegate_to: localhost
 
 - name: "{{ compose_prepare_title }} - fetch template from a single remote host"

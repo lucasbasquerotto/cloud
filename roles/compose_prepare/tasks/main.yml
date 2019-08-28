@@ -51,7 +51,7 @@
   file:
     path: "{{ compose_prepare_item }}"
     state: directory
-    mode: 0751
+    mode: 0755
   loop:
   - "{{ compose_prepare_local_tmp_dir }}"
   - "{{ compose_prepare_local_tmp_dir }}/templates"
@@ -64,7 +64,7 @@
   file:
     path: "{{ compose_prepare_item | dirname }}"
     state: directory
-    mode: 0751
+    mode: 0755
   loop:
   - "{{ compose_prepare_backup_file }}"
   - "{{ compose_prepare_backup_file_tmp }}"

@@ -5,7 +5,7 @@
   file:
     path: "{{ compose_prepare_repo_location }}"
     state: directory
-    mode: 0751
+    mode: 0755
 
 - name: "{{ compose_prepare_title }} - update the repo directory"
   become: "{{ compose_prepare_docker_become }}"
@@ -46,7 +46,7 @@
   file:
     path: "{{ compose_prepare_ctx_tpl_src | dirname }}"
     state: directory
-    mode: 0640
+    mode: 0755
   delegate_to: localhost
 
 - name: "{{ compose_prepare_title }} - fetch the context template from a single remote host"
@@ -210,7 +210,7 @@
     file:
       path: "{{ compose_prepare_item.src | dirname }}"
       state: directory
-      mode: 0751
+      mode: 0755
     loop: "{{ compose_prepare_tpl_list | default([]) }}"
     loop_control:
       loop_var: compose_prepare_item
@@ -224,7 +224,7 @@
       state: directory
       owner: "{{ compose_prepare_owner }}"
       group: "{{ compose_prepare_group }}"
-      mode: 0751
+      mode: 0755
     loop: "{{ compose_prepare_tpl_list | default([]) }}"
     loop_control:
       loop_var: compose_prepare_item
