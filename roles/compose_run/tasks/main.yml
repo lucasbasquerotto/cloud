@@ -43,17 +43,12 @@
 
 - block:
 
-  - name: "{{ compose_run_title }} - check if there is a run file"
-    stat: 
-      path: "{{ compose_run_repo_location }}/run"
-    register: compose_run_file
-
   - name: "{{ compose_run_title }} - run the setup script"
     become: "{{ compose_run_docker_become }}"
-    command: "./run setup"
+    command: "{{ compose_run_context.cmd }}"
     args:
       chdir: "{{ compose_run_repo_location }}/"
-    when: compose_run_file.stat.exists == true
+    when: (compose_run_context.cmd | default('')) != ''
     tags: ["print_action"]
 
   - name: "{{ compose_run_title }} - run the images"

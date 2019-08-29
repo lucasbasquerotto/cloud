@@ -22,6 +22,46 @@
   set_fact:
     compose_prepare_git_commit: "{{ compose_prepare_git_result.after }}"
 
+## Creates the environment pod repository in the env folder (when defined)
+
+- block:
+
+  - name: "{{ compose_prepare_title }} - set_fact - vars"
+    set_fact:
+      compose_prepare_env_repo: "{{ compose_prepare_context.env_repo }}"
+      compose_prepare_repo_key_file: "{{ compose_prepare_repo_location }}/tmp/env_key"
+
+  - name: >-
+      {{ compose_prepare_title }} - create the directory for the temporary files
+    file:
+      path: "{{ compose_prepare_repo_location }}/tmp"
+      state: directory
+      mode: 0755
+
+  - name: "{{ repo.name }} - copy encrypted file to set location"
+    copy:
+      src: >-
+        {{ compose_prepare_env_dir }}/{{ compose_prepare_env_repo.key_file_encrypted }}
+      dest: "{{ compose_prepare_repo_key_file }}"
+      decrypt: yes
+      mode: 0600
+    when: (repo_private | bool)
+    tags: ["other"]
+
+  - name: "{{ compose_prepare_title }} - environment pod repository"
+    become: "{{ compose_prepare_docker_become }}"
+    git:
+      repo: "{{ compose_prepare_env_repo.src }}"
+      version: "{{ compose_prepare_env_repo.version }}"
+      dest: "{{ compose_prepare_repo_location }}/env"
+      key_file: "{{ compose_prepare_repo_key_file }}"
+      accept_hostkey: yes
+      update: yes
+      force: yes
+    tags: ["print_action"]
+
+  when: compose_prepare_context.env_repo is defined
+
 ### Generate the environment pod context variables ###
 
 - name: "{{ compose_prepare_title }} - populate vars from templates (debug)"
@@ -270,7 +310,7 @@
       mode: "{{ compose_prepare_item.mode | default('0640', true) }}"
     vars: 
       compose_prepare_item_src_full: >-
-        {{ compose_prepare_local_env_dir }}/{{ compose_prepare_item.src }}
+        {{ compose_prepare_env_dir }}/{{ compose_prepare_item.src }}
       compose_prepare_item_dest_full: >-
         {{ compose_prepare_repo_location }}/{{ 
         ((compose_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 

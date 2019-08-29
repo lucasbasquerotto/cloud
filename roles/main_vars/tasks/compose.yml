@@ -87,7 +87,35 @@
 
 - set_fact:
     main_vars_cloud:
-      digital_ocean:      
+      digital_ocean:    
+        main:
+          app:
+            role: "digital_ocean"
+            vars:
+              cloud:
+                instance_type: "main"
+                region: "{{ env.cloud_region | default('nyc1') }}"
+                title: "Main Instance"
+                hosts_file: "{{ inventory_file }}"
+                api_token: "{{ env.cloud_api_token }}"
+                host_user: "{{ env.cloud_host_user }}"
+                host_pass: "{{ env.cloud_host_pass }}"
+                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
+                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
+                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
+                tags: 
+                - "main"
+                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
+                instance_max: 1
+                instance_group: "app"
+                instance_name: "{{ main_vars_env_name }}main-compose-app"
+                instance_tmp: false
+                ipv6: "{{ main_vars_ipv6 }}"
+                user_data_file: "{{ main_vars_cloud_user_data_file }}"
+            extra:
+              dmz: true
+              load_balance: false
+
         layer1:
           app:
             role: "digital_ocean"
