@@ -93,7 +93,7 @@
             role: "digital_ocean"
             vars:
               cloud:
-                instance_type: "main"
+                instance_type: "app"
                 region: "{{ env.cloud_region | default('nyc1') }}"
                 title: "Main Instance"
                 hosts_file: "{{ inventory_file }}"

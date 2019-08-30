@@ -83,6 +83,8 @@
       compose_prepare_file_env_vars_relative: >-
         {{ main_vars.prepare.file_env_vars_relative }}
       compose_prepare_docker_become: "{{ main_vars.prepare.docker_become }}"
+      compose_prepare_host_user: "{{ env.cloud_host_user }}"
+      compose_prepare_host_group: "{{ env.cloud_host_user }}"
       compose_prepare_env_dir: "{{ env_dir }}"
       compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
       compose_prepare_repo_name: "{{ env_local_repo }}"

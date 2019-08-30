@@ -82,8 +82,10 @@
     main_dns_record: "{{ main_cloud_dns.main_record }}"
     main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv6 }}"
   when: >-
+    (main_cloud_dns is defined) and
+    (main_cloud_dns.task is defined) and
     (main_cloud_active_hosts | length == 1) and 
-    main_cloud_extra.dmz and 
+    (main_cloud_extra.dmz | bool) and 
     (main_cloud_active_hosts[0].public_ipv6 is defined)
   tags: ["print_action"]
 
@@ -99,7 +101,9 @@
     main_dns_record: "{{ main_cloud_dns.main_record }}"
     main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv4 }}"
   when: >-
+    (main_cloud_dns is defined) and
+    (main_cloud_dns.task is defined) and
     (main_cloud_active_hosts | length == 1) and 
-    main_cloud_extra.dmz and 
+    (main_cloud_extra.dmz | bool) and 
     (main_cloud_active_hosts[0].public_ipv4 is defined)
   tags: ["print_action"]

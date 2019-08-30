@@ -33,20 +33,20 @@
 
   - name: >-
       {{ compose_prepare_title }} - create the directory for the temporary files
+    become: "{{ compose_prepare_docker_become }}"
     file:
       path: "{{ compose_prepare_repo_location }}/tmp"
       state: directory
       mode: 0755
 
-  - name: "{{ repo.name }} - copy encrypted file to set location"
+  - name: "{{ compose_prepare_title }} - copy encrypted file to set location"
+    become: "{{ compose_prepare_docker_become }}"
     copy:
       src: >-
         {{ compose_prepare_env_dir }}/{{ compose_prepare_env_repo.key_file_encrypted }}
       dest: "{{ compose_prepare_repo_key_file }}"
       decrypt: yes
       mode: 0600
-    when: (repo_private | bool)
-    tags: ["other"]
 
   - name: "{{ compose_prepare_title }} - environment pod repository"
     become: "{{ compose_prepare_docker_become }}"
