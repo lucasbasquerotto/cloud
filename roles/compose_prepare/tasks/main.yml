@@ -92,12 +92,12 @@
     name: docker
     state: started
 
-- name: "{{ compose_prepare_title }} - copy the docker compose executable file"
-  become: "{{ compose_prepare_docker_become }}"
-  copy: 
-    src: "roles/compose_prepare/files/docker-compose.sh"
-    dest: "/usr/local/bin/docker-compose"
-    mode: 0755
+# - name: "{{ compose_prepare_title }} - copy the docker compose executable file"
+#   become: "{{ compose_prepare_docker_become }}"
+#   copy: 
+#     src: "roles/compose_prepare/files/docker-compose.sh"
+#     dest: "/usr/local/bin/docker-compose"
+#     mode: 0755
 
 ### Prepare the temporary directory (to catch errors before updating the real one) ###
 
