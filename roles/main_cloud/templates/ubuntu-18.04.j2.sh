@@ -110,7 +110,7 @@ apt install -y python3-pip
 
 echo "Python Installed" >> "/var/log/setup.log"
 
-pip3 install docker
+# pip3 install docker
 
 # sudo -u "$USERNAME" bash <<-EOF 
 # 	yes | pip3 install docker
@@ -140,7 +140,7 @@ add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bi
 apt update
 
 # Finally, install Docker
-apt install -y docker-ce=$DOCKER_CE_VERSION
+apt install -y docker-ce=$DOCKER_CE_VERSION docker-compose
 
 echo "Docker Installed" >> "/var/log/setup.log"
 
