@@ -11,6 +11,7 @@
     compose_run_docker_become: "{{ main_vars.run.docker_become }}"
     compose_run_host_user: "{{ env.cloud_host_user }}"
     compose_run_host_group: "{{ env.cloud_host_user }}"
+    compose_run_env_cmd: "{{ env_cmd | default('') }}"
     # compose_run_index: "{{ instance_index }}"
     # compose_run_instance_max: "{{ main_item.vars.cloud.instance_max }}"
     # compose_run_cloud: "{{ main_vars.cloud }}"

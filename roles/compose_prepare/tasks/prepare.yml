@@ -105,6 +105,7 @@
       pod: "{{ compose_prepare_pod }}"
       git_commit: "{{ compose_prepare_git_result.after }}"
       repo_name: "{{ compose_prepare_repo_name }}"
+      repo_location: "{{ compose_prepare_repo_location }}"
       data_dir: "{{ compose_prepare_data_dir }}"
   
 - name: "{{ compose_prepare_title }} - get the context data from the template"
