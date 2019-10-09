@@ -29,13 +29,14 @@
   - name: "{{ compose_prepare_title }} - set_fact - vars"
     set_fact:
       compose_prepare_env_repo: "{{ compose_prepare_context.env_repo }}"
-      compose_prepare_repo_key_file: "{{ compose_prepare_repo_location }}/tmp/env_key"
+      compose_prepare_repo_key_file: >-
+        {{ compose_prepare_repo_location }}/{{ compose_prepare_pod_env_dir }}/tmp/env_key
 
   - name: >-
       {{ compose_prepare_title }} - create the directory for the temporary files
     become: "{{ compose_prepare_docker_become }}"
     file:
-      path: "{{ compose_prepare_repo_location }}/tmp"
+      path: "{{ compose_prepare_repo_location }}/{{ compose_prepare_pod_env_dir }}/tmp"
       state: directory
       mode: 0755
 
@@ -53,7 +54,7 @@
     git:
       repo: "{{ compose_prepare_env_repo.src }}"
       version: "{{ compose_prepare_env_repo.version }}"
-      dest: "{{ compose_prepare_repo_location }}/env"
+      dest: "{{ compose_prepare_repo_location }}/{{ compose_prepare_pod_env_dir }}"
       key_file: "{{ compose_prepare_repo_key_file }}"
       accept_hostkey: yes
       update: yes
@@ -105,6 +106,7 @@
       pod: "{{ compose_prepare_pod }}"
       git_commit: "{{ compose_prepare_git_result.after }}"
       repo_name: "{{ compose_prepare_repo_name }}"
+      pod_env_dir: "{{ compose_prepare_pod_env_dir }}"
       repo_location: "{{ compose_prepare_repo_location }}"
       data_dir: "{{ compose_prepare_data_dir }}"
   
@@ -195,12 +197,17 @@
         }}
     vars: 
       compose_prepare_item_remote_src_full: >-
-        {{ compose_prepare_repo_location }}/templates/{{ compose_prepare_item.src }}
+        {{ compose_prepare_repo_location }}/{{ 
+          compose_prepare_item.dir_base | default('templates') 
+        }}/{{ compose_prepare_item.src }}
       compose_prepare_item_src_local_full: >-
-        {{ compose_prepare_local_tmp_dir }}/templates/{{ compose_prepare_item.src }}
+        {{ compose_prepare_local_tmp_dir }}/{{ 
+          compose_prepare_item.dir_base | default('templates') 
+        }}/{{ compose_prepare_item.src }}
       compose_prepare_item_dest_full: >-
         {{ compose_prepare_repo_location }}/{{ 
-        ((compose_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        ((compose_prepare_item.root | default(false) | bool) 
+        | ternary('', compose_prepare_pod_env_dir + '/')) 
         + (compose_prepare_item.dest | default(compose_prepare_item.src)) 
         }}
       compose_prepare_item_params: "{{ compose_prepare_item.params | default({}) }}"
@@ -233,10 +240,13 @@
       mode: 0640
     vars: 
       compose_prepare_item_src_full: >-
-        {{ compose_prepare_repo_location }}/files/{{ compose_prepare_item.src }}
+        {{ compose_prepare_repo_location }}/{{ 
+          compose_prepare_item.dir_base | default('files') 
+        }}/{{ compose_prepare_item.src }}
       compose_prepare_item_dest_full: >-
         {{ compose_prepare_repo_location }}/{{ 
-        ((compose_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        ((compose_prepare_item.root | default(false) | bool) 
+        | ternary('', compose_prepare_pod_env_dir + '/')) 
         + (compose_prepare_item.dest | default(compose_prepare_item.src)) 
         }}
     loop: "{{ compose_prepare_vars_files | default([]) }}"
@@ -314,7 +324,8 @@
         {{ compose_prepare_env_dir }}/{{ compose_prepare_item.src }}
       compose_prepare_item_dest_full: >-
         {{ compose_prepare_repo_location }}/{{ 
-        ((compose_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        ((compose_prepare_item.root | default(false) | bool) 
+        | ternary('', compose_prepare_pod_env_dir + '/')) 
         + compose_prepare_item.dest
         }}
     loop: "{{ compose_prepare_vars_env_files | default([]) }}"

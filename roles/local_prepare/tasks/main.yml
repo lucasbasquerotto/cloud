@@ -68,8 +68,8 @@
     group: "{{ local_prepare_group }}"
     mode: 0751
   loop:
-  - "env"
-  - "env/tmp"
+  - "{{ local_prepare_pod_env_dir }}"
+  - "{{ local_prepare_pod_env_dir }}/tmp"
   loop_control:
     loop_var: local_prepare_item
 
@@ -124,6 +124,7 @@
       app: "{{ local_prepare_app_dict }}"
       git_commit: "{{ local_prepare_git_result.after }}"
       repo_name: "{{ local_prepare_repo_name }}"
+      pod_env_dir: "{{ local_prepare_pod_env_dir }}"
       data_dir_inside: "{{ local_prepare_data_dir_inside }}/{{ local_prepare_repo_name }}"
       data_dir: "{{ local_prepare_data_dir_outside }}/{{ local_prepare_repo_name }}"
 
@@ -168,7 +169,10 @@
   copy: 
     force: no
     content: ""
-    dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
+    dest: >-
+      {{ local_prepare_repo_location }}/{{ 
+        local_prepare_pod_env_dir 
+      }}/tmp/local_prepare_vars_full.yml
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
     mode: 0640
@@ -176,7 +180,10 @@
 - name: "{{ local_prepare_title }} - create the temporary file to verify if there was a change"
   copy: 
     content: "{{ local_prepare_vars_full | to_nice_yaml }}"
-    dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
+    dest: >-
+      {{ local_prepare_repo_location }}/{{ 
+        local_prepare_pod_env_dir 
+      }}/tmp/local_prepare_tmp_vars_full.yml
     owner: "{{ local_prepare_owner }}"
     group: "{{ local_prepare_group }}"
     mode: 0640
@@ -184,8 +191,12 @@
 - name: "{{ local_prepare_title }} - get the difference of the 2 files (old and current)"
   command: >-
     diff 
-    {{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml 
-    {{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml
+    {{ local_prepare_repo_location }}/{{ 
+      local_prepare_pod_env_dir 
+    }}/tmp/local_prepare_tmp_vars_full.yml 
+    {{ local_prepare_repo_location }}/{{ 
+      local_prepare_pod_env_dir
+    }}/tmp/local_prepare_vars_full.yml
   register: local_prepare_diff
   failed_when: local_prepare_diff.rc > 1
   changed_when: local_prepare_diff.rc == 1
@@ -212,10 +223,13 @@
         }}
     vars: 
       local_prepare_item_src_full: >-
-        {{ local_prepare_repo_location }}/templates/{{ local_prepare_item.src }}
+        {{ local_prepare_repo_location }}/{{ 
+          local_prepare_item.dir_base | default('templates') 
+        }}/{{ local_prepare_item.src }}
       local_prepare_item_dest_full: >-
         {{ local_prepare_repo_location }}/{{ 
-        ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        ((local_prepare_item.root | default(false) | bool) 
+        | ternary('', local_prepare_pod_env_dir + '/')) 
         + (local_prepare_item.dest | default(local_prepare_item.src)) 
         }}
       local_prepare_item_params: "{{ local_prepare_item.params | default({}) }}"
@@ -257,10 +271,13 @@
       mode: 0640
     vars: 
       local_prepare_item_src_full: >-
-        {{ local_prepare_repo_location }}/files/{{ local_prepare_item.src }}
+        {{ local_prepare_repo_location }}/{{ 
+          local_prepare_item.dir_base | default('files') 
+        }}/{{ local_prepare_item.src }}
       local_prepare_item_dest_full: >-
         {{ local_prepare_repo_location }}/{{ 
-        ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        ((local_prepare_item.root | default(false) | bool) 
+        | ternary('', local_prepare_pod_env_dir + '/')) 
         + (local_prepare_item.dest | default(local_prepare_item.src)) 
         }}
     loop: "{{ local_prepare_vars_files | default([]) }}"
@@ -295,7 +312,8 @@
       local_prepare_item_src_full: "{{ local_prepare_env_dir }}/{{ local_prepare_item.src }}"
       local_prepare_item_dest_full: >-
         {{ local_prepare_repo_location }}/{{ 
-        ((local_prepare_item.root | default(false) | bool) | ternary('', 'env/')) 
+        ((local_prepare_item.root | default(false) | bool) 
+        | ternary('', local_prepare_pod_env_dir + '/')) 
         + local_prepare_item.dest
         }}
     loop: "{{ local_prepare_vars_env_files | default([]) }}"
@@ -307,8 +325,14 @@
   - name: "{{ local_prepare_title }} - create the file to verify if there was a change (for newer runs)"
     copy: 
       remote_src: yes
-      src: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_tmp_vars_full.yml"
-      dest: "{{ local_prepare_repo_location }}/env/tmp/local_prepare_vars_full.yml"
+      src: >-
+        {{ local_prepare_repo_location }}/{{ 
+          local_prepare_pod_env_dir 
+        }}/tmp/local_prepare_tmp_vars_full.yml
+      dest: >-
+        {{ local_prepare_repo_location }}/{{ 
+          local_prepare_pod_env_dir 
+        }}/tmp/local_prepare_vars_full.yml
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
       mode: 0640

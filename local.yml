@@ -45,6 +45,7 @@
     vars:
       local_prepare_subtype: "{{ env.cloud.subtype }}"
       local_prepare_pod: "{{ local_pod }}"
+      local_prepare_pod_env_dir: "{{ env.pod.env_dir | default('env') }}"
       local_prepare_ctx_dir: "{{ env.pod.ctx_dir | default('') }}"
       local_prepare_vars_dir: "{{ env.pod.vars_dir | default('') }}"
       local_prepare_params: "{{ env.params.local | default([]) }}"
