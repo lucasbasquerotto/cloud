@@ -207,7 +207,47 @@
 
   - name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - empty"
     set_fact:
+      local_prepare_files_list: []
       local_prepare_tpl_list: []
+
+  - name: "{{ local_prepare_title }} - set_fact - local_prepare_files_list - fill"
+    set_fact:
+      local_prepare_files_list: >-
+        {{ 
+        local_prepare_files_list
+        + [{ 
+        'src': local_prepare_item_src_full, 
+        'dest': local_prepare_item_dest_full, 
+        'mode': local_prepare_item.mode | default('', true)
+        }] 
+        }}
+    vars: 
+      local_prepare_item_src_full: >-
+        {{ local_prepare_repo_location }}/{{ 
+          local_prepare_item.dir_base | default('files') 
+        }}/{{ local_prepare_item.src }}
+      local_prepare_item_dest_full: >-
+        {{ local_prepare_repo_location }}/{{ 
+        ((local_prepare_item.root | default(false) | bool) 
+        | ternary('', local_prepare_pod_env_dir + '/')) 
+        + (local_prepare_item.dest | default(local_prepare_item.src)) 
+        }}
+    loop: "{{ local_prepare_vars_files | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest | default(local_prepare_item.src) }}"
+
+  - name: "{{ local_prepare_title }} - create directories for the repository files"
+    file:
+      path: "{{ local_prepare_item.dest | dirname }}"
+      state: directory
+      owner: "{{ local_prepare_owner }}"
+      group: "{{ local_prepare_group }}"
+      mode: 0751
+    loop: "{{ local_prepare_files_list | default([]) }}"
+    loop_control:
+      loop_var: local_prepare_item
+      label: "{{ local_prepare_item.dest | dirname }}"
 
   - name: "{{ local_prepare_title }} - set_fact - local_prepare_tpl_list - fill"
     set_fact:
@@ -264,23 +304,12 @@
 
   - name: "{{ local_prepare_title }} - copy the files to the specified locations"
     copy:
-      src: "{{ local_prepare_item_src_full }}"
-      dest: "{{ local_prepare_item_dest_full }}"
+      src: "{{ local_prepare_item.src }}"
+      dest: "{{ local_prepare_item.dest }}"
       owner: "{{ local_prepare_owner }}"
       group: "{{ local_prepare_group }}"
-      mode: 0640
-    vars: 
-      local_prepare_item_src_full: >-
-        {{ local_prepare_repo_location }}/{{ 
-          local_prepare_item.dir_base | default('files') 
-        }}/{{ local_prepare_item.src }}
-      local_prepare_item_dest_full: >-
-        {{ local_prepare_repo_location }}/{{ 
-        ((local_prepare_item.root | default(false) | bool) 
-        | ternary('', local_prepare_pod_env_dir + '/')) 
-        + (local_prepare_item.dest | default(local_prepare_item.src)) 
-        }}
-    loop: "{{ local_prepare_vars_files | default([]) }}"
+      mode: "{{ local_prepare_item.mode | default('0640', true) }}"
+    loop: "{{ local_prepare_files_list | default([]) }}"
     loop_control:
       loop_var: local_prepare_item
       label: "{{ local_prepare_item.dest | default(local_prepare_item.src) }}"
