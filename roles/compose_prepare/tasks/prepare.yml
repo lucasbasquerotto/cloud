@@ -128,7 +128,7 @@
     name: compose_prepare_ctx_outer_params
   delegate_to: localhost
 
-### Generate a file with all the context environment expanded variables ###
+### Generate a file with all the context environment expanded variables (for idempotence) ###
 
 - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_vars_full"
   set_fact:
@@ -176,11 +176,41 @@
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.name }}"
 
-  ### Use the environment pod expanded variables to generate the pod files when changed ###
+  ### Polish previous variables to use them directly later ###
 
   - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_tpl_list - empty"
     set_fact:
+      compose_prepare_files_list: []
       compose_prepare_tpl_list: []
+      compose_prepare_env_files_list: []
+      compose_prepare_dir_list: []
+
+  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_files_list - fill"
+    set_fact:
+      compose_prepare_files_list: >-
+        {{ 
+        compose_prepare_files_list
+        + [{ 
+        'src': compose_prepare_item_src_full, 
+        'dest': compose_prepare_item_dest_full, 
+        'mode': compose_prepare_item.mode | default('', true)
+        }] 
+        }}
+    vars: 
+      compose_prepare_item_src_full: >-
+        {{ compose_prepare_repo_location }}/{{ 
+          compose_prepare_item.dir_base | default('files') 
+        }}/{{ compose_prepare_item.src }}
+      compose_prepare_item_dest_full: >-
+        {{ compose_prepare_repo_location }}/{{ 
+        ((compose_prepare_item.root | default(false) | bool) 
+        | ternary('', compose_prepare_pod_env_dir + '/')) 
+        + (compose_prepare_item.dest | default(compose_prepare_item.src)) 
+        }}
+    loop: "{{ compose_prepare_vars_files | default([]) }}"
+    loop_control:
+      loop_var: compose_prepare_item
+      label: "{{ compose_prepare_item.dest | default(compose_prepare_item.src) }}"
 
   - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_tpl_list - fill"
     set_fact:
@@ -216,44 +246,46 @@
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.dest | default(compose_prepare_item.src) }}"
 
-  - name: "{{ compose_prepare_title }} - create the volume directories"
-    become: "{{ compose_prepare_docker_become }}"
-    file:
-      state: directory
-      path: "{{ compose_prepare_item.path }}"
-      owner: "{{ compose_prepare_owner }}"
-      group: "{{ compose_prepare_group }}"
-      mode: "{{ compose_prepare_item.mode }}"
-    loop: "{{ compose_prepare_vars_volumes | default([]) }}"
-    loop_control:
-      loop_var: compose_prepare_item
-      label: "{{ compose_prepare_item.path }}"
-    tags: ["print_action"]
-
-  - name: "{{ compose_prepare_title }} - copy the files to the specified locations"
-    become: "{{ compose_prepare_docker_become }}"
-    copy:
-      src: "{{ compose_prepare_item_src_full }}"
-      dest: "{{ compose_prepare_item_dest_full }}"
-      owner: "{{ compose_prepare_owner }}"
-      group: "{{ compose_prepare_group }}"
-      mode: 0640
+  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_env_files_list - fill"
+    set_fact:
+      compose_prepare_env_files_list: >-
+        {{ 
+        compose_prepare_env_files_list
+        + [{ 
+        'src': compose_prepare_item_src_full, 
+        'dest': compose_prepare_item_dest_full, 
+        'mode': compose_prepare_item.mode | default('', true)
+        }] 
+        }}
     vars: 
-      compose_prepare_item_src_full: >-
-        {{ compose_prepare_repo_location }}/{{ 
-          compose_prepare_item.dir_base | default('files') 
-        }}/{{ compose_prepare_item.src }}
+      compose_prepare_item_src_full: "{{ compose_prepare_env_dir }}/{{ compose_prepare_item.src }}"
       compose_prepare_item_dest_full: >-
         {{ compose_prepare_repo_location }}/{{ 
         ((compose_prepare_item.root | default(false) | bool) 
         | ternary('', compose_prepare_pod_env_dir + '/')) 
-        + (compose_prepare_item.dest | default(compose_prepare_item.src)) 
+        + compose_prepare_item.dest
         }}
-    loop: "{{ compose_prepare_vars_files | default([]) }}"
+    loop: "{{ compose_prepare_vars_env_files | default([]) }}"
     loop_control:
       loop_var: compose_prepare_item
-      label: "{{ compose_prepare_item.dest | default(compose_prepare_item.src) }}"
-    tags: ["print_action"]
+      label: "{{ compose_prepare_item.dest }}"
+
+  - name: "{{ compose_prepare_title }} - create the directories list var"
+    set_fact:
+      compose_prepare_dir_list: "{{ compose_prepare_dir_list + [compose_prepare_item.dest | dirname] }}"
+    loop: >-
+      {{ 
+      (compose_prepare_files_list | default([]))
+      + 
+      (compose_prepare_tpl_list | default([])) 
+      + 
+      (compose_prepare_env_files_list | default([])) 
+      }}
+    loop_control:
+      loop_var: compose_prepare_item
+      label: "{{ compose_prepare_item.dest | dirname }}"
+
+  ### Create the directories ###
 
   - name: >-
       {{ compose_prepare_title }} - 
@@ -268,18 +300,48 @@
       label: "{{ compose_prepare_item.dest | dirname }}"
     delegate_to: localhost
 
-  - name: "{{ compose_prepare_title }} - create the directories for the repository templates"
+  - name: "{{ compose_prepare_title }} - create the volume directories"
     become: "{{ compose_prepare_docker_become }}"
     file:
-      path: "{{ compose_prepare_item.dest | dirname }}"
       state: directory
+      path: "{{ compose_prepare_item.path }}"
       owner: "{{ compose_prepare_owner }}"
       group: "{{ compose_prepare_group }}"
-      mode: 0755
-    loop: "{{ compose_prepare_tpl_list | default([]) }}"
+      mode: "{{ compose_prepare_item.mode }}"
+    loop: "{{ compose_prepare_vars_volumes | default([]) }}"
     loop_control:
       loop_var: compose_prepare_item
-      label: "{{ compose_prepare_item.dest | dirname }}"
+      label: "{{ compose_prepare_item.path }}"
+    tags: ["print_action"]
+
+  - name: "{{ compose_prepare_title }} - create the other directories"
+    file:
+      state: directory
+      path: "{{ compose_prepare_item }}"
+      owner: "{{ compose_prepare_owner }}"
+      group: "{{ compose_prepare_group }}"
+      mode: 0751
+    loop: "{{ compose_prepare_dir_list | unique | default([]) }}"
+    loop_control:
+      loop_var: compose_prepare_item
+      label: "{{ compose_prepare_item }}"
+
+  ### Transfer the needed files and templates ###
+
+  - name: "{{ compose_prepare_title }} - copy the files to the specified locations"
+    become: "{{ compose_prepare_docker_become }}"
+    copy:
+      remote_src: true
+      src: "{{ compose_prepare_item.src }}"
+      dest: "{{ compose_prepare_item.dest }}"
+      owner: "{{ compose_prepare_owner }}"
+      group: "{{ compose_prepare_group }}"
+      mode: "{{ compose_prepare_item.mode | default('0640', true) }}"
+    loop: "{{ compose_prepare_files_list | default([]) }}"
+    loop_control:
+      loop_var: compose_prepare_item
+      label: "{{ compose_prepare_item.dest }}"
+    tags: ["print_action"]
 
   - name: "{{ compose_prepare_title }} - fetch the vars templates from a single remote host"
     become: "{{ compose_prepare_docker_become }}"
@@ -314,21 +376,12 @@
   - name: "{{ compose_prepare_title }} - copy the environment files to the specified locations"
     become: "{{ compose_prepare_docker_become }}"
     copy:
-      src: "{{ compose_prepare_item_src_full }}"
-      dest: "{{ compose_prepare_item_dest_full }}"
+      src: "{{ compose_prepare_item.src }}"
+      dest: "{{ compose_prepare_item.dest }}"
       owner: "{{ compose_prepare_owner }}"
       group: "{{ compose_prepare_group }}"
       mode: "{{ compose_prepare_item.mode | default('0640', true) }}"
-    vars: 
-      compose_prepare_item_src_full: >-
-        {{ compose_prepare_env_dir }}/{{ compose_prepare_item.src }}
-      compose_prepare_item_dest_full: >-
-        {{ compose_prepare_repo_location }}/{{ 
-        ((compose_prepare_item.root | default(false) | bool) 
-        | ternary('', compose_prepare_pod_env_dir + '/')) 
-        + compose_prepare_item.dest
-        }}
-    loop: "{{ compose_prepare_vars_env_files | default([]) }}"
+    loop: "{{ compose_prepare_env_files_list | default([]) }}"
     loop_control:
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.dest }}"
