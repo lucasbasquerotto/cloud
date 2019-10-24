@@ -44,6 +44,19 @@
 - block:
 
   - name: "{{ compose_run_title }} - run the setup script"
+    include_role: 
+      name: long_run
+    vars:
+      long_run_title: "{{ compose_run_title }} - run the setup script"
+      long_run_become: "{{ compose_run_docker_become }}"
+      long_run_output_path: "{{ compose_run_base_dir }}/data/log"
+      long_run_output_file: "env-run-setup.log"
+      long_run_path: "{{ compose_run_repo_location }}"
+      long_run_cmd: "{{ compose_run_context.cmd }}"
+    when: (compose_run_context.cmd | default('')) != ''
+    tags: ["print_action"]
+
+  - name: "{{ compose_run_title }} - run the setup script"
     become: "{{ compose_run_docker_become }}"
     command: "{{ compose_run_context.cmd }}"
     args:
