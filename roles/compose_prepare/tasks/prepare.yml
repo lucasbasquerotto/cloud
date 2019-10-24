@@ -30,13 +30,13 @@
     set_fact:
       compose_prepare_env_repo: "{{ compose_prepare_context.env_repo }}"
       compose_prepare_repo_key_file: >-
-        {{ compose_prepare_repo_location }}/{{ compose_prepare_pod_env_dir }}/tmp/env_key
+        {{ compose_prepare_repo_location }}/tmp/{{ compose_prepare_pod_env_dir }}/env_key
 
   - name: >-
       {{ compose_prepare_title }} - create the directory for the temporary files
     become: "{{ compose_prepare_docker_become }}"
     file:
-      path: "{{ compose_prepare_repo_location }}/{{ compose_prepare_pod_env_dir }}/tmp"
+      path: "{{ compose_prepare_repo_location }}/tmp/{{ compose_prepare_pod_env_dir }}"
       state: directory
       mode: 0755
 
@@ -315,6 +315,7 @@
     tags: ["print_action"]
 
   - name: "{{ compose_prepare_title }} - create the other directories"
+    become: "{{ compose_prepare_docker_become }}"
     file:
       state: directory
       path: "{{ compose_prepare_item }}"

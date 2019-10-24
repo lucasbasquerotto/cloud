@@ -79,7 +79,6 @@
   when: not compose_run_diff.changed
   tags: ["print_action"]
 
-
 - name: "{{ compose_run_title }} - environment run cmd"
   include_role: 
     name: long_run
