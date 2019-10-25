@@ -6,3 +6,4 @@
   vars:
     main_vars_env_file: "{{ env_file }}"
     main_vars_type: "discourse"
+  tags: ["no_print"]

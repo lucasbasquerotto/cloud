@@ -7,10 +7,12 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
 
   - include_role: 
       name: "main_cloud"
     vars: 
+      main_cloud_title: "cloud - create instances"
       main_cloud_role: "{{ main_item.role }}"
       main_cloud_vars: "{{ main_item.vars.cloud }}"
       main_cloud_extra: "{{ main_item.extra }}"
@@ -43,6 +45,7 @@
   gather_facts: no  
   tasks:  
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
 
   - name: "create the static dns records"
     include_role: 
@@ -71,6 +74,7 @@
   gather_facts: no
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
 
   - include_role: 
       name: "compose_prepare"
@@ -106,7 +110,10 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
   - include_tasks: "tasks/compose_run.yml"
+    tags: ["no_print"]
 
 #-----------------------------------------------------------------------------#
 
@@ -119,7 +126,10 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
   - include_tasks: "tasks/compose_run.yml"
+    tags: ["no_print"]
 
 #-----------------------------------------------------------------------------#
 
@@ -134,7 +144,10 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
   - include_tasks: "tasks/compose_run.yml"
+    tags: ["no_print"]
 
 #-----------------------------------------------------------------------------#
 
@@ -148,7 +161,10 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
   - include_tasks: "tasks/compose_run.yml"
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -161,10 +177,12 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
 
   - include_role: 
       name: "main_cloud"
     vars: 
+      main_cloud_title: "cloud - destroy temporary instances"
       main_cloud_role: "{{ main_item.role }}"
       main_cloud_vars: "{{ main_item.vars.cloud }}"
       main_cloud_extra: "{{ main_item.extra }}"
@@ -186,10 +204,12 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
 
   - include_role: 
       name: "main_cloud"
     vars: 
+      main_cloud_title: "cloud - destroy all instances"
       main_cloud_role: "{{ main_item.role }}"
       main_cloud_vars: "{{ main_item.vars.cloud }}"
       main_cloud_extra: "{{ main_item.extra }}"

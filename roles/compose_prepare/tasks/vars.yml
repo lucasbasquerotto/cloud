@@ -1,4 +1,4 @@
-- name: "{{ compose_prepare_title }} - set_fact - vars"
+- name: "{{ compose_prepare_inner_title }} - set_fact - vars"
   set_fact:
     compose_prepare_vars_tpl_src_remote: >-
       {{ compose_prepare_repo_location }}/{{ ''
@@ -12,7 +12,7 @@
       }}{{ compose_prepare_item.name }}.yml
 
 - name: >-
-    {{ compose_prepare_title }} - 
+    {{ compose_prepare_inner_title }} - 
     create the local directories for the vars template 
     ({{ compose_prepare_item.name }})
   file:
@@ -21,7 +21,7 @@
     mode: 0755
   delegate_to: localhost
 
-- name: "{{ compose_prepare_title }} - fetch template from a single remote host"
+- name: "{{ compose_prepare_inner_title }} - fetch template from a single remote host"
   become: "{{ compose_prepare_docker_become }}"
   run_once: true
   fetch:
@@ -31,7 +31,7 @@
     fail_on_missing: yes
 
 - name: >-
-    {{ compose_prepare_title }} - 
+    {{ compose_prepare_inner_title }} - 
     populate vars from templates ({{ compose_prepare_item.name }})
   template: 
     src: "{{ compose_prepare_vars_tpl_src }}"
@@ -41,13 +41,13 @@
     params: "{{ compose_prepare_item.params }}"
   delegate_to: localhost
 
-- name: "{{ compose_prepare_title }} - load environment vars ({{ compose_prepare_item.name }})"
+- name: "{{ compose_prepare_inner_title }} - load environment vars ({{ compose_prepare_item.name }})"
   include_vars:
     file: "{{ compose_prepare_vars_tpl_dest }}"
     name: compose_prepare_inner_vars
   delegate_to: localhost
 
-- name: "{{ compose_prepare_title }} - set_fact ({{ compose_prepare_item.name }})"
+- name: "{{ compose_prepare_inner_title }} - set_fact ({{ compose_prepare_item.name }})"
   set_fact:
     compose_prepare_vars_volumes: >-
       {{ compose_prepare_vars_volumes + (compose_prepare_inner_vars.volumes | default([])) }}

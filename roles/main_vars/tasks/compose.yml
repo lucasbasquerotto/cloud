@@ -6,6 +6,7 @@
       {{ env.cloud_instance_groups_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_dns:
@@ -23,6 +24,7 @@
         - title: "DNS CNAME records"
           type: "CNAME"
           list: "{{ env.dns_cname_list | default([]) }}"
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_cloud_aux:
@@ -84,6 +86,7 @@
           - ports: "3306"
             sources:
               tags: ["web"]
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_cloud:
@@ -230,6 +233,7 @@
             extra:
               dmz: true
               load_balance: false
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_prepare:
@@ -241,6 +245,7 @@
     main_vars_run:
       docker_become: "{{ env.docker_become }}"
       file_env_vars_relative: "tmp/env/compose_run_vars_full.yml"
+  tags: ["no_print"]
 
 - name: main compose vars
   set_fact:
@@ -252,3 +257,4 @@
       destroy: 
         instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
+  tags: ["no_print"]

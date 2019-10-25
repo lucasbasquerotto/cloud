@@ -2,17 +2,21 @@
   include_vars:
     file: "{{ main_vars_env_file }}"
     name: env
+  tags: ["no_print"]
 
 - name: verify if type match the one from the env variable
   fail:
     msg: "cloud.type is not defined in the environment vars"
   when: env.cloud.type is not defined
+  tags: ["no_print"]
 
 - name: verify if type match the one from the env variable
   fail:
     msg: "{{ main_vars_type }} should be {{ env.cloud.type }}"
   when: env.cloud.type != main_vars_type
+  tags: ["no_print"]
 
 - include_tasks:  "{{ env.cloud.type }}.yml"
   when: env.cloud.type != 'local'
+  tags: ["no_print"]
   

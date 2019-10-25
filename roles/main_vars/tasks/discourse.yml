@@ -6,6 +6,7 @@
       {{ env.cloud_instance_groups_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_dns:
@@ -23,6 +24,7 @@
         - title: "DNS CNAME records"
           type: "CNAME"
           list: "{{ env.dns_cname_list | default([]) }}"
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_container_vars_default: >-
@@ -43,6 +45,7 @@
       {{ (env.container_vars | default({})).redis_master_run | default({}) }}
     main_vars_container_vars_db_master_run: >-
       {{ (env.container_vars | default({})).db_master_run | default({}) }}
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_containers: 
@@ -82,6 +85,7 @@
         combine(main_vars_container_vars_default_run) | 
         combine(main_vars_container_vars_db_master_run) 
         }}
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_cloud_aux:
@@ -156,6 +160,7 @@
           username: "{{ env.cloud_docker_username | default('') }}"
           password: "{{ env.cloud_docker_password | default('') }}"
           reauthorize: "{{ env.cloud_docker_reauthorize | default(false) | bool }}"
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_cloud:
@@ -360,11 +365,13 @@
             extra:
               dmz: true
               load_balance: false
+  tags: ["no_print"]
 
 - set_fact:
     main_vars_prepare:
       discourse_docker_repo: "{{ env.discourse_docker_repo }}"
       discourse_docker_version: "{{ env.discourse_docker_version }}"
+  tags: ["no_print"]
 
 - name: main discourse vars
   set_fact:
@@ -375,3 +382,4 @@
       destroy: 
         instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
+  tags: ["no_print"]

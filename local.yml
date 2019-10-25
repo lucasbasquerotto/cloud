@@ -10,6 +10,7 @@
     vars:
       main_vars_env_file: "{{ env_file }}"
       main_vars_type: "local"
+    tags: ["no_print"]
 
   - name: "local - set_fact"
     set_fact:
@@ -18,10 +19,12 @@
         repo_version: "{{ env.pod.repo_version }}"
         dir_rel: "{{ local_pod_dir_rel }}"
         dir: "{{ local_pod_dir }}"
+    tags: ["no_print"]
 
   - name: "local - set_fact"
     set_fact:
       local_apps_info: []
+    tags: ["no_print"]
       
   - name: "local - set_fact"
     set_fact:
@@ -39,6 +42,7 @@
     loop_control:
       loop_var: local_item
       label: "{{ local_item.name }}"
+    tags: ["no_print"]
 
   - include_role: 
       name: "local_prepare"

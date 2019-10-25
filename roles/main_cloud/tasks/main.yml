@@ -1,19 +1,24 @@
-- name: "main_cloud - set_fact - args"
+- name: "{{ main_cloud_title }} - set_fact - args"
   set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
   vars:
-    main_cloud_item_key: "main_cloud_{{ main_cloud_item }}"
+    main_cloud_item_key: "main_cloud_var_{{ main_cloud_item }}"
     main_cloud_item_value: "{{ main_cloud_vars[main_cloud_item] }}"
   loop: 
   - "instance_type"
   - "title"
-  - "hosts_file"
   - "host_user"
   - "host_pass"
   - "instance_group"
   loop_control:
     loop_var: main_cloud_item
+  tags: ["no_print"]
 
-- name: "{{ main_cloud_title }} - set_fact"
+- name: "{{ main_cloud_title }} - full title"
+  set_fact: 
+    main_cloud_full_title: "{{ main_cloud_title }} - {{ main_cloud_var_title }}"
+  tags: ["no_print"]
+
+- name: "{{ main_cloud_full_title }} - set_fact"
   set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
   vars:
     main_cloud_item_key: "{{ main_cloud_role + '_' + main_cloud_item.key }}"
@@ -22,14 +27,16 @@
   loop_control:
     loop_var: main_cloud_item
     label: "{{ main_cloud_item.key }}"
+  tags: ["no_print"]
 
-- name: "{{ main_cloud_title }} - set_fact"
+- name: "{{ main_cloud_full_title }} - set_fact"
   set_fact: { "{{ main_cloud_item_key }}": "{{ main_cloud_item_value }}" }
   vars:
     main_cloud_item_key: "{{ main_cloud_role }}_shutdown"
     main_cloud_item_value: "{{ main_cloud_shutdown | default(false) }}"
+  tags: ["no_print"]
 
-- name: "{{ main_cloud_title }} - execute role {{ main_cloud_role }}"
+- name: "{{ main_cloud_full_title }} - execute role {{ main_cloud_role }}"
   include_role: 
     name: '{{ main_cloud_role }}'
 
@@ -37,16 +44,16 @@
     main_cloud_active_hosts: "{{ lookup('vars', main_cloud_role + '_active_hosts') }}"
     main_cloud_hosts_info: ""
 
-- name: "{{ main_cloud_title }} - generate the hosts information with the instances ips"
+- name: "{{ main_cloud_full_title }} - generate the hosts information with the instances ips"
   set_fact: 
     main_cloud_hosts_info: >-
       {{ main_cloud_hosts_info | default('') }}
 
       {{ main_cloud_item.name }}
       ansible_host={{ main_cloud_item.public_ipv4 }}
-      ansible_user={{ main_cloud_host_user }}
-      ansible_become_pass={{ main_cloud_host_pass }}
-      instance_type={{ main_cloud_instance_type }}
+      ansible_user={{ main_cloud_var_host_user }}
+      ansible_become_pass={{ main_cloud_var_host_pass }}
+      instance_type={{ main_cloud_var_instance_type }}
       instance_index={{ main_cloud_index }}
       ansible_host_service={{ 
       main_cloud_extra.dmz | 
@@ -58,15 +65,15 @@
     loop_var: main_cloud_item
     label: "{{ main_cloud_item.name }}"
 
-- name: '{{ main_cloud_title }} - Update the hosts file with the generated hosts'
+- name: '{{ main_cloud_full_title }} - Update the hosts file with the generated hosts'
   blockinfile:
     path: "{{ main_cloud_vars.hosts_file }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ main_cloud_instance_group }}"
-    insertafter: "\\[{{ main_cloud_instance_group }}\\]"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ main_cloud_var_instance_group }}"
+    insertafter: "\\[{{ main_cloud_var_instance_group }}\\]"
     block: "{{ main_cloud_hosts_info }}"
   tags: ["print_action"]
 
-- name: '{{ main_cloud_title }} - refresh inventory'
+- name: '{{ main_cloud_full_title }} - refresh inventory'
   meta: refresh_inventory
   tags: ["print_action"]
 
@@ -74,7 +81,7 @@
   include_role: 
     name: "main_dns"
   vars: 
-    main_dns_title: "{{ main_cloud_title }} - main dns - IPv6"
+    main_dns_title: "{{ main_cloud_full_title }} - main dns - IPv6"
     main_dns_task: "{{ main_cloud_dns.task }}"
     main_dns_credentials: "{{ main_cloud_dns.credentials }}"
     main_dns_zone: "{{ main_cloud_dns.zone }}"
@@ -93,7 +100,7 @@
   include_role: 
     name: "main_dns"
   vars: 
-    main_dns_title: "{{ main_cloud_title }} - main dns - IPv4"
+    main_dns_title: "{{ main_cloud_full_title }} - main dns - IPv4"
     main_dns_task: "{{ main_cloud_dns.task }}"
     main_dns_credentials: "{{ main_cloud_dns.credentials }}"
     main_dns_zone: "{{ main_cloud_dns.zone }}"

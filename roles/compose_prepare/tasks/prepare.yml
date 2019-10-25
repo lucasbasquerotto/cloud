@@ -1,13 +1,13 @@
 ### Create / Update the repository ###
 
-- name: "{{ compose_prepare_title }} - create the repo directory"
+- name: "{{ compose_prepare_inner_title }} - create the repo directory"
   become: "{{ compose_prepare_docker_become }}"
   file:
     path: "{{ compose_prepare_repo_location }}"
     state: directory
     mode: 0755
 
-- name: "{{ compose_prepare_title }} - update the repo directory"
+- name: "{{ compose_prepare_inner_title }} - update the repo directory"
   become: "{{ compose_prepare_docker_become }}"
   git:
     repo: "{{ compose_prepare_pod.repo }}"
@@ -18,7 +18,7 @@
   register: compose_prepare_git_result
   tags: ["print_action"]
 
-- name: "{{ compose_prepare_title }} - set_fact - vars"
+- name: "{{ compose_prepare_inner_title }} - set_fact - vars"
   set_fact:
     compose_prepare_git_commit: "{{ compose_prepare_git_result.after }}"
 
@@ -26,21 +26,21 @@
 
 - block:
 
-  - name: "{{ compose_prepare_title }} - set_fact - vars"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - vars"
     set_fact:
       compose_prepare_env_repo: "{{ compose_prepare_context.env_repo }}"
       compose_prepare_repo_key_file: >-
         {{ compose_prepare_repo_location }}/tmp/{{ compose_prepare_pod_env_dir }}/env_key
 
   - name: >-
-      {{ compose_prepare_title }} - create the directory for the temporary files
+      {{ compose_prepare_inner_title }} - create the directory for the temporary files
     become: "{{ compose_prepare_docker_become }}"
     file:
       path: "{{ compose_prepare_repo_location }}/tmp/{{ compose_prepare_pod_env_dir }}"
       state: directory
       mode: 0755
 
-  - name: "{{ compose_prepare_title }} - copy encrypted file to set location"
+  - name: "{{ compose_prepare_inner_title }} - copy encrypted file to set location"
     become: "{{ compose_prepare_docker_become }}"
     copy:
       src: >-
@@ -49,7 +49,7 @@
       decrypt: yes
       mode: 0600
 
-  - name: "{{ compose_prepare_title }} - environment pod repository"
+  - name: "{{ compose_prepare_inner_title }} - environment pod repository"
     become: "{{ compose_prepare_docker_become }}"
     git:
       repo: "{{ compose_prepare_env_repo.src }}"
@@ -65,12 +65,12 @@
 
 ### Generate the environment pod context variables ###
 
-- name: "{{ compose_prepare_title }} - populate vars from templates (debug)"
+- name: "{{ compose_prepare_inner_title }} - populate vars from templates (debug)"
   debug: 
     msg: "populate vars from templates"
   tags: ["print_action"]
 
-- name: "{{ compose_prepare_title }} - set_fact - vars"
+- name: "{{ compose_prepare_inner_title }} - set_fact - vars"
   set_fact:
     compose_prepare_ctx_tpl_src_remote: >-
       {{ compose_prepare_repo_location }}/{{ ''
@@ -82,7 +82,7 @@
       {{ compose_prepare_local_tmp_dir }}/compose_prepare_ctx.yml"
 
 - name: >-
-    {{ compose_prepare_title }} - 
+    {{ compose_prepare_inner_title }} - 
     create the local directory for the context template
   file:
     path: "{{ compose_prepare_ctx_tpl_src | dirname }}"
@@ -90,7 +90,7 @@
     mode: 0755
   delegate_to: localhost
 
-- name: "{{ compose_prepare_title }} - fetch the context template from a single remote host"
+- name: "{{ compose_prepare_inner_title }} - fetch the context template from a single remote host"
   become: "{{ compose_prepare_docker_become }}"
   run_once: true
   fetch:
@@ -99,7 +99,7 @@
     flat: yes
     fail_on_missing: yes
 
-- name: "{{ compose_prepare_title }} - set_fact - compose_prepare_params_aux"
+- name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_params_aux"
   set_fact:
     compose_prepare_params_aux:
       ctx_name: "{{ compose_prepare_ctx_name }}"
@@ -110,7 +110,7 @@
       repo_location: "{{ compose_prepare_repo_location }}"
       data_dir: "{{ compose_prepare_data_dir }}"
   
-- name: "{{ compose_prepare_title }} - get the context data from the template"
+- name: "{{ compose_prepare_inner_title }} - get the context data from the template"
   template: 
     src: "{{ compose_prepare_ctx_tpl_src }}"
     dest: "{{ compose_prepare_ctx_tpl_dest }}"
@@ -121,7 +121,7 @@
   delegate_to: localhost
 
 - name: >-
-    {{ compose_prepare_title }} - 
+    {{ compose_prepare_inner_title }} - 
     load ctx environment vars ({{ compose_prepare_context.name }})
   include_vars:
     file: "{{ compose_prepare_ctx_tpl_dest }}"
@@ -130,13 +130,13 @@
 
 ### Generate a file with all the context environment expanded variables (for idempotence) ###
 
-- name: "{{ compose_prepare_title }} - set_fact - compose_prepare_vars_full"
+- name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_vars_full"
   set_fact:
     compose_prepare_vars_full:
       main: "{{ compose_prepare_ctx_outer_params }}"
       aux: "{{ compose_prepare_params_aux }}"
 
-- name: "{{ compose_prepare_title }} - create the temporary file to verify if there was a change"
+- name: "{{ compose_prepare_inner_title }} - create the temporary file to verify if there was a change"
   become: "{{ compose_prepare_docker_become }}"
   copy: 
     content: "{{ compose_prepare_vars_full | to_nice_yaml }}"
@@ -145,7 +145,7 @@
     group: "{{ compose_prepare_group }}"
     mode: 0640
 
-- name: "{{ compose_prepare_title }} - get the difference of the 2 files (old and current)"
+- name: "{{ compose_prepare_inner_title }} - get the difference of the 2 files (old and current)"
   become: "{{ compose_prepare_docker_become }}"
   command: "diff {{ compose_prepare_backup_file_tmp }} {{ compose_prepare_backup_file }}"
   register: compose_prepare_diff
@@ -158,18 +158,18 @@
 
   ### Generate the environment pod expanded variables ###
 
-  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_ctx_params"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_ctx_params"
     set_fact:
       compose_prepare_ctx_params: "{{ compose_prepare_ctx_outer_params.params }}"
 
-  - name: "{{ compose_prepare_title }} - set_fact - vars"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - vars"
     set_fact:
       compose_prepare_vars_volumes: []
       compose_prepare_vars_files: []
       compose_prepare_vars_templates: []
       compose_prepare_vars_env_files: []
 
-  - name: "{{ compose_prepare_title }} - populate vars from templates (outer)"
+  - name: "{{ compose_prepare_inner_title }} - populate vars from templates (outer)"
     include_tasks: "vars.yml"
     loop: "{{ compose_prepare_ctx_params }}"
     loop_control:
@@ -178,14 +178,14 @@
 
   ### Polish previous variables to use them directly later ###
 
-  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_tpl_list - empty"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_tpl_list - empty"
     set_fact:
       compose_prepare_files_list: []
       compose_prepare_tpl_list: []
       compose_prepare_env_files_list: []
       compose_prepare_dir_list: []
 
-  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_files_list - fill"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_files_list - fill"
     set_fact:
       compose_prepare_files_list: >-
         {{ 
@@ -212,7 +212,7 @@
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.dest | default(compose_prepare_item.src) }}"
 
-  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_tpl_list - fill"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_tpl_list - fill"
     set_fact:
       compose_prepare_tpl_list: >-
         {{ 
@@ -246,7 +246,7 @@
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.dest | default(compose_prepare_item.src) }}"
 
-  - name: "{{ compose_prepare_title }} - set_fact - compose_prepare_env_files_list - fill"
+  - name: "{{ compose_prepare_inner_title }} - set_fact - compose_prepare_env_files_list - fill"
     set_fact:
       compose_prepare_env_files_list: >-
         {{ 
@@ -270,7 +270,7 @@
       loop_var: compose_prepare_item
       label: "{{ compose_prepare_item.dest }}"
 
-  - name: "{{ compose_prepare_title }} - create the directories list var"
+  - name: "{{ compose_prepare_inner_title }} - create the directories list var"
     set_fact:
       compose_prepare_dir_list: "{{ compose_prepare_dir_list + [compose_prepare_item.dest | dirname] }}"
     loop: >-
@@ -288,7 +288,7 @@
   ### Create the directories ###
 
   - name: >-
-      {{ compose_prepare_title }} - 
+      {{ compose_prepare_inner_title }} - 
       create the local directories for the repository templates
     file:
       path: "{{ compose_prepare_item.src | dirname }}"
@@ -300,7 +300,7 @@
       label: "{{ compose_prepare_item.dest | dirname }}"
     delegate_to: localhost
 
-  - name: "{{ compose_prepare_title }} - create the volume directories"
+  - name: "{{ compose_prepare_inner_title }} - create the volume directories"
     become: "{{ compose_prepare_docker_become }}"
     file:
       state: directory
@@ -314,7 +314,7 @@
       label: "{{ compose_prepare_item.path }}"
     tags: ["print_action"]
 
-  - name: "{{ compose_prepare_title }} - create the other directories"
+  - name: "{{ compose_prepare_inner_title }} - create the other directories"
     become: "{{ compose_prepare_docker_become }}"
     file:
       state: directory
@@ -329,7 +329,7 @@
 
   ### Transfer the needed files and templates ###
 
-  - name: "{{ compose_prepare_title }} - copy the files to the specified locations"
+  - name: "{{ compose_prepare_inner_title }} - copy the files to the specified locations"
     become: "{{ compose_prepare_docker_become }}"
     copy:
       remote_src: true
@@ -344,7 +344,7 @@
       label: "{{ compose_prepare_item.dest }}"
     tags: ["print_action"]
 
-  - name: "{{ compose_prepare_title }} - fetch the vars templates from a single remote host"
+  - name: "{{ compose_prepare_inner_title }} - fetch the vars templates from a single remote host"
     become: "{{ compose_prepare_docker_become }}"
     run_once: true
     fetch:
@@ -358,7 +358,7 @@
       label: "{{ compose_prepare_item.dest }}"
     tags: ["print_action"]
       
-  - name: "{{ compose_prepare_title }} - transfer the templates to the specified locations"
+  - name: "{{ compose_prepare_inner_title }} - transfer the templates to the specified locations"
     become: "{{ compose_prepare_docker_become }}"
     template: 
       src: "{{ compose_prepare_item.src }}"
@@ -374,7 +374,7 @@
       label: "{{ compose_prepare_item.dest }}"
     tags: ["print_action"]
 
-  - name: "{{ compose_prepare_title }} - copy the environment files to the specified locations"
+  - name: "{{ compose_prepare_inner_title }} - copy the environment files to the specified locations"
     become: "{{ compose_prepare_docker_become }}"
     copy:
       src: "{{ compose_prepare_item.src }}"
@@ -388,7 +388,7 @@
       label: "{{ compose_prepare_item.dest }}"
     tags: ["print_action"]
     
-  - name: "{{ compose_prepare_title }} - prepare the temporary images (pull and build)"
+  - name: "{{ compose_prepare_inner_title }} - prepare the temporary images (pull and build)"
     become: "{{ compose_prepare_docker_become }}"
     command: "{{ compose_prepare_item }}"
     args:
@@ -402,7 +402,7 @@
 
   when: compose_prepare_diff.changed
 
-- name: "{{ compose_prepare_title }} - debug - inner"
+- name: "{{ compose_prepare_inner_title }} - debug - inner"
   debug: 
     msg: "variables unchanged"
   when: not compose_prepare_diff.changed

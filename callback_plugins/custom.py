@@ -18,11 +18,12 @@ DOCUMENTATION = '''
       - set as stdout in configuration
 '''
 
-import yaml
+import datetime
 import json
 import re
 import string
 import sys
+import yaml
 
 from ansible import constants as C
 from ansible import context
@@ -157,6 +158,9 @@ class CallbackModule(CallbackBase):
                 if not 'print_action' in result._task.tags:
                     return
 
+            if 'no_print' in self._task.tags:
+                return
+
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
@@ -178,6 +182,8 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
+        if 'no_print' in self._task.tags:
+            return
 
         if self.display_skipped_hosts or ('print_skipped_action' in result._task.tags):
 
@@ -212,6 +218,7 @@ class CallbackModule(CallbackBase):
         self._display.banner("NO MORE HOSTS LEFT")
 
     def v2_playbook_on_task_start(self, task, is_conditional):
+        self._task = task
         self._task_start(task, prefix='TASK')
 
     def _task_start(self, task, prefix=None):
@@ -229,6 +236,9 @@ class CallbackModule(CallbackBase):
             self._last_task_name = None
         else:
             self._last_task_name = task.get_name().strip()
+
+            if 'no_print' in self._task.tags:
+                return
 
             # Display the task banner immediately if we're not doing any filtering based on task result
             if self.display_skipped_hosts and self.display_ok_hosts:
@@ -255,7 +265,9 @@ class CallbackModule(CallbackBase):
         if task_name is None:
             task_name = task.get_name().strip()
 
-        self._display.banner(u"%s [%s%s]" % (prefix, task_name, args))
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        self._display.banner(u"%s [%s - %s%s]" % (prefix, now, task_name, args))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
@@ -313,6 +325,9 @@ class CallbackModule(CallbackBase):
                 if not 'print_action' in result._task.tags:
                     return
 
+            if 'no_print' in self._task.tags:
+                return
+
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
@@ -348,6 +363,9 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
+        if 'no_print' in self._task.tags:
+            return
+
         if self.display_skipped_hosts or ('print_skipped_action' in result._task.tags):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
@@ -359,6 +377,9 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
+        if 'no_print' in self._task.tags:
+            return
+
         if self.display_ok_hosts:
             msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
             if 'item' in included_file._args:
