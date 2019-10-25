@@ -122,7 +122,7 @@
   - name: "{{ compose_prepare_title }} - prepare the real directory"
     include_tasks: "prepare.yml"
     vars:
-    compose_prepare_inner_title: "{{ compose_prepare_title }} - real"
+      compose_prepare_inner_title: "{{ compose_prepare_title }} - real"
       compose_prepare_repo_location: >-
         {{ compose_prepare_base_dir }}/pod-{{ compose_prepare_context.name }}
 
