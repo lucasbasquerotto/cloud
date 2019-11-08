@@ -168,7 +168,74 @@
 
 ###############################################################################
 
-- name: Play 06 - Delete Temporary Cloud Instances
+- name: Play 06.1 - Execute instruction on-the-fly - DB Master
+  hosts: db_master
+  tags:
+  - never
+  - exec
+  - exec_db_master
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
+  - include_tasks: "tasks/compose_exec.yml"
+    tags: ["no_print"]
+
+#-----------------------------------------------------------------------------#
+
+- name: Play 06.2 - Execute instruction on-the-fly - Redis Master
+  hosts: redis_master
+  tags:
+  - never
+  - exec
+  - exec_redis_master
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
+  - include_tasks: "tasks/compose_exec.yml"
+    tags: ["no_print"]
+
+#-----------------------------------------------------------------------------#
+
+- name: Play 06.3 - Execute instruction on-the-fly - Web
+  hosts: 
+  - web
+  - web_replica
+  tags:
+  - never
+  - exec
+  - exec_web
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
+  - include_tasks: "tasks/compose_exec.yml"
+    tags: ["no_print"]
+
+#-----------------------------------------------------------------------------#
+
+- name: Play 06.4 - Execute instruction on-the-fly - App
+  hosts: 
+  - app
+  tags:
+  - never
+  - exec
+  - exec_app
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
+  - include_tasks: "tasks/compose_exec.yml"
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 07 - Delete Temporary Cloud Instances
   hosts: main
   tags:
   - init
@@ -196,7 +263,7 @@
 
 ###############################################################################
 
-- name: Play 07 - Delete everything that was previously created
+- name: Play 08 - Delete everything that was previously created
   hosts: main
   tags:
   - never
