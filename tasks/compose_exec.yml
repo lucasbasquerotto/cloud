@@ -7,7 +7,7 @@
     long_run_output_path: "/var/main/{{ main_item.name | default('.tmp') }}/data/log"
     long_run_output_file: "env-exec.log"
     long_run_path: "/var/main/{{ main_item.name | default('.tmp') }}/pod-{{ main_item.name }}"
-    long_run_cmd: "{{ env_exec_cmd }}"
+    long_run_cmd: "{{ env_exec_cmd | b64decode }}"
   loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
   loop_control:
     loop_var: main_item
