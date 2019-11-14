@@ -2,12 +2,12 @@
   include_role: 
     name: long_run
   vars:
-    long_run_title: "compose exec - {{ env_exec_cmd }}"
+    long_run_title: "compose exec - {{ env_exec_cmd | b64decode | trim | regex_replace('\n', ' .. ') | truncate(30, False, '...', 10) }}"
     long_run_become: "{{ main_vars.run.docker_become }}"
     long_run_output_path: "/var/main/{{ main_item.name | default('.tmp') }}/data/log"
     long_run_output_file: "env-exec.log"
     long_run_path: "/var/main/{{ main_item.name | default('.tmp') }}/pod-{{ main_item.name }}"
-    long_run_cmd: "{{ env_exec_cmd | b64decode }}"
+    long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
   loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
   loop_control:
     loop_var: main_item
