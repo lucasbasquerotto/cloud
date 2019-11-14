@@ -162,6 +162,10 @@
       long_run_become: yes
       long_run_output_path: "{{ discourse_run_output_path }}"
       long_run_output_file: "{{ discourse_run_output_file }}"
+      long_run_tmp_path: "{{ discourse_run_tmp_path }}"
+      long_run_tmp_file: "{{ discourse_run_tmp_file }}"
+      long_run_tmp_path: "{{ compose_run_base_dir }}/data/tmp"
+      long_run_tmp_file: "env-run-setup"
       long_run_path: "{{ discourse_run_path }}"
       long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
 

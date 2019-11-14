@@ -1,12 +1,17 @@
 - set_fact:
     long_run_before: "{{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
 
-- name: '[{{ long_run_title }}] - create the directory "{{ long_run_output_path }}" to run'
+- name: '[{{ long_run_title }}] - create the needed directories'
   become: "{{ long_run_become }}"
   file:
-    path: "{{ long_run_output_path }}"
+    path: "{{ long_run_item }}"
     state: directory
     mode: 0744
+  loop: 
+  - "{{ long_run_output_path }}"
+  - "{{ long_run_tmp_path }}"
+  loop_control:
+    loop_var: long_run_item
 
 - name: '[{{ long_run_title }}] - clear output file before run'
   become: "{{ long_run_become }}"
@@ -15,11 +20,21 @@
     dest: "{{ long_run_output_path }}/{{ long_run_output_file }}"
     mode: 0640
 
-- name: '[{{ long_run_title }}] - start the execution of "{{ long_run_cmd }}"'
+- name: "{{ long_run_title }} - create the file to run the command"
+  become: "{{ long_run_become }}"
+  copy: 
+    content: "{{ long_run_cmd }}"
+    dest: "{{ long_run_tmp_path }}/{{ long_run_tmp_file }}"
+    mode: 0741
+
+- name: >-
+    [{{ long_run_title }}] - start the execution of 
+    "{{ long_run_cmd | trim | regex_replace('\n', ' .. ') | truncate(60, False, '...', 20) }}"
   become: "{{ long_run_become }}"
   shell: |
-    set -o pipefail
-    {{ long_run_cmd }} 2>&1 | tee --append {{ long_run_output_path }}/{{ long_run_output_file }}
+    set -eou pipefail
+    {{ long_run_tmp_path }}/{{ long_run_tmp_file }}{{ ''
+    }} 2>&1 | tee --append {{ long_run_output_path }}/{{ long_run_output_file }}
   args:
     executable: /bin/bash
     chdir: "{{ long_run_path }}"

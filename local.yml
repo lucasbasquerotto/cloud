@@ -65,6 +65,8 @@
       long_run_title: "compose exec - {{ env_exec_cmd | b64decode | trim | regex_replace('\n', ' .. ') | truncate(30, False, '...', 10) }}"
       long_run_output_path: "{{ env_tmp_dir }}/data/log"
       long_run_output_file: "env-exec.log"
+      long_run_tmp_path: "{{ env_tmp_dir }}/data/tmp"
+      long_run_tmp_file: "env-exec"
       long_run_path: "{{ local_pod.dir }}"
       long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
     when: (env_exec_cmd | default('')) != ''

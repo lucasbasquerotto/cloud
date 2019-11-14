@@ -14,6 +14,8 @@ discourse_container_instance_max: 0
 discourse_setup_become: "yes"
 discourse_setup_output_path: "/tmp/main/discourse/out"
 discourse_setup_output_file: "setup.log"
+discourse_setup_tmp_path: "/tmp/main/discourse/tmp"
+discourse_setup_tmp_file: "setup"
 discourse_setup_file: "discourse-custom-setup"
 discourse_setup_tmp_file_dir: "/tmp/main/discourse/setup"
 discourse_setup_cmd: "./{{ discourse_setup_file }}"

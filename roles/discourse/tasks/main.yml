@@ -100,6 +100,8 @@
     long_run_become: "{{ discourse_setup_become }}"
     long_run_output_path: "{{ discourse_setup_output_path }}"
     long_run_output_file: "{{ discourse_setup_output_file }}"
+    long_run_tmp_path: "{{ discourse_setup_tmp_path }}"
+    long_run_tmp_file: "{{ discourse_setup_tmp_file }}"
     long_run_path: "{{ discourse_location }}"
     long_run_cmd: "{{ discourse_setup_cmd }}"
   when: "discourse_diff.changed" 
