@@ -6,6 +6,12 @@
   - cloud
   gather_facts: no  
   tasks:
+  - debug:
+      msg: "env_cmd={{ env_cmd | default('') }}"
+      
+  - debug:
+      msg: "env_exec_cmd={{ env_exec_cmd | default('') }}"
+
   - include_tasks: "tasks/compose_init.yml"
     tags: ["no_print"]
 
