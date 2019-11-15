@@ -1,3 +1,10 @@
+- include_role: 
+    name: "main_vars"
+  vars:
+    main_vars_env_file: "{{ env_file }}"
+    main_vars_type: "compose"
+  tags: ["no_print"]
+  
 - name: "compose exec"
   include_role: 
     name: long_run

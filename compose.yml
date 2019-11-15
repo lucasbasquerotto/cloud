@@ -177,9 +177,6 @@
   - exec_db_master
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
-
   - include_tasks: "tasks/compose_exec.yml"
     tags: ["no_print"]
 
@@ -193,9 +190,6 @@
   - exec_redis_master
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
-
   - include_tasks: "tasks/compose_exec.yml"
     tags: ["no_print"]
 
@@ -211,9 +205,6 @@
   - exec_web
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
-
   - include_tasks: "tasks/compose_exec.yml"
     tags: ["no_print"]
 
@@ -228,9 +219,6 @@
   - exec_app
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
-
   - include_tasks: "tasks/compose_exec.yml"
     tags: ["no_print"]
 
