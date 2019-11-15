@@ -93,6 +93,7 @@
       compose_prepare_env_dir: "{{ env_dir }}"
       compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
       compose_prepare_repo_name: "{{ env_local_repo }}"
+      compose_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
     loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
     loop_control:
       loop_var: main_item

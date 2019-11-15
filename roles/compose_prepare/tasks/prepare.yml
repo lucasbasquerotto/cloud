@@ -109,6 +109,7 @@
       pod_env_dir: "{{ compose_prepare_pod_env_dir }}"
       repo_location: "{{ compose_prepare_repo_location }}"
       data_dir: "{{ compose_prepare_data_dir }}"
+      env_cmd: "{{ compose_prepare_env_cmd | default('', true) }}"
   
 - name: "{{ compose_prepare_inner_title }} - get the context data from the template"
   template: 
