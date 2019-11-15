@@ -62,7 +62,11 @@
     include_role: 
       name: long_run
     vars:
-      long_run_title: "{{ compose_run_title }} - environment run cmd - {{ env_exec_cmd | b64decode | trim | regex_replace('\n', ' .. ') | truncate(30, False, '...', 10) }}"
+      long_run_title: >-
+        {{ compose_run_title }} - environment run cmd - 
+        {{ compose_run_env_cmd | b64decode | trim 
+        | regex_replace('\n', ' .. ') 
+        | truncate(30, False, '...', 10) }}
       long_run_become: "{{ compose_run_docker_become }}"
       long_run_output_path: "{{ compose_run_base_dir }}/data/log"
       long_run_output_file: "env-run.log"
