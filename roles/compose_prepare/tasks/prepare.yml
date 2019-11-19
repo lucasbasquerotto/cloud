@@ -77,9 +77,9 @@
       }}{{ compose_prepare_ctx_dir }}/{{ ''
       }}{{ compose_prepare_context.file }}
     compose_prepare_ctx_tpl_src: >-
-      {{ compose_prepare_local_tmp_dir }}/compose_prepare_ctx.tpl.yml"
+      {{ compose_prepare_local_tmp_dir }}/compose_prepare_ctx.tpl.yml
     compose_prepare_ctx_tpl_dest: >-
-      {{ compose_prepare_local_tmp_dir }}/compose_prepare_ctx.yml"
+      {{ compose_prepare_local_tmp_dir }}/compose_prepare_ctx.yml
 
 - name: >-
     {{ compose_prepare_inner_title }} - 
