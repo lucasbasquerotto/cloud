@@ -23,7 +23,9 @@
 - name: "{{ long_run_title }} - create the file to run the command"
   become: "{{ long_run_become }}"
   copy: 
-    content: "{{ long_run_cmd }}"
+    content: |
+      set -eou pipefail
+      {{ long_run_cmd }}
     dest: "{{ long_run_tmp_path }}/{{ long_run_tmp_file }}"
     mode: 0741
 
