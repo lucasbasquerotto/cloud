@@ -52,7 +52,7 @@
       {{ main_cloud_item.name }}
       ansible_host={{ main_cloud_item.public_ipv4 }}
       ansible_user={{ main_cloud_var_host_user }}
-      ansible_become_pass={{ main_cloud_var_host_pass }}
+      {{ main_cloud_var_host_pass | ternary('ansible_become_pass=' + main_cloud_var_host_pass, '') }}
       instance_type={{ main_cloud_var_instance_type }}
       instance_index={{ main_cloud_index }}
       ansible_host_service={{ 
