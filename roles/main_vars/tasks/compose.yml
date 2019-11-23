@@ -6,6 +6,11 @@
       {{ env.cloud_instance_groups_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
+    main_vars_ssh_encrypted_key_path: >-
+      {{ env.cloud_ssh_encrypted_key_path_rel 
+      | ternary(env_dir + '/' + env.cloud_ssh_encrypted_key_path_rel, '') 
+      }}
+    main_vars_ssh_key_path: "{{ env_tmp }}/cloud.key"
   tags: ["no_print"]
 
 - set_fact:
@@ -100,6 +105,8 @@
                 region: "{{ env.cloud_region | default('nyc1') }}"
                 title: "Main Instance"
                 hosts_file: "{{ inventory_file }}"
+                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
+                ssh_key_path: "{{ main_vars_ssh_key_path }}"
                 api_token: "{{ env.cloud_api_token }}"
                 host_user: "{{ env.cloud_host_user }}"
                 host_pass: "{{ env.cloud_host_pass }}"
@@ -131,6 +138,8 @@
                 api_token: "{{ env.cloud_api_token }}"
                 host_user: "{{ env.cloud_host_user }}"
                 host_pass: "{{ env.cloud_host_pass }}"
+                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
+                ssh_key_path: "{{ main_vars_ssh_key_path }}"
                 ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
                 all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
                 all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
@@ -160,6 +169,8 @@
                 api_token: "{{ env.cloud_api_token }}"
                 host_user: "{{ env.cloud_host_user }}"
                 host_pass: "{{ env.cloud_host_pass }}"
+                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
+                ssh_key_path: "{{ main_vars_ssh_key_path }}"
                 ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
                 all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
                 all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
@@ -188,6 +199,8 @@
                 api_token: "{{ env.cloud_api_token }}"
                 host_user: "{{ env.cloud_host_user }}"
                 host_pass: "{{ env.cloud_host_pass }}"
+                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
+                ssh_key_path: "{{ main_vars_ssh_key_path }}"
                 ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
                 all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
                 all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
@@ -216,6 +229,8 @@
                 api_token: "{{ env.cloud_api_token }}"
                 host_user: "{{ env.cloud_host_user }}"
                 host_pass: "{{ env.cloud_host_pass }}"
+                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
+                ssh_key_path: "{{ main_vars_ssh_key_path }}"
                 ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
                 all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
                 all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"

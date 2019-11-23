@@ -9,6 +9,8 @@
   - "host_user"
   - "host_pass"
   - "instance_group"
+  - "ssh_encrypted_key_path"
+  - "ssh_key_path"
   loop_control:
     loop_var: main_cloud_item
   tags: ["no_print"]
@@ -43,6 +45,18 @@
 - set_fact: 
     main_cloud_active_hosts: "{{ lookup('vars', main_cloud_role + '_active_hosts') }}"
     main_cloud_hosts_info: ""
+    main_cloud_ssh_key_file: ""
+
+- name: "{{ main_cloud_full_title }} - generate unencrypted key file"
+  copy:
+    src: "{{ main_cloud_var_ssh_encrypted_key_path }}"
+    dest: "{{ main_cloud_var_ssh_key_path }}"
+    decrypt: yes
+    mode: 0600
+  when: >-
+    ((main_cloud_var_ssh_encrypted_key_path | default('', true)) != '') 
+    and 
+    ((main_cloud_var_ssh_key_path | default('', true)) != '')
 
 - name: "{{ main_cloud_full_title }} - generate the hosts information with the instances ips"
   set_fact: 
@@ -53,6 +67,9 @@
       ansible_host={{ main_cloud_item.public_ipv4 }}
       ansible_user={{ main_cloud_var_host_user }}
       {{ main_cloud_var_host_pass | ternary('ansible_become_pass=' + main_cloud_var_host_pass, '') }}
+      {{ main_cloud_var_ssh_key_path 
+      | ternary('ansible_ssh_private_key_file=' + main_cloud_var_ssh_key_path, '') 
+      }}
       instance_type={{ main_cloud_var_instance_type }}
       instance_index={{ main_cloud_index }}
       ansible_host_service={{ 
