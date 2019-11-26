@@ -1,13 +1,13 @@
 - set_fact:
     main_vars_cloud_shutdown: "{{ env.cloud_shutdown | default(0) }}"
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
-    main_vars_env_name: "{{ env.name | ternary(env.name + '-', '') }}"
+    main_vars_env_name: "{{ env.name | default('') | ternary(env.name + '-', '') }}"
     main_vars_instance_groups_to_destroy: >-
       {{ env.cloud_instance_groups_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
     main_vars_ssh_encrypted_key_path: >-
-      {{ env.cloud_ssh_encrypted_key_path_rel 
+      {{ env.cloud_ssh_encrypted_key_path_rel | default('')
       | ternary(env_dir + '/' + env.cloud_ssh_encrypted_key_path_rel, '') 
       }}
     main_vars_ssh_key_path: "{{ env_tmp }}/cloud.key"
