@@ -47,7 +47,7 @@
     main_cloud_hosts_info: ""
     main_cloud_ssh_key_file: ""
 
-- name: "{{ main_cloud_full_title }} - generate unencrypted key file"
+- name: "{{ main_cloud_full_title }} - generate unencrypted key file - {{ main_cloud_var_ssh_key_path }}"
   copy:
     src: "{{ main_cloud_var_ssh_encrypted_key_path }}"
     dest: "{{ main_cloud_var_ssh_key_path }}"

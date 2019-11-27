@@ -10,7 +10,10 @@
       {{ env.cloud_ssh_encrypted_key_path_rel  | default('')
       | ternary(env_dir + '/' + (env.cloud_ssh_encrypted_key_path_rel | default('')), '') 
       }}
-    main_vars_ssh_key_path: "{{ env_tmp_dir }}/cloud.key"
+    main_vars_ssh_key_path: >-
+      {{ env.cloud_ssh_encrypted_key_path_rel  | default('')
+      | ternary(env_tmp_dir + '/cloud.key', '') 
+      }}
   tags: ["no_print"]
 
 - set_fact:
