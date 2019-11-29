@@ -169,7 +169,35 @@
 
 ###############################################################################
 
-- name: Play 06.1 - Execute instruction on-the-fly - DB Master
+- name: Play 06 - Define the cron jobs
+  hosts: host
+  tags:
+  - init
+  - cron
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
+
+  - include_role: 
+      name: "cron"
+    vars:
+      cron_title: "cron - {{ main_item }}"
+      cron_src_file: "{{ main_vars.cron.main[main_item] }}"
+      cron_dest_become: "{{ main_vars.cron.become }}"
+      cron_dest_dir: "{{ main_vars.cron.dest_dir }}"
+      cron_dest_file: "{{ main_vars.cron.dest_file }}"
+    loop: "{{ main_vars.prepare.contexts | default([]) | list | map(attribute='group') | unique }}"
+    loop_control:
+      loop_var: main_item
+    when: >-
+      (main_item == instance_type) 
+      and 
+      (main_vars.cron.main[main_item] | default('') != '')
+
+###############################################################################
+
+- name: Play 07.1 - Execute instruction on-the-fly - DB Master
   hosts: db_master
   tags:
   - never
@@ -182,7 +210,7 @@
 
 #-----------------------------------------------------------------------------#
 
-- name: Play 06.2 - Execute instruction on-the-fly - Redis Master
+- name: Play 07.2 - Execute instruction on-the-fly - Redis Master
   hosts: redis_master
   tags:
   - never
@@ -195,7 +223,7 @@
 
 #-----------------------------------------------------------------------------#
 
-- name: Play 06.3 - Execute instruction on-the-fly - Web
+- name: Play 07.3 - Execute instruction on-the-fly - Web
   hosts: 
   - web
   - web_replica
@@ -210,7 +238,7 @@
 
 #-----------------------------------------------------------------------------#
 
-- name: Play 06.4 - Execute instruction on-the-fly - App
+- name: Play 07.4 - Execute instruction on-the-fly - App
   hosts: 
   - app
   tags:
@@ -224,7 +252,7 @@
 
 ###############################################################################
 
-- name: Play 07 - Delete Temporary Cloud Instances
+- name: Play 08 - Delete Temporary Cloud Instances
   hosts: main
   tags:
   - init
@@ -252,7 +280,7 @@
 
 ###############################################################################
 
-- name: Play 08 - Delete everything that was previously created
+- name: Play 09 - Delete everything that was previously created
   hosts: main
   tags:
   - never

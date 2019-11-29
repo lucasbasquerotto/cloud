@@ -1,6 +1,7 @@
 - set_fact:
     main_vars_cloud_shutdown: "{{ env.cloud_shutdown | default(0) }}"
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
+    main_vars_cron_dest_dir: "/var/spool/cron/crontabs"
     main_vars_env_name: "{{ env.name | default('') | ternary((env.name | default('')) + '-', '') }}"
     main_vars_instance_groups_to_destroy: >-
       {{ env.cloud_instance_groups_to_destroy | default([]) }}
@@ -263,6 +264,14 @@
     main_vars_run:
       docker_become: "{{ env.docker_become }}"
       file_env_vars_relative: "tmp/env/compose_run_vars_full.yml"
+    main_vars_cron: 
+      main: "{{ env.cron | default({}) }}"
+      become: "{{ env.docker_become }}"
+      dest_dir: "{{ main_vars_cron_dest_dir }}"
+      dest_file: >-
+        {{ ((env.docker_become | default('')) == 'true') 
+        | ternary('root', env.cloud_host_user) 
+        }}
   tags: ["no_print"]
 
 - name: main compose vars
@@ -272,6 +281,7 @@
       dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
       prepare: "{{ main_vars_prepare }}"
       run: "{{ main_vars_run }}"
+      cron:  "{{ main_vars_cron }}"
       destroy: 
         instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
