@@ -43,6 +43,19 @@
       loop_var: local_item
       label: "{{ local_item.name }}"
     tags: ["no_print"]
+  
+  - name: "local env vars"
+    lineinfile:
+      dest: "/root/.profile"
+      state: present
+      regexp: "^{{ local_item.name }}="
+      line: "{{ local_item.name }}={{ local_item.value }}"
+    loop: 
+    - { name: "MAIN_DIR", value: "/var/main/local" }
+    - { name: "DATA_DIR", value: "/var/main/local/data" }
+    loop_control:
+      loop_var: local_item
+      label: "{{ local_item.name }}"
 
   - include_role: 
       name: "local_prepare"
@@ -62,7 +75,9 @@
     include_role: 
       name: long_run
     vars:
-      long_run_title: "compose exec - {{ env_exec_cmd | b64decode | trim | regex_replace('\n', ' .. ') | truncate(30, False, '...', 10) }}"
+      long_run_title: >-
+        compose exec - {{ env_exec_cmd | b64decode | trim 
+        | regex_replace('\n', ' .. ') | truncate(30, False, '...', 10) }}
       long_run_output_path: "{{ env_tmp_dir }}/data/log"
       long_run_output_file: "env-exec.log"
       long_run_tmp_path: "{{ env_tmp_dir }}/data/tmp"
@@ -70,3 +85,14 @@
       long_run_path: "{{ local_pod.dir }}"
       long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
     when: (env_exec_cmd | default('')) != ''
+    
+  - name: "local cron"
+    include_role: 
+      name: "cron"
+    vars:
+      cron_title: "local cron - {{ env.cron }}"
+      cron_src_file: "{{ env_dir }}/{{ env.cron }}"
+      cron_become: "false"
+      cron_dest_dir: "/var/spool/cron/crontabs"
+      cron_dest_file: "root"
+    when: (env.cron | default('')) != ''

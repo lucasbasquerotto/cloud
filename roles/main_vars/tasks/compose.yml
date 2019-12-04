@@ -265,6 +265,7 @@
       docker_become: "{{ env.docker_become }}"
       file_env_vars_relative: "tmp/env/compose_run_vars_full.yml"
     main_vars_cron: 
+      src_base_dir: "{{ env_dir }}"
       main: "{{ env.cron | default({}) }}"
       become: "{{ env.docker_become }}"
       dest_dir: "{{ main_vars_cron_dest_dir }}"

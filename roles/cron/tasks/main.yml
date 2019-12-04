@@ -10,5 +10,5 @@
 
 - name: "{{ cron_title }} - Ensure crontab file is active"
   become: "{{ cron_become }}"
-  shell: "crontab {{ cron_dest_file }}"
-  when: cron_result | changed
+  shell: "crontab '{{ cron_dest_dir }}/{{ cron_dest_file }}'"
+  when: cron_result is changed

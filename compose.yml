@@ -183,8 +183,8 @@
       name: "cron"
     vars:
       cron_title: "cron - {{ main_item }}"
-      cron_src_file: "{{ main_vars.cron.main[main_item] }}"
-      cron_dest_become: "{{ main_vars.cron.become }}"
+      cron_src_file: "{{ main_vars.cron.src_base_dir }}/{{ main_vars.cron.main[main_item] }}"
+      cron_become: "{{ main_vars.cron.become }}"
       cron_dest_dir: "{{ main_vars.cron.dest_dir }}"
       cron_dest_file: "{{ main_vars.cron.dest_file }}"
     loop: "{{ main_vars.prepare.contexts | default([]) | list | map(attribute='group') | unique }}"
@@ -193,7 +193,7 @@
     when: >-
       (main_item == instance_type) 
       and 
-      (main_vars.cron.main[main_item] | default('') != '')
+      ((main_vars.cron.main[main_item] | default('')) != '')
 
 ###############################################################################
 
