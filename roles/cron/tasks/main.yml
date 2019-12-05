@@ -12,3 +12,10 @@
   become: "{{ cron_become }}"
   shell: "crontab '{{ cron_dest_dir }}/{{ cron_dest_file }}'"
   when: cron_result is changed
+
+- name: "{{ cron_title }} - Ensure cron is running"
+  become: "{{ cron_become }}"
+  service: 
+    name: cron
+    state: started
+  when: (cron_start | default('')) == 'true'
