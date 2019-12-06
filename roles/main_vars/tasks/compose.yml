@@ -270,7 +270,7 @@
       become: "{{ env.docker_become }}"
       dest_dir: "{{ main_vars_cron_dest_dir }}"
       dest_file: >-
-        {{ ((env.docker_become | default('')) == 'true') 
+        {{ ((env.docker_become | default('')) in ['yes', 'true']) 
         | ternary('root', env.cloud_host_user) 
         }}
   tags: ["no_print"]

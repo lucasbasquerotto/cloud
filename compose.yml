@@ -188,7 +188,9 @@
       cron_dest_dir: "{{ main_vars.cron.dest_dir }}"
       cron_dest_file: "{{ main_vars.cron.dest_file }}"
       cron_start: "true"
-    loop: "{{ main_vars.prepare.contexts | default([]) | list | map(attribute='group') | unique | list }}"
+    loop: >-
+      {{ main_vars.prepare.contexts | default([]) | list 
+      | map(attribute='group') | unique | list }}
     loop_control:
       loop_var: main_item
     when: >-
