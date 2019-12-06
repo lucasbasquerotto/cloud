@@ -3,7 +3,7 @@
     name: compose_run
   vars:
     compose_run_context: "{{ main_item }}"
-    compose_run_base_dir: "/var/main/{{ main_item.name | default('') }}"
+    compose_run_base_dir: "{{ main_vars.base_dir }}/{{ main_item.name | default('') }}"
     compose_run_file_env_vars_relative_src: >-
       {{ main_vars.prepare.file_env_vars_relative }}
     compose_run_file_env_vars_relative_dest: >-

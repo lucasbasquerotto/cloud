@@ -83,7 +83,7 @@
       compose_prepare_pod: "{{ main_vars.prepare.pod }}"
       compose_prepare_pod_env_dir: "{{ main_vars.prepare.pod.env_dir | default('env') }}"
       compose_prepare_context: "{{ main_item }}"
-      compose_prepare_base_dir: "/var/main/{{ main_item.name | default('') }}"
+      compose_prepare_base_dir: "{{ main_vars.base_dir }}/{{ main_item.name | default('') }}"
       compose_prepare_params: "{{ main_vars.prepare.params[main_item.name] }}"
       compose_prepare_file_env_vars_relative: >-
         {{ main_vars.prepare.file_env_vars_relative }}

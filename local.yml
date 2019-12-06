@@ -43,6 +43,10 @@
       loop_var: local_item
       label: "{{ local_item.name }}"
     tags: ["no_print"]
+      
+  - name: "local - set_fact"
+    set_fact:
+      local_base_dir: "/var/cloud/local"
   
   - name: "local env vars"
     lineinfile:
@@ -51,8 +55,9 @@
       regexp: "^{{ local_item.name }}="
       line: "{{ local_item.name }}={{ local_item.value }}"
     loop: 
-    - { name: "MAIN_DIR", value: "/var/main/local" }
-    - { name: "DATA_DIR", value: "/var/main/local/data" }
+    - { name: "BASE_DIR", value: "{{ local_base_dir }}" }
+    - { name: "MAIN_DIR", value: "{{ local_base_dir }}/app" }
+    - { name: "DATA_DIR", value: "{{ local_base_dir }}/data" }
     loop_control:
       loop_var: local_item
       label: "{{ local_item.name }}"

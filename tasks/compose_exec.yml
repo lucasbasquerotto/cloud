@@ -9,13 +9,17 @@
   include_role: 
     name: long_run
   vars:
-    long_run_title: "compose exec - {{ env_exec_cmd | b64decode | trim | regex_replace('\n', ' .. ') | truncate(30, False, '...', 10) }}"
+    long_run_title: >-
+      compose exec - 
+      {{ env_exec_cmd | b64decode | trim 
+      | regex_replace('\n', ' .. ') 
+      | truncate(30, False, '...', 10) }}
     long_run_become: "{{ main_vars.run.docker_become }}"
-    long_run_output_path: "/var/main/{{ main_item.name | default('.tmp') }}/data/log"
+    long_run_output_path: "{{ main_vars.base_dir }}/{{ main_item.name | default('.tmp') }}/data/log"
     long_run_output_file: "env-exec.log"
-    long_run_tmp_path: "/var/main/{{ main_item.name | default('.tmp') }}/data/tmp"
+    long_run_tmp_path: "{{ main_vars.base_dir }}/{{ main_item.name | default('.tmp') }}/data/tmp"
     long_run_tmp_file: "env-exec"
-    long_run_path: "/var/main/{{ main_item.name | default('.tmp') }}/pod-{{ main_item.name }}"
+    long_run_path: "{{ main_vars.base_dir }}/{{ main_item.name | default('.tmp') }}/pod-{{ main_item.name }}"
     long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
     long_run_poll: 2
   loop: "{{ main_vars.prepare.contexts | default([]) | list }}"

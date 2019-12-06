@@ -30,7 +30,8 @@
 
 - name: "{{ compose_prepare_title }} - set_fact - base directory"
   set_fact:
-    compose_prepare_base_dir: "/var/main/{{ compose_prepare_context.name }}"
+    compose_prepare_main_repo_location: "{{ compose_prepare_base_dir }}/main"
+    compose_prepare_tmp_repo_location: "{{ compose_prepare_base_dir }}/tmp/main"
 
 - name: "{{ compose_prepare_title }} - set_fact - locations"
   set_fact:
@@ -99,14 +100,53 @@
     dest: "/usr/local/bin/docker-compose"
     mode: 0755
 
+### Define the environment variables ###
+
+- name: "{{ compose_prepare_title }} - set_fact - env vars"
+  set_fact:
+    compose_prepare_env_vars: 
+    - { name: "BASE_DIR", value: "{{ compose_prepare_base_dir }}" }
+    - { name: "MAIN_DIR", value: "{{ compose_prepare_main_repo_location }}" }
+    - { name: "DATA_DIR", value: "{{ compose_prepare_base_dir }}/data" }
+  
+- name: >-
+    {{ compose_prepare_title }} - 
+    define the environment variables - 
+    user {{ compose_prepare_host_user }}
+  lineinfile:
+    dest: "/{{ compose_prepare_host_user }}/.profile"
+    state: present
+    regexp: "^{{ local_item.name }}="
+    line: "{{ local_item.name }}={{ local_item.value }}"
+  loop: "{{ compose_prepare_env_vars }}"
+  loop_control:
+    loop_var: local_item
+    label: "{{ local_item.name }}"
+  when: compose_prepare_host_user != 'root'
+  
+- name: >-
+    {{ compose_prepare_title }} - 
+    define the environment variables - 
+    user root
+  become: "{{ compose_prepare_docker_become }}"
+  lineinfile:
+    dest: "/root/.profile"
+    state: present
+    regexp: "^{{ local_item.name }}="
+    line: "{{ local_item.name }}={{ local_item.value }}"
+  loop: "{{ compose_prepare_env_vars }}"
+  loop_control:
+    loop_var: local_item
+    label: "{{ local_item.name }}"
+  when: compose_prepare_docker_become in ['yes', 'true']
+
 ### Prepare the temporary directory (to catch errors before updating the real one) ###
 
 - name: "{{ compose_prepare_title }} - prepare the temporary directory"
   include_tasks: "prepare.yml"
   vars:
     compose_prepare_inner_title: "{{ compose_prepare_title }} - tmp"
-    compose_prepare_repo_location: >-
-      {{ compose_prepare_base_dir }}/tmp/pod-tmp-{{ compose_prepare_context.name }}
+    compose_prepare_repo_location: "{{ compose_prepare_tmp_repo_location }}"
   
 ### Prepare the real directory ###
 
@@ -123,8 +163,7 @@
     include_tasks: "prepare.yml"
     vars:
       compose_prepare_inner_title: "{{ compose_prepare_title }} - real"
-      compose_prepare_repo_location: >-
-        {{ compose_prepare_base_dir }}/pod-{{ compose_prepare_context.name }}
+      compose_prepare_repo_location: "{{ compose_prepare_main_repo_location }}"
 
   - name: >-
       {{ compose_prepare_title }} - 
