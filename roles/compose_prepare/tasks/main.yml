@@ -114,7 +114,7 @@
     define the environment variables - 
     user {{ compose_prepare_host_user }}
   lineinfile:
-    dest: "/{{ compose_prepare_host_user }}/.profile"
+    dest: "/home/{{ compose_prepare_host_user }}/.profile"
     state: present
     regexp: "^{{ local_item.name }}="
     line: "{{ local_item.name }}={{ local_item.value }}"
