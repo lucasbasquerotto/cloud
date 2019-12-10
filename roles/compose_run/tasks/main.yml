@@ -1,7 +1,7 @@
 - name: "{{ compose_run_title }} - set_fact"
   set_fact:
     compose_run_repo_location: >-
-      {{ compose_run_base_dir }}/pod-{{ compose_run_context.name }}
+      {{ compose_run_base_dir }}/main
     compose_run_backup_file_src: >-
       {{ compose_run_base_dir }}/{{ compose_run_file_env_vars_relative_src }}
     compose_run_backup_file_dest: >-
