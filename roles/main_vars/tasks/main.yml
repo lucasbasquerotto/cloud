@@ -1,22 +1,27 @@
 - name: load environment vars
   include_vars:
     file: "{{ main_vars_env_file }}"
-    name: env
+    name: env_tmp
+  tags: ["no_print"]
+      
+- name: "set_fact"
+  set_fact:
+    env: "{{ env_tmp.tmp }}"
   tags: ["no_print"]
 
-- name: verify if type match the one from the env variable
+- name: verify if orchestration type match the one from the env variable
   fail:
-    msg: "cloud.type is not defined in the environment vars"
-  when: env.cloud.type is not defined
+    msg: "orchestration.type is not defined in the environment vars"
+  when: env.orchestration.type is not defined
   tags: ["no_print"]
 
-- name: verify if type match the one from the env variable
+- name: verify if orchestration type match the one from the env variable
   fail:
-    msg: "{{ main_vars_type }} should be {{ env.cloud.type }}"
-  when: env.cloud.type != main_vars_type
+    msg: "{{ main_vars_type }} should be {{ env.orchestration.type }}"
+  when: env.orchestration.type != main_vars_type
   tags: ["no_print"]
 
-- include_tasks:  "{{ env.cloud.type }}.yml"
-  when: env.cloud.type != 'local'
+- include_tasks:  "{{ env.orchestration.type }}.yml"
+  when: env.orchestration.type != 'local'
   tags: ["no_print"]
   
