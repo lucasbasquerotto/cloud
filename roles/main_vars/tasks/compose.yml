@@ -7,14 +7,6 @@
       {{ env.cloud_instance_groups_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
-    main_vars_ssh_encrypted_key_path: >-
-      {{ env.cloud_ssh_encrypted_key_path_rel  | default('')
-      | ternary(env_dir + '/' + (env.cloud_ssh_encrypted_key_path_rel | default('')), '') 
-      }}
-    main_vars_ssh_key_path: >-
-      {{ env.cloud_ssh_encrypted_key_path_rel  | default('')
-      | ternary(env_tmp_dir + '/cloud.key', '') 
-      }}
   tags: ["no_print"]
 
 - set_fact:
@@ -33,70 +25,9 @@
         - title: "DNS CNAME records"
           type: "CNAME"
           list: "{{ env.dns_cname_list | default([]) }}"
+  when: (env.dns_type | default('')) == 'cloudflare'
   tags: ["no_print"]
-
-- set_fact:
-    main_vars_cloud_aux:
-      digital_ocean:
-        tags:
-        - "main"
-        - "auto"
-        - "dmz"
-        - "web"
-        - "redis"
-        - "mysql"
-        firewalls:
-        - name: "auto"
-          tags: ["auto"]
-          inbound_rules:
-          - ports: "22"
-            sources:
-              tags: ["main"]
-          outbound_rules:
-          - protocol: "tcp"
-            ports: "1-65535"
-            destinations:
-              addresses: ["0.0.0.0/0", "::/0"]
-          - protocol: "udp"
-            ports: "1-65535"
-            destinations:
-              addresses: ["0.0.0.0/0", "::/0"]
-          - protocol: "icmp"
-            ports: "1-65535"
-            destinations:
-              addresses: ["0.0.0.0/0", "::/0"]
-        - name: "dmz"
-          tags: ["dmz"]
-          inbound_rules:
-          - ports: "80"
-            sources:
-              addresses: ["0.0.0.0/0", "::/0"]
-          - ports: "443"
-            sources:
-              addresses: ["0.0.0.0/0", "::/0"]
-        - name: "web"
-          tags: ["web"]
-          inbound_rules:
-          - ports: "80"
-            sources:
-              tags: ["dmz"]
-          - ports: "443"
-            sources:
-              tags: ["dmz"]
-        - name: "redis"
-          tags: ["redis"]
-          inbound_rules:
-          - ports: "6379"
-            sources:
-              tags: ["web"]
-        - name: "mysql"
-          tags: ["mysql"]
-          inbound_rules:
-          - ports: "3306"
-            sources:
-              tags: ["web"]
-              tags: ["no_print"]
-            
+     
 - set_fact:
     main_vars_cloud_list: []
   tags: ["no_print"]
@@ -106,10 +37,6 @@
       {{ 
       main_vars_cloud_list
       + [{ 
-      'src': compose_prepare_item_src_full, 
-      'dest': compose_prepare_item_dest_full, 
-      'mode': compose_prepare_item.mode | default('', true)
-
       'role': main_vars_cloud.type,
       'vars': {
         'cloud': {
@@ -117,192 +44,40 @@
           'region': main_vars_cloud.region,
           'title': main_vars_item,
           'hosts_file': inventory_file,
-          'ssh_encrypted_key_path': main_vars_cloud.ssh_encrypted_key_path,
-          'ssh_key_path': main_vars_cloud.ssh_key_path,
+          'ssh_encrypted_key_path': main_vars_ssh_encrypted_key_path,
+          'ssh_key_path': main_vars_ssh_encrypted_key_path | ternary(env_tmp_dir + '/cloud.' + main_vars_item + '.key', ''),
           'api_token': main_vars_cloud.api_token,
           'host_user': main_vars_cloud.host_user,
           'host_pass': main_vars_cloud.host_pass,
-          'ssh_public_keys': main_vars_cloud.ssh_public_keys,
-          'all_tags': main_vars_cloud_aux.digital_ocean.tags,
-          'all_firewalls': main_vars_cloud_aux.digital_ocean.firewalls,
+          'ssh_public_keys': main_vars_cloud.host_ssh_public_keys,
+          'all_tags': main_vars_cloud.tags,
+          'all_firewalls': main_vars_cloud.firewalls,
           'tags': main_vars_node.tags,
           'instance_count': main_vars_node.amount,
           'instance_max': main_vars_node.amount_to_check,
           'instance_group': main_vars_item,
           'instance_name': main_vars_env_name + 'main-compose-' + main_vars_item,
-          'instance_tmp': false,
+          'instance_tmp': main_vars_node.instance_tmp | default(false, true),
           'ipv6': main_vars_cloud.ipv6,
-          'user_data_file': "{{ main_vars_cloud_user_data_file }}"
+          'user_data_file': main_vars_cloud_user_data_file
         }
-      }
-      extra:
-        dmz: true
-        load_balance: false
+      },
+      'extra':
+        'dmz': main_vars_node.dmz | default(false, true),
+        'load_balance': main_vars_node.load_balance | default(false, true),
       }] 
       }}
   vars: 
     main_vars_node: "{{ env.nodes[main_vars_item] }}"
     main_vars_cloud: "{{ env.clouds[env.nodes[main_vars_item].cloud] }}"
+    main_vars_ssh_encrypted_key_path: >-
+      {{ env.clouds[env.nodes[main_vars_item].cloud].ssh_encrypted_key_path_rel  | default('')
+      | ternary(env_dir + '/' + 
+      (env.clouds[env.nodes[main_vars_item].cloud].ssh_encrypted_key_path_rel | default('')), '') 
+      }}
   loop: "{{ env.orchestration.nodes | default([]) }}"
   loop_control:
     loop_var: "main_vars_item"
-  tags: ["no_print"]
-
-- set_fact:
-    main_vars_cloud:
-      digital_ocean:    
-        main:
-          app:
-            role: "digital_ocean"
-            vars:
-              cloud:
-                instance_type: "app"
-                region: "{{ env.cloud_region | default('nyc1') }}"
-                title: "Main Instance"
-                hosts_file: "{{ inventory_file }}"
-                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
-                ssh_key_path: "{{ main_vars_ssh_key_path }}"
-                api_token: "{{ env.cloud_api_token }}"
-                host_user: "{{ env.cloud_host_user }}"
-                host_pass: "{{ env.cloud_host_pass }}"
-                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
-                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
-                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
-                tags: 
-                - "main"
-                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
-                instance_max: 1
-                instance_group: "app"
-                instance_name: "{{ main_vars_env_name }}main-compose-app"
-                instance_tmp: false
-                ipv6: "{{ main_vars_ipv6 }}"
-                user_data_file: "{{ main_vars_cloud_user_data_file }}"
-            extra:
-              dmz: true
-              load_balance: false
-
-        layer1:
-          app:
-            role: "digital_ocean"
-            vars:
-              cloud:
-                instance_type: "app"
-                region: "{{ env.cloud_region | default('nyc1') }}"
-                title: "App Instance"
-                hosts_file: "{{ inventory_file }}"
-                api_token: "{{ env.cloud_api_token }}"
-                host_user: "{{ env.cloud_host_user }}"
-                host_pass: "{{ env.cloud_host_pass }}"
-                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
-                ssh_key_path: "{{ main_vars_ssh_key_path }}"
-                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
-                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
-                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
-                tags: 
-                - "auto"
-                - "dmz"
-                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
-                instance_max: 1
-                instance_group: "app"
-                instance_name: "{{ main_vars_env_name }}compose-app"
-                instance_tmp: false
-                ipv6: "{{ main_vars_ipv6 }}"
-                user_data_file: "{{ main_vars_cloud_user_data_file }}"
-            extra:
-              dmz: true
-              load_balance: false
-
-        layer2:
-          db_master:
-            role: "digital_ocean"
-            vars:
-              cloud:
-                instance_type: "db_master"
-                region: "{{ env.cloud_region | default('nyc1') }}"
-                title: "DB Instance"
-                hosts_file: "{{ inventory_file }}"
-                api_token: "{{ env.cloud_api_token }}"
-                host_user: "{{ env.cloud_host_user }}"
-                host_pass: "{{ env.cloud_host_pass }}"
-                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
-                ssh_key_path: "{{ main_vars_ssh_key_path }}"
-                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
-                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
-                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
-                tags: 
-                - "auto"
-                - "mysql"
-                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
-                instance_max: 1
-                instance_group: "db_master"
-                instance_name: "{{ main_vars_env_name }}compose-db-master"
-                instance_tmp: false
-                ipv6: "{{ main_vars_ipv6 }}"
-                user_data_file: "{{ main_vars_cloud_user_data_file }}"
-            extra:
-              dmz: false
-              load_balance: false
-
-          redis_master:
-            role: "digital_ocean"
-            vars:
-              cloud:
-                instance_type: "redis_master"
-                region: "{{ env.cloud_region | default('nyc1') }}"
-                title: "Redis Instance"
-                hosts_file: "{{ inventory_file }}"
-                api_token: "{{ env.cloud_api_token }}"
-                host_user: "{{ env.cloud_host_user }}"
-                host_pass: "{{ env.cloud_host_pass }}"
-                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
-                ssh_key_path: "{{ main_vars_ssh_key_path }}"
-                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
-                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
-                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
-                tags: 
-                - "auto"
-                - "redis"
-                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
-                instance_max: 1
-                instance_group: "redis_master"
-                instance_name: "{{ main_vars_env_name }}compose-redis-master"
-                instance_tmp: false
-                ipv6: "{{ main_vars_ipv6 }}"
-                user_data_file: "{{ main_vars_cloud_user_data_file }}"
-            extra:
-              dmz: false
-              load_balance: false
-
-          web:
-            role: "digital_ocean"
-            vars:
-              cloud:
-                instance_type: "web"
-                region: "{{ env.cloud_region | default('nyc1') }}"
-                title: "Web Instance"
-                hosts_file: "{{ inventory_file }}"
-                api_token: "{{ env.cloud_api_token }}"
-                host_user: "{{ env.cloud_host_user }}"
-                host_pass: "{{ env.cloud_host_pass }}"
-                ssh_encrypted_key_path: "{{ main_vars_ssh_encrypted_key_path }}"
-                ssh_key_path: "{{ main_vars_ssh_key_path }}"
-                ssh_public_keys: "{{ env.cloud_host_ssh_public_keys }}"
-                all_tags: "{{ main_vars_cloud_aux.digital_ocean.tags }}"
-                all_firewalls: "{{ main_vars_cloud_aux.digital_ocean.firewalls }}"
-                tags: 
-                - "auto"
-                - "web"
-                - "dmz"
-                instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
-                instance_max: 1
-                instance_group: "web"
-                instance_name: "{{ main_vars_env_name }}compose-web"
-                instance_tmp: false
-                ipv6: "{{ main_vars_ipv6 }}"
-                user_data_file: "{{ main_vars_cloud_user_data_file }}"
-            extra:
-              dmz: true
-              load_balance: false
   tags: ["no_print"]
 
 - set_fact:
@@ -331,7 +106,7 @@
     main_vars:
       base_dir: "/var/cloud"
       cloud: "{{ main_vars_cloud[env.cloud_type][env.cloud_layer] }}"
-      dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
+      dns: "{{ main_vars_dns | default({}) }}"
       prepare: "{{ main_vars_prepare }}"
       run: "{{ main_vars_run }}"
       cron:  "{{ main_vars_cron }}"
