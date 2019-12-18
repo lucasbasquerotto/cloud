@@ -22,7 +22,7 @@
       region: "{{ main_cloud_var.region }}"
       title: "{{ main_cloud_node_id }}"
       hosts_file: "{{ main_cloud_hosts_file }}"
-      ssh_encrypted_key_path: "{{ main_cloud_aux.main_vars_ssh_encrypted_key_path }}"
+      ssh_encrypted_key_path: "{{ main_cloud_aux.ssh_encrypted_key_path }}"
       ssh_key_path: "{{ main_cloud_aux.ssh_key_path }}"
       api_token: "{{ main_cloud_var.api_token }}"
       host_user: "{{ main_cloud_var.host_user }}"
@@ -41,7 +41,7 @@
         }}-{{ 
         main_cloud_node_id 
         }}
-      instance_tmp: "{{ main_cloud_node.tmp }}"
+      instance_tmp: "{{ main_cloud_node.tmp | default(false) }}"
       ipv6: "{{ main_cloud_var.ipv6 }}"
       user_data_file: "{{ main_cloud_user_data_file | default('') }}"
       shutdown: "{{ main_cloud_shutdown | default(false) }}"
@@ -66,7 +66,30 @@
 - set_fact: 
     main_cloud_active_hosts: "{{ lookup('vars', main_cloud_role + '_active_hosts') }}"
     main_cloud_hosts_info: ""
-    main_cloud_ssh_key_file: ""
+    main_cloud_unencrypt_key: >-
+      {{
+      ((main_cloud_aux.ssh_encrypted_key_path | default('', true)) != '') 
+      and 
+      ((main_cloud_aux.ssh_key_path | default('', true)) != '')
+      }}
+
+- debug:
+    var: main_cloud_aux.ssh_encrypted_key_path
+
+- debug:
+    var: main_cloud_aux.ssh_key_path
+
+- debug:
+    var: (main_cloud_unencrypt_key | bool)
+
+- name: >-
+    {{ main_cloud_title }} - create unencrypted key file dir - 
+    {{ main_cloud_aux.ssh_key_path | dirname }}
+  file:
+    path: "{{ main_cloud_aux.ssh_key_path | dirname }}"
+    state: directory
+    mode: 0755
+  when: (main_cloud_unencrypt_key | bool)
 
 - name: "{{ main_cloud_title }} - generate unencrypted key file - {{ main_cloud_aux.ssh_key_path }}"
   copy:
@@ -74,10 +97,7 @@
     dest: "{{ main_cloud_aux.ssh_key_path }}"
     decrypt: yes
     mode: 0600
-  when: >-
-    ((main_cloud_aux.ssh_encrypted_key_path | default('', true)) != '') 
-    and 
-    ((main_cloud_aux.ssh_key_path | default('', true)) != '')
+  when: main_cloud_unencrypt_key | bool
 
 - name: "{{ main_cloud_title }} - generate the hosts information with the instances ips"
   set_fact: 
@@ -98,7 +118,7 @@
       instance_type={{ main_cloud_node_id }}
       instance_index={{ main_cloud_index }}
       ansible_host_service={{ 
-      main_cloud_node.dmz | bool | 
+      main_cloud_node.dmz | default(false) | bool | 
       ternary(main_cloud_item.public_ipv4, main_cloud_item.private_ip) 
       }}
   loop: "{{ main_cloud_active_hosts | list }}"
@@ -109,7 +129,7 @@
 
 - name: '{{ main_cloud_title }} - Update the hosts file with the generated hosts'
   blockinfile:
-    path: "{{ main_cloud_vars.hosts_file }}"
+    path: "{{ main_cloud_hosts_file }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ main_cloud_node_id }}"
     insertafter: "\\[{{ main_cloud_node_id }}\\]"
     block: "{{ main_cloud_hosts_info }}"
@@ -130,7 +150,6 @@
     main_dns_type: "AAAA"
     main_dns_record: "{{ main_cloud_item.record }}"
     main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv6 }}"
-    }}
   loop: "{{ (main_cloud_node.dns | default([])) | list }}"
   loop_control:
     loop_var: main_cloud_item
@@ -143,27 +162,26 @@
     (main_cloud_active_hosts[0].public_ipv6 is defined)
   tags: ["print_action"]
 
-  - name: "create the main dns record (IPv4) point to the instance when in the dmz layer"
-    include_role: 
-      name: "main_dns"
-    vars: 
-      main_dns_title: "{{ main_cloud_title }} - main dns - IPv4"
-      main_dns_task: "{{ main_cloud_dns_dict[main_cloud_item.name].type + '_dns' }}"
-      main_dns_credentials: "{{ main_cloud_dns_dict[main_cloud_item.name].credentials }}"
-      main_dns_zone: "{{ main_cloud_dns_dict[main_cloud_item.name].zone }}"
-      main_dns_type: "A"
-      main_dns_record: "{{ main_cloud_item.record }}"
-      main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv4 }}"
-      }}
-    loop: "{{ (main_cloud_node.dns | default([])) | list }}"
-    loop_control:
-      loop_var: main_cloud_item
-      label: "{{ main_cloud_item.name }}"
-    when: >-
-      (main_cloud_dns_dict[main_cloud_item.name] is defined) and
-      (main_cloud_dns_dict[main_cloud_item.name].task is defined) and
-      (main_cloud_active_hosts | length == 1) and 
-      (main_cloud_node.dmz | bool) and 
-      (main_cloud_active_hosts[0].public_ipv4 is defined)
-    tags: ["print_action"]
+- name: "create the main dns record (IPv4) point to the instance when in the dmz layer"
+  include_role: 
+    name: "main_dns"
+  vars: 
+    main_dns_title: "{{ main_cloud_title }} - main dns - IPv4"
+    main_dns_task: "{{ main_cloud_dns_dict[main_cloud_item.name].type + '_dns' }}"
+    main_dns_credentials: "{{ main_cloud_dns_dict[main_cloud_item.name].credentials }}"
+    main_dns_zone: "{{ main_cloud_dns_dict[main_cloud_item.name].zone }}"
+    main_dns_type: "A"
+    main_dns_record: "{{ main_cloud_item.record }}"
+    main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv4 }}"
+  loop: "{{ (main_cloud_node.dns | default([])) | list }}"
+  loop_control:
+    loop_var: main_cloud_item
+    label: "{{ main_cloud_item.name }}"
+  when: >-
+    (main_cloud_dns_dict[main_cloud_item.name] is defined) and
+    (main_cloud_dns_dict[main_cloud_item.name].task is defined) and
+    (main_cloud_active_hosts | length == 1) and 
+    (main_cloud_node.dmz | bool) and 
+    (main_cloud_active_hosts[0].public_ipv4 is defined)
+  tags: ["print_action"]
     

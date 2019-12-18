@@ -296,7 +296,7 @@
     loop_control:
       loop_var: main_item
     when: >-
-      (env.nodes[main_item].tmp | bool)
+      (env.nodes[main_item].tmp | default(false) | bool)
       and
       (((env_node | default('')) == '') or (env_node == main_item))
 
@@ -311,7 +311,7 @@
   tasks:
   - include_tasks: "tasks/compose_init.yml"
     tags: ["no_print"]
-  
+   
   - include_role: 
       name: "main_cloud"
     vars: 
@@ -332,14 +332,14 @@
       loop_var: main_item
     when: (main_item in (env.destroy.nodes | default([])))
 
-  - name: Delete the bucket and all contents
+  - name: "delete the bucket and all contents"
     aws_s3:
       s3_url: "{{ main_item.0.endpoint }}"
       access_key: "{{ main_item.0.access_key }}"
       secret_key: "{{ main_item.0.secret_key }}"
       bucket: "{{ main_item.1 }}"
       mode: delete
-    loop: "{{ env.destroy.buckets | subelements('names') | default([]) }}"
+    loop: "{{ (env.destroy.buckets | default([])) | subelements('names') }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.1 }}"
