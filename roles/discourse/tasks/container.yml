@@ -20,7 +20,7 @@
       {{ hostvars[
       groups[
       discourse_cloud[
-      discourse_container_item.instance_type].vars.cloud.instance_group][
+      discourse_container_item.instance_type].vars.cloud.instance_type][
       ((discourse_index | int) *
       ((discourse_cloud[
       discourse_container_item.instance_type].vars.cloud.instance_max | int) / 

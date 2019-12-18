@@ -3,8 +3,8 @@
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_cron_dest_dir: "/var/spool/cron/crontabs"
     main_vars_env_name: "{{ env.name | default('') | ternary((env.name | default('')) + '-', '') }}"
-    main_vars_instance_groups_to_destroy: >-
-      {{ env.cloud_instance_groups_to_destroy | default([]) }}
+    main_vars_instance_types_to_destroy: >-
+      {{ env.cloud_instance_types_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
     main_vars_ssh_encrypted_key_path: >-
@@ -121,7 +121,6 @@
                 - "main"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "app"
                 instance_name: "{{ main_vars_env_name }}main-compose-app"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -152,7 +151,6 @@
                 - "dmz"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "app"
                 instance_name: "{{ main_vars_env_name }}compose-app"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -183,7 +181,6 @@
                 - "mysql"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "db_master"
                 instance_name: "{{ main_vars_env_name }}compose-db-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -213,7 +210,6 @@
                 - "redis"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "redis_master"
                 instance_name: "{{ main_vars_env_name }}compose-redis-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -244,7 +240,6 @@
                 - "dmz"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "web"
                 instance_name: "{{ main_vars_env_name }}compose-web"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -285,6 +280,6 @@
       run: "{{ main_vars_run }}"
       cron:  "{{ main_vars_cron }}"
       destroy: 
-        instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
+        instance_types: "{{ main_vars_instance_types_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
   tags: ["no_print"]

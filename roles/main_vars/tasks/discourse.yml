@@ -2,8 +2,8 @@
     main_vars_cloud_shutdown: "{{ env.cloud_shutdown | default(0) }}"
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_env_name: "{{ env.name | ternary(env.name + '-', '') }}"
-    main_vars_instance_groups_to_destroy: >-
-      {{ env.cloud_instance_groups_to_destroy | default([]) }}
+    main_vars_instance_types_to_destroy: >-
+      {{ env.cloud_instance_types_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
   tags: ["no_print"]
@@ -170,7 +170,7 @@
             role: "digital_ocean"
             vars:
               cloud:
-                instance_type: "tmp"
+                instance_type: "bootstrap"
                 region: "{{ env.cloud_region | default('nyc1') }}"
                 title: "Discourse Bootstrap Instance"
                 hosts_file: "{{ inventory_file }}"
@@ -185,11 +185,11 @@
                 - "tmp"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "bootstrap"
                 instance_name: "{{ main_vars_env_name }}discourse-bootstrap"
                 instance_tmp: true
                 ipv6: "{{ main_vars_ipv6 }}"
                 user_data_file: "{{ main_vars_cloud_user_data_file }}"
+                temporary: "true"
               discourse:
                 containers:
                 - name: "app-build"
@@ -238,7 +238,6 @@
                 - "dmz"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "app"
                 instance_name: "{{ main_vars_env_name }}discourse-app"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -275,7 +274,6 @@
                 - "postgres"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "db_master"
                 instance_name: "{{ main_vars_env_name }}discourse-db-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -307,7 +305,6 @@
                 - "redis"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "redis_master"
                 instance_name: "{{ main_vars_env_name }}discourse-redis-master"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -340,7 +337,6 @@
                 - "dmz"
                 instance_count: "{{ (main_vars_cloud_shutdown == 1) | ternary(0, 1) }}"
                 instance_max: 1
-                instance_group: "web"
                 instance_name: "{{ main_vars_env_name }}discourse-web"
                 instance_tmp: false
                 ipv6: "{{ main_vars_ipv6 }}"
@@ -380,6 +376,6 @@
       dns: "{{ main_vars_dns[env.dns_type | default('')] | default({}) }}"
       prepare: "{{ main_vars_prepare }}"
       destroy: 
-        instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
+        instance_types: "{{ main_vars_instance_types_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
   tags: ["no_print"]

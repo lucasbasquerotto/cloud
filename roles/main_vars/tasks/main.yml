@@ -21,7 +21,7 @@
   when: env.orchestration.type != main_vars_type
   tags: ["no_print"]
 
-- include_tasks:  "{{ env.orchestration.type }}.yml"
-  when: env.orchestration.type != 'local'
-  tags: ["no_print"]
+# - include_tasks:  "{{ env.orchestration.type }}.yml"
+#   when: env.orchestration.type != 'local'
+#   tags: ["no_print"]
   

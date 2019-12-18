@@ -3,8 +3,8 @@
     main_vars_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     main_vars_cron_dest_dir: "/var/spool/cron/crontabs"
     main_vars_env_name: "{{ env.name | default('') | ternary((env.name | default('')) + '-', '') }}"
-    main_vars_instance_groups_to_destroy: >-
-      {{ env.cloud_instance_groups_to_destroy | default([]) }}
+    main_vars_instance_types_to_destroy: >-
+      {{ env.cloud_instance_types_to_destroy | default([]) }}
     main_vars_buckets_to_destroy: "{{ env.cloud_buckets_to_destroy | default([]) }}"
     main_vars_ipv6: "{{ env.cloud_ipv6 | default('no') }}"
   tags: ["no_print"]
@@ -55,7 +55,6 @@
           'tags': main_vars_node.tags,
           'instance_count': main_vars_node.amount,
           'instance_max': main_vars_node.amount_to_check,
-          'instance_group': main_vars_item,
           'instance_name': main_vars_env_name + 'main-compose-' + main_vars_item,
           'instance_tmp': main_vars_node.instance_tmp | default(false, true),
           'ipv6': main_vars_cloud.ipv6,
@@ -111,6 +110,6 @@
       run: "{{ main_vars_run }}"
       cron:  "{{ main_vars_cron }}"
       destroy: 
-        instance_groups: "{{ main_vars_instance_groups_to_destroy | list }}"
+        instance_types: "{{ main_vars_instance_types_to_destroy | list }}"
         buckets: "{{ main_vars_buckets_to_destroy | list }}"
   tags: ["no_print"]

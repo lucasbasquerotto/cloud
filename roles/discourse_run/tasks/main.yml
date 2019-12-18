@@ -140,7 +140,7 @@
         {{ hostvars[
         groups[
         discourse_run_cloud[
-        discourse_run_item.instance_type].vars.cloud.instance_group][
+        discourse_run_item.instance_type].vars.cloud.instance_type][
         ((discourse_run_index | int) *
         ((discourse_run_cloud[
         discourse_run_item.instance_type].vars.cloud.instance_max | int) / 

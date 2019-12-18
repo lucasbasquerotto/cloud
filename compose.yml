@@ -12,14 +12,21 @@
   - include_role: 
       name: "main_cloud"
     vars: 
-      main_cloud_title: "cloud - create instances"
-      main_cloud_role: "{{ main_item.role }}"
-      main_cloud_vars: "{{ main_item.vars.cloud }}"
-      main_cloud_extra: "{{ main_item.extra }}"
-      main_cloud_dns: "{{ main_vars.dns }}"
-    loop: "{{ main_vars.cloud.values() | list }}"
+      main_cloud_title: "cloud - create instances - {{ main_item }}"
+      main_cloud_env_name: "{{ env.name }}"
+      main_cloud_orchestration_type: "{{ env.orchestration.type }}"
+      main_cloud_node_id: "{{ main_item }}"
+      main_cloud_node: "{{ env.nodes[main_item] }}"
+      main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_dns_dict: "{{ env.dns }}"
+      main_cloud_env_dir: "{{ env_dir }}"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
+      main_cloud_hosts_file: "{{ inventory_file }}"
+      main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
+    loop: "{{ env.orchestration.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
+    when: ((env_node | default('')) == '') or (env_node == main_item)
 
 ###############################################################################
 
@@ -33,6 +40,7 @@
   tasks:
   - include_role: 
       name: "host_test"
+    when: (((env_node | default('')) == '') or (env_node == instance_type))
 
 ###############################################################################
 
@@ -51,207 +59,210 @@
     include_role: 
       name: "main_dns"
     vars: 
-      main_dns_title: "create the static dns records - {{ main_item.0.title }}"
-      main_dns_task: "{{ main_vars.dns.task }}"
-      main_dns_credentials: "{{ main_vars.dns.credentials }}"
-      main_dns_zone: "{{ main_vars.dns.zone }}"
-      main_dns_type: "{{ main_item.0.type }}"
-      main_dns_record: "{{ main_item.1.record }}"
-      main_dns_value: "{{ main_item.1.value }}"
-    loop: "{{ (main_vars.dns.static | default([])) | subelements('list') }}"
+      main_dns_title: >-
+        create the static dns records - 
+        {{ main_item.type }} - {{ main_item.record }}
+      main_dns_task: "{{ main_item.type + '_dns' }}"
+      main_dns_credentials: "{{ env.dns[main_item].credentials }}"
+      main_dns_zone: "{{ env.dns[main_item].zone }}"
+      main_dns_type: "{{ main_item.dns_type }}"
+      main_dns_record: "{{ main_item.record }}"
+      main_dns_value: "{{ main_item.value }}"
+    loop: "{{ env.orchestration.dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.1.record }}"
+      label: "{{ main_item.type }}"
+    when: (((env_node | default('')) == '') or (env_node == main_item))
 
 ###############################################################################
 
-- name: Play 04 - Prepare the hosts
-  hosts: host
-  tags:
-  - init
-  - prepare
-  - prepare-hosts
-  gather_facts: no
-  tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
+# - name: Play 04 - Prepare the hosts
+#   hosts: host
+#   tags:
+#   - init
+#   - prepare
+#   - prepare-hosts
+#   gather_facts: no
+#   tasks:
+#   - include_tasks: "tasks/compose_init.yml"
+#     tags: ["no_print"]
 
-  - include_role: 
-      name: "compose_prepare"
-    vars:
-      compose_prepare_title: "compose prepare - {{ main_item.group }} - {{ main_item.name }}"
-      compose_prepare_pod: "{{ main_vars.prepare.pod }}"
-      compose_prepare_pod_env_dir: "{{ main_vars.prepare.pod.env_dir | default('env') }}"
-      compose_prepare_context: "{{ main_item }}"
-      compose_prepare_base_dir: "{{ main_vars.base_dir }}/{{ main_item.name | default('') }}"
-      compose_prepare_params: "{{ main_vars.prepare.params[main_item.name] }}"
-      compose_prepare_file_env_vars_relative: >-
-        {{ main_vars.prepare.file_env_vars_relative }}
-      compose_prepare_docker_become: "{{ main_vars.prepare.docker_become }}"
-      compose_prepare_host_user: "{{ env.cloud_host_user }}"
-      compose_prepare_host_group: "{{ env.cloud_host_user }}"
-      compose_prepare_env_dir: "{{ env_dir }}"
-      compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
-      compose_prepare_repo_name: "{{ env_local_repo }}"
-      compose_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
-    loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
-    loop_control:
-      loop_var: main_item
-      label: "{{ main_item.group }} - {{ main_item.name }}"
-    when: main_item.group == instance_type
+#   - include_role: 
+#       name: "compose_prepare"
+#     vars:
+#       compose_prepare_title: "compose prepare - {{ main_item.group }} - {{ main_item.name }}"
+#       compose_prepare_pod: "{{ main_vars.prepare.pod }}"
+#       compose_prepare_pod_env_dir: "{{ main_vars.prepare.pod.env_dir | default('env') }}"
+#       compose_prepare_context: "{{ main_item }}"
+#       compose_prepare_base_dir: "{{ main_vars.base_dir }}/{{ main_item.name | default('') }}"
+#       compose_prepare_params: "{{ main_vars.prepare.params[main_item.name] }}"
+#       compose_prepare_file_env_vars_relative: >-
+#         {{ main_vars.prepare.file_env_vars_relative }}
+#       compose_prepare_docker_become: "{{ main_vars.prepare.docker_become }}"
+#       compose_prepare_host_user: "{{ env.cloud_host_user }}"
+#       compose_prepare_host_group: "{{ env.cloud_host_user }}"
+#       compose_prepare_env_dir: "{{ env_dir }}"
+#       compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
+#       compose_prepare_repo_name: "{{ env_local_repo }}"
+#       compose_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
+#     loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
+#     loop_control:
+#       loop_var: main_item
+#       label: "{{ main_item.group }} - {{ main_item.name }}"
+#     when: main_item.group == instance_type
 
-###############################################################################
+# ###############################################################################
 
-- name: Play 05.1 - Run - DB Master
-  hosts: db_master
-  tags:
-  - init
-  - run
-  - run_db_master
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
+# - name: Play 05.1 - Run - DB Master
+#   hosts: db_master
+#   tags:
+#   - init
+#   - run
+#   - run_db_master
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_init.yml"
+#     tags: ["no_print"]
 
-  - include_tasks: "tasks/compose_run.yml"
-    tags: ["no_print"]
+#   - include_tasks: "tasks/compose_run.yml"
+#     tags: ["no_print"]
 
-#-----------------------------------------------------------------------------#
+# #-----------------------------------------------------------------------------#
 
-- name: Play 05.2 - Run - Redis Master
-  hosts: redis_master
-  tags:
-  - init
-  - run
-  - run_redis_master
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
+# - name: Play 05.2 - Run - Redis Master
+#   hosts: redis_master
+#   tags:
+#   - init
+#   - run
+#   - run_redis_master
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_init.yml"
+#     tags: ["no_print"]
 
-  - include_tasks: "tasks/compose_run.yml"
-    tags: ["no_print"]
+#   - include_tasks: "tasks/compose_run.yml"
+#     tags: ["no_print"]
 
-#-----------------------------------------------------------------------------#
+# #-----------------------------------------------------------------------------#
 
-- name: Play 05.3 - Run - Web
-  hosts: 
-  - web
-  - web_replica
-  tags:
-  - init
-  - run
-  - run_web
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
+# - name: Play 05.3 - Run - Web
+#   hosts: 
+#   - web
+#   - web_replica
+#   tags:
+#   - init
+#   - run
+#   - run_web
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_init.yml"
+#     tags: ["no_print"]
 
-  - include_tasks: "tasks/compose_run.yml"
-    tags: ["no_print"]
+#   - include_tasks: "tasks/compose_run.yml"
+#     tags: ["no_print"]
 
-#-----------------------------------------------------------------------------#
+# #-----------------------------------------------------------------------------#
 
-- name: Play 05.4 - Run - App
-  hosts: 
-  - app
-  tags:
-  - init
-  - run
-  - run_app
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
+# - name: Play 05.4 - Run - App
+#   hosts: 
+#   - app
+#   tags:
+#   - init
+#   - run
+#   - run_app
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_init.yml"
+#     tags: ["no_print"]
 
-  - include_tasks: "tasks/compose_run.yml"
-    tags: ["no_print"]
+#   - include_tasks: "tasks/compose_run.yml"
+#     tags: ["no_print"]
 
-###############################################################################
+# ###############################################################################
 
-- name: Play 06 - Define the cron jobs
-  hosts: host
-  tags:
-  - init
-  - cron
-  gather_facts: no
-  tasks:
-  - include_tasks: "tasks/compose_init.yml"
-    tags: ["no_print"]
+# - name: Play 06 - Define the cron jobs
+#   hosts: host
+#   tags:
+#   - init
+#   - cron
+#   gather_facts: no
+#   tasks:
+#   - include_tasks: "tasks/compose_init.yml"
+#     tags: ["no_print"]
 
-  - include_role: 
-      name: "cron"
-    vars:
-      cron_title: "cron - {{ main_item }}"
-      cron_src_file: "{{ main_vars.cron.src_base_dir }}/{{ main_vars.cron.main[main_item] }}"
-      cron_become: "{{ main_vars.cron.become }}"
-      cron_dest_dir: "{{ main_vars.cron.dest_dir }}"
-      cron_dest_file: "{{ main_vars.cron.dest_file }}"
-      cron_start: "true"
-    loop: >-
-      {{ main_vars.prepare.contexts | default([]) | list 
-      | map(attribute='group') | unique | list }}
-    loop_control:
-      loop_var: main_item
-    when: >-
-      (main_item == instance_type) 
-      and 
-      ((main_vars.cron.main[main_item] | default('')) != '')
+#   - include_role: 
+#       name: "cron"
+#     vars:
+#       cron_title: "cron - {{ main_item }}"
+#       cron_src_file: "{{ main_vars.cron.src_base_dir }}/{{ main_vars.cron.main[main_item] }}"
+#       cron_become: "{{ main_vars.cron.become }}"
+#       cron_dest_dir: "{{ main_vars.cron.dest_dir }}"
+#       cron_dest_file: "{{ main_vars.cron.dest_file }}"
+#       cron_start: "true"
+#     loop: >-
+#       {{ main_vars.prepare.contexts | default([]) | list 
+#       | map(attribute='group') | unique | list }}
+#     loop_control:
+#       loop_var: main_item
+#     when: >-
+#       (main_item == instance_type) 
+#       and 
+#       ((main_vars.cron.main[main_item] | default('')) != '')
 
-###############################################################################
+# ###############################################################################
 
-- name: Play 07.1 - Execute instruction on-the-fly - DB Master
-  hosts: db_master
-  tags:
-  - never
-  - exec
-  - exec_db_master
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_exec.yml"
-    tags: ["no_print"]
+# - name: Play 07.1 - Execute instruction on-the-fly - DB Master
+#   hosts: db_master
+#   tags:
+#   - never
+#   - exec
+#   - exec_db_master
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_exec.yml"
+#     tags: ["no_print"]
 
-#-----------------------------------------------------------------------------#
+# #-----------------------------------------------------------------------------#
 
-- name: Play 07.2 - Execute instruction on-the-fly - Redis Master
-  hosts: redis_master
-  tags:
-  - never
-  - exec
-  - exec_redis_master
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_exec.yml"
-    tags: ["no_print"]
+# - name: Play 07.2 - Execute instruction on-the-fly - Redis Master
+#   hosts: redis_master
+#   tags:
+#   - never
+#   - exec
+#   - exec_redis_master
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_exec.yml"
+#     tags: ["no_print"]
 
-#-----------------------------------------------------------------------------#
+# #-----------------------------------------------------------------------------#
 
-- name: Play 07.3 - Execute instruction on-the-fly - Web
-  hosts: 
-  - web
-  - web_replica
-  tags:
-  - never
-  - exec
-  - exec_web
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_exec.yml"
-    tags: ["no_print"]
+# - name: Play 07.3 - Execute instruction on-the-fly - Web
+#   hosts: 
+#   - web
+#   - web_replica
+#   tags:
+#   - never
+#   - exec
+#   - exec_web
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_exec.yml"
+#     tags: ["no_print"]
 
-#-----------------------------------------------------------------------------#
+# #-----------------------------------------------------------------------------#
 
-- name: Play 07.4 - Execute instruction on-the-fly - App
-  hosts: 
-  - app
-  tags:
-  - never
-  - exec
-  - exec_app
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/compose_exec.yml"
-    tags: ["no_print"]
+# - name: Play 07.4 - Execute instruction on-the-fly - App
+#   hosts: 
+#   - app
+#   tags:
+#   - never
+#   - exec
+#   - exec_app
+#   gather_facts: no  
+#   tasks:
+#   - include_tasks: "tasks/compose_exec.yml"
+#     tags: ["no_print"]
 
 ###############################################################################
 
@@ -269,17 +280,25 @@
   - include_role: 
       name: "main_cloud"
     vars: 
-      main_cloud_title: "cloud - destroy temporary instances"
-      main_cloud_role: "{{ main_item.role }}"
-      main_cloud_vars: "{{ main_item.vars.cloud }}"
-      main_cloud_extra: "{{ main_item.extra }}"
-      main_cloud_dns: "{{ main_vars.dns }}"
+      main_cloud_title: "cloud - destroy temporary instances - {{ main_item }}"
+      main_cloud_env_name: "{{ env.name }}"
+      main_cloud_orchestration_type: "{{ env.orchestration.type }}"
+      main_cloud_node_id: "{{ main_item }}"
+      main_cloud_node: "{{ env.nodes[main_item] }}"
+      main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_dns_dict: "{{ env.dns }}"
+      main_cloud_env_dir: "{{ env_dir }}"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
+      main_cloud_hosts_file: "{{ inventory_file }}"
+      main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
       main_cloud_shutdown: true
-    loop: "{{ main_vars.cloud.values() | list }}"
+    loop: "{{ env.orchestration.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.vars.cloud.instance_group }}"
-    when: (main_item.vars.cloud.instance_tmp | default(false) | bool) == true
+    when: >-
+      (env.nodes[main_item].tmp | bool)
+      and
+      (((env_node | default('')) == '') or (env_node == main_item))
 
 ###############################################################################
 
@@ -292,21 +311,26 @@
   tasks:
   - include_tasks: "tasks/compose_init.yml"
     tags: ["no_print"]
-
+  
   - include_role: 
       name: "main_cloud"
     vars: 
-      main_cloud_title: "cloud - destroy all instances"
-      main_cloud_role: "{{ main_item.role }}"
-      main_cloud_vars: "{{ main_item.vars.cloud }}"
-      main_cloud_extra: "{{ main_item.extra }}"
-      main_cloud_dns: "{{ main_vars.dns }}"
+      main_cloud_title: "cloud - destroy all instances - {{ main_item }}"
+      main_cloud_env_name: "{{ env.name }}"
+      main_cloud_orchestration_type: "{{ env.orchestration.type }}"
+      main_cloud_node_id: "{{ main_item }}"
+      main_cloud_node: "{{ env.nodes[main_item] }}"
+      main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_dns_dict: "{{ env.dns }}"
+      main_cloud_env_dir: "{{ env_dir }}"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
+      main_cloud_hosts_file: "{{ inventory_file }}"
+      main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
       main_cloud_shutdown: true
-    loop: "{{ main_vars.cloud.values() | list }}"
+    loop: "{{ env.orchestration.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.vars.cloud.instance_group }}"
-    when: main_item.vars.cloud.instance_group in main_vars.destroy.instance_groups
+    when: (main_item in (env.destroy.nodes | default([])))
 
   - name: Delete the bucket and all contents
     aws_s3:
@@ -315,7 +339,7 @@
       secret_key: "{{ main_item.0.secret_key }}"
       bucket: "{{ main_item.1 }}"
       mode: delete
-    loop: "{{ main_vars.destroy.buckets | subelements('names') }}"
+    loop: "{{ env.destroy.buckets | subelements('names') | default([]) }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.1 }}"

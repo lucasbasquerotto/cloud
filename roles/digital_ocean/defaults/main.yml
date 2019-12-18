@@ -9,7 +9,6 @@ digital_ocean_hosts_file: ""
 digital_ocean_tags: []
 digital_ocean_instance_count: 1
 digital_ocean_instance_max: 1
-digital_ocean_instance_group: "instance_group"
 digital_ocean_instance_type: "instance_type"
 digital_ocean_instance_name: "droplet"
 
