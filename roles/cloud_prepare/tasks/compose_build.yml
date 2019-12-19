@@ -1,0 +1,11 @@
+- name: "{{ cloud_prepare_inner_title }} - compose - prepare the temporary images (pull and build)"
+  become: "{{ cloud_prepare_cloud.root }}"
+  command: "{{ cloud_prepare_compose_item }}"
+  args:
+    chdir: "{{ cloud_prepare_repo_location }}/"
+  loop:
+  - "docker-compose pull"
+  - "docker-compose build --pull"
+  loop_control:
+    loop_var: cloud_prepare_compose_item
+  tags: ["print_action"]

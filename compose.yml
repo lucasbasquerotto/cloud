@@ -14,7 +14,7 @@
     vars: 
       main_cloud_title: "cloud - create instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
-      main_cloud_orchestration_type: "{{ env.orchestration.type }}"
+      main_cloud_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
@@ -23,7 +23,7 @@
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
-    loop: "{{ env.orchestration.nodes | default([]) | list }}"
+    loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: ((env_node | default('')) == '') or (env_node == main_item)
@@ -68,7 +68,7 @@
       main_dns_type: "{{ main_item.dns_type }}"
       main_dns_record: "{{ main_item.record }}"
       main_dns_value: "{{ main_item.value }}"
-    loop: "{{ env.orchestration.dns | default([]) | list }}"
+    loop: "{{ env.main.dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.type }}"
@@ -76,40 +76,44 @@
 
 ###############################################################################
 
-# - name: Play 04 - Prepare the hosts
-#   hosts: host
-#   tags:
-#   - init
-#   - prepare
-#   - prepare-hosts
-#   gather_facts: no
-#   tasks:
-#   - include_tasks: "tasks/compose_init.yml"
-#     tags: ["no_print"]
+- name: Play 04 - Prepare the hosts
+  hosts: host
+  tags:
+  - init
+  - prepare
+  - prepare-hosts
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/compose_init.yml"
+    tags: ["no_print"]
 
-#   - include_role: 
-#       name: "compose_prepare"
-#     vars:
-#       compose_prepare_title: "compose prepare - {{ main_item.group }} - {{ main_item.name }}"
-#       compose_prepare_pod: "{{ main_vars.prepare.pod }}"
-#       compose_prepare_pod_env_dir: "{{ main_vars.prepare.pod.env_dir | default('env') }}"
-#       compose_prepare_context: "{{ main_item }}"
-#       compose_prepare_base_dir: "{{ main_vars.base_dir }}/{{ main_item.name | default('') }}"
-#       compose_prepare_params: "{{ main_vars.prepare.params[main_item.name] }}"
-#       compose_prepare_file_env_vars_relative: >-
-#         {{ main_vars.prepare.file_env_vars_relative }}
-#       compose_prepare_docker_become: "{{ main_vars.prepare.docker_become }}"
-#       compose_prepare_host_user: "{{ env.cloud_host_user }}"
-#       compose_prepare_host_group: "{{ env.cloud_host_user }}"
-#       compose_prepare_env_dir: "{{ env_dir }}"
-#       compose_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item.name }}"
-#       compose_prepare_repo_name: "{{ env_local_repo }}"
-#       compose_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
-#     loop: "{{ main_vars.prepare.contexts | default([]) | list }}"
-#     loop_control:
-#       loop_var: main_item
-#       label: "{{ main_item.group }} - {{ main_item.name }}"
-#     when: main_item.group == instance_type
+  - include_role: 
+      name: "cloud_prepare"
+    vars:
+      cloud_prepare_title: "compose prepare - {{ main_item }}"
+      cloud_prepare_env_name: "{{ env.name }}"
+      cloud_prepare_node_id: "{{ main_item }}"
+      cloud_prepare_node: "{{ env.nodes[main_item] }}"
+      cloud_prepare_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      cloud_prepare_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
+      cloud_prepare_pods_dict: "{{ env.pods }}"
+      cloud_prepare_params_dict: "{{ env.params }}"
+      cloud_prepare_base_dir: "{{ env.nodes[main_item].base_dir | default('/var/cloud') }}"
+      cloud_prepare_env_vars_relative_file: >-
+        {{
+        env.nodes[main_item].env_vars_relative_file | 
+        default('tmp/env/vars_full.yml')
+        }}
+      cloud_prepare_env_dir: "{{ env_dir }}"
+      cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item }}"
+      cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
+    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: >-
+      (main_item == instance_type)
+      and
+      (((env_node | default('')) == '') or (env_node == main_item))
 
 # ###############################################################################
 
@@ -282,7 +286,7 @@
     vars: 
       main_cloud_title: "cloud - destroy temporary instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
-      main_cloud_orchestration_type: "{{ env.orchestration.type }}"
+      main_cloud_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
@@ -292,7 +296,7 @@
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
       main_cloud_shutdown: true
-    loop: "{{ env.orchestration.nodes | default([]) | list }}"
+    loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -317,7 +321,7 @@
     vars: 
       main_cloud_title: "cloud - destroy all instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
-      main_cloud_orchestration_type: "{{ env.orchestration.type }}"
+      main_cloud_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
@@ -327,7 +331,7 @@
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
       main_cloud_shutdown: true
-    loop: "{{ env.orchestration.nodes | default([]) | list }}"
+    loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: (main_item in (env.destroy.nodes | default([])))

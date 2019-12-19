@@ -1,0 +1,16 @@
+- include_tasks: "{{ cloud_prepare_orchestration.type }}_main.yml"
+
+- include_tasks: "pod.yml"
+  vars:
+    cloud_prepare_pod_title: "{{ cloud_prepare_title }} - {{ cloud_prepare_item }}"
+    cloud_prepare_pod_id: "{{ cloud_prepare_item }}"
+    cloud_prepare_pod: "{{ cloud_prepare_pods_dict[cloud_prepare_item] }}"
+    cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_item }}"
+    cloud_prepare_params: "{{ main_vars.prepare.params[main_item.name] }}"
+    cloud_prepare_host_user: "{{ cloud_prepare_cloud.host_user }}"
+    cloud_prepare_host_group: "{{ cloud_prepare_cloud.host_user }}"
+    cloud_prepare_pod_local_tmp_dir: "{{ cloud_prepare_local_tmp_dir }}/{{ cloud_prepare_item }}"
+  loop: "{{ cloud_prepare_node.pods | default([]) | list }}"
+  loop_control:
+    loop_var: cloud_prepare_item
+  when: main_item.group == instance_type

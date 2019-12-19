@@ -9,19 +9,19 @@
     env: "{{ env_tmp.tmp }}"
   tags: ["no_print"]
 
-- name: verify if orchestration type match the one from the env variable
+- name: verify if main type match the one from the env variable
   fail:
-    msg: "orchestration.type is not defined in the environment vars"
-  when: env.orchestration.type is not defined
+    msg: "main.type is not defined in the environment vars"
+  when: env.main.type is not defined
   tags: ["no_print"]
 
-- name: verify if orchestration type match the one from the env variable
+- name: verify if main type match the one from the env variable
   fail:
-    msg: "{{ main_vars_type }} should be {{ env.orchestration.type }}"
-  when: env.orchestration.type != main_vars_type
+    msg: "{{ main_vars_type }} should be {{ env.main.type }}"
+  when: env.main.type != main_vars_type
   tags: ["no_print"]
 
-# - include_tasks:  "{{ env.orchestration.type }}.yml"
-#   when: env.orchestration.type != 'local'
+# - include_tasks:  "{{ env.main.type }}.yml"
+#   when: env.main.type != 'local'
 #   tags: ["no_print"]
   

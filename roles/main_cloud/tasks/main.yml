@@ -37,7 +37,7 @@
         {{ 
         main_cloud_env_name 
         }}-{{ 
-        main_cloud_orchestration_type 
+        main_cloud_orchestration.type 
         }}-{{ 
         main_cloud_node_id 
         }}

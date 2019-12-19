@@ -74,7 +74,7 @@
       | ternary(env_dir + '/' + 
       (env.clouds[env.nodes[main_vars_item].cloud].ssh_encrypted_key_path_rel | default('')), '') 
       }}
-  loop: "{{ env.orchestration.nodes | default([]) }}"
+  loop: "{{ env.main.nodes | default([]) }}"
   loop_control:
     loop_var: "main_vars_item"
   tags: ["no_print"]

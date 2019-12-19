@@ -1,0 +1,164 @@
+### Validation ###
+
+- name: "{{ cloud_prepare_pod_title }} - verify the pod environment variables"
+  fail:
+    msg: >-
+      [Error] Specify the environment repo variable: 
+      pod[cloud_prepare_pod_id][{{ cloud_prepare_pod_item }}]
+  when: ((cloud_prepare_pod[cloud_prepare_pod_item] | default('')) == '')
+  loop:
+  - "repo"
+  - "repo_version"
+  - "ctx"
+  - "params"
+  loop_control:
+    loop_var: cloud_prepare_pod_item
+
+- name: "{{ cloud_prepare_pod_title }} - verify if the temporary dir is specified"
+  fail:
+    msg: "The parameter cloud_prepare_pod_local_tmp_dir must be specified"
+  when: ((cloud_prepare_pod_local_tmp_dir | default('')) == '')
+
+- name: "{{ cloud_prepare_pod_title }} - set_fact - base directory"
+  set_fact:
+    cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"
+    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/main"
+
+- name: "{{ cloud_prepare_pod_title }} - set_fact - locations"
+  set_fact:
+    cloud_prepare_data_dir: "{{ cloud_prepare_pod_base_dir }}/data"
+    cloud_prepare_vars_dir: "{{ cloud_prepare_pod.vars_dir }}"
+    cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
+    cloud_prepare_group: "{{ cloud_prepare_host_group }}"
+    cloud_prepare_backup_file: >-
+      {{ cloud_prepare_pod_base_dir }}/{{ cloud_prepare_env_vars_relative_file }}
+    cloud_prepare_backup_file_tmp: >-
+      {{ cloud_prepare_pod_base_dir }}/{{ cloud_prepare_env_vars_relative_file }}.tmp
+    
+### Prepare the directories ###
+
+- name: "{{ cloud_prepare_pod_title }} - create the local directories"
+  file:
+    path: "{{ cloud_prepare_pod_item }}"
+    state: directory
+    mode: 0755
+  loop:
+  - "{{ cloud_prepare_pod_local_tmp_dir }}"
+  - "{{ cloud_prepare_pod_local_tmp_dir }}/templates"
+  loop_control:
+    loop_var: cloud_prepare_pod_item
+  delegate_to: localhost
+
+- name: "{{ cloud_prepare_pod_title }} - create the remote directories"
+  become: "{{ cloud_prepare_cloud.root }}"
+  file:
+    path: "{{ cloud_prepare_pod_item | dirname }}"
+    state: directory
+    mode: 0755
+  loop:
+  - "{{ cloud_prepare_backup_file }}"
+  - "{{ cloud_prepare_backup_file_tmp }}"
+  loop_control:
+    loop_var: cloud_prepare_pod_item
+    label: "{{ cloud_prepare_pod_item | dirname }}"
+
+- name: >-
+    {{ cloud_prepare_pod_title }} - create the file to verify if there was a change, 
+    if it was not created before
+  become: "{{ cloud_prepare_cloud.root }}"
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ cloud_prepare_backup_file }}"
+    owner: "{{ cloud_prepare_owner }}"
+    group: "{{ cloud_prepare_group }}"
+    mode: 0640
+
+### Define the environment variables ###
+- block:
+
+  - name: "{{ cloud_prepare_pod_title }} - set_fact - env vars"
+    set_fact:
+      cloud_prepare_env_vars: 
+      - { name: "BASE_DIR", value: "{{ cloud_prepare_pod_base_dir }}" }
+      - { name: "MAIN_DIR", value: "{{ cloud_prepare_main_repo_location }}" }
+      - { name: "DATA_DIR", value: "{{ cloud_prepare_pod_base_dir }}/data" }
+    
+  - name: >-
+      {{ cloud_prepare_pod_title }} - 
+      define the environment variables - 
+      user {{ cloud_prepare_host_user }}
+    lineinfile:
+      dest: "/home/{{ cloud_prepare_host_user }}/.profile"
+      state: present
+      regexp: "^{{ local_item.name }}="
+      line: "{{ local_item.name }}={{ local_item.value }}"
+    loop: "{{ cloud_prepare_env_vars }}"
+    loop_control:
+      loop_var: local_item
+      label: "{{ local_item.name }}"
+    when: cloud_prepare_host_user != 'root'
+    
+  - name: >-
+      {{ cloud_prepare_pod_title }} - 
+      define the environment variables - 
+      user root
+    become: "{{ cloud_prepare_cloud.root }}"
+    lineinfile:
+      dest: "/root/.profile"
+      state: present
+      regexp: "^{{ local_item.name }}="
+      line: "{{ local_item.name }}={{ local_item.value }}"
+    loop: "{{ cloud_prepare_env_vars }}"
+    loop_control:
+      loop_var: local_item
+      label: "{{ local_item.name }}"
+    when: cloud_prepare_cloud.root in ['yes', 'true']
+
+  when: cloud_prepare_pod_id == cloud_prepare_node.main_pod
+
+### Prepare the temporary directory (to catch errors before updating the real one) ###
+
+- name: "{{ cloud_prepare_pod_title }} - prepare the temporary directory"
+  include_tasks: "prepare.yml"
+  vars:
+    cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - tmp"
+    cloud_prepare_repo_location: "{{ cloud_prepare_tmp_repo_location }}"
+  
+### Prepare the real directory ###
+
+- name: "{{ cloud_prepare_pod_title }} - get the difference of the 2 files (old and current)"
+  become: "{{ cloud_prepare_cloud.root }}"
+  command: "diff {{ cloud_prepare_backup_file_tmp }} {{ cloud_prepare_backup_file }}"
+  register: cloud_prepare_diff
+  failed_when: cloud_prepare_diff.rc > 1
+  changed_when: cloud_prepare_diff.rc == 1
+
+- block:
+
+  - name: "{{ cloud_prepare_pod_title }} - prepare the real directory"
+    include_tasks: "prepare.yml"
+    vars:
+      cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - real"
+      cloud_prepare_repo_location: "{{ cloud_prepare_main_repo_location }}"
+
+  - name: >-
+      {{ cloud_prepare_pod_title }} - 
+      update the file to verify if there was a change (for newer runs)
+    become: "{{ cloud_prepare_cloud.root }}"
+    copy: 
+      remote_src: yes
+      src: "{{ cloud_prepare_backup_file_tmp }}"
+      dest: "{{ cloud_prepare_backup_file }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: 0640
+    tags: ["print_action"]
+
+  when: cloud_prepare_diff.changed
+
+- name: "{{ cloud_prepare_pod_title }} - debug - outer"
+  debug: 
+    msg: "variables unchanged"
+  when: not cloud_prepare_diff.changed
+  tags: ["print_action"]
