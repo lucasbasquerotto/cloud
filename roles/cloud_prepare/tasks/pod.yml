@@ -19,6 +19,12 @@
     msg: "The parameter cloud_prepare_pod_local_tmp_dir must be specified"
   when: ((cloud_prepare_pod_local_tmp_dir | default('')) == '')
 
+### Prepare the orchestration environment ###
+
+- include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_main.yml"
+
+### Set vars ###
+
 - name: "{{ cloud_prepare_pod_title }} - set_fact - base directory"
   set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"

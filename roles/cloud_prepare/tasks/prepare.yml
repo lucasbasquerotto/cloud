@@ -202,8 +202,8 @@
         }}/{{ cloud_prepare_inner_item.src }}
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
-        ((cloud_prepare_inner_item.root | default(false) | bool) 
-        | ternary('', cloud_prepare_pod_env_dir + '/')) 
+        ((cloud_prepare_inner_item.root | default(false) | bool) | 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
         + (cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src)) 
         }}
     loop: "{{ cloud_prepare_vars_files | default([]) }}"
@@ -235,8 +235,8 @@
         }}/{{ cloud_prepare_inner_item.src }}
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
-        ((cloud_prepare_inner_item.root | default(false) | bool) 
-        | ternary('', cloud_prepare_pod_env_dir + '/')) 
+        ((cloud_prepare_inner_item.root | default(false) | bool) | 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
         + (cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src)) 
         }}
       cloud_prepare_inner_item_params: "{{ cloud_prepare_inner_item.params | default({}) }}"
@@ -260,8 +260,8 @@
       cloud_prepare_inner_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_inner_item.src }}"
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
-        ((cloud_prepare_inner_item.root | default(false) | bool) 
-        | ternary('', cloud_prepare_pod_env_dir + '/')) 
+        ((cloud_prepare_inner_item.root | default(false) | bool) | 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
         + cloud_prepare_inner_item.dest
         }}
     loop: "{{ cloud_prepare_vars_env_files | default([]) }}"
@@ -387,7 +387,7 @@
       label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["print_action"]
     
-  - include_tasks: "{{ cloud_prepare_orchestration.type }}_build.yml"
+  - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_build.yml"
 
   when: cloud_prepare_diff.changed
 

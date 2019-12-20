@@ -15,7 +15,7 @@
 
 set -e
 
-VERSION="{{ docker_compose_version }}"
+VERSION="{{ params.docker_compose_version }}"
 IMAGE="docker/compose:$VERSION"
 
 

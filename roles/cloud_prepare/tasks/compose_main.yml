@@ -14,4 +14,8 @@
     mode: 0755
   vars:
     params: 
-      docker_compose_version: "{{ cloud_prepare.node.docker_compose_version }}"
+      docker_compose_version: "{{ cloud_prepare_pod_orchestration.version }}"
+  when: 
+    ((cloud_prepare_pod_orchestration.version | default('')) != '')
+    and
+    (cloud_prepare_pod_orchestration.container | bool)

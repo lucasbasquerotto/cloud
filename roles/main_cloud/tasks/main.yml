@@ -28,19 +28,12 @@
       host_user: "{{ main_cloud_var.host_user }}"
       host_pass: "{{ main_cloud_var.host_pass }}"
       ssh_public_keys: "{{ main_cloud_var.host_ssh_public_keys }}"
-      all_tags: "{{ main_cloud_var.tags }}"
-      all_firewalls: "{{ main_cloud_var.firewalls }}"
+      all_tags: "{{ main_cloud_params.tags }}"
+      all_firewalls: "{{ main_cloud_params.firewalls }}"
       tags: "{{ main_cloud_node.tags }}"
       instance_count: "{{ main_cloud_node.amount }}"
       instance_max: "{{ main_cloud_node.amount_to_check }}"
-      instance_name: >-
-        {{ 
-        main_cloud_env_name 
-        }}-{{ 
-        main_cloud_orchestration.type 
-        }}-{{ 
-        main_cloud_node_id 
-        }}
+      instance_name: "{{ main_cloud_env_name }}-{{ main_cloud_node_id }}"
       instance_tmp: "{{ main_cloud_node.tmp | default(false) }}"
       ipv6: "{{ main_cloud_var.ipv6 }}"
       user_data_file: "{{ main_cloud_user_data_file | default('') }}"

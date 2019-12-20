@@ -6,7 +6,7 @@
   - cloud
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
   - include_role: 
@@ -14,10 +14,10 @@
     vars: 
       main_cloud_title: "cloud - create instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
-      main_cloud_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
@@ -52,7 +52,7 @@
   - dns
   gather_facts: no  
   tasks:  
-  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
   - name: "create the static dns records"
@@ -84,7 +84,7 @@
   - prepare-hosts
   gather_facts: no
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
   - include_role: 
@@ -95,18 +95,51 @@
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
       cloud_prepare_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
-      cloud_prepare_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
+      cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_params_dict: "{{ env.params }}"
       cloud_prepare_base_dir: "{{ env.nodes[main_item].base_dir | default('/var/cloud') }}"
-      cloud_prepare_env_vars_relative_file: >-
-        {{
-        env.nodes[main_item].env_vars_relative_file | 
-        default('tmp/env/vars_full.yml')
-        }}
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item }}"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
+      cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
+      cloud_prepare_env_vars_relative_file: 'tmp/env/cloud.prepare.vars_full.yml'
+    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: >-
+      (main_item == instance_type)
+      and
+      (((env_node | default('')) == '') or (env_node == main_item))
+
+###############################################################################
+
+- name: Play 05 - Run
+  hosts: host
+  tags:
+  - init
+  - run
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
+
+  - include_role: 
+      name: "cloud_run"
+    vars:
+      cloud_run_title: "compose run - {{ main_item }}"
+      cloud_run_env_name: "{{ env.name }}"
+      cloud_run_node_id: "{{ main_item }}"
+      cloud_run_node: "{{ env.nodes[main_item] }}"
+      cloud_run_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
+      cloud_run_pods_dict: "{{ env.pods }}"
+      cloud_run_params_dict: "{{ env.params }}"
+      cloud_run_base_dir: "{{ env.nodes[main_item].base_dir | default('/var/cloud') }}"
+      cloud_run_env_pod: "{{ env_pod | default('', true) }}"
+      cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
+      cloud_run_env_vars_relative_file_src: 'tmp/env/cloud.prepare.vars_full.yml'
+      cloud_run_env_vars_relative_file_dest: 'tmp/env/cloud.run.vars_full.yml'
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -125,7 +158,7 @@
 #   - run_db_master
 #   gather_facts: no  
 #   tasks:
-#   - include_tasks: "tasks/compose_init.yml"
+#   - include_tasks: "tasks/init.yml"
 #     tags: ["no_print"]
 
 #   - include_tasks: "tasks/compose_run.yml"
@@ -141,7 +174,7 @@
 #   - run_redis_master
 #   gather_facts: no  
 #   tasks:
-#   - include_tasks: "tasks/compose_init.yml"
+#   - include_tasks: "tasks/init.yml"
 #     tags: ["no_print"]
 
 #   - include_tasks: "tasks/compose_run.yml"
@@ -159,7 +192,7 @@
 #   - run_web
 #   gather_facts: no  
 #   tasks:
-#   - include_tasks: "tasks/compose_init.yml"
+#   - include_tasks: "tasks/init.yml"
 #     tags: ["no_print"]
 
 #   - include_tasks: "tasks/compose_run.yml"
@@ -176,7 +209,7 @@
 #   - run_app
 #   gather_facts: no  
 #   tasks:
-#   - include_tasks: "tasks/compose_init.yml"
+#   - include_tasks: "tasks/init.yml"
 #     tags: ["no_print"]
 
 #   - include_tasks: "tasks/compose_run.yml"
@@ -191,7 +224,7 @@
 #   - cron
 #   gather_facts: no
 #   tasks:
-#   - include_tasks: "tasks/compose_init.yml"
+#   - include_tasks: "tasks/init.yml"
 #     tags: ["no_print"]
 
 #   - include_role: 
@@ -278,7 +311,7 @@
   - cloud
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
   - include_role: 
@@ -286,10 +319,10 @@
     vars: 
       main_cloud_title: "cloud - destroy temporary instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
-      main_cloud_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
@@ -313,7 +346,7 @@
   - destroy
   gather_facts: no  
   tasks:
-  - include_tasks: "tasks/compose_init.yml"
+  - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
    
   - include_role: 
@@ -321,10 +354,10 @@
     vars: 
       main_cloud_title: "cloud - destroy all instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
-      main_cloud_orchestration: "{{ env.orchestrations[env.nodes[main_item].orchestration] }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
