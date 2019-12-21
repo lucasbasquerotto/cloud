@@ -1,12 +1,5 @@
 - name: Gathering facts
-  setup: 
-
-- include_role: 
-    name: "main_vars"
-  vars:
-    main_vars_env_file: "{{ env_file }}"
-    main_vars_type: "compose"
-  tags: ["no_print"]
+  setup:
 
 - name: "load environment vars"
   include_vars:
