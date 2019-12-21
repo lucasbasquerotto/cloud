@@ -1,7 +1,6 @@
 - name: "{{ cloud_run_pod_title }} - set_fact"
   set_fact:
-    cloud_run_repo_location: >-
-      {{ cloud_run_pod_base_dir }}/main
+    cloud_run_pod_repo_location: "{{ cloud_run_pod_base_dir }}/main"
     cloud_run_backup_file_src: >-
       {{ cloud_run_pod_base_dir }}/{{ cloud_run_env_vars_relative_file_src }}
     cloud_run_backup_file_dest: >-
@@ -53,7 +52,7 @@
       long_run_output_file: "env-run-setup.log"
       long_run_tmp_path: "{{ cloud_run_pod_base_dir }}/data/tmp"
       long_run_tmp_file: "env-run-setup"
-      long_run_path: "{{ cloud_run_repo_location }}"
+      long_run_path: "{{ cloud_run_pod_repo_location }}"
       long_run_cmd: "{{ cloud_run_pod.cmd }}"
     when: (cloud_run_pod.cmd | default('')) != ''
     tags: ["print_action"]
@@ -72,12 +71,12 @@
       long_run_output_file: "env-run.log"
       long_run_tmp_path: "{{ cloud_run_pod_base_dir }}/data/tmp"
       long_run_tmp_file: "env-run"
-      long_run_path: "{{ cloud_run_repo_location }}"
+      long_run_path: "{{ cloud_run_pod_repo_location }}"
       long_run_cmd: "{{ cloud_run_env_cmd | b64decode | trim }}"
     when: (cloud_run_env_cmd | default('')) != ''
     tags: ["print_action"]
     
-  - include_tasks: "{{ cloud_run_pod_orchestration.type }}_build.yml"
+  - include_tasks: "{{ cloud_run_pod_orchestration.type }}.yml"
     
   - name: >-
       {{ cloud_run_pod_title }} - 
