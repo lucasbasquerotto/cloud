@@ -33,7 +33,6 @@
 - name: "{{ cloud_prepare_pod_title }} - set_fact - locations"
   set_fact:
     cloud_prepare_data_dir: "{{ cloud_prepare_pod_base_dir }}/data"
-    cloud_prepare_vars_dir: "{{ cloud_prepare_pod.vars_dir }}"
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
     cloud_prepare_backup_file: >-
@@ -69,7 +68,7 @@
     label: "{{ cloud_prepare_pod_item | dirname }}"
 
 - name: >-
-    {{ cloud_prepare_pod_title }} - create the file to verify if there was a change, 
+    {{ cloud_prepare_pod_title }} - create the file to verify if there was a change,
     if it was not created before
   become: "{{ cloud_prepare_pod.root }}"
   copy: 
@@ -91,8 +90,8 @@
       - { name: "DATA_DIR", value: "{{ cloud_prepare_pod_base_dir }}/data" }
     
   - name: >-
-      {{ cloud_prepare_pod_title }} - 
-      define the environment variables - 
+      {{ cloud_prepare_pod_title }} -
+      define the environment variables -
       user {{ cloud_prepare_host_user }}
     lineinfile:
       dest: "/home/{{ cloud_prepare_host_user }}/.profile"
@@ -106,8 +105,8 @@
     when: cloud_prepare_host_user != 'root'
     
   - name: >-
-      {{ cloud_prepare_pod_title }} - 
-      define the environment variables - 
+      {{ cloud_prepare_pod_title }} -
+      define the environment variables -
       user root
     become: "{{ cloud_prepare_pod.root }}"
     lineinfile:
@@ -149,7 +148,7 @@
       cloud_prepare_repo_location: "{{ cloud_prepare_main_repo_location }}"
 
   - name: >-
-      {{ cloud_prepare_pod_title }} - 
+      {{ cloud_prepare_pod_title }} -
       update the file to verify if there was a change (for newer runs)
     become: "{{ cloud_prepare_pod.root }}"
     copy: 

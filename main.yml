@@ -16,12 +16,13 @@
       main_cloud_env_name: "{{ env.name }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
-      main_cloud_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
-      main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_node_params: "{{ env.node_params[main_cloud_node.params] }}"
+      main_cloud_instance_params: "{{ env.instance_params[main_cloud_node_params.params] }}"
+      main_cloud_var: "{{ env.clouds[main_cloud_node.cloud] }}"
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ env.nodes[main_item].cloud }}"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ main_cloud_node.cloud }}"
       main_cloud_hosts_file: "{{ inventory_file }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
@@ -38,8 +39,21 @@
   - test
   gather_facts: no
   tasks:
+  - include_tasks: "tasks/env.yml"
+    tags: ["no_print"]
+    
   - include_role: 
       name: "host_test"
+    vars: 
+      host_test_title: "{{ inventory_hostname }}"
+      host_test_node: "{{ env.nodes[instance_type] }}"
+      host_test_node_params: "{{ env.node_params[host_test_node.params] }}"
+      host_test_instance_params: "{{ env.instance_params[host_test_node_params.params] }}"
+      host_test_vars: "{{ host_test_instance_params.host_test }}"
+      host_test_log_file: "{{ host_test_vars.log_file }}"
+      host_test_setup_last_line: "{{ host_test_vars.setup_last_line }}"
+      host_test_initial_connection_timeout: "{{ host_test_vars.initial_connection_timeout }}"
+      host_test_setup_finished_timeout: "{{ host_test_vars.setup_finished_timeout }}"
     when: (((env_node | default('')) == '') or (env_node == instance_type))
 
 ###############################################################################
@@ -94,12 +108,13 @@
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
-      cloud_prepare_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
-      cloud_prepare_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      cloud_prepare_node_params: "{{ env.node_params[cloud_prepare_node.params] }}"
+      cloud_prepare_instance_params: "{{ env.instance_params[cloud_prepare_node_params.params] }}"
+      cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_node.cloud] }}"
       cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_params_dict: "{{ env.pod_params }}"
-      cloud_prepare_base_dir: "{{ env.node_params[env.nodes[main_item].params].base_dir }}"
+      cloud_prepare_base_dir: "{{ cloud_prepare_instance_params.base_dir }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item }}"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
@@ -132,12 +147,13 @@
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"
-      cloud_run_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
-      cloud_run_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      cloud_run_node_params: "{{ env.node_params[cloud_run_node.params] }}"
+      cloud_run_instance_params: "{{ env.instance_params[cloud_run_node_params.params] }}"
+      cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud] }}"
       cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_run_pods_dict: "{{ env.pods }}"
       cloud_run_params_dict: "{{ env.pod_params }}"
-      cloud_run_base_dir: "{{ env.node_params[env.nodes[main_item].params].base_dir }}"
+      cloud_run_base_dir: "{{ cloud_run_instance_params.base_dir }}"
       cloud_run_env_pod: "{{ env_pod | default('', true) }}"
       cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_run_env_vars_relative_file_src: 'tmp/env/cloud.prepare.vars_full.yml'
@@ -235,16 +251,17 @@
   - include_role: 
       name: "main_cloud"
     vars: 
-      main_cloud_title: "cloud - destroy temporary instances - {{ main_item }}"
+      main_cloud_title: "cloud - create instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
-      main_cloud_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
-      main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_node_params: "{{ env.node_params[main_cloud_node.params] }}"
+      main_cloud_instance_params: "{{ env.instance_params[main_cloud_node_params.params] }}"
+      main_cloud_var: "{{ env.clouds[main_cloud_node.cloud] }}"
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ env.nodes[main_item].cloud }}"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ main_cloud_node.cloud }}"
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
@@ -270,16 +287,17 @@
   - include_role: 
       name: "main_cloud"
     vars: 
-      main_cloud_title: "cloud - destroy all instances - {{ main_item }}"
+      main_cloud_title: "cloud - create instances - {{ main_item }}"
       main_cloud_env_name: "{{ env.name }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
-      main_cloud_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
-      main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
+      main_cloud_node_params: "{{ env.node_params[main_cloud_node.params] }}"
+      main_cloud_instance_params: "{{ env.instance_params[main_cloud_node_params.params] }}"
+      main_cloud_var: "{{ env.clouds[main_cloud_node.cloud] }}"
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ env.nodes[main_item].cloud }}"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ main_cloud_node.cloud }}"
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"

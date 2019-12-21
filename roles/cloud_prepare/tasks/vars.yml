@@ -2,7 +2,6 @@
   set_fact:
     cloud_prepare_vars_tpl_src_remote: >-
       {{ cloud_prepare_repo_location }}/{{ ''
-      }}{{ cloud_prepare_vars_dir }}/{{ ''
       }}{{ cloud_prepare_inner_item.name }}.yml
     cloud_prepare_vars_tpl_src: >-
       {{ cloud_prepare_pod_local_tmp_dir }}/vars/cloud_prepare/{{ ''

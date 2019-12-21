@@ -7,8 +7,8 @@
       {{ cloud_run_orchestrations_dict[cloud_run_pod.orchestration] }}
     cloud_run_pod_base_dir: "{{ cloud_run_base_dir }}/{{ cloud_run_item }}"
     cloud_run_params: "{{ cloud_run_params_dict[cloud_prepare_pod.params] }}"
-    cloud_run_host_user: "{{ cloud_run_node_params.host_user }}"
-    cloud_run_host_group: "{{ cloud_run_node_params.host_user }}"
+    cloud_run_host_user: "{{ cloud_run_instance_params.host_user }}"
+    cloud_run_host_group: "{{ cloud_run_instance_params.host_user }}"
   loop: "{{ cloud_run_node.pods | default([cloud_prepare_node.main_pod]) | list }}"
   loop_control:
     loop_var: cloud_run_item
