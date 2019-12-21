@@ -1,21 +1,12 @@
----
-- name: >-
-    {{ cron_title }} - Ensure crontab file is up-to-date 
-    ({{ cron_dest_dir }}/{{ cron_dest_file }})
-  become: "{{ cron_become }}"
-  copy: 
-    src: "{{ cron_src_file }}" 
-    dest: "{{ cron_dest_dir }}/{{ cron_dest_file }}"
-  register: cron_result
-
-- name: "{{ cron_title }} - Ensure crontab file is active"
-  become: "{{ cron_become }}"
-  shell: "crontab '{{ cron_dest_dir }}/{{ cron_dest_file }}'"
-  when: cron_result is changed
-
-- name: "{{ cron_title }} - Ensure cron is running"
-  become: "{{ cron_become }}"
-  service: 
-    name: cron
-    state: started
-  when: (cron_start | default('')) == 'true'
+- name: "{{ cron_title }}"
+  include_tasks: "cron.yml"
+  vars:
+    cron_inner_title: "cron - {{ cron_item.user }} - {{ cron_item.src_file }}"
+    cron_src_file: "{{ cron_env_dir }}/{{ cron_item.src_file }}"
+    cron_become: "{{ cron_item.user == 'root' }}"
+    cron_dest_dir: "{{ cron_item.dest_dir }}"
+    cron_dest_file: "{{ cron_item.user }}"
+    cron_inner_start: "{{ cron_start }}"
+  loop: "{{ cron_node.cron | default([]) | list }}"
+  loop_control:
+    loop_var: cron_item

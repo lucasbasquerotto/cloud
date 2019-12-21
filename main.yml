@@ -90,7 +90,7 @@
   - include_role: 
       name: "cloud_prepare"
     vars:
-      cloud_prepare_title: "compose prepare - {{ main_item }}"
+      cloud_prepare_title: "cloud prepare - {{ main_item }}"
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
@@ -127,7 +127,7 @@
   - include_role: 
       name: "cloud_run"
     vars:
-      cloud_run_title: "compose run - {{ main_item }}"
+      cloud_run_title: "cloud run - {{ main_item }}"
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"
@@ -150,101 +150,30 @@
 
 # ###############################################################################
 
-# - name: Play 05.1 - Run - DB Master
-#   hosts: db_master
-#   tags:
-#   - init
-#   - run
-#   - run_db_master
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/init.yml"
-#     tags: ["no_print"]
+- name: Play 06 - Define the cron jobs
+  hosts: host
+  tags:
+  - init
+  - cron
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
 
-#   - include_tasks: "tasks/compose_run.yml"
-#     tags: ["no_print"]
-
-# #-----------------------------------------------------------------------------#
-
-# - name: Play 05.2 - Run - Redis Master
-#   hosts: redis_master
-#   tags:
-#   - init
-#   - run
-#   - run_redis_master
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/init.yml"
-#     tags: ["no_print"]
-
-#   - include_tasks: "tasks/compose_run.yml"
-#     tags: ["no_print"]
-
-# #-----------------------------------------------------------------------------#
-
-# - name: Play 05.3 - Run - Web
-#   hosts: 
-#   - web
-#   - web_replica
-#   tags:
-#   - init
-#   - run
-#   - run_web
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/init.yml"
-#     tags: ["no_print"]
-
-#   - include_tasks: "tasks/compose_run.yml"
-#     tags: ["no_print"]
-
-# #-----------------------------------------------------------------------------#
-
-# - name: Play 05.4 - Run - App
-#   hosts: 
-#   - app
-#   tags:
-#   - init
-#   - run
-#   - run_app
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/init.yml"
-#     tags: ["no_print"]
-
-#   - include_tasks: "tasks/compose_run.yml"
-#     tags: ["no_print"]
-
-# ###############################################################################
-
-# - name: Play 06 - Define the cron jobs
-#   hosts: host
-#   tags:
-#   - init
-#   - cron
-#   gather_facts: no
-#   tasks:
-#   - include_tasks: "tasks/init.yml"
-#     tags: ["no_print"]
-
-#   - include_role: 
-#       name: "cron"
-#     vars:
-#       cron_title: "cron - {{ main_item }}"
-#       cron_src_file: "{{ main_vars.cron.src_base_dir }}/{{ main_vars.cron.main[main_item] }}"
-#       cron_become: "{{ main_vars.cron.become }}"
-#       cron_dest_dir: "{{ main_vars.cron.dest_dir }}"
-#       cron_dest_file: "{{ main_vars.cron.dest_file }}"
-#       cron_start: "true"
-#     loop: >-
-#       {{ main_vars.prepare.contexts | default([]) | list 
-#       | map(attribute='group') | unique | list }}
-#     loop_control:
-#       loop_var: main_item
-#     when: >-
-#       (main_item == instance_type) 
-#       and 
-#       ((main_vars.cron.main[main_item] | default('')) != '')
+  - include_role: 
+      name: "cron"
+    vars:
+      cron_title: "cron - {{ main_item }}"
+      cron_node: "{{ env.nodes[main_item] }}"
+      cron_env_dir: "{{ env_dir }}"
+      cron_start: "true"
+    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: >-
+      (main_item == instance_type)
+      and
+      (((env_node | default('')) == '') or (env_node == main_item))
 
 # ###############################################################################
 

@@ -1,4 +1,4 @@
-- include_tasks: "pod.yml"
+- name: "{{ cloud_run_title }}"
   vars:
     cloud_run_pod_title: "{{ cloud_run_title }} - {{ cloud_run_item }}"
     cloud_run_pod_id: "{{ cloud_run_item }}"
@@ -12,4 +12,4 @@
   loop: "{{ cloud_run_node.pods | default([]) | list }}"
   loop_control:
     loop_var: cloud_run_item
-  when: cloud_run_env_pod  in ['', cloud_run_item]
+  when: cloud_run_env_pod in ['', cloud_run_item]

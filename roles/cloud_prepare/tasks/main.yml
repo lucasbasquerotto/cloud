@@ -1,4 +1,5 @@
-- include_tasks: "pod.yml"
+- name: "{{ cloud_prepare_title }}"
+  include_tasks: "pod.yml"
   vars:
     cloud_prepare_pod_title: "{{ cloud_prepare_title }} - {{ cloud_prepare_item }}"
     cloud_prepare_pod_id: "{{ cloud_prepare_item }}"
@@ -13,4 +14,4 @@
   loop: "{{ cloud_prepare_node.pods | default([]) | list }}"
   loop_control:
     loop_var: cloud_prepare_item
-  when: cloud_prepare_env_pod  in ['', cloud_prepare_item]
+  when: cloud_prepare_env_pod in ['', cloud_prepare_item]

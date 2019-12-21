@@ -7,3 +7,26 @@
     main_vars_env_file: "{{ env_file }}"
     main_vars_type: "compose"
   tags: ["no_print"]
+
+- name: "load environment vars"
+  include_vars:
+    file: "{{ env_file }}"
+    name: env_tmp
+  tags: ["no_print"]
+      
+- name: "set_fact"
+  set_fact:
+    env: "{{ env_tmp.tmp }}"
+  tags: ["no_print"]
+
+- name: "verify if main type match the one from the env variable"
+  fail:
+    msg: "main.type is not defined in the environment vars"
+  when: env.main.type is not defined
+  tags: ["no_print"]
+
+- name: "verify if main type match the one from the env variable"
+  fail:
+    msg: "{{ main_vars_type }} should be {{ env.main.type }}"
+  when: env.main.type != main_vars_type
+  tags: ["no_print"]

@@ -1,0 +1,21 @@
+---
+- name: >-
+    {{ cron_inner_title }} - Ensure crontab file is up-to-date 
+    ({{ cron_dest_dir }}/{{ cron_dest_file }})
+  become: "{{ cron_become }}"
+  copy: 
+    src: "{{ cron_src_file }}" 
+    dest: "{{ cron_dest_dir }}/{{ cron_dest_file }}"
+  register: cron_result
+
+- name: "{{ cron_inner_title }} - Ensure crontab file is active"
+  become: "{{ cron_become }}"
+  shell: "crontab '{{ cron_dest_dir }}/{{ cron_dest_file }}'"
+  when: cron_result is changed
+
+- name: "{{ cron_inner_title }} - Ensure cron is running"
+  become: "{{ cron_become }}"
+  service: 
+    name: cron
+    state: started
+  when: (cron_inner_start | default('')) == 'true'
