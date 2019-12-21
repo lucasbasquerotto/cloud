@@ -11,7 +11,7 @@
     cloud_prepare_host_user: "{{ cloud_prepare_node_params.host_user }}"
     cloud_prepare_host_group: "{{ cloud_prepare_node_params.host_user }}"
     cloud_prepare_pod_local_tmp_dir: "{{ cloud_prepare_local_tmp_dir }}/{{ cloud_prepare_item }}"
-  loop: "{{ cloud_prepare_node.pods | default([]) | list }}"
+  loop: "{{ cloud_prepare_node.pods | default([cloud_prepare_node.main_pod]) | list }}"
   loop_control:
     loop_var: cloud_prepare_item
   when: cloud_prepare_env_pod in ['', cloud_prepare_item]

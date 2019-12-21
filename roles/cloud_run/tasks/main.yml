@@ -9,7 +9,7 @@
     cloud_run_params: "{{ cloud_run_params_dict[cloud_prepare_pod.params] }}"
     cloud_run_host_user: "{{ cloud_run_node_params.host_user }}"
     cloud_run_host_group: "{{ cloud_run_node_params.host_user }}"
-  loop: "{{ cloud_run_node.pods | default([]) | list }}"
+  loop: "{{ cloud_run_node.pods | default([cloud_prepare_node.main_pod]) | list }}"
   loop_control:
     loop_var: cloud_run_item
   when: cloud_run_env_pod in ['', cloud_run_item]
