@@ -12,7 +12,7 @@ digital_ocean_instance_name: "droplet"
 # digital_ocean_instance_size: "1gb"
 # digital_ocean_instance_size: "s-2vcpu-2gb"
 # digital_ocean_region: "nyc1"
-# digital_ocean_private_networking: yes
+digital_ocean_private_networking: yes
 # digital_ocean_ipv6: yes
 digital_ocean_wait_timeout: 500  
 # digital_ocean_user_data_file: ""

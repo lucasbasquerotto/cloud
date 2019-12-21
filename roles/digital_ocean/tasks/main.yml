@@ -102,8 +102,8 @@
       {{ digital_ocean_cloud_instances +
       [{ 'name':
       digital_ocean_instance_name + '-' +
-      digital_ocean_region + '-' +
-      ('%03d' | format(digital_ocean_item)),
+      ('%04d' | format(digital_ocean_item)) + '-' +
+      digital_ocean_region,
       'region_id': digital_ocean_region,
       'state':
       (((digital_ocean_item | int) <= (digital_ocean_instance_count | int))

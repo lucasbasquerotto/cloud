@@ -21,7 +21,7 @@
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ env.nodes[main_item].cloud }}"
       main_cloud_hosts_file: "{{ inventory_file }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
@@ -244,7 +244,7 @@
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ env.nodes[main_item].cloud }}"
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
@@ -279,7 +279,7 @@
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
+      main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud/{{ env.nodes[main_item].cloud }}"
       main_cloud_hosts_file: "{{ inventory_file }}"
       main_cloud_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"

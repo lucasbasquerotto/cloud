@@ -21,8 +21,8 @@
       title: "{{ main_cloud_node_id }} - {{ main_cloud_node_params.region }}"
       hosts_file: "{{ main_cloud_hosts_file }}"
       api_token: "{{ main_cloud_var.api_token }}"
-      all_tags: "{{ main_cloud_params.tags }}"
-      all_firewalls: "{{ main_cloud_params.firewalls }}"
+      all_tags: "{{ main_cloud_params.tags | default([]) }}"
+      all_firewalls: "{{ main_cloud_params.firewalls | default([]) }}"
       instance_name: "{{ main_cloud_env_name }}-{{ main_cloud_node_id }}"
       instance_type: "{{ main_cloud_node_id }}"
       region: "{{ main_cloud_node_params.region }}"
@@ -37,8 +37,9 @@
       ssh_public_keys: "{{ main_cloud_node_params.host_ssh_public_keys }}"
       ssh_encrypted_key_path: "{{ main_cloud_aux.ssh_encrypted_key_path }}"
       ssh_key_path: "{{ main_cloud_aux.ssh_key_path }}"
-      tags: "{{ main_cloud_node.tags }}"
+      tags: "{{ main_cloud_node_params.tags }}"
       instance_tmp: "{{ main_cloud_node.tmp | default(false) }}"
+      tmp_dir: "{{ main_cloud_tmp_dir }}"
       shutdown: "{{ main_cloud_shutdown | default(false) }}"
   tags: ["no_print"]
 
