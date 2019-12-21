@@ -128,15 +128,14 @@
   vars:
     digital_ocean_droplets_title: >-
       {{ digital_ocean_title }} - create droplets - {{ digital_ocean_instance_type }}
-    digital_ocean_droplets_hosts_group: "{{ digital_ocean_instance_type }}"
     digital_ocean_droplets_hosts_file: "{{ digital_ocean_hosts_file }}"
     digital_ocean_droplets_instance_type: "{{ digital_ocean_instance_type }}"
     digital_ocean_droplets_api_token: "{{ digital_ocean_api_token }}"
     digital_ocean_droplets_host_user: "{{ digital_ocean_host_user }}"
     digital_ocean_droplets_host_pass: "{{ digital_ocean_host_pass }}"
     digital_ocean_droplets_user_data: "{{ digital_ocean_user_data }}"
-    digital_ocean_droplets_size_id: "{{ digital_ocean_size_id }}"
-    digital_ocean_droplets_image_id: "{{ digital_ocean_image_id }}"
+    digital_ocean_droplets_size_id: "{{ digital_ocean_instance_size }}"
+    digital_ocean_droplets_image_id: "{{ digital_ocean_instance_image }}"
     digital_ocean_droplets_private_networking: "{{ digital_ocean_private_networking }}"
     digital_ocean_droplets_ipv6: "{{ digital_ocean_ipv6 }}"
     digital_ocean_droplets_wait_timeout: "{{ digital_ocean_wait_timeout }}"

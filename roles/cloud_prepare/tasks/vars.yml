@@ -22,7 +22,7 @@
   delegate_to: localhost
 
 - name: "{{ cloud_prepare_inner_title }} - fetch template from a single remote host"
-  become: "{{ cloud_prepare_cloud.root }}"
+  become: "{{ cloud_prepare_pod.root }}"
   run_once: true
   fetch:
     src: "{{ cloud_prepare_vars_tpl_src_remote }}"

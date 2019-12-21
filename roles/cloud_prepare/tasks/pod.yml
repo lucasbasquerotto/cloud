@@ -56,7 +56,7 @@
   delegate_to: localhost
 
 - name: "{{ cloud_prepare_pod_title }} - create the remote directories"
-  become: "{{ cloud_prepare_cloud.root }}"
+  become: "{{ cloud_prepare_pod.root }}"
   file:
     path: "{{ cloud_prepare_pod_item | dirname }}"
     state: directory
@@ -71,7 +71,7 @@
 - name: >-
     {{ cloud_prepare_pod_title }} - create the file to verify if there was a change, 
     if it was not created before
-  become: "{{ cloud_prepare_cloud.root }}"
+  become: "{{ cloud_prepare_pod.root }}"
   copy: 
     force: no
     content: ""
@@ -109,7 +109,7 @@
       {{ cloud_prepare_pod_title }} - 
       define the environment variables - 
       user root
-    become: "{{ cloud_prepare_cloud.root }}"
+    become: "{{ cloud_prepare_pod.root }}"
     lineinfile:
       dest: "/root/.profile"
       state: present
@@ -119,7 +119,7 @@
     loop_control:
       loop_var: local_item
       label: "{{ local_item.name }}"
-    when: cloud_prepare_cloud.root in ['yes', 'true']
+    when: cloud_prepare_pod.root in ['yes', 'true']
 
   when: cloud_prepare_pod_id == cloud_prepare_node.main_pod
 
@@ -134,7 +134,7 @@
 ### Prepare the real directory ###
 
 - name: "{{ cloud_prepare_pod_title }} - get the difference of the 2 files (old and current)"
-  become: "{{ cloud_prepare_cloud.root }}"
+  become: "{{ cloud_prepare_pod.root }}"
   command: "diff {{ cloud_prepare_backup_file_tmp }} {{ cloud_prepare_backup_file }}"
   register: cloud_prepare_diff
   failed_when: cloud_prepare_diff.rc > 1
@@ -151,7 +151,7 @@
   - name: >-
       {{ cloud_prepare_pod_title }} - 
       update the file to verify if there was a change (for newer runs)
-    become: "{{ cloud_prepare_cloud.root }}"
+    become: "{{ cloud_prepare_pod.root }}"
     copy: 
       remote_src: yes
       src: "{{ cloud_prepare_backup_file_tmp }}"

@@ -18,15 +18,4 @@
   set_fact:
     env: "{{ env_tmp.tmp }}"
   tags: ["no_print"]
-
-- name: "verify if main type match the one from the env variable"
-  fail:
-    msg: "main.type is not defined in the environment vars"
-  when: env.main.type is not defined
-  tags: ["no_print"]
-
-- name: "verify if main type match the one from the env variable"
-  fail:
-    msg: "{{ main_vars_type }} should be {{ env.main.type }}"
-  when: env.main.type != main_vars_type
-  tags: ["no_print"]
+  

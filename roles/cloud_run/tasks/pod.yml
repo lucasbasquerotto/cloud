@@ -8,7 +8,7 @@
       {{ cloud_run_pod_base_dir }}/{{ cloud_run_env_vars_relative_file_dest }}
 
 - name: "{{ cloud_run_pod_title }} - create the backup directories"
-  become: "{{ cloud_run_cloud.root }}"
+  become: "{{ cloud_run_pod.root }}"
   file:
     path: "{{ cloud_run_pod_item | dirname }}"
     state: directory
@@ -25,7 +25,7 @@
 - name: >-
     {{ cloud_run_pod_title }} - create empty env file in backup directory
     if there is no file there
-  become: "{{ cloud_run_cloud.root }}"
+  become: "{{ cloud_run_pod.root }}"
   copy: 
     force: no
     content: ""
@@ -35,7 +35,7 @@
     mode: 0640
 
 - name: "{{ cloud_run_pod_title }} - get the difference of the 2 env files (old and current)"
-  become: "{{ cloud_run_cloud.root }}"
+  become: "{{ cloud_run_pod.root }}"
   command: "diff {{ cloud_run_backup_file_src }} {{ cloud_run_backup_file_dest }}"
   register: cloud_run_diff
   failed_when: cloud_run_diff.rc > 1
@@ -48,7 +48,7 @@
       name: long_run
     vars:
       long_run_title: "{{ cloud_run_pod_title }} - run the setup script"
-      long_run_become: "{{ cloud_run_cloud.root }}"
+      long_run_become: "{{ cloud_run_pod.root }}"
       long_run_output_path: "{{ cloud_run_pod_base_dir }}/data/log"
       long_run_output_file: "env-run-setup.log"
       long_run_tmp_path: "{{ cloud_run_pod_base_dir }}/data/tmp"
@@ -67,7 +67,7 @@
         {{ cloud_run_env_cmd | b64decode | trim 
         | regex_replace('\n', ' .. ') 
         | truncate(30, False, '...', 10) }}
-      long_run_become: "{{ cloud_run_cloud.root }}"
+      long_run_become: "{{ cloud_run_pod.root }}"
       long_run_output_path: "{{ cloud_run_pod_base_dir }}/data/log"
       long_run_output_file: "env-run.log"
       long_run_tmp_path: "{{ cloud_run_pod_base_dir }}/data/tmp"
@@ -83,7 +83,7 @@
       {{ cloud_run_pod_title }} - 
       backup the env context vars file 
       (to avoid running when the variables haven't changed)
-    become: "{{ cloud_run_cloud.root }}"
+    become: "{{ cloud_run_pod.root }}"
     copy: 
       remote_src: yes
       src: "{{ cloud_run_backup_file_src }}"

@@ -16,13 +16,13 @@
       main_cloud_env_name: "{{ env.name }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
+      main_cloud_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
       main_cloud_hosts_file: "{{ inventory_file }}"
-      main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -94,11 +94,12 @@
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
+      cloud_prepare_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
       cloud_prepare_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
       cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
-      cloud_prepare_params_dict: "{{ env.params }}"
-      cloud_prepare_base_dir: "{{ env.nodes[main_item].base_dir | default('/var/cloud') }}"
+      cloud_prepare_params_dict: "{{ env.pod_params }}"
+      cloud_prepare_base_dir: "{{ env.node_params[env.nodes[main_item].params].base_dir }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item }}"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
@@ -131,11 +132,12 @@
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"
+      cloud_run_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
       cloud_run_cloud: "{{ env.clouds[env.nodes[main_item].cloud] }}"
       cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_run_pods_dict: "{{ env.pods }}"
-      cloud_run_params_dict: "{{ env.params }}"
-      cloud_run_base_dir: "{{ env.nodes[main_item].base_dir | default('/var/cloud') }}"
+      cloud_run_params_dict: "{{ env.pod_params }}"
+      cloud_run_base_dir: "{{ env.node_params[env.nodes[main_item].params].base_dir }}"
       cloud_run_env_pod: "{{ env_pod | default('', true) }}"
       cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_run_env_vars_relative_file_src: 'tmp/env/cloud.prepare.vars_full.yml'
@@ -177,59 +179,46 @@
 
 # ###############################################################################
 
-# - name: Play 07.1 - Execute instruction on-the-fly - DB Master
-#   hosts: db_master
-#   tags:
-#   - never
-#   - exec
-#   - exec_db_master
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/compose_exec.yml"
-#     tags: ["no_print"]
+- name: Play 07 - Execute instruction on-the-fly
+  hosts: host
+  tags:
+  - never
+  - exec
+  gather_facts: no  
+  tasks:
 
-# #-----------------------------------------------------------------------------#
-
-# - name: Play 07.2 - Execute instruction on-the-fly - Redis Master
-#   hosts: redis_master
-#   tags:
-#   - never
-#   - exec
-#   - exec_redis_master
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/compose_exec.yml"
-#     tags: ["no_print"]
-
-# #-----------------------------------------------------------------------------#
-
-# - name: Play 07.3 - Execute instruction on-the-fly - Web
-#   hosts: 
-#   - web
-#   - web_replica
-#   tags:
-#   - never
-#   - exec
-#   - exec_web
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/compose_exec.yml"
-#     tags: ["no_print"]
-
-# #-----------------------------------------------------------------------------#
-
-# - name: Play 07.4 - Execute instruction on-the-fly - App
-#   hosts: 
-#   - app
-#   tags:
-#   - never
-#   - exec
-#   - exec_app
-#   gather_facts: no  
-#   tasks:
-#   - include_tasks: "tasks/compose_exec.yml"
-#     tags: ["no_print"]
-
+  - include_role: 
+      name: "long_run"
+    vars:
+      long_run_title: >-
+        compose exec - 
+        {{ env_exec_cmd | b64decode | trim 
+        | regex_replace('\n', ' .. ') 
+        | truncate(30, False, '...', 10) }}
+      long_run_become: "{{ main_vars.run.docker_become }}"
+      long_run_output_path: >-
+        {{ env.node_params[env.nodes[main_item].params].base_dir 
+        }}/{{ env.nodes[main_item].main_pod }}/data/log
+      long_run_output_file: "env-exec.log"
+      long_run_tmp_path: >-
+        {{ env.node_params[env.nodes[main_item].params].base_dir 
+        }}/{{ env.nodes[main_item].main_pod }}/data/tmp
+      long_run_tmp_file: "env-exec"
+      long_run_path: >-
+        {{ env.node_params[env.nodes[main_item].params].base_dir 
+        }}/{{ env.nodes[main_item].main_pod }}/main
+      long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
+      long_run_poll: 2
+    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: >-
+      ((env_exec_cmd | default('')) != '')
+      and
+      (main_item == instance_type)
+      and
+      (((env_node | default('')) == '') or (env_node == main_item))
+  
 ###############################################################################
 
 - name: Play 08 - Delete Temporary Cloud Instances
@@ -250,13 +239,13 @@
       main_cloud_env_name: "{{ env.name }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
+      main_cloud_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
       main_cloud_hosts_file: "{{ inventory_file }}"
-      main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
       main_cloud_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
@@ -285,13 +274,13 @@
       main_cloud_env_name: "{{ env.name }}"
       main_cloud_node_id: "{{ main_item }}"
       main_cloud_node: "{{ env.nodes[main_item] }}"
+      main_cloud_node_params: "{{ env.node_params[env.nodes[main_item].params] }}"
       main_cloud_var: "{{ env.clouds[env.nodes[main_item].cloud] }}"
       main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
       main_cloud_dns_dict: "{{ env.dns }}"
       main_cloud_env_dir: "{{ env_dir }}"
       main_cloud_tmp_dir: "{{ env_tmp_dir }}/cloud"
       main_cloud_hosts_file: "{{ inventory_file }}"
-      main_cloud_user_data_file: "roles/main_cloud/templates/ubuntu-18.04.j2.sh"
       main_cloud_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:

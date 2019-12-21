@@ -1,5 +1,5 @@
 - name: "{{ cloud_prepare_inner_title }} - compose - prepare the images (pull and build)"
-  become: "{{ cloud_prepare_cloud.root }}"
+  become: "{{ cloud_prepare_pod.root }}"
   command: "{{ cloud_prepare_compose_item }}"
   args:
     chdir: "{{ cloud_prepare_repo_location }}/"
