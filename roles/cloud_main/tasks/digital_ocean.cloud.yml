@@ -1,4 +1,5 @@
 - name: "{{ cloud_main_inner_title }} - define the tmp dirs"
+  set_fact:
     cloud_main_tmp_file_tags_src: "{{ cloud_main_tmp_dir }}/tags.src.txt"
     cloud_main_tmp_file_tags_dest: "{{ cloud_main_tmp_dir }}/tags.dest.txt"
     cloud_main_tmp_file_firewalls_src: "{{ cloud_main_tmp_dir }}/firewalls.src.txt"
