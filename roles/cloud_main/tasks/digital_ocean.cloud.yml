@@ -1,0 +1,96 @@
+- name: "{{ cloud_main_inner_title }} - define the tmp dirs"
+    cloud_main_tmp_file_tags_src: "{{ cloud_main_tmp_dir }}/tags.src.txt"
+    cloud_main_tmp_file_tags_dest: "{{ cloud_main_tmp_dir }}/tags.dest.txt"
+    cloud_main_tmp_file_firewalls_src: "{{ cloud_main_tmp_dir }}/firewalls.src.txt"
+    cloud_main_tmp_file_firewalls_dest: "{{ cloud_main_tmp_dir }}/firewalls.dest.txt"
+
+- name: >-
+    {{ cloud_main_inner_title }} - create the temporary directory 
+    '{{ cloud_main_inner_tmp_dir }}'
+  file:
+    path: "{{ cloud_main_inner_tmp_dir }}"
+    state: directory
+    mode: 0751
+
+- name: "{{ cloud_main_inner_title }} - tags tmp file src"
+  copy: 
+    content: "{{ cloud_main_inner_tags | default([]) }}" 
+    dest: "{{ cloud_main_inner_tmp_file_tags_src }}"
+
+- name: "{{ cloud_main_inner_title }} - tags tmp file dest if empty"
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ cloud_main_inner_tmp_file_tags_dest }}"
+    mode: 0640
+
+- name: "{{ cloud_main_inner_title }} - tags - get the difference of two files (old and current)"
+  command: >-
+    diff {{ cloud_main_inner_tmp_file_tags_src }} {{ cloud_main_inner_tmp_file_tags_dest }}
+  register: cloud_main_inner_diff
+  failed_when: cloud_main_inner_diff.rc > 1
+  changed_when: cloud_main_inner_diff.rc == 1
+
+- name: "{{ cloud_main_inner_title }} - create tags"
+  digital_ocean_tag:
+    api_token: "{{ cloud_main_inner_api_token }}"
+    name: "{{ cloud_main_inner_item }}"
+    state: "present"
+  loop: "{{ cloud_main_inner_tags | default([]) }}"
+  loop_control:
+    loop_var: cloud_main_inner_item
+  when: cloud_main_inner_diff.changed and ((cloud_main_inner_instance_count | int) > 0)
+  tags: ["print_action"]
+
+- name: "{{ cloud_main_inner_title }} - tags tmp file dest"
+  copy: 
+    remote_src: yes
+    src: "{{ cloud_main_inner_tmp_file_tags_src }}" 
+    dest: "{{ cloud_main_inner_tmp_file_tags_dest }}"
+    mode: 0640
+  when: cloud_main_inner_diff.changed
+
+- name: "{{ cloud_main_inner_title }} - firewalls tmp file src"
+  copy: 
+    content: "{{ cloud_main_inner_firewalls | default([]) }}" 
+    dest: "{{ cloud_main_inner_tmp_file_firewalls_src }}"
+
+- name: "{{ cloud_main_inner_title }} - firewalls tmp file dest if empty"
+  copy: 
+    force: no
+    content: ""
+    dest: "{{ cloud_main_inner_tmp_file_firewalls_dest }}"
+    mode: 0640
+
+- name: "{{ cloud_main_inner_title }} - firewalls - get the difference of two files (old and current)"
+  command: >-
+    diff 
+    {{ cloud_main_inner_tmp_file_firewalls_src }} 
+    {{ cloud_main_inner_tmp_file_firewalls_dest }}
+  register: cloud_main_inner_diff
+  failed_when: cloud_main_inner_diff.rc > 1
+  changed_when: cloud_main_inner_diff.rc == 1
+
+- name: "{{ cloud_main_inner_title }} - create firewalls"
+  digital_ocean_firewall:
+    api_token: "{{ cloud_main_inner_api_token }}"
+    name: "{{ cloud_main_inner_item.name }}"
+    state: "present"
+    droplet_ids: "{{ cloud_main_inner_item.droplet_ids | default([]) }}"
+    tags: "{{ cloud_main_inner_item.tags | default([]) }}"
+    inbound_rules: "{{ cloud_main_inner_item.inbound_rules | default([]) }}"
+    outbound_rules: "{{ cloud_main_inner_item.outbound_rules | default([]) }}"
+  loop: "{{ cloud_main_inner_firewalls | default([]) }}"
+  loop_control:
+    loop_var: cloud_main_inner_item
+    label: "{{ cloud_main_inner_item.name }}"
+  when: cloud_main_inner_diff.changed and ((cloud_main_inner_instance_count | int) > 0)
+  tags: ["print_action"]
+
+- name: "{{ cloud_main_inner_title }} - firewalls tmp file dest"
+  copy: 
+    remote_src: yes
+    src: "{{ cloud_main_inner_tmp_file_firewalls_src }}" 
+    dest: "{{ cloud_main_inner_tmp_file_firewalls_dest }}"
+    mode: 0640
+  when: cloud_main_inner_diff.changed

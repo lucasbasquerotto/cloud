@@ -14,23 +14,35 @@
     tags: ["no_print"]
 
   - include_role: 
-      name: "main_cloud"
+      name: "cloud_main"
     vars: 
-      main_cloud_title: "cloud - create instances - {{ main_item }}"
-      main_cloud_env_name: "{{ env.name }}"
-      main_cloud_node_id: "{{ main_item }}"
-      main_cloud_node: "{{ env.nodes[main_item] }}"
-      main_cloud_node_params: >-
-        {{ env.node_params[main_cloud_node.params] }}
-      main_cloud_instance_params: >-
-        {{ env.instance_params[main_cloud_node_params.params] }}
-      main_cloud_var: "{{ env.clouds[main_cloud_node.cloud] }}"
-      main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
-      main_cloud_dns_dict: "{{ env.dns }}"
-      main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/{{ main_cloud_node.cloud }}
-      main_cloud_hosts_file: "{{ inventory_file }}"
+      cloud_main_title: "cloud - prepare"
+      cloud_main_cloud: "{{ env.clouds[main_item] }}"
+      cloud_main_cloud_params: >-
+        {{ env.cloud_params[cloud_main_cloud.params] }}
+      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+    loop: "{{ env.main.clouds | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+
+  - include_role: 
+      name: "cloud_node"
+    vars: 
+      cloud_node_title: "cloud - create instances - {{ main_item }}"
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_id: "{{ main_item }}"
+      cloud_node_node: "{{ env.nodes[main_item] }}"
+      cloud_node_node_params: >-
+        {{ env.node_params[cloud_node_node.params] }}
+      cloud_node_instance_params: >-
+        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_params: "{{ env.cloud_params[cloud_node_cloud.params] }}"
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -276,24 +288,24 @@
     tags: ["no_print"]
 
   - include_role: 
-      name: "main_cloud"
+      name: "cloud_node"
     vars: 
-      main_cloud_title: "cloud - create instances - {{ main_item }}"
-      main_cloud_env_name: "{{ env.name }}"
-      main_cloud_node_id: "{{ main_item }}"
-      main_cloud_node: "{{ env.nodes[main_item] }}"
-      main_cloud_node_params: >-
-        {{ env.node_params[main_cloud_node.params] }}
-      main_cloud_instance_params: >-
-        {{ env.instance_params[main_cloud_node_params.params] }}
-      main_cloud_var: "{{ env.clouds[main_cloud_node.cloud] }}"
-      main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
-      main_cloud_dns_dict: "{{ env.dns }}"
-      main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/{{ main_cloud_node.cloud }}
-      main_cloud_hosts_file: "{{ inventory_file }}"
-      main_cloud_shutdown: true
+      cloud_node_title: "cloud - create instances - {{ main_item }}"
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_id: "{{ main_item }}"
+      cloud_node_node: "{{ env.nodes[main_item] }}"
+      cloud_node_node_params: >-
+        {{ env.node_params[cloud_node_node.params] }}
+      cloud_node_instance_params: >-
+        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_params: "{{ env.cloud_params[cloud_node_cloud.params] }}"
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/{{ cloud_node_node.cloud }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -315,24 +327,24 @@
     tags: ["no_print"]
    
   - include_role: 
-      name: "main_cloud"
+      name: "cloud_node"
     vars: 
-      main_cloud_title: "cloud - create instances - {{ main_item }}"
-      main_cloud_env_name: "{{ env.name }}"
-      main_cloud_node_id: "{{ main_item }}"
-      main_cloud_node: "{{ env.nodes[main_item] }}"
-      main_cloud_node_params: >-
-        {{ env.node_params[main_cloud_node.params] }}
-      main_cloud_instance_params: >-
-        {{ env.instance_params[main_cloud_node_params.params] }}
-      main_cloud_var: "{{ env.clouds[main_cloud_node.cloud] }}"
-      main_cloud_params: "{{ env.cloud_params[main_cloud_var.params] }}"
-      main_cloud_dns_dict: "{{ env.dns }}"
-      main_cloud_env_dir: "{{ env_dir }}"
-      main_cloud_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/{{ main_cloud_node.cloud }}
-      main_cloud_hosts_file: "{{ inventory_file }}"
-      main_cloud_shutdown: true
+      cloud_node_title: "cloud - create instances - {{ main_item }}"
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_id: "{{ main_item }}"
+      cloud_node_node: "{{ env.nodes[main_item] }}"
+      cloud_node_node_params: >-
+        {{ env.node_params[cloud_node_node.params] }}
+      cloud_node_instance_params: >-
+        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_params: "{{ env.cloud_params[cloud_node_cloud.params] }}"
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/{{ cloud_node_node.cloud }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item

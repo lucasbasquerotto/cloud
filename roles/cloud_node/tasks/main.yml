@@ -1,0 +1,187 @@
+- name: "{{ cloud_node_title }} - set_fact - main"
+  set_fact: 
+    cloud_node_aux:
+      ssh_encrypted_key_path: >-
+        {{ 
+        cloud_node_instance_params.ssh_encrypted_key_path_rel | default('') | 
+        ternary(env_dir + '/' + 
+        (cloud_node_instance_params.ssh_encrypted_key_path_rel | default('')), '') 
+        }}
+      ssh_key_path: >-
+        {{ 
+        cloud_node_instance_params.ssh_encrypted_key_path_rel | 
+        ternary(cloud_node_tmp_dir + '/' + cloud_node_node_id + '.key', '')
+        }}
+  tags: ["no_print"]
+  
+- set_fact:
+    cloud_node_cloud_instances: []
+    cloud_node_instance_count: "{{ cloud_node_node.amount }}"
+    cloud_node_instance_max: "{{ cloud_node_node.amount_to_check }}"
+
+- name: "{{ cloud_node_title }} - define instances to be created"
+  set_fact:
+    cloud_node_cloud_instances: >-
+      {{ cloud_node_cloud_instances +
+      [{ 'name':
+      cloud_node_instance_name + '-' +
+      ('%04d' | format(cloud_node_item)) + '-' +
+      cloud_node_region,
+      'region_id': cloud_node_region,
+      'create':
+      (((cloud_node_item | int) <= (cloud_node_instance_count | int))
+      and not ((cloud_node_shutdown| default(false)) | bool)) | 
+      ternary('true', 'false') }] }}
+  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+
+- name: "{{ cloud_node_title }} - define cloud_node_user_data_file"
+  set_fact:
+    cloud_node_user_data: >-
+      {{ lookup(
+      'template', 
+      cloud_node_user_data_file, 
+      template_vars=dict(cloud_node_host_vars)
+      ) | trim 
+      }}
+  when: (cloud_node_user_data_file is defined) and (cloud_node_user_data_file != '')
+
+# Will be populeted from the inner task
+- name: "{{ cloud_node_title }} - Init array cloud_node_active_hosts"
+  set_fact: 
+    cloud_node_active_hosts: []
+
+- name: "{{ cloud_node_title }} - create the nodes"
+  include_tasks: "{{ cloud_node_cloud.type }}.node.yml"
+  vars:
+    cloud_node_inner_title: "{{ cloud_node_title }} - {{ cloud_node_cloud.type }}"
+    cloud_node_inner_hosts_file: "{{ cloud_node_hosts_file }}"
+    cloud_node_inner_instance_type: "{{ cloud_node_node_id }}"
+    cloud_node_inner_api_token: "{{ cloud_node_cloud.api_token }}"
+    cloud_node_inner_host_user: "{{ cloud_node_instance_params.host_user }}"
+    cloud_node_inner_host_pass: "{{ cloud_node_instance_params.host_pass }}"
+    cloud_node_inner_user_data: "{{ cloud_node_user_data }}"
+    cloud_node_inner_size_id: "{{ cloud_node_node_params.size }}"
+    cloud_node_inner_image_id: "{{ cloud_node_instance_params.image }}"
+    cloud_node_inner_ipv6: "{{ cloud_node_instance_params.ipv6 }}"
+    cloud_node_inner_wait_timeout: "{{ cloud_node_wait_timeout | default(500) }}"
+    cloud_node_inner_tags: "{{ cloud_node_node_params.tags | default([]) }}"
+    cloud_node_inner_create: "{{ cloud_node_item.create }}"
+  loop: "{{ cloud_node_cloud_instances | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_item.name }}"
+
+- set_fact: 
+    cloud_node_hosts_info: ""
+    cloud_node_unencrypt_key: >-
+      {{
+      ((cloud_node_aux.ssh_encrypted_key_path | default('', true)) != '') 
+      and 
+      ((cloud_node_aux.ssh_key_path | default('', true)) != '')
+      }}
+
+- name: >-
+    {{ cloud_node_title }} - create unencrypted key file dir - 
+    {{ cloud_node_aux.ssh_key_path | dirname }}
+  file:
+    path: "{{ cloud_node_aux.ssh_key_path | dirname }}"
+    state: directory
+    mode: 0755
+  when: (cloud_node_unencrypt_key | bool)
+
+- name: "{{ cloud_node_title }} - generate unencrypted key file - {{ cloud_node_aux.ssh_key_path }}"
+  copy:
+    src: "{{ cloud_node_aux.ssh_encrypted_key_path }}"
+    dest: "{{ cloud_node_aux.ssh_key_path }}"
+    decrypt: yes
+    mode: 0600
+  when: cloud_node_unencrypt_key | bool
+
+- name: "{{ cloud_node_title }} - generate the hosts information with the instances ips"
+  set_fact: 
+    cloud_node_hosts_info: >-
+      {{ cloud_node_hosts_info | default('') }}
+
+      {{ cloud_node_item.name }}
+      ansible_host={{ cloud_node_item.public_ipv4 }}
+      ansible_user={{ cloud_node_instance_params.host_user }}
+      {{ 
+      cloud_node_instance_params.host_pass | 
+      ternary('ansible_become_pass=' + cloud_node_instance_params.host_pass, '') 
+      }}
+      {{ 
+      cloud_node_aux.ssh_key_path | 
+      ternary('ansible_ssh_private_key_file=' + cloud_node_aux.ssh_key_path, '') 
+      }}
+      instance_type={{ cloud_node_node_id }}
+      instance_index={{ cloud_node_index }}
+      ansible_host_service={{ 
+      cloud_node_node.dmz | default(false) | bool | 
+      ternary(cloud_node_item.public_ipv4, cloud_node_item.private_ip) 
+      }}
+  loop: "{{ cloud_node_active_hosts | list }}"
+  loop_control:
+    index_var: cloud_node_index
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_item.name }}"
+
+- name: '{{ cloud_node_title }} - Update the hosts file with the generated hosts'
+  blockinfile:
+    path: "{{ cloud_node_hosts_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_id }}"
+    insertafter: "\\[{{ cloud_node_node_id }}\\]"
+    block: "{{ cloud_node_hosts_info }}"
+  tags: ["print_action"]
+
+- name: '{{ cloud_node_title }} - refresh inventory'
+  meta: refresh_inventory
+  tags: ["print_action"]
+
+- name: "create the main dns record (IPv6) point to the instance when in the dmz layer"
+  include_role: 
+    name: "cloud_dns"
+  vars: 
+    cloud_dns_title: "{{ cloud_node_title }} - main dns - IPv6"
+    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item.name].type }}"
+    cloud_dns_credentials: "{{ cloud_node_dns_dict[cloud_node_item.name].credentials }}"
+    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.name].zone }}"
+    cloud_dns_type: "AAAA"
+    cloud_dns_record: "{{ cloud_node_item.record }}"
+    cloud_dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 }}"
+  loop: "{{ (cloud_node_node.dns | default([])) | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_item.name }}"
+  when: >-
+    (cloud_node_dns_dict[cloud_node_item.name] is defined) and
+    (cloud_node_dns_dict[cloud_node_item.name].task is defined) and
+    (cloud_node_active_hosts | length == 1) and 
+    (cloud_node_node.dmz | bool) and 
+    (cloud_node_active_hosts[0].public_ipv6 is defined)
+  tags: ["print_action"]
+
+- name: "create the main dns record (IPv4) point to the instance when in the dmz layer"
+  include_role: 
+    name: "cloud_dns"
+  vars: 
+    cloud_dns_title: "{{ cloud_node_title }} - main dns - IPv4"
+    cloud_dns_task: "{{ cloud_node_dns_dict[cloud_node_item.name].type }}"
+    cloud_dns_credentials: "{{ cloud_node_dns_dict[cloud_node_item.name].credentials }}"
+    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.name].zone }}"
+    cloud_dns_type: "A"
+    cloud_dns_record: "{{ cloud_node_item.record }}"
+    cloud_dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 }}"
+  loop: "{{ (cloud_node_node.dns | default([])) | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_item.name }}"
+  when: >-
+    (cloud_node_dns_dict[cloud_node_item.name] is defined) and
+    (cloud_node_dns_dict[cloud_node_item.name].task is defined) and
+    (cloud_node_active_hosts | length == 1) and 
+    (cloud_node_node.dmz | bool) and 
+    (cloud_node_active_hosts[0].public_ipv4 is defined)
+  tags: ["print_action"]
+    

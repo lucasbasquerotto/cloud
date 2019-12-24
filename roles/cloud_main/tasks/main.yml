@@ -1,0 +1,7 @@
+- name: "{{ cloud_main_title }} - prepare the cloud"
+  include_tasks: "{{ cloud_main_cloud.type }}.cloud.yml"
+  vars:
+    cloud_main_inner_title: "{{ cloud_main_title }} - {{ cloud_main_cloud.type }}"
+    cloud_main_inner_api_token: "{{ cloud_main_cloud.api_token }}"
+    cloud_main_inner_tags: "{{ cloud_main_cloud_params.tags | default([]) }}"
+    cloud_main_inner_firewalls: "{{ cloud_main_cloud_params.firewalls | default([]) }}"

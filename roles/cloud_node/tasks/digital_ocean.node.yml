@@ -1,0 +1,65 @@
+- name: >-
+    {{ cloud_node_inner_title }} -
+    {{ cloud_node_inner_create | bool | ternary('create', 'destroy') }}
+    droplet - {{ cloud_node_item.name }}
+  digital_ocean_droplet:
+    unique_name: yes
+    oauth_token: "{{ cloud_node_inner_api_token }}"
+    name: "{{ cloud_node_item.name }}"
+    state: "{{ cloud_node_inner_create | bool | ternary('present', 'absent') }}"
+    region_id: "{{ cloud_node_item.region_id }}"
+    size_id: "{{ cloud_node_inner_size_id }}"
+    image_id: "{{ cloud_node_inner_image_id }}"
+    wait_timeout: "{{ cloud_node_inner_wait_timeout }}"
+    private_networking: "true"
+    ipv6: "{{ cloud_node_inner_ipv6 | default(omit) }}"
+    user_data: "{{ cloud_node_inner_user_data }}"
+  register: cloud_node_inner_details
+  tags: ["print_action"]
+
+- block:
+
+  - name: "{{ cloud_node_inner_title }} - Define value of cloud_node_inner_active"
+    set_fact: 
+      cloud_node_inner_droplet: "{{ cloud_node_inner_details.data.droplet }}"
+  
+  - name: >-
+      {{ cloud_node_inner_title }} - 
+      tag the droplet {{ cloud_node_item.name }} - 
+      {{ cloud_node_inner_item }}
+    digital_ocean_tag:
+      api_token: "{{ cloud_node_inner_api_token }}"
+      resource_id: "{{ cloud_node_inner_droplet.id }}"
+      name: "{{ cloud_node_inner_item }}"
+      state: present
+    loop: "{{ cloud_node_inner_tags }}"
+    tags: ["print_action"]
+    
+  - name: "{{ cloud_node_title }} - create object of host"
+    set_fact: 
+      cloud_node_inner_host: 
+        name: "{{ cloud_node_item.name }}"
+        private_ip: >-
+          {{ 
+          (cloud_node_inner_droplet.networks.v4 |
+          selectattr('type', 'equalto', 'private') |
+          map(attribute='ip_address') | list | first | default(''))
+          }}
+        public_ipv4: >-
+          {{ 
+          (cloud_node_inner_droplet.networks.v4 |
+          selectattr('type', 'equalto', 'public') |
+          map(attribute='ip_address') | list | first | default(''))
+          }}
+        public_ipv6: >-
+          {{ 
+          (cloud_node_inner_droplet.networks.v6 |
+          selectattr('type', 'equalto', 'public') |
+          map(attribute='ip_address') | list | first | default(''))
+          }}
+      
+  - name: "{{ cloud_node_title }} - Include items in cloud_node_active_hosts"
+    set_fact: 
+      cloud_node_active_hosts: {{ cloud_node_active_hosts + [cloud_node_inner_host] }}
+
+  when: cloud_node_inner_create | bool
