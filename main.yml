@@ -37,7 +37,6 @@
       cloud_node_instance_params: >-
         {{ env.instance_params[cloud_node_node_params.params] }}
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
-      cloud_node_params: "{{ env.cloud_params[cloud_node_cloud.params] }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
@@ -299,7 +298,6 @@
       cloud_node_instance_params: >-
         {{ env.instance_params[cloud_node_node_params.params] }}
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
-      cloud_node_params: "{{ env.cloud_params[cloud_node_cloud.params] }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
@@ -338,7 +336,6 @@
       cloud_node_instance_params: >-
         {{ env.instance_params[cloud_node_node_params.params] }}
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
-      cloud_node_params: "{{ env.cloud_params[cloud_node_cloud.params] }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-

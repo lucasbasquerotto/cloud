@@ -60,6 +60,6 @@
       
   - name: "{{ cloud_node_title }} - Include items in cloud_node_active_hosts"
     set_fact: 
-      cloud_node_active_hosts: {{ cloud_node_active_hosts + [cloud_node_inner_host] }}
+      cloud_node_active_hosts: "{{ cloud_node_active_hosts + [cloud_node_inner_host] }}"
 
   when: cloud_node_inner_create | bool

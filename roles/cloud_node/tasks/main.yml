@@ -1,5 +1,17 @@
 - name: "{{ cloud_node_title }} - set_fact - main"
   set_fact: 
+    cloud_node_host_vars: 
+      host_user: "{{ cloud_node_instance_params.host_user }}"
+      host_pass: "{{ cloud_node_instance_params.host_pass }}"
+      host_ssh_public_keys: "{{ cloud_node_instance_params.host_ssh_public_keys }}"
+    cloud_node_user_data_file: >-
+      {{ 
+      ((cloud_node_instance_params.user_data_file | default('')) != '' )
+      | ternary(
+      cloud_node_env_dir + '/' + cloud_node_instance_params.user_data_file,
+      ''
+      )
+      }}
     cloud_node_aux:
       ssh_encrypted_key_path: >-
         {{ 
@@ -26,9 +38,9 @@
       [{ 'name':
       cloud_node_env_name + '-' +
       cloud_node_node_id + '-' +
-      cloud_node_region + '-' +
+      cloud_node_node_params.region + '-' +
       ('%04d' | format(cloud_node_item)),
-      'region_id': cloud_node_region,
+      'region_id': cloud_node_node_params.region,
       'create':
       (((cloud_node_item | int) <= (cloud_node_instance_count | int))
       and not ((cloud_node_shutdown| default(false)) | bool)) | 
@@ -37,7 +49,7 @@
   loop_control:
     loop_var: cloud_node_item
 
-- name: "{{ cloud_node_title }} - define cloud_node_user_data_file"
+- name: "{{ cloud_node_title }} - define cloud_node_user_data"
   set_fact:
     cloud_node_user_data: >-
       {{ lookup(
@@ -46,10 +58,10 @@
       template_vars=dict(cloud_node_host_vars)
       ) | trim 
       }}
-  when: (cloud_node_user_data_file is defined) and (cloud_node_user_data_file != '')
+  when: cloud_node_user_data_file != '' 
 
 # Will be populeted from the inner task
-- name: "{{ cloud_node_title }} - Init array cloud_node_active_hosts"
+- name: "{{ cloud_node_title }} - init array cloud_node_active_hosts"
   set_fact: 
     cloud_node_active_hosts: []
 
@@ -62,7 +74,7 @@
     cloud_node_inner_api_token: "{{ cloud_node_cloud.api_token }}"
     cloud_node_inner_host_user: "{{ cloud_node_instance_params.host_user }}"
     cloud_node_inner_host_pass: "{{ cloud_node_instance_params.host_pass }}"
-    cloud_node_inner_user_data: "{{ cloud_node_user_data }}"
+    cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
     cloud_node_inner_size_id: "{{ cloud_node_node_params.size }}"
     cloud_node_inner_image_id: "{{ cloud_node_instance_params.image }}"
     cloud_node_inner_ipv6: "{{ cloud_node_instance_params.ipv6 }}"
