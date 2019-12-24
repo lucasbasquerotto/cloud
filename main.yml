@@ -71,7 +71,7 @@
       cloud_dns_type: "{{ main_item.type }}"
       cloud_dns_credentials: "{{ env.dns[main_item].credentials }}"
       cloud_dns_zone: "{{ env.dns[main_item].zone }}"
-      cloud_dns_type: "{{ main_item.dns_type }}"
+      cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_value: "{{ main_item.value }}"
     loop: "{{ env.main.dns | default([]) | list }}"

@@ -24,9 +24,10 @@
     cloud_node_cloud_instances: >-
       {{ cloud_node_cloud_instances +
       [{ 'name':
-      cloud_node_instance_name + '-' +
-      ('%04d' | format(cloud_node_item)) + '-' +
-      cloud_node_region,
+      cloud_node_env_name + '-' +
+      cloud_node_node_id + '-' +
+      cloud_node_region + '-' +
+      ('%04d' | format(cloud_node_item)),
       'region_id': cloud_node_region,
       'create':
       (((cloud_node_item | int) <= (cloud_node_instance_count | int))
