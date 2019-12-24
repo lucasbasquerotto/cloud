@@ -1,0 +1,2 @@
+- name: "{{ cloud_dns_title }} - {{ cloud_dns_type }} record"
+  include_tasks: "{{ cloud_dns_type }}_dns.yml"

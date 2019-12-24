@@ -137,15 +137,15 @@
 
 - name: "create the main dns record (IPv6) point to the instance when in the dmz layer"
   include_role: 
-    name: "main_dns"
+    name: "cloud_dns"
   vars: 
-    main_dns_title: "{{ main_cloud_title }} - main dns - IPv6"
-    main_dns_task: "{{ main_cloud_dns_dict[main_cloud_item.name].type + '_dns' }}"
-    main_dns_credentials: "{{ main_cloud_dns_dict[main_cloud_item.name].credentials }}"
-    main_dns_zone: "{{ main_cloud_dns_dict[main_cloud_item.name].zone }}"
-    main_dns_type: "AAAA"
-    main_dns_record: "{{ main_cloud_item.record }}"
-    main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv6 }}"
+    cloud_dns_title: "{{ main_cloud_title }} - main dns - IPv6"
+    cloud_dns_type: "{{ main_cloud_dns_dict[main_cloud_item.name].type }}"
+    cloud_dns_credentials: "{{ main_cloud_dns_dict[main_cloud_item.name].credentials }}"
+    cloud_dns_zone: "{{ main_cloud_dns_dict[main_cloud_item.name].zone }}"
+    cloud_dns_type: "AAAA"
+    cloud_dns_record: "{{ main_cloud_item.record }}"
+    cloud_dns_value: "{{ main_cloud_active_hosts[0].public_ipv6 }}"
   loop: "{{ (main_cloud_node.dns | default([])) | list }}"
   loop_control:
     loop_var: main_cloud_item
@@ -160,15 +160,15 @@
 
 - name: "create the main dns record (IPv4) point to the instance when in the dmz layer"
   include_role: 
-    name: "main_dns"
+    name: "cloud_dns"
   vars: 
-    main_dns_title: "{{ main_cloud_title }} - main dns - IPv4"
-    main_dns_task: "{{ main_cloud_dns_dict[main_cloud_item.name].type + '_dns' }}"
-    main_dns_credentials: "{{ main_cloud_dns_dict[main_cloud_item.name].credentials }}"
-    main_dns_zone: "{{ main_cloud_dns_dict[main_cloud_item.name].zone }}"
-    main_dns_type: "A"
-    main_dns_record: "{{ main_cloud_item.record }}"
-    main_dns_value: "{{ main_cloud_active_hosts[0].public_ipv4 }}"
+    cloud_dns_title: "{{ main_cloud_title }} - main dns - IPv4"
+    cloud_dns_task: "{{ main_cloud_dns_dict[main_cloud_item.name].type }}"
+    cloud_dns_credentials: "{{ main_cloud_dns_dict[main_cloud_item.name].credentials }}"
+    cloud_dns_zone: "{{ main_cloud_dns_dict[main_cloud_item.name].zone }}"
+    cloud_dns_type: "A"
+    cloud_dns_record: "{{ main_cloud_item.record }}"
+    cloud_dns_value: "{{ main_cloud_active_hosts[0].public_ipv4 }}"
   loop: "{{ (main_cloud_node.dns | default([])) | list }}"
   loop_control:
     loop_var: main_cloud_item

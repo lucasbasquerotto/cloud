@@ -49,15 +49,15 @@
 
   - name: "create the static dns records"
     include_role: 
-      name: "main_dns"
+      name: "cloud_dns"
     vars: 
-      main_dns_title: "create the static dns records - {{ main_item.0.title }}"
-      main_dns_task: "{{ main_vars.dns.task }}"
-      main_dns_credentials: "{{ main_vars.dns.credentials }}"
-      main_dns_zone: "{{ main_vars.dns.zone }}"
-      main_dns_type: "{{ main_item.0.type }}"
-      main_dns_record: "{{ main_item.1.record }}"
-      main_dns_value: "{{ main_item.1.value }}"
+      cloud_dns_title: "create the static dns records - {{ main_item.0.title }}"
+      cloud_dns_type: "{{ main_vars.dns.type }}"
+      cloud_dns_credentials: "{{ main_vars.dns.credentials }}"
+      cloud_dns_zone: "{{ main_vars.dns.zone }}"
+      cloud_dns_type: "{{ main_item.0.type }}"
+      cloud_dns_record: "{{ main_item.1.record }}"
+      cloud_dns_value: "{{ main_item.1.value }}"
     loop: "{{ (main_vars.dns.static | default([])) | subelements('list') }}"
     loop_control:
       loop_var: main_item

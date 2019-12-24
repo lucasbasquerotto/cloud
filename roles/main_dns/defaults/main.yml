@@ -1,9 +1,0 @@
-main_dns_title: "main dns"
-main_dns_role: "cloudflare_dns"
-main_dns_credentials: 
-  account_email: ""
-  account_api_token: ""
-main_dns_zone: ""
-main_dns_type: "A"
-main_dns_record: ""
-main_dns_value: ""

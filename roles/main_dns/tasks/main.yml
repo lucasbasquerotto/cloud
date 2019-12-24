@@ -1,2 +1,0 @@
-- name: "{{ main_dns_title }} - {{ main_dns_type }} record"
-  include_tasks: "{{ main_dns_task }}.yml"
