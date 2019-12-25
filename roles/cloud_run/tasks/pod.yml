@@ -94,7 +94,7 @@
       group: "{{ cloud_run_host_group }}"
       mode: 0640
 
-  when: "cloud_run_diff.changed" 
+  when: "cloud_run_diff.changed or (cloud_run_force | bool)" 
 
 - name: "{{ cloud_run_pod_title }} - debug"
   debug: 

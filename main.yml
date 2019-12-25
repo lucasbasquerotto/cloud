@@ -263,6 +263,7 @@
         tmp/env/cloud.prepare.vars_full.yml
       cloud_run_env_vars_relative_file_dest: >-
         tmp/env/cloud.run.vars_full.yml
+      cloud_run_force: "{{ env_force | default(false, true) }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
