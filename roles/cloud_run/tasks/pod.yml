@@ -96,6 +96,9 @@
 
   when: "cloud_run_diff.changed or (cloud_run_force | bool)" 
 
+- debug:
+    var: cloud_run_force
+
 - name: "{{ cloud_run_pod_title }} - debug"
   debug: 
     msg: "variables unchanged"
