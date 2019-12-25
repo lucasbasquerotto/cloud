@@ -80,6 +80,34 @@
     when: (((env_node | default('')) == '') or (env_node == main_item))
 
 ###############################################################################
+
+- name: Play 01.02 - Cloud - Buckets
+  hosts: main
+  tags:
+  - init
+  - setup
+  - bucket
+  gather_facts: no  
+  tasks:  
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
+
+  - name: "delete the bucket and all contents"
+    aws_s3:
+      s3_url: "{{ main_bucket.endpoint }}"
+      access_key: "{{ main_credentials.access_key }}"
+      secret_key: "{{ main_credentials.secret_key }}"
+      bucket: "{{ main_bucket.name }}"
+      mode: create
+    vars:
+      main_bucket: "{{ env.buckets[main_item] }}"
+      main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    loop: "{{ (env.main.buckets | default([])) }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item }}"
+
+###############################################################################
 ##################     WAIT FOR THE NODES TO BE READY      ####################
 ###############################################################################
 
@@ -147,7 +175,7 @@
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file: >-
-        'tmp/env/cloud.prepare.vars_full.yml'
+        tmp/env/cloud.prepare.vars_full.yml
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -187,9 +215,9 @@
       cloud_run_env_pod: "{{ env_pod | default('', true) }}"
       cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_run_env_vars_relative_file_src: >-
-        'tmp/env/cloud.prepare.vars_full.yml'
+        tmp/env/cloud.prepare.vars_full.yml
       cloud_run_env_vars_relative_file_dest: >-
-        'tmp/env/cloud.run.vars_full.yml'
+        tmp/env/cloud.run.vars_full.yml
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item

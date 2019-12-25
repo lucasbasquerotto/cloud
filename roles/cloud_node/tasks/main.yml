@@ -140,7 +140,7 @@
     loop_var: cloud_node_item
     label: "{{ cloud_node_item.name }}"
 
-- name: '{{ cloud_node_title }} - Update the hosts file with the generated hosts'
+- name: "{{ cloud_node_title }} - update the hosts file with the generated hosts"
   blockinfile:
     path: "{{ cloud_node_hosts_file }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_id }}"
@@ -152,7 +152,9 @@
   meta: refresh_inventory
   tags: ["print_action"]
 
-- name: "create the main dns record (IPv6) point to the instance when in the dmz layer"
+- name: >-
+    {{ cloud_node_title }} - create the main dns record (IPv6)
+    that points to the instance when in the dmz layer
   include_role: 
     name: "cloud_dns"
   vars: 
@@ -175,7 +177,9 @@
     (cloud_node_active_hosts[0].public_ipv6 is defined)
   tags: ["print_action"]
 
-- name: "create the main dns record (IPv4) point to the instance when in the dmz layer"
+- name: >-
+    {{ cloud_node_title }} - create the main dns record (IPv4) 
+    that points to the instance when in the dmz layer
   include_role: 
     name: "cloud_dns"
   vars: 

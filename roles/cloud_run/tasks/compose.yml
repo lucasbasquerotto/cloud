@@ -1,4 +1,4 @@
-- name: "{{ cloud_run_inner_title }} - compose - run the images"
+- name: "{{ cloud_run_inner_title }} - run the images"
   become: "{{ cloud_run_pod.root }}"
   command: "docker-compose up -d --remove-orphans"
   args:

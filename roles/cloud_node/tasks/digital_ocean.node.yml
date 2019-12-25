@@ -19,23 +19,24 @@
 
 - block:
 
-  - name: "{{ cloud_node_inner_title }} - Define value of cloud_node_inner_active"
+  - name: "{{ cloud_node_inner_title }} - define value of cloud_node_inner_active"
     set_fact: 
       cloud_node_inner_droplet: "{{ cloud_node_inner_details.data.droplet }}"
   
   - name: >-
-      {{ cloud_node_inner_title }} - 
-      tag the droplet {{ cloud_node_item.name }} - 
-      {{ cloud_node_inner_item }}
+      {{ cloud_node_inner_title }} - tag the droplet {{ cloud_node_item.name }}
     digital_ocean_tag:
       api_token: "{{ cloud_node_inner_api_token }}"
       resource_id: "{{ cloud_node_inner_droplet.id }}"
       name: "{{ cloud_node_inner_item }}"
       state: present
     loop: "{{ cloud_node_inner_tags }}"
+    loop_control:
+      loop_var: cloud_node_inner_item
+      label: "{{ cloud_node_item.name }} - {{ cloud_node_inner_item }}"
     tags: ["print_action"]
     
-  - name: "{{ cloud_node_title }} - create object of host"
+  - name: "{{ cloud_node_title }} - create the host object"
     set_fact: 
       cloud_node_inner_host: 
         name: "{{ cloud_node_item.name }}"
