@@ -6,6 +6,6 @@
     type: "{{ cloud_dns_record_type }}"
     record: "{{ cloud_dns_record | default(omit, true) }}"
     value: "{{ cloud_dns_value | default(omit, true) }}"
-    account_email: "{{ cloud_dns_credentials.account_email }}"
-    account_api_token: "{{ cloud_dns_credentials.account_api_token }}"
+    account_email: "{{ cloud_dns_credentials.email }}"
+    account_api_token: "{{ cloud_dns_credentials.token }}"
   tags: ["print_action"]
