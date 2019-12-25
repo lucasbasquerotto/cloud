@@ -78,7 +78,7 @@
     
   - include_tasks: "{{ cloud_run_pod_orchestration.type }}.yml"
     vars:
-      compose_run_inner_title: >-
+      cloud_run_inner_title: >-
         {{ cloud_run_pod_title }} - {{ cloud_run_pod_orchestration.type }}
     
   - name: >-
