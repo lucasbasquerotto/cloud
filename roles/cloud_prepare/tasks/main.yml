@@ -8,8 +8,8 @@
       {{ cloud_prepare_orchestrations_dict[cloud_prepare_pod.orchestration] }}
     cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_item }}"
     cloud_prepare_params: "{{ cloud_prepare_params_dict[cloud_prepare_pod.params] }}"
-    cloud_prepare_host_user: "{{ cloud_prepare_instance_params.host_user }}"
-    cloud_prepare_host_group: "{{ cloud_prepare_instance_params.host_user }}"
+    cloud_prepare_host_user: "{{ cloud_prepare_node_credentials.host_user }}"
+    cloud_prepare_host_group: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_pod_local_tmp_dir: "{{ cloud_prepare_local_tmp_dir }}/{{ cloud_prepare_item }}"
   loop: "{{ cloud_prepare_node.pods | default([cloud_prepare_node.main_pod]) | list }}"
   loop_control:

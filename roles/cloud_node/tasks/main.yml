@@ -1,9 +1,9 @@
 - name: "{{ cloud_node_title }} - set_fact - main"
   set_fact: 
     cloud_node_host_vars: 
-      host_user: "{{ cloud_node_instance_params.host_user }}"
-      host_pass: "{{ cloud_node_instance_params.host_pass }}"
-      host_ssh_public_keys: "{{ cloud_node_instance_params.host_ssh_public_keys }}"
+      host_user: "{{ cloud_node_node_credentials.host_user }}"
+      host_pass: "{{ cloud_node_node_credentials.host_pass }}"
+      host_ssh_public_keys: "{{ cloud_node_node_credentials.host_ssh_public_keys }}"
     cloud_node_user_data_file: >-
       {{ 
       ((cloud_node_instance_params.user_data_file | default('')) != '' )
@@ -15,13 +15,13 @@
     cloud_node_aux:
       ssh_encrypted_key_path: >-
         {{ 
-        cloud_node_instance_params.ssh_encrypted_key_path_rel | default('') | 
+        cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('') | 
         ternary(env_dir + '/' + 
-        (cloud_node_instance_params.ssh_encrypted_key_path_rel | default('')), '') 
+        (cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('')), '') 
         }}
       ssh_key_path: >-
         {{ 
-        cloud_node_instance_params.ssh_encrypted_key_path_rel | 
+        cloud_node_node_credentials.ssh_encrypted_key_path_rel | 
         ternary(cloud_node_tmp_dir + '/' + cloud_node_node_id + '.key', '')
         }}
   tags: ["no_print"]
@@ -71,9 +71,9 @@
     cloud_node_inner_title: "{{ cloud_node_title }} - {{ cloud_node_cloud.type }}"
     cloud_node_inner_hosts_file: "{{ cloud_node_hosts_file }}"
     cloud_node_inner_instance_type: "{{ cloud_node_node_id }}"
-    cloud_node_inner_api_token: "{{ cloud_node_cloud.api_token }}"
-    cloud_node_inner_host_user: "{{ cloud_node_instance_params.host_user }}"
-    cloud_node_inner_host_pass: "{{ cloud_node_instance_params.host_pass }}"
+    cloud_node_inner_api_token: "{{ cloud_node_cloud_credentials.api_token }}"
+    cloud_node_inner_host_user: "{{ cloud_node_node_credentials.host_user }}"
+    cloud_node_inner_host_pass: "{{ cloud_node_node_credentials.host_pass }}"
     cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
     cloud_node_inner_size_id: "{{ cloud_node_node_params.size }}"
     cloud_node_inner_image_id: "{{ cloud_node_instance_params.image }}"
@@ -119,10 +119,10 @@
 
       {{ cloud_node_item.name }}
       ansible_host={{ cloud_node_item.public_ipv4 }}
-      ansible_user={{ cloud_node_instance_params.host_user }}
+      ansible_user={{ cloud_node_node_credentials.host_user }}
       {{ 
-      cloud_node_instance_params.host_pass | 
-      ternary('ansible_become_pass=' + cloud_node_instance_params.host_pass, '') 
+      cloud_node_node_credentials.host_pass | 
+      ternary('ansible_become_pass=' + cloud_node_node_credentials.host_pass, '') 
       }}
       {{ 
       cloud_node_aux.ssh_key_path | 

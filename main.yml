@@ -2,12 +2,12 @@
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 01.01 - Cloud - Main & Nodes
+- name: Play 01.01 - Cloud - Main
   hosts: main
   tags:
   - init
-  - setup
   - cloud
+  - cloud_main
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init.yml"
@@ -18,6 +18,8 @@
     vars: 
       cloud_main_title: "cloud - prepare"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
+      cloud_main_credentials: >-
+        {{ env.credentials[cloud_main_cloud.credentials] }}
       cloud_main_cloud_params: >-
         {{ env.cloud_params[cloud_main_cloud.params] }}
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
@@ -25,35 +27,13 @@
     loop_control:
       loop_var: main_item
 
-  - include_role: 
-      name: "cloud_node"
-    vars: 
-      cloud_node_title: "cloud - create instances - {{ main_item }}"
-      cloud_node_env_name: "{{ env.name }}"
-      cloud_node_node_id: "{{ main_item }}"
-      cloud_node_node: "{{ env.nodes[main_item] }}"
-      cloud_node_node_params: >-
-        {{ env.node_params[cloud_node_node.params] }}
-      cloud_node_instance_params: >-
-        {{ env.instance_params[cloud_node_node_params.params] }}
-      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
-      cloud_node_dns_dict: "{{ env.dns }}"
-      cloud_node_env_dir: "{{ env_dir }}"
-      cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
-      cloud_node_hosts_file: "{{ inventory_file }}"
-    loop: "{{ env.main.nodes | default([]) | list }}"
-    loop_control:
-      loop_var: main_item
-    when: ((env_node | default('')) == '') or (env_node == main_item)
-
 ###############################################################################
 
 - name: Play 01.01 - Cloud - DNS
   hosts: main
   tags:
   - init
-  - setup
+  - cloud
   - dns
   gather_facts: no  
   tasks:  
@@ -68,7 +48,8 @@
         create the static dns records - 
         {{ main_item.type }} - {{ main_item.record }}
       cloud_dns_type: "{{ main_item.type }}"
-      cloud_dns_credentials: "{{ env.dns[main_item].credentials }}"
+      cloud_dns_credentials: >-
+        {{ env.credentials[env.dns[main_item].credentials] }}
       cloud_dns_zone: "{{ env.dns[main_item].zone }}"
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
@@ -85,14 +66,14 @@
   hosts: main
   tags:
   - init
-  - setup
-  - bucket
+  - cloud
+  - buckets
   gather_facts: no  
   tasks:  
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - name: "delete the bucket and all contents"
+  - name: "create the buckets"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
@@ -108,15 +89,54 @@
       label: "{{ main_item }}"
 
 ###############################################################################
-##################     WAIT FOR THE NODES TO BE READY      ####################
+
+- name: Play 01.04 - Cloud - Nodes
+  hosts: main
+  tags:
+  - init
+  - cloud
+  - nodes
+  - create
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
+
+  - include_role: 
+      name: "cloud_node"
+    vars: 
+      cloud_node_title: "cloud - instances - {{ main_item }}"
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_id: "{{ main_item }}"
+      cloud_node_node: "{{ env.nodes[main_item] }}"
+      cloud_node_node_credentials: >-
+        {{ env.credentials[cloud_node_node.credentials] }}
+      cloud_node_node_params: >-
+        {{ env.node_params[cloud_node_node.params] }}
+      cloud_node_instance_params: >-
+        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_cloud_credentials: >-
+        {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
+    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: ((env_node | default('')) == '') or (env_node == main_item)
+
 ###############################################################################
 
-- name: Play 02 - Wait for the hosts to be ready
+- name: Play 01.05 - Wait for the hosts to be ready
   hosts: host
   tags:
   - init
-  - setup
-  - test
+  - cloud
+  - nodes
+  - wait
   gather_facts: no
   tasks:
   - include_tasks: "tasks/env.yml"
@@ -143,12 +163,12 @@
 ##################        PREPARE & START THE PODS         ####################
 ###############################################################################
 
-- name: Play 03.01 - Prepare the Pods
+- name: Play 02.01 - Prepare the Pods
   hosts: host
   tags:
   - init
+  - pod
   - prepare
-  - prepare-hosts
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
@@ -161,10 +181,8 @@
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
-      cloud_prepare_node_params: >-
-        {{ env.node_params[cloud_prepare_node.params] }}
-      cloud_prepare_instance_params: >-
-        {{ env.instance_params[cloud_prepare_node_params.params] }}
+      cloud_prepare_node_credentials: >-
+        {{ env.credentials[cloud_prepare_node.credentials] }}
       cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_node.cloud] }}"
       cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
@@ -186,10 +204,11 @@
 
 ###############################################################################
 
-- name: Play 03.02 - Start the Pods
+- name: Play 02.02 - Start the Pods
   hosts: host
   tags:
   - init
+  - pod
   - run
   gather_facts: no
   tasks:
@@ -203,10 +222,8 @@
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"
-      cloud_run_node_params: >-
-        {{ env.node_params[cloud_run_node.params] }}
-      cloud_run_instance_params: >-
-        {{ env.instance_params[cloud_run_node_params.params] }}
+      cloud_run_node_credentials: >-
+        {{ env.credentials[cloud_run_node.credentials] }}
       cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud] }}"
       cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_run_pods_dict: "{{ env.pods }}"
@@ -230,7 +247,7 @@
 ##################          DEFINE THE CRON JOBS           ####################
 ###############################################################################
 
-- name: Play 04 - Define the cron jobs
+- name: Play 03 - Define the cron jobs
   hosts: host
   tags:
   - init
@@ -259,13 +276,15 @@
 ##################       EXECUTE COMMANDS ON-THE-FLY       ####################
 ###############################################################################
 
-- name: Play 05 - Execute instruction on-the-fly
+- name: Play 04 - Execute instruction on-the-fly
   hosts: host
   tags:
   - never
   - exec
   gather_facts: no  
   tasks:
+  - include_tasks: "tasks/env.yml"
+    tags: ["no_print"]
 
   - include_role: 
       name: "long_run"
@@ -275,7 +294,7 @@
         {{ env_exec_cmd | b64decode | trim 
         | regex_replace('\n', ' .. ') 
         | truncate(30, False, '...', 10) }}
-      long_run_become: "{{ main_vars.run.docker_become }}"
+      long_run_become: "{{ env_exec_become | default(false) }}"
       long_run_output_path: >-
         {{ env.node_params[env.nodes[main_item].params].base_dir 
         }}/{{ env.nodes[main_item].main_pod }}/data/log
@@ -303,7 +322,7 @@
 ##################            DESTROY THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 06.01 - Delete Temporary Cloud Instances
+- name: Play 05.01 - Delete Temporary Cloud Instances
   hosts: main
   tags:
   - init
@@ -317,19 +336,24 @@
   - include_role: 
       name: "cloud_node"
     vars: 
-      cloud_node_title: "cloud - create instances - {{ main_item }}"
+      cloud_node_title: >-
+        cloud - destroy temporary instances - {{ main_item }}
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
       cloud_node_node: "{{ env.nodes[main_item] }}"
+      cloud_node_node_credentials: >-
+        {{ env.credentials[cloud_node_node.credentials] }}
       cloud_node_node_params: >-
         {{ env.node_params[cloud_node_node.params] }}
       cloud_node_instance_params: >-
         {{ env.instance_params[cloud_node_node_params.params] }}
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_cloud_credentials: >-
+        {{ env.credentials[cloud_node_cloud.credentials] }}
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/{{ cloud_node_node.cloud }}
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
@@ -342,7 +366,7 @@
 
 ###############################################################################
 
-- name: Play 06.02 - Delete everything that was previously created
+- name: Play 05.02 - Delete everything that was previously created
   hosts: main
   tags:
   - never
@@ -355,19 +379,23 @@
   - include_role: 
       name: "cloud_node"
     vars: 
-      cloud_node_title: "cloud - create instances - {{ main_item }}"
+      cloud_node_title: "cloud - destroy instances - {{ main_item }}"
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
       cloud_node_node: "{{ env.nodes[main_item] }}"
+      cloud_node_node_credentials: >-
+        {{ env.credentials[cloud_node_node.credentials] }}
       cloud_node_node_params: >-
         {{ env.node_params[cloud_node_node.params] }}
       cloud_node_instance_params: >-
         {{ env.instance_params[cloud_node_node_params.params] }}
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_cloud_credentials: >-
+        {{ env.credentials[cloud_node_cloud.credentials] }}
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/{{ cloud_node_node.cloud }}
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
     loop: "{{ env.main.nodes | default([]) | list }}"
@@ -375,16 +403,19 @@
       loop_var: main_item
     when: (main_item in (env.destroy.nodes | default([])))
 
-  - name: "delete the bucket and all contents"
+  - name: "delete the buckets and all their contents"
     aws_s3:
-      s3_url: "{{ main_item.0.endpoint }}"
-      access_key: "{{ main_item.0.access_key }}"
-      secret_key: "{{ main_item.0.secret_key }}"
-      bucket: "{{ main_item.1 }}"
+      s3_url: "{{ main_bucket.endpoint }}"
+      access_key: "{{ main_credentials.access_key }}"
+      secret_key: "{{ main_credentials.secret_key }}"
+      bucket: "{{ main_bucket.name }}"
       mode: delete
-    loop: "{{ (env.destroy.buckets | default([])) | subelements('names') }}"
+    vars:
+      main_bucket: "{{ env.buckets[main_item] }}"
+      main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    loop: "{{ (env.destroy.buckets | default([])) }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.1 }}"
+      label: "{{ main_item }}"
 
 ###############################################################################
