@@ -193,7 +193,7 @@
     label: "{{ cloud_node_item.name }}"
   when: >-
     (cloud_node_dns_dict[cloud_node_item.name] is defined) and
-    (cloud_node_dns_dict[cloud_node_item.name].task is defined) and
+    (cloud_node_dns_dict[cloud_node_item.name].type is defined) and
     (cloud_node_active_hosts | length == 1) and 
     (cloud_node_node.dmz | bool) and 
     (cloud_node_active_hosts[0].public_ipv6 is defined)
@@ -218,7 +218,7 @@
     label: "{{ cloud_node_item.name }}"
   when: >-
     (cloud_node_dns_dict[cloud_node_item.name] is defined) and
-    (cloud_node_dns_dict[cloud_node_item.name].task is defined) and
+    (cloud_node_dns_dict[cloud_node_item.name].type is defined) and
     (cloud_node_active_hosts | length == 1) and 
     (cloud_node_node.dmz | bool) and 
     (cloud_node_active_hosts[0].public_ipv4 is defined)
