@@ -73,32 +73,10 @@
     msg: "populate vars from templates"
   tags: ["print_action"]
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
+- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_ctx_tpl_dest"
   set_fact:
-    cloud_prepare_ctx_tpl_src_remote: >-
-      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod.ctx }}
-    cloud_prepare_ctx_tpl_src: >-
-      {{ cloud_prepare_pod_local_tmp_dir }}/cloud_prepare_ctx.tpl.yml
     cloud_prepare_ctx_tpl_dest: >-
       {{ cloud_prepare_pod_local_tmp_dir }}/cloud_prepare_ctx.yml
-
-- name: >-
-    {{ cloud_prepare_inner_title }} - 
-    create the local directory for the context template
-  file:
-    path: "{{ cloud_prepare_ctx_tpl_src | dirname }}"
-    state: directory
-    mode: 0755
-  delegate_to: localhost
-
-- name: "{{ cloud_prepare_inner_title }} - fetch the context template from a single remote host"
-  become: "{{ cloud_prepare_pod.root }}"
-  run_once: true
-  fetch:
-    src: "{{ cloud_prepare_ctx_tpl_src_remote }}"
-    dest: "{{ cloud_prepare_ctx_tpl_src }}"
-    flat: yes
-    fail_on_missing: yes
 
 - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_params_aux"
   set_fact:
@@ -111,10 +89,19 @@
       repo_location: "{{ cloud_prepare_repo_location }}"
       data_dir: "{{ cloud_prepare_data_dir }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
+
+- name: >-
+    {{ cloud_prepare_inner_title }} - 
+    create the local directory for the expanded context template
+  file:
+    path: "{{ cloud_prepare_ctx_tpl_dest | dirname }}"
+    state: directory
+    mode: 0755
+  delegate_to: localhost
   
 - name: "{{ cloud_prepare_inner_title }} - get the context data from the template"
   template: 
-    src: "{{ cloud_prepare_ctx_tpl_src }}"
+    src: "{{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_pod.ctx }}"
     dest: "{{ cloud_prepare_ctx_tpl_dest }}"
     mode: 0640
   vars:
@@ -220,7 +207,6 @@
         {{ 
         cloud_prepare_tpl_list
         + [{ 
-        'remote_src': cloud_prepare_inner_item_remote_src_full, 
         'src': cloud_prepare_inner_item_src_local_full,
         'dest': cloud_prepare_inner_item_dest_full, 
         'mode': cloud_prepare_inner_item.mode | default('', true), 
@@ -228,12 +214,8 @@
         }] 
         }}
     vars: 
-      cloud_prepare_inner_item_remote_src_full: >-
-        {{ cloud_prepare_repo_location }}/{{ 
-          cloud_prepare_inner_item.dir_base | default('templates') 
-        }}/{{ cloud_prepare_inner_item.src }}
       cloud_prepare_inner_item_src_local_full: >-
-        {{ cloud_prepare_pod_local_tmp_dir }}/{{ 
+        {{ cloud_prepare_local_pod_repo }}/{{ 
           cloud_prepare_inner_item.dir_base | default('templates') 
         }}/{{ cloud_prepare_inner_item.src }}
       cloud_prepare_inner_item_dest_full: >-
@@ -289,19 +271,6 @@
 
   ### Create the directories ###
 
-  - name: >-
-      {{ cloud_prepare_inner_title }} - 
-      create the local directories for the repository templates
-    file:
-      path: "{{ cloud_prepare_inner_item.src | dirname }}"
-      state: directory
-      mode: 0755
-    loop: "{{ cloud_prepare_tpl_list | default([]) }}"
-    loop_control:
-      loop_var: cloud_prepare_inner_item
-      label: "{{ cloud_prepare_inner_item.dest | dirname }}"
-    delegate_to: localhost
-
   - name: "{{ cloud_prepare_inner_title }} - create the volume directories"
     become: "{{ cloud_prepare_pod.root }}"
     file:
@@ -341,20 +310,6 @@
       group: "{{ cloud_prepare_group }}"
       mode: "{{ cloud_prepare_inner_item.mode | default('0640', true) }}"
     loop: "{{ cloud_prepare_files_list | default([]) }}"
-    loop_control:
-      loop_var: cloud_prepare_inner_item
-      label: "{{ cloud_prepare_inner_item.dest }}"
-    tags: ["print_action"]
-
-  - name: "{{ cloud_prepare_inner_title }} - fetch the vars templates from a single remote host"
-    become: "{{ cloud_prepare_pod.root }}"
-    run_once: true
-    fetch:
-      src: "{{ cloud_prepare_inner_item.remote_src }}"
-      dest: "{{ cloud_prepare_inner_item.src }}"
-      flat: yes
-      fail_on_missing: yes
-    loop: "{{ cloud_prepare_tpl_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"

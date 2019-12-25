@@ -42,18 +42,6 @@
     
 ### Prepare the directories ###
 
-- name: "{{ cloud_prepare_pod_title }} - create the local directories"
-  file:
-    path: "{{ cloud_prepare_pod_item }}"
-    state: directory
-    mode: 0755
-  loop:
-  - "{{ cloud_prepare_pod_local_tmp_dir }}"
-  - "{{ cloud_prepare_pod_local_tmp_dir }}/templates"
-  loop_control:
-    loop_var: cloud_prepare_pod_item
-  delegate_to: localhost
-
 - name: "{{ cloud_prepare_pod_title }} - create the remote directories"
   become: "{{ cloud_prepare_pod.root }}"
   file:

@@ -1,11 +1,8 @@
 - name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
   set_fact:
-    cloud_prepare_vars_tpl_src_remote: >-
-      {{ cloud_prepare_repo_location }}/{{ ''
-      }}{{ cloud_prepare_inner_item.name }}.yml
     cloud_prepare_vars_tpl_src: >-
-      {{ cloud_prepare_pod_local_tmp_dir }}/vars/cloud_prepare/{{ ''
-      }}{{ cloud_prepare_inner_item.name }}.tpl.yml
+      {{ cloud_prepare_local_pod_repo }}/{{ ''
+      }}{{ cloud_prepare_inner_item.name }}.yml
     cloud_prepare_vars_tpl_dest: >-
       {{ cloud_prepare_pod_local_tmp_dir }}/vars/cloud_prepare/{{ ''
       }}{{ cloud_prepare_inner_item.name }}.yml
@@ -15,19 +12,10 @@
     create the local directories for the vars template 
     ({{ cloud_prepare_inner_item.name }})
   file:
-    path: "{{ cloud_prepare_vars_tpl_src | dirname }}"
+    path: "{{ cloud_prepare_vars_tpl_dest | dirname }}"
     state: directory
     mode: 0755
   delegate_to: localhost
-
-- name: "{{ cloud_prepare_inner_title }} - fetch template from a single remote host"
-  become: "{{ cloud_prepare_pod.root }}"
-  run_once: true
-  fetch:
-    src: "{{ cloud_prepare_vars_tpl_src_remote }}"
-    dest: "{{ cloud_prepare_vars_tpl_src }}"
-    flat: yes
-    fail_on_missing: yes
 
 - name: >-
     {{ cloud_prepare_inner_title }} - 

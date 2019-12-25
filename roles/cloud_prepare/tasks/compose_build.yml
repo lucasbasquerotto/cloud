@@ -1,11 +1,19 @@
-- name: "{{ cloud_prepare_inner_title }} - compose - prepare the images (pull and build)"
-  become: "{{ cloud_prepare_pod.root }}"
-  command: "{{ cloud_prepare_compose_item }}"
-  args:
-    chdir: "{{ cloud_prepare_repo_location }}/"
+- name: "{{ cloud_prepare_inner_title }} - compose"
+  include_role: 
+    name: "long_run"
+  vars:
+    long_run_title: >-
+      {{ cloud_prepare_inner_title }} - compose - 
+      {{ cloud_prepare_compose_item }}
+    long_run_become: "{{ cloud_prepare_pod.root }}"
+    long_run_output_path: "{{ cloud_prepare_pod_base_dir }}/data/log"
+    long_run_output_file: "compose-prepare.log"
+    long_run_tmp_path: "{{ cloud_prepare_pod_base_dir }}/data/tmp"
+    long_run_tmp_file: "compose-prepare"
+    long_run_path: "{{ cloud_prepare_repo_location }}"
+    long_run_cmd: "{{ cloud_prepare_compose_item }}"
   loop:
   - "docker-compose pull"
   - "docker-compose build --pull"
   loop_control:
     loop_var: cloud_prepare_compose_item
-  tags: ["print_action"]

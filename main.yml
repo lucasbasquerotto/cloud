@@ -163,12 +163,39 @@
 ##################        PREPARE & START THE PODS         ####################
 ###############################################################################
 
-- name: Play 02.01 - Prepare the Pods
+- name: Play 02.01 - Prepare the Pods Repositories (Local)
+  hosts: main
+  tags:
+  - init
+  - pod
+  - prepare
+  - prepare-local
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
+
+  - name: "pods - repositories - local"
+    git:
+      repo: "{{ main_item.value.repo }}"
+      version: "{{ main_item.value.repo_version }}"
+      dest: "{{ env_tmp_dir }}/repo/pod/{{ main_item.key }}"
+      update: yes
+      force: yes
+    loop: "{{ lookup('dict', (env.pods | default({})), wantlist=True) }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.key }}"
+
+###############################################################################
+
+- name: Play 02.02 - Prepare the Pods - Remote
   hosts: host
   tags:
   - init
   - pod
   - prepare
+  - prepare-remote
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
@@ -189,7 +216,8 @@
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_params_dict: "{{ env.pod_params }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
-      cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item }}"
+      cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/node/{{ main_item }}"
+      cloud_prepare_local_pod_repo_base: "{{ env_tmp_dir }}/repo/pod"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file: >-
@@ -204,7 +232,7 @@
 
 ###############################################################################
 
-- name: Play 02.02 - Start the Pods
+- name: Play 02.03 - Start the Pods
   hosts: host
   tags:
   - init
