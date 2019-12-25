@@ -272,8 +272,8 @@
       and
       (((env_node | default('')) == '') or (env_node == main_item))
 
-- debug:
-    var: env_force
+  - debug:
+      var: env_force
 
 ###############################################################################
 ##################          DEFINE THE CRON JOBS           ####################
