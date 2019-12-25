@@ -118,6 +118,7 @@
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_credentials_dict: "{{ env.credentials }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
@@ -379,6 +380,7 @@
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_credentials_dict: "{{ env.credentials }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
@@ -421,6 +423,7 @@
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_credentials_dict: "{{ env.credentials }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
