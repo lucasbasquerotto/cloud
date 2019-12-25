@@ -21,6 +21,7 @@
 - name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
   set_fact:
     cloud_prepare_git_commit: "{{ cloud_prepare_git_result.after }}"
+    cloud_prepare_pod_env_dir: "{{ cloud_prepare_pod.env_dir | default('env') }}"
 
 ## Creates the environment pod repository in the env folder (when defined)
 
@@ -30,13 +31,13 @@
     set_fact:
       cloud_prepare_env_repo: "{{ cloud_prepare_pod.env_repo }}"
       cloud_prepare_repo_key_file: >-
-        {{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod.env_dir }}/env_key
+        {{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_env_dir }}/env_key
 
   - name: >-
       {{ cloud_prepare_inner_title }} - create the directory for the temporary files
     become: "{{ cloud_prepare_pod.root }}"
     file:
-      path: "{{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod.env_dir }}"
+      path: "{{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_env_dir }}"
       state: directory
       mode: 0755
 
@@ -73,7 +74,7 @@
     msg: "populate vars from templates"
   tags: ["print_action"]
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_ctx_tpl_dest"
+- name: "{{ cloud_prepare_inner_title }} - set_fact"
   set_fact:
     cloud_prepare_ctx_tpl_dest: >-
       {{ cloud_prepare_pod_local_tmp_dir }}/cloud_prepare_ctx.yml
@@ -85,7 +86,7 @@
       pod: "{{ cloud_prepare_pod }}"
       git_commit: "{{ cloud_prepare_git_result.after }}"
       repo_name: "{{ cloud_prepare_env_name }}"
-      pod_env_dir: "{{ cloud_prepare_pod.env_dir }}"
+      pod_env_dir: "{{ cloud_prepare_pod_env_dir | default('env') }}"
       repo_location: "{{ cloud_prepare_repo_location }}"
       data_dir: "{{ cloud_prepare_data_dir }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
@@ -193,7 +194,7 @@
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
-        ternary('', cloud_prepare_pod.env_dir + '/')) 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
         + (cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src)) 
         }}
     loop: "{{ cloud_prepare_vars_files | default([]) }}"
@@ -221,7 +222,7 @@
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
-        ternary('', cloud_prepare_pod.env_dir + '/')) 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
         + (cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src)) 
         }}
       cloud_prepare_inner_item_params: "{{ cloud_prepare_inner_item.params | default({}) }}"
@@ -246,7 +247,7 @@
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
-        ternary('', cloud_prepare_pod.env_dir + '/')) 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
         + cloud_prepare_inner_item.dest
         }}
     loop: "{{ cloud_prepare_vars_env_files | default([]) }}"
