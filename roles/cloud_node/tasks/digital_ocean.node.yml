@@ -63,4 +63,7 @@
     set_fact: 
       cloud_node_active_hosts: "{{ cloud_node_active_hosts + [cloud_node_inner_host] }}"
 
+  - debug:
+      var: cloud_node_active_hosts
+
   when: cloud_node_inner_create | bool
