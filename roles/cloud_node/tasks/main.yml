@@ -1,9 +1,31 @@
+- name: "{{ cloud_node_title }} - set_fact - aux"
+  set_fact: 
+    cloud_node_host_ssh_public_keys_path: >-
+      {{ 
+      ((cloud_node_node_credentials.host_ssh_public_keys_path | default('')) != '' )
+      | ternary(
+      cloud_node_env_dir + '/' + cloud_node_node_credentials.host_ssh_public_keys_path,
+      ''
+      )
+      }}
+
+- name: "{{ cloud_node_title }} - set_fact - aux"
+  set_fact: 
+    cloud_node_host_ssh_public_keys: >-
+      {{ 
+      ((cloud_node_host_ssh_public_keys_path | default('')) != '' )
+      | ternary(
+      lookup('file', cloud_node_host_ssh_public_keys_path).splitlines() | list ,
+      []
+      )
+      }}
+
 - name: "{{ cloud_node_title }} - set_fact - main"
   set_fact: 
     cloud_node_host_vars: 
       host_user: "{{ cloud_node_node_credentials.host_user }}"
       host_pass: "{{ cloud_node_node_credentials.host_pass }}"
-      host_ssh_public_keys: "{{ cloud_node_node_credentials.host_ssh_public_keys }}"
+      host_ssh_public_keys: "{{ cloud_node_host_ssh_public_keys }}"
     cloud_node_user_data_file: >-
       {{ 
       ((cloud_node_instance_params.user_data_file | default('')) != '' )
@@ -25,7 +47,7 @@
         ternary(cloud_node_tmp_dir + '/' + cloud_node_node_id + '.key', '')
         }}
   tags: ["no_print"]
-  
+
 - set_fact:
     cloud_node_cloud_instances: []
     cloud_node_instance_count: "{{ cloud_node_node.amount }}"

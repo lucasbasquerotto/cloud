@@ -181,13 +181,13 @@
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
+      cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
       cloud_prepare_node_credentials: >-
         {{ env.credentials[cloud_prepare_node.credentials] }}
       cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_node.cloud] }}"
       cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_params_dict: "{{ env.pod_params }}"
-      cloud_prepare_base_dir: "{{ cloud_prepare_instance_params.base_dir }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/{{ main_item }}"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
@@ -222,13 +222,13 @@
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"
+      cloud_run_base_dir: "{{ cloud_run_node.base_dir }}"
       cloud_run_node_credentials: >-
         {{ env.credentials[cloud_run_node.credentials] }}
       cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud] }}"
       cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_run_pods_dict: "{{ env.pods }}"
       cloud_run_params_dict: "{{ env.pod_params }}"
-      cloud_run_base_dir: "{{ cloud_run_instance_params.base_dir }}"
       cloud_run_env_pod: "{{ env_pod | default('', true) }}"
       cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_run_env_vars_relative_file_src: >-
