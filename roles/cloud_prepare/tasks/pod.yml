@@ -115,20 +115,30 @@
 
 ### Prepare the temporary directory (to catch errors before updating the real one) ###
 
-- name: "{{ cloud_prepare_pod_title }} - prepare the temporary directory"
-  include_tasks: "prepare.yml"
-  vars:
-    cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - tmp"
-    cloud_prepare_repo_location: "{{ cloud_prepare_tmp_repo_location }}"
-  
-### Prepare the real directory ###
+- block:
 
-- name: "{{ cloud_prepare_pod_title }} - get the difference of the 2 files (old and current)"
-  become: "{{ cloud_prepare_pod.root }}"
-  command: "diff {{ cloud_prepare_backup_file_tmp }} {{ cloud_prepare_backup_file }}"
-  register: cloud_prepare_diff
-  failed_when: cloud_prepare_diff.rc > 1
-  changed_when: cloud_prepare_diff.rc == 1
+  - name: "{{ cloud_prepare_pod_title }} - prepare the temporary directory"
+    include_tasks: "prepare.yml"
+    vars:
+      cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - tmp"
+      cloud_prepare_repo_location: "{{ cloud_prepare_tmp_repo_location }}"
+    
+  - name: "{{ cloud_prepare_pod_title }} - get the difference of the 2 files (old and current)"
+    become: "{{ cloud_prepare_pod.root }}"
+    command: "diff {{ cloud_prepare_backup_file_tmp }} {{ cloud_prepare_backup_file }}"
+    register: cloud_prepare_diff
+    failed_when: cloud_prepare_diff.rc > 1
+    changed_when: cloud_prepare_diff.rc == 1
+
+  - name: "{{ cloud_prepare_pod_title }} - debug - outer"
+    debug: 
+      msg: "variables unchanged"
+    when: not cloud_prepare_diff.changed
+    tags: ["print_action"]
+
+  when: not (cloud_prepare_pod.fast_prepare | default(false) | bool)
+
+### Prepare the real directory ###
 
 - block:
 
@@ -151,10 +161,6 @@
       mode: 0640
     tags: ["print_action"]
 
-  when: cloud_prepare_diff.changed
-
-- name: "{{ cloud_prepare_pod_title }} - debug - outer"
-  debug: 
-    msg: "variables unchanged"
-  when: not cloud_prepare_diff.changed
-  tags: ["print_action"]
+  when: >-
+    (cloud_prepare_pod.fast_prepare | default(false) | bool) or
+    (cloud_prepare_diff | default({})).changed | default(false) | bool
