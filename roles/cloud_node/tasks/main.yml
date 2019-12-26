@@ -174,55 +174,46 @@
   meta: refresh_inventory
   tags: ["print_action"]
 
+- set_fact:
+    cloud_node_ips: []
+  
+- name: "{{ cloud_node_title }} - define instances to be created"
+  set_fact:
+    cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
+  loop: 
+  - name: "ipv4"
+    record_type: "A"
+    dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
+  - name: "ipv6"
+    record_type: "AAAA"
+    dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
+  loop_control:
+    loop_var: cloud_node_item
+  when: >-
+    (cloud_node_active_hosts | length == 1) and 
+    (cloud_node_node.dmz | bool) and 
+    (cloud_node_item.value != '')
+
 - name: >-
     {{ cloud_node_title }} - create the main dns record (IPv6)
     that points to the instance when in the dmz layer
   include_role: 
     name: "cloud_dns"
   vars: 
-    cloud_dns_title: "{{ cloud_node_title }} - main dns - IPv6"
-    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item.name].type }}"
-    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item.name].credentials }}"
+    cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
+    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item.0.name].type }}"
+    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item.0.name].credentials }}"
     cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
-    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.name].zone }}"
-    cloud_dns_record_type: "AAAA"
-    cloud_dns_record: "{{ cloud_node_item.record }}"
-    cloud_dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 }}"
-  loop: "{{ (cloud_node_node.dns | default([])) | list }}"
+    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.0.name].zone }}"
+    cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
+    cloud_dns_record: "{{ cloud_node_item.0.record }}"
+    cloud_dns_value: "{{ cloud_node_item.1.dns_value }}"
+  loop: "{{ (cloud_node_node.dns | default([])) | list | product(cloud_node_ips) }}"
   loop_control:
     loop_var: cloud_node_item
-    label: "{{ cloud_node_item.name }}"
+    label: "{{ cloud_node_item.0.name }} - {{ cloud_node_item.1.name }}"
   when: >-
-    (cloud_node_dns_dict[cloud_node_item.name] is defined) and
-    (cloud_node_dns_dict[cloud_node_item.name].type is defined) and
-    (cloud_node_active_hosts | length == 1) and 
-    (cloud_node_node.dmz | bool) and 
-    (cloud_node_active_hosts[0].public_ipv6 is defined)
-  tags: ["print_action"]
-
-- name: >-
-    {{ cloud_node_title }} - create the main dns record (IPv4) 
-    that points to the instance when in the dmz layer
-  include_role: 
-    name: "cloud_dns"
-  vars: 
-    cloud_dns_title: "{{ cloud_node_title }} - main dns - IPv4"
-    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item.name].type }}"
-    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item.name].credentials }}"
-    cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
-    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.name].zone }}"
-    cloud_dns_record_type: "A"
-    cloud_dns_record: "{{ cloud_node_item.record }}"
-    cloud_dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 }}"
-  loop: "{{ (cloud_node_node.dns | default([])) | list }}"
-  loop_control:
-    loop_var: cloud_node_item
-    label: "{{ cloud_node_item.name }}"
-  when: >-
-    (cloud_node_dns_dict[cloud_node_item.name] is defined) and
-    (cloud_node_dns_dict[cloud_node_item.name].type is defined) and
-    (cloud_node_active_hosts | length == 1) and 
-    (cloud_node_node.dmz | bool) and 
-    (cloud_node_active_hosts[0].public_ipv4 is defined)
+    (cloud_node_dns_dict[cloud_node_item.0.name] is defined) and
+    ((cloud_node_dns_dict[cloud_node_item.0.name].type | default('')) != '')
   tags: ["print_action"]
     

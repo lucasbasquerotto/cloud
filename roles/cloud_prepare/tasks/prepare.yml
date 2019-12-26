@@ -91,6 +91,27 @@
       data_dir: "{{ cloud_prepare_data_dir }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
 
+- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_credentials"
+  set_fact:
+    cloud_prepare_inner_credentials: {}
+  
+- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_credentials"
+  set_fact:
+    cloud_prepare_inner_credentials: >-
+      {{ 
+      cloud_prepare_inner_credentials | 
+      combine({ 
+      cloud_prepare_inner_item.key: 
+      cloud_prepare_credentials_dict[cloud_prepare_inner_item.value] }) 
+      }}
+  loop: "{{ cloud_prepare_pod.credentials | default({}) | dict2items }}"
+  loop_control:
+    loop_var: cloud_prepare_inner_item
+    label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
+
+- debug:
+    var: cloud_prepare_inner_credentials
+
 - name: >-
     {{ cloud_prepare_inner_title }} - 
     create the local directory for the expanded context template
@@ -108,6 +129,7 @@
   vars:
     params: "{{ cloud_prepare_params }}"
     params_aux: "{{ cloud_prepare_params_aux }}"
+    credentials: "{{ cloud_prepare_inner_credentials }}"
   delegate_to: localhost
 
 - name: >-
@@ -125,6 +147,7 @@
     cloud_prepare_vars_full:
       main: "{{ cloud_prepare_ctx_outer_params }}"
       aux: "{{ cloud_prepare_params_aux }}"
+      credentials: "{{ cloud_prepare_inner_credentials }}"
 
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
   become: "{{ cloud_prepare_pod.root }}"

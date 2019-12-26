@@ -216,6 +216,7 @@
       cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_params_dict: "{{ env.pod_params }}"
+      cloud_prepare_credentials_dict: "{{ env.credentials }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/node/{{ main_item }}"
       cloud_prepare_local_pod_repo_base: "{{ env_tmp_dir }}/repo/pod"
