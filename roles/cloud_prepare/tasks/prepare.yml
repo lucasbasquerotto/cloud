@@ -4,7 +4,10 @@
   set_fact:
     cloud_prepare_local_pod_repo: "/main/pod/{{ local_pod_dir_rel }}"
     cloud_prepare_repo_location: "/main/pod/{{ local_pod_dir_rel }}"
-  when: "{{ cloud_prepare_cloud.type == 'local' }}"
+  when: cloud_prepare_cloud.type == 'local'
+
+- debug:
+    var: cloud_prepare_local_pod_repo
 
 - name: "{{ cloud_prepare_inner_title }} - create the repo directory"
   become: "{{ cloud_prepare_pod.root }}"

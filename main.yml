@@ -127,7 +127,10 @@
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-    when: ((env_node | default('')) == '') or (env_node == main_item)
+    when: >-
+      (((env_node | default('')) == '') or (env_node == main_item))
+      and
+      (cloud_node_cloud.type != 'local')
 
 ###############################################################################
 
@@ -187,6 +190,7 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_item.key }}"
+    when: ansible_connection != 'local'
 
 ###############################################################################
 
@@ -228,14 +232,14 @@
     loop_control:
       loop_var: main_item
     when: >-
-      (main_item == instance_type)
+      ((ansible_connection == 'local') or (main_item == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == main_item))
       and 
       (
-      ((ansible_connection == 'local') and (cloud_prepare_cloud == 'local'))
+      ((ansible_connection == 'local') and (cloud_prepare_cloud.type == 'local'))
       or
-      ((ansible_connection != 'local') and (cloud_prepare_cloud != 'local'))
+      ((ansible_connection != 'local') and (cloud_prepare_cloud.type != 'local'))
       )
 
 ###############################################################################
@@ -276,14 +280,14 @@
     loop_control:
       loop_var: main_item
     when: >-
-      (main_item == instance_type)
+      ((ansible_connection == 'local') or (main_item == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == main_item))
       and 
       (
-      ((ansible_connection == 'local') and (cloud_run_cloud == 'local'))
+      ((ansible_connection == 'local') and (cloud_run_cloud.type == 'local'))
       or
-      ((ansible_connection != 'local') and (cloud_run_cloud != 'local'))
+      ((ansible_connection != 'local') and (cloud_run_cloud.type != 'local'))
       )
 
 ###############################################################################
@@ -313,14 +317,14 @@
     loop_control:
       loop_var: main_item
     when: >-
-      (main_item == instance_type)
+      ((ansible_connection == 'local') or (main_item == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == main_item))
       and 
       (
-      ((ansible_connection == 'local') and (cron_cloud == 'local'))
+      ((ansible_connection == 'local') and (cron_cloud.type == 'local'))
       or
-      ((ansible_connection != 'local') and (cron_cloud != 'local'))
+      ((ansible_connection != 'local') and (cron_cloud.type != 'local'))
       )
 
 ###############################################################################

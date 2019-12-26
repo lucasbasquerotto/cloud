@@ -31,6 +31,12 @@
     cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/main"
 
+- name: "{{ cloud_prepare_pod_title }} - set_fact - vars"
+  set_fact:
+    cloud_prepare_host_user: "root"
+    cloud_prepare_host_group: "root"
+  when: cloud_prepare_cloud.type == 'local'
+
 - name: "{{ cloud_prepare_pod_title }} - set_fact - locations"
   set_fact:
     cloud_prepare_data_dir: "{{ cloud_prepare_pod_base_dir }}/data"
