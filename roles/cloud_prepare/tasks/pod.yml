@@ -25,9 +25,6 @@
 
 ### Set vars ###
 
-- debug:
-    var: cloud_prepare_pod_base_dir
-
 - name: "{{ cloud_prepare_pod_title }} - set_fact - base directory"
   set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"
