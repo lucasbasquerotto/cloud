@@ -191,7 +191,7 @@
 ###############################################################################
 
 - name: Play 02.02 - Prepare the Pods - Remote
-  hosts: host
+  hosts: main,host
   tags:
   - init
   - pod
@@ -231,11 +231,17 @@
       (main_item == instance_type)
       and
       (((env_node | default('')) == '') or (env_node == main_item))
+      and 
+      (
+      ((ansible_connection == 'local') and (cloud_prepare_cloud == 'local'))
+      or
+      ((ansible_connection != 'local') and (cloud_prepare_cloud != 'local'))
+      )
 
 ###############################################################################
 
 - name: Play 02.03 - Start the Pods
-  hosts: host
+  hosts: main,host
   tags:
   - init
   - pod
@@ -273,16 +279,23 @@
       (main_item == instance_type)
       and
       (((env_node | default('')) == '') or (env_node == main_item))
+      and 
+      (
+      ((ansible_connection == 'local') and (cloud_run_cloud == 'local'))
+      or
+      ((ansible_connection != 'local') and (cloud_run_cloud != 'local'))
+      )
 
 ###############################################################################
 ##################          DEFINE THE CRON JOBS           ####################
 ###############################################################################
 
 - name: Play 03 - Define the cron jobs
-  hosts: host
+  hosts: main,host
   tags:
   - init
   - cron
+  - cron_local
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
@@ -295,6 +308,7 @@
       cron_node: "{{ env.nodes[main_item] }}"
       cron_env_dir: "{{ env_dir }}"
       cron_start: "true"
+      cron_cloud: "{{ env.clouds[cron_node.cloud] }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -302,6 +316,12 @@
       (main_item == instance_type)
       and
       (((env_node | default('')) == '') or (env_node == main_item))
+      and 
+      (
+      ((ansible_connection == 'local') and (cron_cloud == 'local'))
+      or
+      ((ansible_connection != 'local') and (cron_cloud != 'local'))
+      )
 
 ###############################################################################
 ##################       EXECUTE COMMANDS ON-THE-FLY       ####################

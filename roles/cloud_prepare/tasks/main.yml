@@ -1,6 +1,3 @@
-- debug:
-    var: cloud_prepare_base_dir
-
 - name: "{{ cloud_prepare_title }}"
   include_tasks: "pod.yml"
   vars:

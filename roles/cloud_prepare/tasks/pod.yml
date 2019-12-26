@@ -22,6 +22,7 @@
 ### Prepare the orchestration environment ###
 
 - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_main.yml"
+  when: cloud_prepare_pod_orchestration.type != 'none'
 
 ### Set vars ###
 

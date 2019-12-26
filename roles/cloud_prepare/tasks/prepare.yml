@@ -1,5 +1,11 @@
 ### Create / Update the repository ###
 
+- name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
+  set_fact:
+    cloud_prepare_local_pod_repo: "/main/pod/{{ local_pod_dir_rel }}"
+    cloud_prepare_repo_location: "/main/pod/{{ local_pod_dir_rel }}"
+  when: "{{ cloud_prepare_cloud.type == 'local' }}"
+
 - name: "{{ cloud_prepare_inner_title }} - create the repo directory"
   become: "{{ cloud_prepare_pod.root }}"
   file:
@@ -13,8 +19,8 @@
     repo: "{{ cloud_prepare_pod.repo }}"
     version: "{{ cloud_prepare_pod.repo_version }}"
     dest: "{{ cloud_prepare_repo_location }}"
-    update: yes
-    force: yes
+    update: "{{ cloud_prepare_cloud.type != 'local' }}"
+    force: "{{ cloud_prepare_cloud.type != 'local' }}"
   register: cloud_prepare_git_result
   tags: ["print_action"]
 
@@ -61,8 +67,8 @@
       dest: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod.env_repo.dir }}"
       key_file: "{{ cloud_prepare_repo_key_file }}"
       accept_hostkey: yes
-      update: yes
-      force: yes
+      update: "{{ cloud_prepare_cloud.type != 'local' }}"
+      force: "{{ cloud_prepare_cloud.type != 'local' }}"
     tags: ["print_action"]
 
   when: cloud_prepare_pod.env_repo is defined
@@ -370,6 +376,7 @@
     tags: ["print_action"]
     
   - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_build.yml"
+    when: cloud_prepare_pod_orchestration.type != 'none'
 
   when: cloud_prepare_diff.changed
 
