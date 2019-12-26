@@ -177,7 +177,7 @@
 - set_fact:
     cloud_node_ips: []
   
-- name: "{{ cloud_node_title }} - define instances to be created"
+- name: "{{ cloud_node_title }} - define instance ip"
   set_fact:
     cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
   loop: 
@@ -192,7 +192,7 @@
   when: >-
     (cloud_node_active_hosts | default([]) | length == 1) and 
     (cloud_node_node.dmz | default('false') | bool) and 
-    (cloud_node_item.value != '')
+    (cloud_node_item.dns_value != '')
 
 - name: >-
     {{ cloud_node_title }} - create the main dns records
