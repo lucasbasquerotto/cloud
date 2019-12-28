@@ -207,8 +207,8 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_full, 
         'dest': cloud_prepare_inner_item_dest_full, 
-        'mode': (cloud_prepare_cloud.type == 'local') | 
-        ternary(0666, cloud_prepare_inner_item.mode | default('', true))
+        'mode': cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
         }] 
         }}
     vars: 
@@ -235,8 +235,8 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_local_full,
         'dest': cloud_prepare_inner_item_dest_full, 
-        'mode': (cloud_prepare_cloud.type == 'local') | 
-        ternary(0666, cloud_prepare_inner_item.mode | default('', true)), 
+        'mode': cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
         'params': cloud_prepare_inner_item_params
         }] 
         }}
@@ -265,8 +265,8 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_full, 
         'dest': cloud_prepare_inner_item_dest_full, 
-        'mode': (cloud_prepare_cloud.type == 'local') | 
-        ternary(0666, cloud_prepare_inner_item.mode | default('', true))
+        'mode': cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
         }] 
         }}
     vars: 
@@ -336,7 +336,7 @@
       dest: "{{ cloud_prepare_inner_item.dest }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode | default('0640', true) }}"
+      mode: "{{ cloud_prepare_inner_item.mode }}"
     loop: "{{ cloud_prepare_files_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
@@ -350,7 +350,7 @@
       dest: "{{ cloud_prepare_inner_item.dest }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode | default('0640', true) }}"
+      mode: "{{ cloud_prepare_inner_item.mode }}"
     vars:
       params: "{{ cloud_prepare_inner_item.params }}"
     loop: "{{ cloud_prepare_tpl_list | default([]) }}"
@@ -366,7 +366,7 @@
       dest: "{{ cloud_prepare_inner_item.dest }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode | default('0640', true) }}"
+      mode: "{{ cloud_prepare_inner_item.mode }}"
     loop: "{{ cloud_prepare_env_files_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
