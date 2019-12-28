@@ -21,7 +21,7 @@
 
 ### Prepare the orchestration environment ###
 
-- include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_main.yml"
+- include_tasks: "{{ cloud_prepare_pod_orchestration.type }}.main.yml"
   when: cloud_prepare_pod_orchestration.type != 'none'
 
 ### Set vars ###
@@ -40,7 +40,11 @@
 
 - name: "{{ cloud_prepare_pod_title }} - set_fact - locations"
   set_fact:
-    cloud_prepare_data_dir: "{{ cloud_prepare_pod_base_dir }}/data"
+    cloud_prepare_pod_data_dir: >-
+      {{ (cloud_prepare_cloud.type != 'local') | ternary(
+      cloud_prepare_pod_base_dir + '/data',
+      cloud_prepare_pod_local_data_dir_rel) 
+      }}
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
     cloud_prepare_backup_file: >-

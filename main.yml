@@ -179,7 +179,7 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - name: "pods - repositories - local"
+  - name: "pods - repositories - local (for remote)"
     git:
       repo: "{{ main_item.value.repo }}"
       version: "{{ main_item.value.repo_version }}"
@@ -190,7 +190,33 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_item.key }}"
-    when: ansible_connection != 'local'
+    when: not (main_item.key in (env.main.local.pods | default([])))
+
+  - name: "pods - repositories - local (dev)"
+    git:
+      repo: "{{ main_local_pod.repo }}"
+      version: "{{ main_local_pod.repo_version }}"
+      dest: "{{ main_local_pod.dir }}"
+      update: no
+      force: no
+    vars:
+      main_local_pod: "{{ env_local_pod_dict[main_item] }}"
+    loop: "{{ env.main.local.pods | default([]) }}"
+    loop_control:
+      loop_var: main_item
+
+  - name: "apps - repositories - local (dev)"
+    git:
+      repo: "{{ main_local_app.repo }}"
+      version: "{{ main_local_app.repo_version }}"
+      dest: "{{ main_local_app.dir }}"
+      update: no
+      force: no
+    vars:
+      main_local_app: "{{ env_local_app_dict[main_item] }}"
+    loop: "{{ env.main.local.apps | default([]) }}"
+    loop_control:
+      loop_var: main_item
 
 ###############################################################################
 
@@ -229,6 +255,9 @@
       cloud_prepare_env_vars_relative_file: >-
         tmp/env/cloud.prepare.vars_full.yml
       cloud_prepare_local_pod_dict: "{{ env_local_pod_dict }}"
+      cloud_prepare_local_app_dict: "{{ env_local_app_dict }}"
+      cloud_prepare_data_dir_inside: "{{ env_local_data_dir }}"
+      cloud_prepare_local_data_dir_rel: "{{ env_local_data_dir_rel }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item

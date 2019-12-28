@@ -3,7 +3,8 @@
     cloud_run_pod_repo_location: >-
       {{ 
       (cloud_run_cloud.type == 'local') | ternary(
-      cloud_run_local_pod_dict[cloud_run_pod_id].dir,
+      cloud_run_local_pod_dict[cloud_run_pod_id].dir
+      | default(cloud_run_pod_base_dir + '/main'),
       cloud_run_pod_base_dir + '/main'
       )
       }}

@@ -2,10 +2,10 @@
   set_fact:
     cloud_prepare_vars_tpl_src: >-
       {{ cloud_prepare_local_pod_repo }}/{{ ''
-      }}{{ cloud_prepare_inner_item.name }}.yml
+      }}{{ cloud_prepare_inner_item.name }}
     cloud_prepare_vars_tpl_dest: >-
       {{ cloud_prepare_pod_local_tmp_dir }}/vars/cloud_prepare/{{ ''
-      }}{{ cloud_prepare_inner_item.name }}.yml
+      }}{{ cloud_prepare_inner_item.name }}
 
 - name: >-
     {{ cloud_prepare_inner_title }} -

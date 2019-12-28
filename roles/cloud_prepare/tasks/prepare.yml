@@ -1,8 +1,5 @@
 ### Create / Update the repository ###
 
-- debug:
-    var: cloud_prepare_local_pod_repo
-
 - name: "{{ cloud_prepare_inner_title }} - create the repo directory"
   become: "{{ cloud_prepare_pod.root }}"
   file:
@@ -87,11 +84,13 @@
     cloud_prepare_params_aux:
       pod_id: "{{ cloud_prepare_pod_id }}"
       pod: "{{ cloud_prepare_pod }}"
+      app: "{{ cloud_prepare_local_app_dict }}"
       git_commit: "{{ cloud_prepare_git_result.after }}"
       repo_name: "{{ cloud_prepare_env_name }}"
       pod_env_dir: "{{ cloud_prepare_pod_env_dir | default('env') }}"
       repo_location: "{{ cloud_prepare_repo_location }}"
-      data_dir: "{{ cloud_prepare_data_dir }}"
+      data_dir: "{{ cloud_prepare_pod_data_dir }}"
+      data_dir_inside: "{{ cloud_prepare_pod_data_dir_inside }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
 
 - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_credentials"
@@ -374,7 +373,7 @@
       label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["print_action"]
     
-  - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_build.yml"
+  - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}.build.yml"
     when: cloud_prepare_pod_orchestration.type != 'none'
 
   when: cloud_prepare_diff.changed or (cloud_prepare_cloud.type == 'local')

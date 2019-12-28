@@ -69,15 +69,6 @@
       ((main_cloud_aux.ssh_key_path | default('', true)) != '')
       }}
 
-- debug:
-    var: main_cloud_aux.ssh_encrypted_key_path
-
-- debug:
-    var: main_cloud_aux.ssh_key_path
-
-- debug:
-    var: (main_cloud_unencrypt_key | bool)
-
 - name: >-
     {{ main_cloud_title }} - create unencrypted key file dir - 
     {{ main_cloud_aux.ssh_key_path | dirname }}
