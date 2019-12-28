@@ -30,11 +30,12 @@
   set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/main"
+  when: cloud_prepare_cloud.type != 'local'
 
-- name: "{{ cloud_prepare_pod_title }} - set_fact - vars"
+- name: "{{ cloud_prepare_pod_title }} - set_fact - base directory"
   set_fact:
-    cloud_prepare_host_user: "root"
-    cloud_prepare_host_group: "root"
+    cloud_prepare_main_repo_location: "{{ cloud_prepare_local_pod_repo }}"
+    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_local_pod_repo }}"
   when: cloud_prepare_cloud.type == 'local'
 
 - name: "{{ cloud_prepare_pod_title }} - set_fact - locations"
@@ -54,7 +55,7 @@
   file:
     path: "{{ cloud_prepare_pod_item | dirname }}"
     state: directory
-    mode: 0755
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
   loop:
   - "{{ cloud_prepare_backup_file }}"
   - "{{ cloud_prepare_backup_file_tmp }}"
@@ -72,7 +73,7 @@
     dest: "{{ cloud_prepare_backup_file }}"
     owner: "{{ cloud_prepare_owner }}"
     group: "{{ cloud_prepare_group }}"
-    mode: 0640
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
 
 ### Define the environment variables ###
 - block:
@@ -162,7 +163,7 @@
       dest: "{{ cloud_prepare_backup_file }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: 0640
+      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
     tags: ["print_action"]
 
   when: >-

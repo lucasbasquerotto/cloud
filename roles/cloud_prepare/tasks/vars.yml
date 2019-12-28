@@ -14,7 +14,7 @@
   file:
     path: "{{ cloud_prepare_vars_tpl_dest | dirname }}"
     state: directory
-    mode: 0755
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
   delegate_to: localhost
 
 - name: >-
@@ -23,7 +23,7 @@
   template: 
     src: "{{ cloud_prepare_vars_tpl_src }}"
     dest: "{{ cloud_prepare_vars_tpl_dest }}"
-    mode: 0640
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
   vars:
     params: "{{ cloud_prepare_inner_item.params }}"
   delegate_to: localhost

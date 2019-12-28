@@ -228,6 +228,8 @@
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file: >-
         tmp/env/cloud.prepare.vars_full.yml
+      cloud_prepare_local_pod_repo_dict:
+        efk: "/main/pod/{{ local_pod_dir_rel }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -276,6 +278,8 @@
       cloud_run_env_vars_relative_file_dest: >-
         tmp/env/cloud.run.vars_full.yml
       cloud_run_force: "{{ env_force | default(false, true) }}"
+      cloud_run_local_pod_repo_dict:
+        efk: "/main/pod/{{ local_pod_dir_rel }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item

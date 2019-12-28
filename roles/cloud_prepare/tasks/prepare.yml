@@ -1,11 +1,5 @@
 ### Create / Update the repository ###
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
-  set_fact:
-    cloud_prepare_local_pod_repo: "/main/pod/{{ local_pod_dir_rel }}"
-    cloud_prepare_repo_location: "/main/pod/{{ local_pod_dir_rel }}"
-  when: cloud_prepare_cloud.type == 'local'
-
 - debug:
     var: cloud_prepare_local_pod_repo
 
@@ -14,7 +8,7 @@
   file:
     path: "{{ cloud_prepare_repo_location }}"
     state: directory
-    mode: 0755
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
 
 - name: "{{ cloud_prepare_inner_title }} - update the repo directory"
   become: "{{ cloud_prepare_pod.root }}"
@@ -48,7 +42,7 @@
     file:
       path: "{{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_env_dir }}"
       state: directory
-      mode: 0755
+      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
 
   - name: "{{ cloud_prepare_inner_title }} - copy encrypted file to set location"
     become: "{{ cloud_prepare_pod.root }}"
@@ -57,12 +51,12 @@
         {{ cloud_prepare_env_dir }}/{{ cloud_prepare_env_repo.key_file_encrypted }}
       dest: "{{ cloud_prepare_repo_key_file }}"
       decrypt: yes
-      mode: 0600
+      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
 
   - name: >-
       {{ cloud_prepare_inner_title }} -
       environment pod repository
-      ({{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod.env_repo.dir }})
+      ({{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod.env_repo.dir | default('') }})
     become: "{{ cloud_prepare_pod.root }}"
     git:
       repo: "{{ cloud_prepare_env_repo.src }}"
@@ -118,23 +112,20 @@
     loop_var: cloud_prepare_inner_item
     label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
 
-- debug:
-    var: cloud_prepare_inner_credentials
-
 - name: >-
     {{ cloud_prepare_inner_title }} - 
     create the local directory for the expanded context template
   file:
     path: "{{ cloud_prepare_ctx_tpl_dest | dirname }}"
     state: directory
-    mode: 0755
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
   delegate_to: localhost
   
 - name: "{{ cloud_prepare_inner_title }} - get the context data from the template"
   template: 
     src: "{{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_pod.ctx }}"
     dest: "{{ cloud_prepare_ctx_tpl_dest }}"
-    mode: 0640
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
   vars:
     params: "{{ cloud_prepare_params }}"
     params_aux: "{{ cloud_prepare_params_aux }}"
@@ -165,7 +156,7 @@
     dest: "{{ cloud_prepare_backup_file_tmp }}"
     owner: "{{ cloud_prepare_owner }}"
     group: "{{ cloud_prepare_group }}"
-    mode: 0640
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
 
 - name: "{{ cloud_prepare_inner_title }} - get the difference of the 2 files (old and current)"
   become: "{{ cloud_prepare_pod.root }}"
@@ -205,7 +196,9 @@
       cloud_prepare_files_list: []
       cloud_prepare_tpl_list: []
       cloud_prepare_env_files_list: []
-      cloud_prepare_dir_list: []
+      cloud_prepare_dir_list: [
+        "{{ cloud_prepare_repo_location + '/' + (cloud_prepare_pod_env_dir | default('env')) }}"
+      ]
 
   - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_files_list - fill"
     set_fact:
@@ -215,7 +208,8 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_full, 
         'dest': cloud_prepare_inner_item_dest_full, 
-        'mode': cloud_prepare_inner_item.mode | default('', true)
+        'mode': (cloud_prepare_cloud.type == 'local') | 
+        ternary(0666, cloud_prepare_inner_item.mode | default('', true))
         }] 
         }}
     vars: 
@@ -242,7 +236,8 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_local_full,
         'dest': cloud_prepare_inner_item_dest_full, 
-        'mode': cloud_prepare_inner_item.mode | default('', true), 
+        'mode': (cloud_prepare_cloud.type == 'local') | 
+        ternary(0666, cloud_prepare_inner_item.mode | default('', true)), 
         'params': cloud_prepare_inner_item_params
         }] 
         }}
@@ -271,7 +266,8 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_full, 
         'dest': cloud_prepare_inner_item_dest_full, 
-        'mode': cloud_prepare_inner_item.mode | default('', true)
+        'mode': (cloud_prepare_cloud.type == 'local') | 
+        ternary(0666, cloud_prepare_inner_item.mode | default('', true))
         }] 
         }}
     vars: 
@@ -325,8 +321,8 @@
       path: "{{ cloud_prepare_inner_item }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: 0751
-    loop: "{{ cloud_prepare_dir_list | unique | default([]) }}"
+      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(777, 751) }}"
+    loop: "{{ cloud_prepare_dir_list | default([]) | unique | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item }}"
@@ -381,7 +377,7 @@
   - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}_build.yml"
     when: cloud_prepare_pod_orchestration.type != 'none'
 
-  when: cloud_prepare_diff.changed
+  when: cloud_prepare_diff.changed or (cloud_prepare_cloud.type == 'local')
 
 - name: "{{ cloud_prepare_inner_title }} - debug - inner"
   debug: 

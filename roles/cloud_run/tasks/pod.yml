@@ -1,15 +1,16 @@
 - name: "{{ cloud_run_pod_title }} - set_fact"
   set_fact:
-    cloud_run_pod_repo_location: "{{ cloud_run_pod_base_dir }}/main"
+    cloud_run_pod_repo_location: >-
+      {{ 
+      (cloud_run_cloud.type == 'local') | ternary(
+      cloud_run_local_pod_repo_dict[cloud_run_pod_id],
+      cloud_run_pod_base_dir + '/main'
+      )
+      }}
     cloud_run_backup_file_src: >-
       {{ cloud_run_pod_base_dir }}/{{ cloud_run_env_vars_relative_file_src }}
     cloud_run_backup_file_dest: >-
       {{ cloud_run_pod_base_dir }}/{{ cloud_run_env_vars_relative_file_dest }}
-
-- name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
-  set_fact:
-    cloud_run_pod_repo_location: "/main/pod/{{ local_pod_dir_rel }}"
-  when: "{{ cloud_prepare_cloud.type == 'local' }}"
     
 - name: "{{ cloud_run_pod_title }} - create the backup directories"
   become: "{{ cloud_run_pod.root }}"
@@ -18,7 +19,7 @@
     state: directory
     owner: "{{ cloud_run_host_user }}"
     group: "{{ cloud_run_host_group }}"
-    mode: 0751
+    mode: "{{ (cloud_run_cloud.type == 'local') | ternary(0777, 0751) }}"
   loop:
   - "{{ cloud_run_backup_file_src }}"
   - "{{ cloud_run_backup_file_dest }}"
@@ -36,7 +37,7 @@
     dest: "{{ cloud_run_backup_file_dest }}"
     owner: "{{ cloud_run_host_user }}"
     group: "{{ cloud_run_host_group }}"
-    mode: 0640
+    mode: "{{ (cloud_run_cloud.type == 'local') | ternary(0666, 0640) }}"
 
 - name: "{{ cloud_run_pod_title }} - get the difference of the 2 env files (old and current)"
   become: "{{ cloud_run_pod.root }}"
@@ -98,7 +99,7 @@
       dest: "{{ cloud_run_backup_file_dest }}"
       owner: "{{ cloud_run_host_user }}"
       group: "{{ cloud_run_host_group }}"
-      mode: 0640
+      mode: "{{ (cloud_run_cloud.type == 'local') | ternary(0666, 0640) }}"
 
   when: "cloud_run_diff.changed or (cloud_run_force | bool)" 
 

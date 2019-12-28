@@ -11,7 +11,7 @@
   template: 
     src: "roles/cloud_prepare/files/docker-compose.sh"
     dest: "/usr/local/bin/docker-compose"
-    mode: 0755
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
   vars:
     params: 
       docker_compose_version: "{{ cloud_prepare_pod_orchestration.version }}"

@@ -7,7 +7,7 @@
     cloud_run_pod_orchestration: >-
       {{ cloud_run_orchestrations_dict[cloud_run_pod.orchestration] }}
     cloud_run_pod_base_dir: "{{ cloud_run_base_dir }}/{{ cloud_run_item }}"
-    cloud_run_params: "{{ cloud_run_params_dict[cloud_prepare_pod.params] }}"
+    cloud_run_params: "{{ cloud_run_params_dict[cloud_run_pod.params] }}"
     cloud_run_host_user: "{{ cloud_run_node_credentials.host_user }}"
     cloud_run_host_group: "{{ cloud_run_node_credentials.host_user }}"
   loop: "{{ cloud_run_node.pods | default([cloud_run_node.main_pod]) | list }}"
