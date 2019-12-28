@@ -8,7 +8,7 @@
       }}{{ cloud_prepare_inner_item.name }}.yml
 
 - name: >-
-    {{ cloud_prepare_inner_title }} - 
+    {{ cloud_prepare_inner_title }} -
     create the local directories for the vars template 
     ({{ cloud_prepare_inner_item.name }})
   file:

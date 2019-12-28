@@ -113,7 +113,7 @@
     label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
 
 - name: >-
-    {{ cloud_prepare_inner_title }} - 
+    {{ cloud_prepare_inner_title }} -
     create the local directory for the expanded context template
   file:
     path: "{{ cloud_prepare_ctx_tpl_dest | dirname }}"
