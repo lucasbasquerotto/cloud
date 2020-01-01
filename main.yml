@@ -256,8 +256,16 @@
         tmp/env/cloud.prepare.vars_full.yml
       cloud_prepare_local_pod_dict: "{{ env_local_pod_dict }}"
       cloud_prepare_local_app_dict: "{{ env_local_app_dict }}"
-      cloud_prepare_local_data_dir_inside: "{{ env_local_data_dir | default('') }}"
-      cloud_prepare_local_data_dir_rel: "{{ env_local_data_dir_rel | default('') }}"
+      cloud_prepare_local_data_dir_inside: >-
+        {{ 
+        (ansible_connection == 'local') | 
+        ternary(env_local_data_dir | default(''), '') 
+        }}
+      cloud_prepare_local_data_dir_rel: >-
+        {{ 
+        (ansible_connection == 'local') | 
+        ternary(env_local_data_dir_rel | default(''), '') 
+        }}
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item

@@ -18,7 +18,7 @@
   delegate_to: localhost
 
 - name: >-
-    {{ cloud_prepare_inner_title }} - 
+    {{ cloud_prepare_inner_title }} -
     populate vars from templates ({{ cloud_prepare_inner_item.name }})
   template: 
     src: "{{ cloud_prepare_vars_tpl_src }}"
@@ -28,7 +28,9 @@
     params: "{{ cloud_prepare_inner_item.params }}"
   delegate_to: localhost
 
-- name: "{{ cloud_prepare_inner_title }} - load environment vars ({{ cloud_prepare_inner_item.name }})"
+- name: >-
+    {{ cloud_prepare_inner_title }} - load environment vars
+    ({{ cloud_prepare_inner_item.name }})
   include_vars:
     file: "{{ cloud_prepare_vars_tpl_dest }}"
     name: cloud_prepare_inner_vars
