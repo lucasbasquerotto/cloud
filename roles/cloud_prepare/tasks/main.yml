@@ -21,9 +21,15 @@
     cloud_prepare_pod_local_tmp_dir: >-
       {{ cloud_prepare_local_tmp_dir }}/pod/{{ cloud_prepare_item }}
     cloud_prepare_pod_local_data_dir_inside: >-
-      {{ cloud_prepare_local_data_dir_inside + '/' + cloud_prepare_item }}
+      {{ 
+      (cloud_prepare_local_data_dir_inside | default('') != '')
+      | ternary(cloud_prepare_local_data_dir_inside + '/' + cloud_prepare_item, '') 
+      }}
     cloud_prepare_pod_local_data_dir_rel: >-
-      {{ cloud_prepare_local_data_dir_rel + '/' + cloud_prepare_item }}
+      {{ 
+      (cloud_prepare_local_data_dir_rel | default('') != '')
+      | ternary(cloud_prepare_local_data_dir_rel + '/' + cloud_prepare_item, '') 
+      }}
   loop: "{{ cloud_prepare_node.pods | default([cloud_prepare_node.main_pod]) | list }}"
   loop_control:
     loop_var: cloud_prepare_item
