@@ -48,7 +48,7 @@
         {{ cloud_prepare_env_dir }}/{{ cloud_prepare_env_repo.key_file_encrypted }}
       dest: "{{ cloud_prepare_repo_key_file }}"
       decrypt: yes
-      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
+      mode: "0600"
 
   - name: >-
       {{ cloud_prepare_inner_title }} -
