@@ -90,7 +90,7 @@
       pod_env_dir: "{{ cloud_prepare_pod_env_dir | default('env') }}"
       repo_location: "{{ cloud_prepare_repo_location }}"
       data_dir: "{{ cloud_prepare_pod_data_dir }}"
-      data_dir_inside: "{{ cloud_prepare_pod_data_dir_inside }}"
+      local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
 
 - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_credentials"
