@@ -19,6 +19,7 @@
       []
       )
       }}
+    cloud_node_ssh_key_filename: "{{ cloud_node_node_id + '.key' }}"
 
 - name: "{{ cloud_node_title }} - set_fact - main"
   set_fact: 
@@ -44,7 +45,7 @@
       ssh_key_path: >-
         {{ 
         cloud_node_node_credentials.ssh_encrypted_key_path_rel | 
-        ternary(cloud_node_tmp_dir + '/' + cloud_node_node_id + '.key', '')
+        ternary(cloud_node_tmp_dir + '/' + cloud_node_ssh_key_filename, '')
         }}
   tags: ["no_print"]
 
