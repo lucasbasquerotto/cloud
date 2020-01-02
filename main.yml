@@ -381,6 +381,12 @@
   - include_tasks: "tasks/env.yml"
     tags: ["no_print"]
 
+  - debug:
+      var: env_exec_become
+
+  - debug:
+      var: env_node
+
   - include_role: 
       name: "long_run"
     vars:

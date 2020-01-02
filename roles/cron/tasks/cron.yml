@@ -5,6 +5,13 @@
   file:
     state: directory
     path: "{{ cron_tmp_dir }}"
+
+- name: "{{ cron_inner_title }} - Ensure crontab file is present"
+  become: "{{ cron_become }}"
+  copy: 
+    content: ""
+    force: no
+    dest: "{{ cron_dest_dir }}/{{ cron_user }}"
     
 - name: "{{ cron_inner_title }} - copy temporary cron files"
   become: "{{ cron_become }}"
@@ -14,10 +21,15 @@
     owner: "{{ cron_user }}"
     group: "{{ cron_user }}"
     mode: 0600
+    remote_src: "{{ cron_inner_item.remote_src }}"
   register: diff_hosts_file
   loop:
-  - { name: "current.cron", src: "{{ cron_dest_dir }}/{{ cron_user }}" }
-  - { name: "new.cron", src: "{{ cron_src_file }}" }
+  - name: "current.cron"
+    remote_src: yes
+    src: "{{ cron_dest_dir }}/{{ cron_user }}"
+  - name: "new.cron"
+    remote_src: no
+    src: "{{ cron_src_file }}"
   loop_control:
     loop_var: cron_inner_item
     label: "{{ cron_inner_item.name }}"
