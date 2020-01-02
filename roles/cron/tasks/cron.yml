@@ -1,17 +1,64 @@
 ---
-- name: >-
-    {{ cron_inner_title }} - Ensure crontab file is up-to-date 
-    ({{ cron_dest_dir }}/{{ cron_dest_file }})
-  become: "{{ cron_become }}"
-  copy: 
-    src: "{{ cron_src_file }}" 
-    dest: "{{ cron_dest_dir }}/{{ cron_dest_file }}"
-  register: cron_result
 
-- name: "{{ cron_inner_title }} - Ensure crontab file is active"
+- name: "{{ cron_inner_title }} - create the temporary directory"
   become: "{{ cron_become }}"
-  shell: "crontab '{{ cron_dest_dir }}/{{ cron_dest_file }}'"
-  when: cron_result is changed
+  file:
+    state: directory
+    path: "{{ cron_tmp_dir }}"
+    
+- name: "{{ cron_inner_title }} - copy temporary cron files"
+  become: "{{ cron_become }}"
+  copy:
+    src: "{{ cron_inner_item.src }}"
+    dest: "{{ cron_tmp_dir }}/{{ cron_inner_item.name }}"
+    owner: "{{ cron_user }}"
+    group: "{{ cron_user }}"
+    mode: 0600
+  register: diff_hosts_file
+  loop:
+  - { name: "current.cron", src: "{{ cron_dest_dir }}/{{ cron_user }}" }
+  - { name: "new.cron", src: "{{ cron_src_file }}" }
+  loop_control:
+    loop_var: cron_inner_item
+    label: "{{ cron_inner_item.name }}"
+  changed_when: false
+
+- name: "{{ cron_inner_title }} - remove comments from cron files"
+  lineinfile:
+    path: "{{ cron_tmp_dir }}/{{ cron_inner_item }}"
+    state: absent
+    regexp: "^#"
+  loop:
+  - "current.cron"
+  - "new.cron"
+  loop_control:
+    loop_var: cron_inner_item
+  changed_when: false
+    
+- name: "{{ cron_inner_title }} - get the difference of the 2 files (old and current)"
+  become: "{{ cron_become }}"
+  command: "diff {{ cron_tmp_dir + '/current.cron' }} {{ cron_tmp_dir + '/new.cron' }}"
+  register: cron_diff
+  failed_when: cron_diff.rc > 1
+  changed_when: cron_diff.rc == 1
+
+- block:
+
+  - name: >-
+      {{ cron_inner_title }} - Ensure crontab file is up-to-date
+      ({{ cron_dest_dir }}/{{ cron_user }})
+    become: "{{ cron_become }}"
+    copy: 
+      src: "{{ cron_src_file }}" 
+      dest: "{{ cron_dest_dir }}/{{ cron_user }}"
+    register: cron_result
+
+  - name: "{{ cron_inner_title }} - Ensure crontab file is active"
+    become: "{{ cron_become }}"
+    shell: "crontab '{{ cron_dest_dir }}/{{ cron_user }}'"
+    when: cron_result is changed
+
+  when: cron_diff.changed
 
 - name: "{{ cron_inner_title }} - Ensure cron is running"
   become: "{{ cron_become }}"
@@ -19,3 +66,4 @@
     name: cron
     state: started
   when: (cron_inner_start | default('')) == 'true'
+  

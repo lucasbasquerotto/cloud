@@ -352,6 +352,7 @@
       cron_env_dir: "{{ env_dir }}"
       cron_start: "true"
       cron_cloud: "{{ env.clouds[cron_node.cloud] }}"
+      cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes/{{ main_item }}/cron"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -390,15 +391,15 @@
         | truncate(30, False, '...', 10) }}
       long_run_become: "{{ env_exec_become | default(false) }}"
       long_run_output_path: >-
-        {{ env.node_params[env.nodes[main_item].params].base_dir 
+        {{ env.nodes[main_item].base_dir 
         }}/{{ env.nodes[main_item].main_pod }}/data/log
       long_run_output_file: "env-exec.log"
       long_run_tmp_path: >-
-        {{ env.node_params[env.nodes[main_item].params].base_dir 
+        {{ env.nodes[main_item].base_dir 
         }}/{{ env.nodes[main_item].main_pod }}/data/tmp
       long_run_tmp_file: "env-exec"
       long_run_path: >-
-        {{ env.node_params[env.nodes[main_item].params].base_dir 
+        {{ env.nodes[main_item].base_dir  
         }}/{{ env.nodes[main_item].main_pod }}/main
       long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
       long_run_poll: 2
