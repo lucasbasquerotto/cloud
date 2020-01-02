@@ -24,6 +24,7 @@
   changed_when: false
 
 - name: "{{ cron_inner_title }} - remove comments from cron files"
+  become: "{{ cron_become }}"
   lineinfile:
     path: "{{ cron_tmp_dir }}/{{ cron_inner_item }}"
     state: absent
