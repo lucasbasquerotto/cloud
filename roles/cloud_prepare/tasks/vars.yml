@@ -1,42 +1,42 @@
-- name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
+
+- name: "{{ cloud_prepare_inner_title }} - vars - set_fact - title"
+  set_fact:
+    cloud_prepare_inner_vars_title: >-
+      {{ cloud_prepare_inner_title }} - vars ({{ cloud_prepare_vars_ctx.name }})
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_vars_title }} - set_fact - tpl"
   set_fact:
     cloud_prepare_vars_tpl_src: >-
       {{ cloud_prepare_local_pod_repo }}/{{ ''
-      }}{{ cloud_prepare_inner_item.name }}
+      }}{{ cloud_prepare_vars_ctx.name }}
     cloud_prepare_vars_tpl_dest: >-
       {{ cloud_prepare_pod_local_tmp_dir }}/vars/cloud_prepare/{{ ''
-      }}{{ cloud_prepare_inner_item.name }}
+      }}{{ cloud_prepare_vars_ctx.name }}
 
-- name: >-
-    {{ cloud_prepare_inner_title }} -
-    create the local directories for the vars template 
-    ({{ cloud_prepare_inner_item.name }})
+- name: "{{ cloud_prepare_inner_vars_title }} - create the local directories for the template"
   file:
     path: "{{ cloud_prepare_vars_tpl_dest | dirname }}"
     state: directory
     mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
   delegate_to: localhost
 
-- name: >-
-    {{ cloud_prepare_inner_title }} -
-    populate vars from templates ({{ cloud_prepare_inner_item.name }})
+- name: "{{ cloud_prepare_inner_vars_title }} - populate vars from the template"
   template: 
     src: "{{ cloud_prepare_vars_tpl_src }}"
     dest: "{{ cloud_prepare_vars_tpl_dest }}"
     mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
   vars:
-    params: "{{ cloud_prepare_inner_item.params }}"
+    params: "{{ cloud_prepare_vars_ctx.params }}"
   delegate_to: localhost
 
-- name: >-
-    {{ cloud_prepare_inner_title }} - load environment vars
-    ({{ cloud_prepare_inner_item.name }})
+- name: "{{ cloud_prepare_inner_vars_title }} - load environment vars"
   include_vars:
     file: "{{ cloud_prepare_vars_tpl_dest }}"
     name: cloud_prepare_inner_vars
   delegate_to: localhost
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact ({{ cloud_prepare_inner_item.name }})"
+- name: "{{ cloud_prepare_inner_vars_title }} - set_fact ({{ cloud_prepare_vars_ctx.name }})"
   set_fact:
     cloud_prepare_vars_volumes: >-
       {{ cloud_prepare_vars_volumes + (cloud_prepare_inner_vars.volumes | default([])) }}
@@ -46,3 +46,13 @@
       {{ cloud_prepare_vars_templates + (cloud_prepare_inner_vars.templates | default([])) }}
     cloud_prepare_vars_env_files: >-
       {{ cloud_prepare_vars_env_files + (cloud_prepare_inner_vars.env_files | default([])) }}
+
+# Call itself recursively for the children
+- name: "{{ cloud_prepare_inner_vars_title }} - populate vars from templates (recursive)"
+  include_tasks: "vars.yml"
+  vars:
+    cloud_prepare_vars_ctx: "{{ cloud_prepare_inner_item }}"
+  loop: "{{ cloud_prepare_inner_vars.children | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_inner_item
+    label: "{{ cloud_prepare_inner_item.name }}"

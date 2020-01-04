@@ -69,19 +69,9 @@
 
 ### Generate the environment pod context variables ###
 
-- name: "{{ cloud_prepare_inner_title }} - populate vars from templates (debug)"
-  debug: 
-    msg: "populate vars from templates"
-  tags: ["print_action"]
-
-- name: "{{ cloud_prepare_inner_title }} - set_fact"
+- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_params_pod"
   set_fact:
-    cloud_prepare_ctx_tpl_dest: >-
-      {{ cloud_prepare_pod_local_tmp_dir }}/cloud_prepare_ctx.yml
-
-- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_params_aux"
-  set_fact:
-    cloud_prepare_params_aux:
+    cloud_prepare_params_pod:
       pod_id: "{{ cloud_prepare_pod_id }}"
       pod: "{{ cloud_prepare_pod }}"
       app: "{{ cloud_prepare_local_app_dict }}"
@@ -111,45 +101,14 @@
     loop_var: cloud_prepare_inner_item
     label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
 
-- name: >-
-    {{ cloud_prepare_inner_title }} -
-    create the local directory for the expanded context template
-  file:
-    path: "{{ cloud_prepare_ctx_tpl_dest | dirname }}"
-    state: directory
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
-  delegate_to: localhost
-  
-- name: "{{ cloud_prepare_inner_title }} - get the context data from the template"
-  template: 
-    src: "{{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_pod.ctx }}"
-    dest: "{{ cloud_prepare_ctx_tpl_dest }}"
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
-  vars:
-    params: "{{ cloud_prepare_params }}"
-    params_aux: "{{ cloud_prepare_params_aux }}"
-    credentials: "{{ cloud_prepare_inner_credentials }}"
-  delegate_to: localhost
-
-- name: >-
-    {{ cloud_prepare_inner_title }} - 
-    load ctx environment vars ({{ cloud_prepare_pod_id }})
-  include_vars:
-    file: "{{ cloud_prepare_ctx_tpl_dest }}"
-    name: cloud_prepare_ctx_outer_params
-  delegate_to: localhost
-
-### Generate a file with all the context environment expanded variables (for idempotence) ###
+### Generate a file with the environment variables and state (for idempotence) ###
 
 - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_vars_full"
   set_fact:
     cloud_prepare_vars_full:
-      main: "{{ cloud_prepare_ctx_outer_params }}"
-      aux: "{{ cloud_prepare_params_aux }}"
+      main: "{{ cloud_prepare_params }}"
+      pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
-
-- debug:
-    var: cloud_prepare_backup_file_tmp
 
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
   become: "{{ cloud_prepare_pod.root }}"
@@ -173,34 +132,30 @@
 
   ### Generate the environment pod expanded variables ###
 
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_ctx_params"
-    set_fact:
-      cloud_prepare_ctx_params: "{{ cloud_prepare_ctx_outer_params.params }}"
-
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
+  - name: "{{ cloud_prepare_inner_title }} - set_fact - vars - create lists"
     set_fact:
       cloud_prepare_vars_volumes: []
       cloud_prepare_vars_files: []
       cloud_prepare_vars_templates: []
       cloud_prepare_vars_env_files: []
-
-  - name: "{{ cloud_prepare_inner_title }} - populate vars from templates (outer)"
-    include_tasks: "vars.yml"
-    loop: "{{ cloud_prepare_ctx_params }}"
-    loop_control:
-      loop_var: cloud_prepare_inner_item
-      label: "{{ cloud_prepare_inner_item.name }}"
-
-  ### Polish previous variables to use them directly later ###
-
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_tpl_list - empty"
-    set_fact:
       cloud_prepare_files_list: []
       cloud_prepare_tpl_list: []
       cloud_prepare_env_files_list: []
       cloud_prepare_dir_list: [
         "{{ cloud_prepare_repo_location + '/' + (cloud_prepare_pod_env_dir | default('env')) }}"
       ]
+
+  - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars.yml"
+    include_tasks: "vars.yml"
+    vars:
+      cloud_prepare_vars_ctx: 
+        name: "{{ cloud_prepare_pod.ctx }}"
+        params: "{{ cloud_prepare_vars_full }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.name }}"
+
+  ### Polish previous variables to use them directly later ###
 
   - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_files_list - fill"
     set_fact:
