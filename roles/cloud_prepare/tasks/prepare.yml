@@ -148,6 +148,9 @@
       aux: "{{ cloud_prepare_params_aux }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
 
+- debug:
+    var: cloud_prepare_backup_file_tmp
+
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
   become: "{{ cloud_prepare_pod.root }}"
   copy: 
