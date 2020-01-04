@@ -6,14 +6,14 @@
     state: directory
     path: "{{ cron_tmp_dir }}"
 
-- name: "{{ cron_inner_title }} - Ensure crontab file is present"
+- name: "{{ cron_inner_title }} - ensure the crontab file is present"
   become: "{{ cron_become }}"
   copy: 
     content: ""
     force: no
     dest: "{{ cron_dest_dir }}/{{ cron_user }}"
     
-- name: "{{ cron_inner_title }} - copy temporary cron files"
+- name: "{{ cron_inner_title }} - copy the temporary cron files"
   become: "{{ cron_become }}"
   copy:
     src: "{{ cron_inner_item.src }}"
@@ -35,7 +35,7 @@
     label: "{{ cron_inner_item.name }}"
   changed_when: false
 
-- name: "{{ cron_inner_title }} - remove comments from cron files"
+- name: "{{ cron_inner_title }} - remove the comments from cron files"
   become: "{{ cron_become }}"
   lineinfile:
     path: "{{ cron_tmp_dir }}/{{ cron_inner_item }}"
@@ -58,7 +58,7 @@
 - block:
 
   - name: >-
-      {{ cron_inner_title }} - Ensure crontab file is up-to-date
+      {{ cron_inner_title }} - ensure the crontab file is up-to-date
       ({{ cron_dest_dir }}/{{ cron_user }})
     become: "{{ cron_become }}"
     copy: 
@@ -66,14 +66,14 @@
       dest: "{{ cron_dest_dir }}/{{ cron_user }}"
     register: cron_result
 
-  - name: "{{ cron_inner_title }} - Ensure crontab file is active"
+  - name: "{{ cron_inner_title }} - ensure the crontab file is active"
     become: "{{ cron_become }}"
     shell: "crontab '{{ cron_dest_dir }}/{{ cron_user }}'"
     when: cron_result is changed
 
   when: cron_diff.changed
 
-- name: "{{ cron_inner_title }} - Ensure cron is running"
+- name: "{{ cron_inner_title }} - ensure cron is running"
   become: "{{ cron_become }}"
   service: 
     name: cron
