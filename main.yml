@@ -2,7 +2,7 @@
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 01.01 - Cloud - Main
+- name: Play 01.01 - Cloud - Main 
   hosts: main
   tags:
   - init
