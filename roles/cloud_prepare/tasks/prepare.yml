@@ -7,21 +7,38 @@
     state: directory
     mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
 
-- name: "{{ cloud_prepare_inner_title }} - update the repo directory"
-  become: "{{ cloud_prepare_pod.root }}"
-  git:
-    repo: "{{ cloud_prepare_pod.repo }}"
-    version: "{{ cloud_prepare_pod.repo_version }}"
-    dest: "{{ cloud_prepare_repo_location }}"
-    update: "{{ cloud_prepare_cloud.type != 'local' }}"
-    force: "{{ cloud_prepare_cloud.type != 'local' }}"
-  register: cloud_prepare_git_result
-  tags: ["print_action"]
+- set_fact:    
+    cloud_prepare_pod_inner_repo: >-
+      {{ cloud_prepare_repos_dict[cloud_prepare_pod.repo] }}
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
-  set_fact:
+- include_role: 
+    name: "cloud_git"
+  vars:
+    cloud_git_key: "{{ cloud_prepare_pod.repo }}"
+    cloud_git_title: >-
+      {{ cloud_prepare_inner_title }} - update the repo directory
+      ({{ cloud_prepare_pod.repo }})
+    cloud_git_become: "{{ cloud_prepare_pod.root }}"
+    cloud_git_repo: "{{ cloud_prepare_pod_inner_repo.src }}"
+    cloud_git_version: "{{ cloud_prepare_pod_inner_repo.version }}"
+    cloud_git_private: "{{ cloud_prepare_pod_inner_repo.private | default(false) }}"
+    cloud_git_key_file_encrypted: >-
+      {{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_repo.key_file_encrypted }}
+    cloud_git_dest: "{{ cloud_prepare_repo_location }}"
+    cloud_git_tmp_dir: >-
+      {{ cloud_prepare_pod_base_dir }}/tmp/repo/{{ cloud_prepare_pod.repo }}
+    cloud_git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
+    cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
+    cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
+
+- set_fact:
+    cloud_prepare_git_result: "{{ cloud_git_result }}"
+  tags: ["no_print"]
+
+- set_fact:
     cloud_prepare_git_commit: "{{ cloud_prepare_git_result.after }}"
     cloud_prepare_pod_env_dir: "{{ cloud_prepare_pod.env_dir | default('env') }}"
+  tags: ["no_print"]
 
 ## Creates the environment pod repository in the env folder (when defined)
 
@@ -29,7 +46,6 @@
 
   - name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
     set_fact:
-      cloud_prepare_env_repo: "{{ cloud_prepare_pod.env_repo }}"
       cloud_prepare_repo_key_file: >-
         {{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_env_dir }}/env_key
 
@@ -40,30 +56,34 @@
       path: "{{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_env_dir }}"
       state: directory
       mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
-
-  - name: "{{ cloud_prepare_inner_title }} - copy encrypted file to set location"
-    become: "{{ cloud_prepare_pod.root }}"
-    copy:
-      src: >-
-        {{ cloud_prepare_env_dir }}/{{ cloud_prepare_env_repo.key_file_encrypted }}
-      dest: "{{ cloud_prepare_repo_key_file }}"
-      decrypt: yes
-      mode: "0600"
-
-  - name: >-
-      {{ cloud_prepare_inner_title }} -
-      environment pod repository
-      ({{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod.env_repo.dir | default('') }})
-    become: "{{ cloud_prepare_pod.root }}"
-    git:
-      repo: "{{ cloud_prepare_env_repo.src }}"
-      version: "{{ cloud_prepare_env_repo.version }}"
-      dest: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod.env_repo.dir }}"
-      key_file: "{{ cloud_prepare_repo_key_file }}"
-      accept_hostkey: yes
-      update: "{{ cloud_prepare_cloud.type != 'local' }}"
-      force: "{{ cloud_prepare_cloud.type != 'local' }}"
-    tags: ["print_action"]
+    
+  - include_role: 
+      name: "cloud_git"
+    vars:
+      cloud_prepare_pod_inner_env_repo: >-
+        {{ cloud_prepare_repos_dict[cloud_prepare_pod_inner_item.repo] }}
+      cloud_git_key: "{{ cloud_prepare_pod_inner_item.repo }}"
+      cloud_git_title: >-
+        {{ cloud_prepare_inner_title }} -
+        environment pod repository
+        ({{ cloud_prepare_repo_location }}/{{ 
+        cloud_prepare_pod_inner_item.dir | default('') }})
+      cloud_git_become: "{{ cloud_prepare_pod.root }}"
+      cloud_git_repo: "{{ cloud_prepare_pod_inner_env_repo.src }}"
+      cloud_git_version: "{{ cloud_prepare_pod_inner_env_repo.version }}"
+      cloud_git_private: "{{ cloud_prepare_pod_inner_env_repo.private | default(false) }}"
+      cloud_git_key_file_encrypted: >-
+        {{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_env_repo.key_file_encrypted }}
+      cloud_git_dest: "{{ cloud_prepare_repo_location }}"
+      cloud_git_tmp_dir: >-
+        {{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_inner_item.dir }}
+      cloud_git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
+      cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
+      cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
+    loop: "{{ cloud_prepare_pod.env_repos | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_pod_inner_item
+      label: "{{ cloud_prepare_pod_inner_item.repo }}"
 
   when: cloud_prepare_pod.env_repo is defined
 
@@ -77,6 +97,7 @@
       app: "{{ cloud_prepare_local_app_dict }}"
       git_commit: "{{ cloud_prepare_git_result.after }}"
       repo_name: "{{ cloud_prepare_env_name }}"
+      repo:  "{{ cloud_prepare_pod_inner_repo }}"
       pod_env_dir: "{{ cloud_prepare_pod_env_dir | default('env') }}"
       repo_location: "{{ cloud_prepare_repo_location }}"
       data_dir: "{{ cloud_prepare_pod_data_dir }}"

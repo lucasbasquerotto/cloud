@@ -1,8 +1,0 @@
-cloud_dns_title: "main dns"
-cloud_dns_credentials: 
-  account_email: ""
-  account_api_token: ""
-cloud_dns_zone: ""
-cloud_dns_type: ""
-cloud_dns_record: ""
-cloud_dns_value: ""

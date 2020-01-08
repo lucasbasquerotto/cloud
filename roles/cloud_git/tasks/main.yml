@@ -1,0 +1,41 @@
+- name: "{{ cloud_git_title }} - set_fact"
+  set_fact: 
+    cloud_git_key_file: >-
+      {{ 
+      (cloud_git_private | default(false) | bool) | 
+      ternary(cloud_git_tmp_dir + '/repo.' + cloud_git_key + '.key_file', '')
+      }}
+  tags: ["no_print"]
+
+- block:
+
+  - name: >-
+      {{ cloud_git_title }} - create the temporary directory 
+      ({{ cloud_git_tmp_dir }})
+    become: "{{ cloud_prepare_pod.root }}"
+    file:
+      path: "{{ cloud_git_tmp_dir }}"
+      state: directory
+      mode: "{{ cloud_git_mode }}"
+
+  - name: "{{ cloud_git_title }} - copy encrypted file to set location"
+    become: "{{ cloud_git_become | default(false) }}"
+    copy:
+      src: "{{ cloud_git_key_file_encrypted }}"
+      dest: "{{ cloud_git_key_file }}"
+      decrypt: yes
+      mode: 0600
+
+  when: (cloud_git_private | default(false) | bool)
+
+- name: "{{ cloud_git_title }} - git task"
+  become: "{{ cloud_git_become | default(false) }}"
+  git:
+    repo: "{{ cloud_git_repo }}"
+    version: "{{ cloud_git_version }}"
+    key_file: "{{ cloud_git_key_file | default(omit, true) }}"
+    accept_hostkey: "{{ cloud_git_key_file | ternary(yes, omit) }}"
+    dest: "{{ cloud_git_dest }}"
+    update: "{{ cloud_git_update }}"
+    force: "{{ cloud_git_force }}"
+  register: cloud_git_result
