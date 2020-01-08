@@ -1,0 +1,107 @@
+- include_role: 
+    name: "cloud_git"
+  vars:
+    cloud_repo_repo: "{{ env.repos[cloud_repo_item.value.repo] }}"
+    cloud_git_key: "{{ cloud_repo_item.value.repo }}"
+    cloud_git_title: >-
+      pods - repositories - local (for remote) - 
+      {{ cloud_repo_item.value.repo }}
+    cloud_git_repo: "{{ cloud_repo_repo.src }}"
+    cloud_git_version: "{{ cloud_repo_repo.version }}"
+    cloud_git_private: "{{ cloud_repo_repo.private | default(false) }}"
+    cloud_git_key_file_encrypted: >-
+      {{ cloud_repo_env_dir }}/{{ cloud_repo_repo.key_file_encrypted }}
+    cloud_git_dest: "{{ cloud_repo_env_tmp_dir }}/repo/pod/{{ cloud_repo_item.key }}"
+    cloud_git_tmp_dir: "{{ cloud_repo_env_tmp_dir }}/repo/tmp/{{ cloud_repo_item.value.repo }}"
+    cloud_git_update: yes
+    cloud_git_force: yes
+    cloud_git_dir_mode: "0755"
+  loop: "{{ lookup('dict', (cloud_repo_pods_dict | default({})), wantlist=True) }}"
+  loop_control:
+    loop_var: cloud_repo_item
+    label: "{{ cloud_repo_item.key }}"
+  when: not (cloud_repo_item.key in (env.main.local.pods | default([])))
+
+- fail: 
+    msg: "local pod {{ cloud_repo_item }} is not defined"
+  vars:
+    cloud_repo_local_pod: "{{ cloud_repo_env_local_pod_dict[cloud_repo_item] }}"
+  loop: "{{ cloud_repo_local_pods | default([]) }}"
+  loop_control:
+    loop_var: cloud_repo_item
+  when: cloud_repo_local_pod is not defined
+
+- fail: 
+    msg: "local pod {{ cloud_repo_item }} has no repository defined"
+  vars:
+    cloud_repo_local_pod: "{{ cloud_repo_env_local_pod_dict[cloud_repo_item] }}"
+    cloud_repo_repo: "{{ env.repos[cloud_repo_local_pod.repo] }}"
+  loop: "{{ cloud_repo_local_pods | default([]) }}"
+  loop_control:
+    loop_var: cloud_repo_item
+  when: cloud_repo_repo is not defined
+    
+- include_role: 
+    name: "cloud_git"
+  vars:
+    cloud_repo_local_pod: "{{ cloud_repo_env_local_pod_dict[cloud_repo_item] }}"
+    cloud_repo_repo: "{{ env.repos[cloud_repo_local_pod.repo] }}"
+    cloud_git_key: "{{ cloud_repo_local_pod.repo }}"
+    cloud_git_title: >-
+      pods - repositories - local (dev) - 
+      {{ cloud_repo_local_pod.repo }}
+    cloud_git_repo: "{{ cloud_repo_repo.src }}"
+    cloud_git_version: "{{ cloud_repo_repo.version }}"
+    cloud_git_private: "{{ cloud_repo_repo.private | default(false) }}"
+    cloud_git_key_file_encrypted: >-
+      {{ cloud_repo_env_dir }}/{{ cloud_repo_repo.key_file_encrypted }}
+    cloud_git_dest: "{{ cloud_repo_env_tmp_dir }}/repo/pod/{{ cloud_repo_item }}"
+    cloud_git_tmp_dir: "{{ cloud_repo_env_tmp_dir }}/repo/tmp/{{ cloud_repo_local_pod.repo }}"
+    cloud_git_update: no
+    cloud_git_force: no
+    cloud_git_dir_mode: "0777"
+  loop: "{{ cloud_repo_local_pods | default([]) }}"
+  loop_control:
+    loop_var: cloud_repo_item
+
+- fail: 
+    msg: "local app {{ cloud_repo_item }} is not defined"
+  vars:
+    cloud_repo_local_app: "{{ cloud_repo_env_local_app_dict[cloud_repo_item] }}"
+  loop: "{{ cloud_repo_local_apps | default([]) }}"
+  loop_control:
+    loop_var: cloud_repo_item
+  when: cloud_repo_local_app is not defined
+
+- fail: 
+    msg: "local app {{ cloud_repo_item }} has no repository defined"
+  vars:
+    cloud_repo_local_app: "{{ cloud_repo_env_local_app_dict[cloud_repo_item] }}"
+    cloud_repo_repo: "{{ env.repos[cloud_repo_local_app.repo] }}"
+  loop: "{{ cloud_repo_local_apps | default([]) }}"
+  loop_control:
+    loop_var: cloud_repo_item
+  when: cloud_repo_repo is not defined
+
+- include_role: 
+    name: "cloud_git"
+  vars:
+    cloud_repo_local_app: "{{ cloud_repo_env_local_app_dict[cloud_repo_item] }}"
+    cloud_repo_repo: "{{ env.repos[cloud_repo_local_app.repo] }}"
+    cloud_git_key: "{{ cloud_repo_local_app.repo }}"
+    cloud_git_title: >-
+      pods - repositories - local (dev) - 
+      {{ cloud_repo_local_app.repo }}
+    cloud_git_repo: "{{ cloud_repo_repo.src }}"
+    cloud_git_version: "{{ cloud_repo_repo.version }}"
+    cloud_git_private: "{{ cloud_repo_repo.private | default(false) }}"
+    cloud_git_key_file_encrypted: >-
+      {{ cloud_repo_env_dir }}/{{ cloud_repo_repo.key_file_encrypted }}
+    cloud_git_dest: "{{ cloud_repo_env_tmp_dir }}/repo/pod/{{ cloud_repo_item }}"
+    cloud_git_tmp_dir: "{{ cloud_repo_env_tmp_dir }}/repo/tmp/{{ cloud_repo_local_app.repo }}"
+    cloud_git_update: no
+    cloud_git_force: no
+    cloud_git_dir_mode: "0777"
+  loop: "{{ cloud_repo_local_apps | default([]) }}"
+  loop_control:
+    loop_var: cloud_repo_item
