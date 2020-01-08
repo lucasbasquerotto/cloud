@@ -9,13 +9,13 @@
 - block:
 
   - name: >-
-      {{ cloud_git_title }} - create the temporary directory 
+      {{ cloud_git_title }} - create the temporary directory
       ({{ cloud_git_tmp_dir }})
     become: "{{ cloud_prepare_pod.root }}"
     file:
       path: "{{ cloud_git_tmp_dir }}"
       state: directory
-      mode: "{{ cloud_git_mode }}"
+      mode: "{{ cloud_git_dir_mode }}"
 
   - name: "{{ cloud_git_title }} - copy encrypted file to set location"
     become: "{{ cloud_git_become | default(false) }}"
