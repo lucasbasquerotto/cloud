@@ -180,7 +180,7 @@
     tags: ["no_print"]
 
   - include_role: 
-      name: "cloud_repo"
+      name: "cloud_repos"
     vars:
       cloud_repos_title: "cloud repositories (local)"
       cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
@@ -190,7 +190,7 @@
       cloud_repos_env_local_pod_dict: "{{ env_local_pod_dict }}"
       cloud_repos_env_local_app_dict: "{{ env_local_app_dict }}"
       cloud_repos_env_dir: "{{ env_dir }}"
-      cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}/repo/pod/{{ main_item.key }}"
+      cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}"
 
 ###############################################################################
 
