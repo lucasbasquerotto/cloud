@@ -1,5 +1,4 @@
-- name: "{{ cloud_node_title }} - set_fact - aux"
-  set_fact: 
+- set_fact: 
     cloud_node_host_ssh_public_keys_path: >-
       {{ 
       ((cloud_node_node_credentials.host_ssh_public_keys_path | default('')) != '' )
@@ -8,9 +7,9 @@
       ''
       )
       }}
+  tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - set_fact - aux"
-  set_fact: 
+- set_fact: 
     cloud_node_host_ssh_public_keys: >-
       {{ 
       ((cloud_node_host_ssh_public_keys_path | default('')) != '' )
@@ -20,9 +19,9 @@
       )
       }}
     cloud_node_ssh_key_filename: "{{ cloud_node_node_id + '.key' }}"
+  tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - set_fact - main"
-  set_fact: 
+- set_fact: 
     cloud_node_host_vars: 
       host_user: "{{ cloud_node_node_credentials.host_user }}"
       host_pass: "{{ cloud_node_node_credentials.host_pass }}"
@@ -53,9 +52,9 @@
     cloud_node_cloud_instances: []
     cloud_node_instance_count: "{{ cloud_node_node.amount }}"
     cloud_node_instance_max: "{{ cloud_node_node.amount_to_check }}"
+  tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - define instances to be created"
-  set_fact:
+- set_fact:
     cloud_node_cloud_instances: >-
       {{ cloud_node_cloud_instances +
       [{ 'name':
@@ -71,9 +70,9 @@
   loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
   loop_control:
     loop_var: cloud_node_item
+  tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - define cloud_node_user_data"
-  set_fact:
+- set_fact:
     cloud_node_user_data: >-
       {{ lookup(
       'template', 
@@ -82,11 +81,12 @@
       ) | trim 
       }}
   when: cloud_node_user_data_file != '' 
+  tags: ["no_print"]
 
 # Will be populeted from the inner task
-- name: "{{ cloud_node_title }} - init array cloud_node_active_hosts"
-  set_fact: 
+- set_fact: 
     cloud_node_active_hosts: []
+  tags: ["no_print"]
 
 - name: "{{ cloud_node_title }} - create the nodes"
   include_tasks: "{{ cloud_node_cloud.type }}.node.yml"
@@ -118,6 +118,7 @@
       and 
       ((cloud_node_aux.ssh_key_path | default('', true)) != '')
       }}
+  tags: ["no_print"]
 
 - name: >-
     {{ cloud_node_title }} - create unencrypted key file dir - 
@@ -136,8 +137,7 @@
     mode: 0600
   when: cloud_node_unencrypt_key | bool
 
-- name: "{{ cloud_node_title }} - generate the hosts information with the instances ips"
-  set_fact: 
+- set_fact: 
     cloud_node_hosts_info: >-
       {{ cloud_node_hosts_info | default('') }}
 
@@ -163,6 +163,7 @@
     index_var: cloud_node_index
     loop_var: cloud_node_item
     label: "{{ cloud_node_item.name }}"
+  tags: ["no_print"]
 
 - name: "{{ cloud_node_title }} - update the hosts file with the generated hosts"
   blockinfile:
@@ -178,9 +179,9 @@
 
 - set_fact:
     cloud_node_ips: []
+  tags: ["no_print"]
   
-- name: "{{ cloud_node_title }} - define instance ip"
-  set_fact:
+- set_fact:
     cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
   loop: 
   - name: "ipv4"
@@ -195,6 +196,7 @@
     (cloud_node_active_hosts | default([]) | length == 1) and 
     (cloud_node_node.dmz | default('false') | bool) and 
     (cloud_node_item.dns_value != '')
+  tags: ["no_print"]
 
 - name: >-
     {{ cloud_node_title }} - create the main dns records

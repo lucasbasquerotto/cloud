@@ -25,20 +25,19 @@
 
 ### Set vars ###
 
-- name: "{{ cloud_prepare_pod_title }} - set_fact - base directory"
-  set_fact:
+- set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/main"
   when: cloud_prepare_cloud.type != 'local'
+  tags: ["no_print"]
 
-- name: "{{ cloud_prepare_pod_title }} - set_fact - base directory"
-  set_fact:
+- set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_local_pod_repo }}"
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_local_pod_repo }}"
   when: cloud_prepare_cloud.type == 'local'
+  tags: ["no_print"]
 
-- name: "{{ cloud_prepare_pod_title }} - set_fact - locations"
-  set_fact:
+- set_fact:
     cloud_prepare_pod_data_dir: >-
       {{ (cloud_prepare_cloud.type != 'local') | ternary(
       cloud_prepare_pod_base_dir + '/data',
@@ -50,6 +49,7 @@
       {{ cloud_prepare_pod_base_dir }}/{{ cloud_prepare_env_vars_relative_file }}
     cloud_prepare_backup_file_tmp: >-
       {{ cloud_prepare_pod_base_dir }}/{{ cloud_prepare_env_vars_relative_file }}.tmp
+  tags: ["no_print"]
     
 ### Prepare the directories ###
 
@@ -81,12 +81,12 @@
 ### Define the environment variables ###
 - block:
 
-  - name: "{{ cloud_prepare_pod_title }} - set_fact - env vars"
-    set_fact:
+  - set_fact:
       cloud_prepare_env_vars: 
       - { name: "BASE_DIR", value: "{{ cloud_prepare_pod_base_dir }}" }
       - { name: "MAIN_DIR", value: "{{ cloud_prepare_main_repo_location }}" }
       - { name: "DATA_DIR", value: "{{ cloud_prepare_pod_base_dir }}/data" }
+    tags: ["no_print"]
     
   - name: >-
       {{ cloud_prepare_pod_title }} -

@@ -19,9 +19,9 @@
 
 - block:
 
-  - name: "{{ cloud_node_inner_title }} - define value of cloud_node_inner_active"
-    set_fact: 
+  - set_fact: 
       cloud_node_inner_droplet: "{{ cloud_node_inner_details.data.droplet }}"
+    tags: ["no_print"]
   
   - name: >-
       {{ cloud_node_inner_title }} - tag the droplet {{ cloud_node_item.name }}
@@ -36,8 +36,7 @@
       label: "{{ cloud_node_item.name }} - {{ cloud_node_inner_item }}"
     tags: ["print_action"]
     
-  - name: "{{ cloud_node_title }} - create the host object"
-    set_fact: 
+  - set_fact: 
       cloud_node_inner_host: 
         name: "{{ cloud_node_item.name }}"
         private_ip: >-
@@ -58,9 +57,10 @@
           selectattr('type', 'equalto', 'public') |
           map(attribute='ip_address') | list | first | default(''))
           }}
+    tags: ["no_print"]
       
-  - name: "{{ cloud_node_title }} - Include items in cloud_node_active_hosts"
-    set_fact: 
+  - set_fact: 
       cloud_node_active_hosts: "{{ cloud_node_active_hosts + [cloud_node_inner_host] }}"
+    tags: ["no_print"]
 
   when: cloud_node_inner_create | bool

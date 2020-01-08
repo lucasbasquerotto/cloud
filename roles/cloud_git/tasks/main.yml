@@ -1,5 +1,4 @@
-- name: "{{ cloud_git_title }} - set_fact"
-  set_fact: 
+- set_fact: 
     cloud_git_key_file: >-
       {{ 
       (cloud_git_private | default(false) | bool) | 

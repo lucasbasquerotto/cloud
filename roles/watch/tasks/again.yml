@@ -1,8 +1,8 @@
 ---
 
-- name: '[{{ watch_title }}] - initialize watch_count'
-  set_fact:
+- set_fact:
     watch_count: 0
+  tags: ["no_print"]
 
 - name: '[{{ watch_title }}] - checking {{ watch_job }} status until finished'
   include_tasks: 'recursive.yml'

@@ -4,18 +4,15 @@
   include_tasks: 'loop.yml'
   tags: ["no_print"]
 
-- name: '[{{ watch_title }}] - set watch_finished'
-  set_fact:
+- set_fact:
     watch_finished: "{{ watch_status.finished | bool }}"
   tags: ["no_print"]
 
-- name: '[{{ watch_title }}] - count ({{ watch_count | int + 1 }})'
-  set_fact:
+- set_fact:
     watch_count: '{{ watch_count | int + 1 }}'
   tags: ["no_print"]
 
-- name: '[{{ watch_title }}] - retries ({{ (watch_timeout | int / watch_poll | int) | int }})'
-  set_fact:
+- set_fact:
     watch_retries: '{{ (watch_timeout | int / watch_poll | int) | int }}'
   tags: ["no_print"]
 

@@ -1,11 +1,11 @@
 - block:
   
-  - name: "{{ cloud_main_inner_title }} - define the tmp dirs"
-    set_fact:
+  - set_fact:
       cloud_main_inner_tmp_file_tags_src: "{{ cloud_main_inner_tmp_dir }}/tags.src.txt"
       cloud_main_inner_tmp_file_tags_dest: "{{ cloud_main_inner_tmp_dir }}/tags.dest.txt"
       cloud_main_inner_tmp_file_firewalls_src: "{{ cloud_main_inner_tmp_dir }}/firewalls.src.txt"
       cloud_main_inner_tmp_file_firewalls_dest: "{{ cloud_main_inner_tmp_dir }}/firewalls.dest.txt"
+    tags: ["no_print"]
 
   - name: >-
       {{ cloud_main_inner_title }} - create the temporary directory 

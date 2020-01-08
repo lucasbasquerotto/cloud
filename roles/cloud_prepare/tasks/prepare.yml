@@ -44,10 +44,10 @@
 
 - block:
 
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - vars"
-    set_fact:
+  - set_fact:
       cloud_prepare_repo_key_file: >-
         {{ cloud_prepare_repo_location }}/tmp/{{ cloud_prepare_pod_env_dir }}/env_key
+    tags: ["no_print"]
 
   - name: >-
       {{ cloud_prepare_inner_title }} - create the directory for the temporary files
@@ -89,8 +89,7 @@
 
 ### Generate the environment pod context variables ###
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_params_pod"
-  set_fact:
+- set_fact:
     cloud_prepare_params_pod:
       pod_id: "{{ cloud_prepare_pod_id }}"
       pod: "{{ cloud_prepare_pod }}"
@@ -103,13 +102,13 @@
       data_dir: "{{ cloud_prepare_pod_data_dir }}"
       local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
+  tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_credentials"
-  set_fact:
+- set_fact:
     cloud_prepare_inner_credentials: {}
+  tags: ["no_print"]
   
-- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_credentials"
-  set_fact:
+- set_fact:
     cloud_prepare_inner_credentials: >-
       {{ 
       cloud_prepare_inner_credentials | 
@@ -121,15 +120,16 @@
   loop_control:
     loop_var: cloud_prepare_inner_item
     label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
+  tags: ["no_print"]
 
 ### Generate a file with the environment variables and state (for idempotence) ###
 
-- name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_vars_full"
-  set_fact:
+- set_fact:
     cloud_prepare_vars_full:
       main: "{{ cloud_prepare_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
+  tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
   become: "{{ cloud_prepare_pod.root }}"
@@ -153,8 +153,7 @@
 
   ### Generate the environment pod expanded variables ###
 
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - vars - create lists"
-    set_fact:
+  - set_fact:
       cloud_prepare_vars_volumes: []
       cloud_prepare_vars_files: []
       cloud_prepare_vars_templates: []
@@ -165,6 +164,7 @@
       cloud_prepare_dir_list: [
         "{{ cloud_prepare_repo_location + '/' + (cloud_prepare_pod_env_dir | default('env')) }}"
       ]
+    tags: ["no_print"]
 
   - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars.yml"
     include_tasks: "vars.yml"
@@ -178,8 +178,7 @@
 
   ### Polish previous variables to use them directly later ###
 
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_files_list - fill"
-    set_fact:
+  - set_fact:
       cloud_prepare_files_list: >-
         {{ 
         cloud_prepare_files_list
@@ -205,9 +204,9 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src) }}"
+    tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_tpl_list - fill"
-    set_fact:
+  - set_fact:
       cloud_prepare_tpl_list: >-
         {{ 
         cloud_prepare_tpl_list
@@ -235,9 +234,9 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src) }}"
+    tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }} - set_fact - cloud_prepare_env_files_list - fill"
-    set_fact:
+  - set_fact:
       cloud_prepare_env_files_list: >-
         {{ 
         cloud_prepare_env_files_list
@@ -260,9 +259,9 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }} - create the directories list var"
-    set_fact:
+  - set_fact:
       cloud_prepare_dir_list: "{{ cloud_prepare_dir_list + [cloud_prepare_inner_item.dest | dirname] }}"
     loop: >-
       {{ 
@@ -275,6 +274,7 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | dirname }}"
+    tags: ["no_print"]
 
   ### Create the directories ###
 

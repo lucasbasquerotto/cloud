@@ -1,5 +1,4 @@
-- name: "{{ cloud_run_pod_title }} - set_fact"
-  set_fact:
+- set_fact:
     cloud_run_pod_repo_location: >-
       {{ 
       (cloud_run_cloud.type == 'local') | ternary(
@@ -12,6 +11,7 @@
       {{ cloud_run_pod_base_dir }}/{{ cloud_run_env_vars_relative_file_src }}
     cloud_run_backup_file_dest: >-
       {{ cloud_run_pod_base_dir }}/{{ cloud_run_env_vars_relative_file_dest }}
+  tags: ["no_print"]
     
 - name: "{{ cloud_run_pod_title }} - create the backup directories"
   become: "{{ cloud_run_pod.root }}"

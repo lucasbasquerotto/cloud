@@ -30,8 +30,8 @@
   register: host_test_last_line
   changed_when: False
 
-- name: '{{ host_test_title }} - define variable with the last line'
-  set_fact: host_test_last_line="{{ host_test_last_line.stdout }}"
+- set_fact: host_test_last_line="{{ host_test_last_line.stdout }}"
+  tags: ["no_print"]
 
 - debug: msg="last_line='{{ host_test_last_line }}'"
   
