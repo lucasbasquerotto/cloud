@@ -33,7 +33,7 @@
     repo: "{{ cloud_git_repo }}"
     version: "{{ cloud_git_version }}"
     key_file: "{{ cloud_git_key_file | default(omit, true) }}"
-    accept_hostkey: "{{ cloud_git_key_file | ternary(yes, omit) }}"
+    accept_hostkey: "{{ cloud_git_key_file | ternary('yes', omit) }}"
     dest: "{{ cloud_git_dest }}"
     update: "{{ cloud_git_update }}"
     force: "{{ cloud_git_force }}"
