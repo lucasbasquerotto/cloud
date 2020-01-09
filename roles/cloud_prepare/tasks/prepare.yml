@@ -243,9 +243,7 @@
         }}
     vars: 
       cloud_prepare_inner_item_src_full: >-
-        {{ cloud_prepare_repo_location }}/{{ 
-          cloud_prepare_inner_item.dir_base | default('files') 
-        }}/{{ cloud_prepare_inner_item.src }}
+        {{ cloud_prepare_repo_location }}/{{ cloud_prepare_inner_item.src }}
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
@@ -272,9 +270,7 @@
         }}
     vars: 
       cloud_prepare_inner_item_src_local_full: >-
-        {{ cloud_prepare_local_pod_repo }}/{{ 
-          cloud_prepare_inner_item.dir_base | default('templates') 
-        }}/{{ cloud_prepare_inner_item.src }}
+        {{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_inner_item.src }}
       cloud_prepare_inner_item_dest_full: >-
         {{ cloud_prepare_repo_location }}/{{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
