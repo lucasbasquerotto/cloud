@@ -1,0 +1,37 @@
+- include_role: 
+    name: "cloud_git"
+  vars:
+    cloud_repos_layer_repo: "{{ cloud_repos_repos_dict[cloud_repos_layer.repo] }}"
+    cloud_git_key: "{{ cloud_repos_layer.repo }}"
+    cloud_git_title: "{{ cloud_repos_layer_title }} - main"
+    cloud_git_repo: "{{ cloud_repos_layer_repo.src }}"
+    cloud_git_version: "{{ cloud_repos_layer_repo.version }}"
+    cloud_git_private: "{{ cloud_repos_layer_repo.private | default(false) }}"
+    cloud_git_key_file_encrypted: >-
+      {{ cloud_repos_env_dir }}/{{ cloud_repos_layer_repo.key_file_encrypted }}
+    cloud_git_dest: "{{ cloud_repos_layer_dest }}"
+    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_layer.repo }}"
+    cloud_git_update: "{{ cloud_repos_layer_git_update }}"
+    cloud_git_force: "{{ cloud_repos_layer_git_force }}"
+    cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
+
+- include_role: 
+    name: "cloud_git"
+  vars:
+    cloud_repos_layer_repo: "{{ cloud_repos_repos_dict[cloud_repos_layer_item.repo] }}"
+    cloud_git_key: "{{ cloud_repos_layer.repo }}"
+    cloud_git_title: "{{ cloud_repos_layer_title }} - main"
+    cloud_git_repo: "{{ cloud_repos_layer_repo.src }}"
+    cloud_git_version: "{{ cloud_repos_layer_repo.version }}"
+    cloud_git_private: "{{ cloud_repos_layer_repo.private | default(false) }}"
+    cloud_git_key_file_encrypted: >-
+      {{ cloud_repos_env_dir }}/{{ cloud_repos_layer_repo.key_file_encrypted }}
+    cloud_git_dest: "{{ cloud_repos_layer_dest }}/{{ cloud_repos_layer_item.dir }}"
+    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_layer.repo }}"
+    cloud_git_update: "{{ cloud_repos_layer_git_update }}"
+    cloud_git_force: "{{ cloud_repos_layer_git_force }}"
+    cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
+  loop: "{{ cloud_repos_layer.env_repos | default([]) }}"
+  loop_control:
+    loop_var: cloud_repos_layer_item
+    label: "{{ cloud_repos_layer_item.repo }}"

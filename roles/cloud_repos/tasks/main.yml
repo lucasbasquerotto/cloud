@@ -1,26 +1,41 @@
-- include_role: 
-    name: "cloud_git"
+- set_fact:
+    cloud_repos_pods: []
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_repos_pods: >-
+      {{ 
+      cloud_repos_pods + 
+      (cloud_repos_node.pods | default([cloud_repos_node.main_pod])) 
+      }}
   vars:
-    cloud_repos_repo: "{{ cloud_repos_repos_dict[cloud_repos_item.value.repo] }}"
-    cloud_git_key: "{{ cloud_repos_item.value.repo }}"
-    cloud_git_title: >-
-      {{ cloud_repos_title }} - pods - repositories - local (for remote) - 
-      {{ cloud_repos_item.value.repo }}
-    cloud_git_repo: "{{ cloud_repos_repo.src }}"
-    cloud_git_version: "{{ cloud_repos_repo.version }}"
-    cloud_git_private: "{{ cloud_repos_repo.private | default(false) }}"
-    cloud_git_key_file_encrypted: >-
-      {{ cloud_repos_env_dir }}/{{ cloud_repos_repo.key_file_encrypted }}
-    cloud_git_dest: "{{ cloud_repos_env_tmp_dir }}/repo/pod/{{ cloud_repos_item.key }}"
-    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_item.value.repo }}"
-    cloud_git_update: yes
-    cloud_git_force: yes
-    cloud_git_dir_mode: "0755"
-  loop: "{{ lookup('dict', (cloud_repos_pods_dict | default({})), wantlist=True) }}"
+    cloud_repos_node: "{{ cloud_repos_nodes_dict[cloud_repos_item] }}"
+  loop: "{{ cloud_repos_nodes }}"
   loop_control:
     loop_var: cloud_repos_item
-    label: "{{ cloud_repos_item.key }}"
-  when: not (cloud_repos_item.key in (cloud_repos_local_pods | default([])))
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_repos_pods: "{{ cloud_repos_pods | unique }}"
+  tags: ["no_print"]
+
+- include_tasks: "layer.yml"
+  vars:
+    cloud_repos_layer_type: "pod"
+    cloud_repos_layer_name: "{{ cloud_repos_item }}"
+    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_name] }}"
+    cloud_repos_layer_title: >-
+      {{ cloud_repos_title }} - pods - repositories - local (for remote) - 
+      {{ cloud_repos_layer.repo }}
+    cloud_repos_layer_dest: >-
+      {{ cloud_repos_env_tmp_dir + '/repo/pod/' + cloud_repos_layer_name }}
+    cloud_repos_layer_git_update: yes
+    cloud_repos_layer_git_force: yes
+    cloud_repos_layer_dir_mode: "0755"
+  loop: "{{ cloud_repos_pods }}"
+  loop_control:
+    loop_var: cloud_repos_item
+  when: not (cloud_repos_item in (cloud_repos_local_pods | default([])))
 
 - fail: 
     msg: "local pod {{ cloud_repos_item }} is not defined"
@@ -41,25 +56,19 @@
     loop_var: cloud_repos_item
   when: cloud_repos_repo is not defined
     
-- include_role: 
-    name: "cloud_git"
+- include_tasks: "layer.yml"
   vars:
-    cloud_repos_local_pod: "{{ cloud_repos_env_local_pod_dict[cloud_repos_item] }}"
-    cloud_repos_repo: "{{ cloud_repos_repos_dict[cloud_repos_local_pod.repo] }}"
-    cloud_git_key: "{{ cloud_repos_local_pod.repo }}"
-    cloud_git_title: >-
-      {{ cloud_repos_title }} - pods - repositories - local (dev) - 
-      {{ cloud_repos_local_pod.repo }}
-    cloud_git_repo: "{{ cloud_repos_repo.src }}"
-    cloud_git_version: "{{ cloud_repos_repo.version }}"
-    cloud_git_private: "{{ cloud_repos_repo.private | default(false) }}"
-    cloud_git_key_file_encrypted: >-
-      {{ cloud_repos_env_dir }}/{{ cloud_repos_repo.key_file_encrypted }}
-    cloud_git_dest: "{{ cloud_repos_env_tmp_dir }}/repo/pod/{{ cloud_repos_item }}"
-    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_local_pod.repo }}"
-    cloud_git_update: no
-    cloud_git_force: no
-    cloud_git_dir_mode: "0777"
+    cloud_repos_layer_type: "pod"
+    cloud_repos_layer_name: "{{ cloud_repos_item }}"
+    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_name] }}"
+    cloud_repos_layer_title: >-
+      {{ cloud_repos_title }} - pods - repositories - local (for remote) - 
+      {{ cloud_repos_layer.repo }}
+    cloud_repos_layer_dest: >-
+      {{ cloud_repos_env_local_pod_dict[cloud_repos_layer_name].dir }}
+    cloud_repos_layer_git_update: no
+    cloud_repos_layer_git_force: no
+    cloud_repos_layer_dir_mode: "0777"
   loop: "{{ cloud_repos_local_pods | default([]) }}"
   loop_control:
     loop_var: cloud_repos_item
@@ -83,25 +92,19 @@
     loop_var: cloud_repos_item
   when: cloud_repos_repo is not defined
 
-- include_role: 
-    name: "cloud_git"
+- include_tasks: "layer.yml"
   vars:
-    cloud_repos_local_app: "{{ cloud_repos_env_local_app_dict[cloud_repos_item] }}"
-    cloud_repos_repo: "{{ cloud_repos_repos_dict[cloud_repos_local_app.repo] }}"
-    cloud_git_key: "{{ cloud_repos_local_app.repo }}"
-    cloud_git_title: >-
-      {{ cloud_repos_title }} - pods - repositories - local (dev) - 
-      {{ cloud_repos_local_app.repo }}
-    cloud_git_repo: "{{ cloud_repos_repo.src }}"
-    cloud_git_version: "{{ cloud_repos_repo.version }}"
-    cloud_git_private: "{{ cloud_repos_repo.private | default(false) }}"
-    cloud_git_key_file_encrypted: >-
-      {{ cloud_repos_env_dir }}/{{ cloud_repos_repo.key_file_encrypted }}
-    cloud_git_dest: "{{ cloud_repos_env_tmp_dir }}/repo/pod/{{ cloud_repos_item }}"
-    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_local_app.repo }}"
-    cloud_git_update: no
-    cloud_git_force: no
-    cloud_git_dir_mode: "0777"
+    cloud_repos_layer_type: "app"
+    cloud_repos_layer_name: "{{ cloud_repos_item }}"
+    cloud_repos_layer: "{{ cloud_repos_apps_dict[cloud_repos_layer_name] }}"
+    cloud_repos_layer_title: >-
+      {{ cloud_repos_title }} - apps - repositories - local (for remote) - 
+      {{ cloud_repos_layer.repo }}
+    cloud_repos_layer_dest: >-
+      {{ cloud_repos_env_local_app_dict[cloud_repos_layer_name].dir }}
+    cloud_repos_layer_git_update: no
+    cloud_repos_layer_git_force: no
+    cloud_repos_layer_dir_mode: "0777"
   loop: "{{ cloud_repos_local_apps | default([]) }}"
   loop_control:
     loop_var: cloud_repos_item

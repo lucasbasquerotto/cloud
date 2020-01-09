@@ -27,7 +27,7 @@
 
   when: (cloud_git_private | default(false) | bool)
 
-- name: "{{ cloud_git_title }} - git task"
+- name: "{{ cloud_git_title }} - git task ({{ cloud_git_dest }})"
   become: "{{ cloud_git_become | default(false) }}"
   git:
     repo: "{{ cloud_git_repo }}"

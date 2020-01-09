@@ -183,7 +183,10 @@
       name: "cloud_repos"
     vars:
       cloud_repos_title: "cloud repositories (local)"
+      cloud_repos_nodes: "{{ env.main.nodes | default([]) }}"
+      cloud_repos_nodes_dict: "{{ env.nodes | default({}) }}"
       cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
+      cloud_repos_apps_dict: "{{ env.apps | default({}) }}"
       cloud_repos_repos_dict: "{{ env.repos | default({}) }}"
       cloud_repos_local_pods: "{{ env.main.local.pods | default([]) }}"
       cloud_repos_local_apps: "{{ env.main.local.apps | default([]) }}"
