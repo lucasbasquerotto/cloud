@@ -32,6 +32,7 @@
     cloud_repos_layer_git_update: yes
     cloud_repos_layer_git_force: yes
     cloud_repos_layer_dir_mode: "0755"
+    cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
   loop: "{{ cloud_repos_pods }}"
   loop_control:
     loop_var: cloud_repos_item
@@ -69,6 +70,7 @@
     cloud_repos_layer_git_update: no
     cloud_repos_layer_git_force: no
     cloud_repos_layer_dir_mode: "0777"
+    cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
   loop: "{{ cloud_repos_local_pods | default([]) }}"
   loop_control:
     loop_var: cloud_repos_item
@@ -105,6 +107,7 @@
     cloud_repos_layer_git_update: no
     cloud_repos_layer_git_force: no
     cloud_repos_layer_dir_mode: "0777"
+    cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
   loop: "{{ cloud_repos_local_apps | default([]) }}"
   loop_control:
     loop_var: cloud_repos_item

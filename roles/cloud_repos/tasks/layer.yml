@@ -14,6 +14,7 @@
     cloud_git_update: "{{ cloud_repos_layer_git_update }}"
     cloud_git_force: "{{ cloud_repos_layer_git_force }}"
     cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
+    cloud_git_become: "{{ cloud_repos_layer_become }}"
 
 - include_role: 
     name: "cloud_git"
@@ -31,6 +32,7 @@
     cloud_git_update: "{{ cloud_repos_layer_git_update }}"
     cloud_git_force: "{{ cloud_repos_layer_git_force }}"
     cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
+    cloud_git_become: "{{ cloud_repos_layer_become }}"
   loop: "{{ cloud_repos_layer.env_repos | default([]) }}"
   loop_control:
     loop_var: cloud_repos_layer_item

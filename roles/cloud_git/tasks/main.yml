@@ -11,7 +11,7 @@
   - name: >-
       {{ cloud_git_title }} - create the temporary directory
       ({{ cloud_git_tmp_dir }})
-    become: "{{ cloud_prepare_pod.root }}"
+    become: "{{ cloud_git_become | default(false) }}"
     file:
       path: "{{ cloud_git_tmp_dir }}"
       state: directory
