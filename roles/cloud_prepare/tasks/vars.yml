@@ -29,11 +29,22 @@
     params: "{{ cloud_prepare_vars_ctx.params }}"
   delegate_to: localhost
 
-- name: "{{ cloud_prepare_inner_vars_title }} - load environment vars"
-  include_vars:
-    file: "{{ cloud_prepare_vars_tpl_dest }}"
-    name: cloud_prepare_inner_vars
+- set_fact: 
+    cloud_prepare_inner_vars: >-
+      {{ 
+      lookup('template', cloud_prepare_vars_tpl_dest, 
+      variable_start_string=env_var_start, 
+      variable_end_string=env_var_end) 
+      | from_yaml 
+      }}
   delegate_to: localhost
+  tags: ["no_print"]
+
+# - name: "{{ cloud_prepare_inner_vars_title }} - load environment vars"
+#   include_vars:
+#     file: "{{ cloud_prepare_vars_tpl_dest }}"
+#     name: cloud_prepare_inner_vars
+#   delegate_to: localhost
 
 - set_fact:
     cloud_prepare_vars_volumes: >-
