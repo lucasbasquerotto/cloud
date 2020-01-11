@@ -1,13 +1,17 @@
 - copy:
-    content: "decrypted: !vault |\n  {{ env.credentials.do_spaces.secret_key | replace('\n', '\n  ') }}"
-    dest: "{{ env_tmp_dir }}/test.yml"
+    content: "decrypted: !vault |\n  {{ vault_encrypted_value | replace('\n', '\n  ') }}"
+    dest: "{{ vault_tmp_dir }}/tmp.yml"
+  tags: ["no_print"]
 
 - include_vars:
-    file: "{{ env_tmp_dir }}/test.yml"
+    file: "{{ vault_tmp_dir }}/tmp.yml"
     name: vault_outer_result
+  tags: ["no_print"]
 
 - set_fact: 
     vault_result: "{{ vault_outer_result.decrypted }}"
+  tags: ["no_print"]
 
 - debug:
     var: vault_result
+  tags: ["no_print"]
