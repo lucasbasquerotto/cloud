@@ -24,6 +24,7 @@
       path: "{{ cloud_main_inner_tmp_dir }}"
       state: directory
       mode: 0751
+    when: cloud_main_state == 'present'
 
   - name: "{{ cloud_main_inner_title }} - tags tmp file src"
     copy: 
@@ -32,7 +33,7 @@
 
   - name: "{{ cloud_main_inner_title }} - tags tmp file dest if empty"
     copy: 
-      force: no
+      force: "{{ (cloud_main_state != 'present') | ternary(true, false) }}"
       content: ""
       dest: "{{ cloud_main_inner_tmp_file_tags_dest }}"
       mode: 0640
@@ -43,8 +44,17 @@
     register: cloud_main_inner_diff
     failed_when: cloud_main_inner_diff.rc > 1
     changed_when: cloud_main_inner_diff.rc == 1
+    when: cloud_main_state == 'present'
 
-  - name: "{{ cloud_main_inner_title }} - create tags"
+  - set_fact:
+      cloud_main_inner_diff: { changed: false }
+    when: cloud_main_state != 'present'
+    tags: ["no_print"]
+
+  - name: >-
+      {{ cloud_main_inner_title }} -
+      {{ (cloud_main_state == 'present') | ternary('create', 'destroy')}}
+      tags
     digital_ocean_tag:
       api_token: "{{ cloud_main_inner_api_token }}"
       name: "{{ cloud_main_inner_item }}"
@@ -52,7 +62,7 @@
     loop: "{{ cloud_main_inner_tags_final | default([]) }}"
     loop_control:
       loop_var: cloud_main_inner_item
-    when: cloud_main_inner_diff.changed
+    when: (cloud_main_state != 'present') or cloud_main_inner_diff.changed
     tags: ["print_action"]
 
   - name: "{{ cloud_main_inner_title }} - tags tmp file dest"
@@ -61,7 +71,7 @@
       src: "{{ cloud_main_inner_tmp_file_tags_src }}" 
       dest: "{{ cloud_main_inner_tmp_file_tags_dest }}"
       mode: 0640
-    when: cloud_main_inner_diff.changed
+    when: (cloud_main_state == 'present') and cloud_main_inner_diff.changed
 
   when: (cloud_main_inner_tags | default([])) | length > 0
 
@@ -88,7 +98,7 @@
 
   - name: "{{ cloud_main_inner_title }} - firewalls tmp file dest if empty"
     copy: 
-      force: no
+      force: "{{ (cloud_main_state != 'present') | ternary(true, false) }}"
       content: ""
       dest: "{{ cloud_main_inner_tmp_file_firewalls_dest }}"
       mode: 0640
@@ -101,8 +111,17 @@
     register: cloud_main_inner_diff
     failed_when: cloud_main_inner_diff.rc > 1
     changed_when: cloud_main_inner_diff.rc == 1
+    when: cloud_main_state == 'present'
 
-  - name: "{{ cloud_main_inner_title }} - create firewalls"
+  - set_fact:
+      cloud_main_inner_diff: { changed: false }
+    when: cloud_main_state != 'present'
+    tags: ["no_print"]
+
+  - name: >-
+      {{ cloud_main_inner_title }} -
+      {{ (cloud_main_state == 'present') | ternary('create', 'destroy')}}
+      firewalls
     digital_ocean_firewall:
       api_token: "{{ cloud_main_inner_api_token }}"
       name: "{{ cloud_main_inner_item.name }}"
@@ -115,7 +134,7 @@
     loop_control:
       loop_var: cloud_main_inner_item
       label: "{{ cloud_main_inner_item.name }}"
-    when: cloud_main_inner_diff.changed
+    when: (cloud_main_state != 'present') or cloud_main_inner_diff.changed
     tags: ["print_action"]
 
   - name: "{{ cloud_main_inner_title }} - firewalls tmp file dest"
@@ -124,6 +143,6 @@
       src: "{{ cloud_main_inner_tmp_file_firewalls_src }}" 
       dest: "{{ cloud_main_inner_tmp_file_firewalls_dest }}"
       mode: 0640
-    when: cloud_main_inner_diff.changed
+    when: (cloud_main_state == 'present') and cloud_main_inner_diff.changed
 
   when: (cloud_main_inner_firewalls | default([])) | length > 0
