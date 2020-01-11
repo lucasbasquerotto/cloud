@@ -400,7 +400,7 @@
       label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["print_action"]
     
-  - include_tasks: "{{ cloud_prepare_pod_orchestration.type }}.build.yml"
+  - include_tasks: "ext/{{ cloud_prepare_pod_orchestration.type }}.build.yml"
     when: cloud_prepare_pod_orchestration.type != 'none'
 
   when: cloud_prepare_diff.changed or (cloud_prepare_cloud.type == 'local')

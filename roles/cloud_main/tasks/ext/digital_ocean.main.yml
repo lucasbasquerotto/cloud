@@ -3,8 +3,18 @@
   - set_fact:
       cloud_main_inner_tmp_file_tags_src: "{{ cloud_main_inner_tmp_dir }}/tags.src.txt"
       cloud_main_inner_tmp_file_tags_dest: "{{ cloud_main_inner_tmp_dir }}/tags.dest.txt"
-      cloud_main_inner_tmp_file_firewalls_src: "{{ cloud_main_inner_tmp_dir }}/firewalls.src.txt"
-      cloud_main_inner_tmp_file_firewalls_dest: "{{ cloud_main_inner_tmp_dir }}/firewalls.dest.txt"
+      cloud_main_inner_tags_final: []
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_main_inner_tags_final: >-
+        {{
+        cloud_main_inner_tags_final +
+        [cloud_main_env_name + '-' + cloud_main_inner_item]
+        }}
+    loop: "{{ cloud_main_inner_tags | default([]) }}"
+    loop_control:
+      loop_var: cloud_main_inner_item
     tags: ["no_print"]
 
   - name: >-
@@ -17,7 +27,7 @@
 
   - name: "{{ cloud_main_inner_title }} - tags tmp file src"
     copy: 
-      content: "{{ cloud_main_inner_tags | default([]) }}" 
+      content: "{{ cloud_main_inner_tags_final | default([]) }}" 
       dest: "{{ cloud_main_inner_tmp_file_tags_src }}"
 
   - name: "{{ cloud_main_inner_title }} - tags tmp file dest if empty"
@@ -38,8 +48,8 @@
     digital_ocean_tag:
       api_token: "{{ cloud_main_inner_api_token }}"
       name: "{{ cloud_main_inner_item }}"
-      state: "present"
-    loop: "{{ cloud_main_inner_tags | default([]) }}"
+      state: "{{ cloud_main_state }}"
+    loop: "{{ cloud_main_inner_tags_final | default([]) }}"
     loop_control:
       loop_var: cloud_main_inner_item
     when: cloud_main_inner_diff.changed
@@ -57,9 +67,23 @@
 
 - block:
 
+  - set_fact:
+      cloud_main_inner_tmp_file_firewalls_src: "{{ cloud_main_inner_tmp_dir }}/firewalls.src.txt"
+      cloud_main_inner_tmp_file_firewalls_dest: "{{ cloud_main_inner_tmp_dir }}/firewalls.dest.txt"
+      cloud_main_inner_firewalls_final: []
+    tags: ["no_print"]
+
+  - include_tasks: "digital_ocean.firewall_tags.yml"
+    vars:
+      cloud_main_inner_firewall: "{{ cloud_main_inner_item }}"
+    loop: "{{ cloud_main_inner_firewalls | default([]) }}"
+    loop_control:
+      loop_var: cloud_main_inner_item
+    tags: ["no_print"]
+
   - name: "{{ cloud_main_inner_title }} - firewalls tmp file src"
     copy: 
-      content: "{{ cloud_main_inner_firewalls | default([]) }}" 
+      content: "{{ cloud_main_inner_firewalls_final | default([]) }}" 
       dest: "{{ cloud_main_inner_tmp_file_firewalls_src }}"
 
   - name: "{{ cloud_main_inner_title }} - firewalls tmp file dest if empty"
@@ -82,12 +106,12 @@
     digital_ocean_firewall:
       api_token: "{{ cloud_main_inner_api_token }}"
       name: "{{ cloud_main_inner_item.name }}"
-      state: "present"
       droplet_ids: "{{ cloud_main_inner_item.droplet_ids | default([]) }}"
       tags: "{{ cloud_main_inner_item.tags | default([]) }}"
       inbound_rules: "{{ cloud_main_inner_item.inbound_rules | default([]) }}"
       outbound_rules: "{{ cloud_main_inner_item.outbound_rules | default([]) }}"
-    loop: "{{ cloud_main_inner_firewalls | default([]) }}"
+      state: "{{ cloud_main_state }}"
+    loop: "{{ cloud_main_inner_firewalls_final | default([]) }}"
     loop_control:
       loop_var: cloud_main_inner_item
       label: "{{ cloud_main_inner_item.name }}"

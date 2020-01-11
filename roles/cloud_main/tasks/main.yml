@@ -1,5 +1,5 @@
 - name: "{{ cloud_main_title }} - prepare the cloud"
-  include_tasks: "{{ cloud_main_cloud.type }}.cloud.yml"
+  include_tasks: "ext/{{ cloud_main_cloud.type }}.main.yml"
   vars:
     cloud_main_inner_title: "{{ cloud_main_title }} - {{ cloud_main_cloud.type }}"
     cloud_main_inner_api_token: "{{ cloud_main_credentials.api_token }}"

@@ -17,12 +17,14 @@
       name: "cloud_main"
     vars: 
       cloud_main_title: "cloud - prepare"
+      cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
       cloud_main_credentials: >-
         {{ env.credentials[cloud_main_cloud.credentials] }}
       cloud_main_cloud_params: >-
         {{ env.cloud_params[cloud_main_cloud.params] }}
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_state: "present"
     loop: "{{ env.main.clouds | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -40,8 +42,7 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - name: "create the static dns records"
-    include_role: 
+  - include_role: 
       name: "cloud_dns"
     vars: 
       cloud_dns_title: >-
@@ -54,11 +55,11 @@
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_value: "{{ main_item.value }}"
+      cloud_dns_state: "present"
     loop: "{{ env.main.dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.type }}"
-    when: (((env_node | default('')) == '') or (env_node == main_item))
 
 ###############################################################################
 
@@ -131,6 +132,8 @@
       (((env_node | default('')) == '') or (env_node == main_item))
       and
       (cloud_node_cloud.type != 'local')
+      and 
+      (not (cloud_node_node.external | default(false) | bool))
 
 ###############################################################################
 
@@ -436,6 +439,7 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
+      cloud_node_allow_destroy_dns: "{{ env.destroy.node_dns | bool }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -443,6 +447,8 @@
       (env.nodes[main_item].tmp | default(false) | bool)
       and
       (((env_node | default('')) == '') or (env_node == main_item))
+      and 
+      (not (cloud_node_node.external | default(false) | bool))
 
 ###############################################################################
 
@@ -459,7 +465,7 @@
   - include_role: 
       name: "cloud_node"
     vars: 
-      cloud_node_title: "cloud - destroy instances - {{ main_item }}"
+      cloud_node_title: "[destroy] cloud - destroy instances - {{ main_item }}"
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
       cloud_node_node: "{{ env.nodes[main_item] }}"
@@ -479,12 +485,16 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
+      cloud_node_allow_destroy_dns: "{{ env.destroy.node_dns | bool }}"
     loop: "{{ env.main.nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-    when: (main_item in (env.destroy.nodes | default([])))
+    when: >-
+      (main_item in (env.destroy.nodes | default([])))
+      and 
+      (not (cloud_node_node.external | default(false) | bool))
 
-  - name: "delete the buckets and all their contents"
+  - name: "[destroy] delete the buckets and all their contents"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
@@ -498,5 +508,41 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_item }}"
+
+  - include_role: 
+      name: "cloud_dns"
+    vars: 
+      cloud_dns_title: >-
+        [destroy] dns - {{ main_item.type }} - {{ main_item.record }}
+      cloud_dns_type: "{{ main_item.type }}"
+      cloud_dns_credentials: >-
+        {{ env.credentials[env.dns[main_item].credentials] }}
+      cloud_dns_zone: "{{ env.dns[main_item].zone }}"
+      cloud_dns_record_type: "{{ main_item.dns_type }}"
+      cloud_dns_record: "{{ main_item.record }}"
+      cloud_dns_value: "{{ main_item.value }}"
+      cloud_dns_state: "absent"
+    loop: "{{ env.main.dns | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.type }}"
+    when: main_item in (env.destroy.dns | default([]))
+
+  - include_role: 
+      name: "cloud_main"
+    vars: 
+      cloud_main_title: "[destroy] cloud"
+      cloud_main_env_name: "{{ env.name }}"
+      cloud_main_cloud: "{{ env.clouds[main_item] }}"
+      cloud_main_credentials: >-
+        {{ env.credentials[cloud_main_cloud.credentials] }}
+      cloud_main_cloud_params: >-
+        {{ env.cloud_params[cloud_main_cloud.params] }}
+      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_state: "absent"
+    loop: "{{ env.main.clouds | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: main_item in (env.destroy.clouds | default([]))
 
 ###############################################################################
