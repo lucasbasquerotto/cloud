@@ -59,6 +59,7 @@
 
 - set_fact:
     cloud_prepare_inner_credentials: {}
+    cloud_prepare_inner_other_params: {}
   tags: ["no_print"]
   
 - set_fact:
@@ -74,7 +75,21 @@
     loop_var: cloud_prepare_inner_item
     label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
   tags: ["no_print"]
-
+    
+- set_fact:
+    cloud_prepare_inner_other_params: >-
+      {{ 
+      cloud_prepare_inner_other_params | 
+      combine({ 
+      cloud_prepare_inner_item.key: 
+      cloud_prepare_params_dict[cloud_prepare_inner_item.value] }) 
+      }}
+  loop: "{{ cloud_prepare_pod.other_params | default({}) | dict2items }}"
+  loop_control:
+    loop_var: cloud_prepare_inner_item
+    label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
+  tags: ["no_print"]
+    
 ### Generate a file with the environment variables and state (for idempotence) ###
 
 - set_fact:
@@ -82,8 +97,9 @@
       main: "{{ cloud_prepare_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
+      other: "{{ cloud_prepare_inner_other_params }}"
   tags: ["no_print"]
-
+    
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
   become: "{{ cloud_prepare_pod.root }}"
   copy: 
@@ -254,6 +270,7 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src) }}"
+    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["no_print"]
 
   - set_fact:
@@ -282,6 +299,7 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src) }}"
+    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["no_print"]
 
   - set_fact:
@@ -307,6 +325,7 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"
+    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["no_print"]
 
   - set_fact:
@@ -333,11 +352,16 @@
       path: "{{ cloud_prepare_inner_item.path }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0777, ''), true) 
+        }}
     loop: "{{ cloud_prepare_vars_volumes | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.path }}"
+    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["print_action"]
 
   - name: "{{ cloud_prepare_inner_title }} - create the other directories"
@@ -363,7 +387,11 @@
       dest: "{{ cloud_prepare_inner_item.dest }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
     loop: "{{ cloud_prepare_files_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
@@ -377,7 +405,11 @@
       dest: "{{ cloud_prepare_inner_item.dest }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
     vars:
       params: "{{ cloud_prepare_inner_item.params }}"
     loop: "{{ cloud_prepare_tpl_list | default([]) }}"
@@ -393,7 +425,11 @@
       dest: "{{ cloud_prepare_inner_item.dest }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
-      mode: "{{ cloud_prepare_inner_item.mode }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
     loop: "{{ cloud_prepare_env_files_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item

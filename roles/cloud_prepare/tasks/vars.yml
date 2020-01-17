@@ -21,28 +21,11 @@
   delegate_to: localhost
 
 - name: "{{ cloud_prepare_inner_vars_title }} - populate vars from the template"
-  template: 
-    src: "{{ cloud_prepare_vars_tpl_src }}"
-    dest: "{{ cloud_prepare_vars_tpl_dest }}"
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
+  set_fact: 
+    cloud_prepare_inner_vars: >-
+      {{ lookup('template', cloud_prepare_vars_tpl_src) | from_yaml }}
   vars:
     params: "{{ cloud_prepare_vars_ctx.params }}"
-  delegate_to: localhost
-
-- set_fact: 
-    cloud_prepare_var_start: "{[[[%%%§§§"
-    cloud_prepare_var_end: "§§§%%%]]]}"
-  tags: ["no_print"]
-
-- set_fact: 
-    cloud_prepare_inner_vars: >-
-      {{ 
-      lookup('template', cloud_prepare_vars_tpl_dest, 
-      variable_start_string=cloud_prepare_var_start, 
-      variable_end_string=cloud_prepare_var_end) 
-      | from_yaml 
-      }}
-  delegate_to: localhost
   tags: ["no_print"]
 
 - set_fact:
@@ -65,3 +48,4 @@
   loop_control:
     loop_var: cloud_prepare_inner_item
     label: "{{ cloud_prepare_inner_item.name }}"
+  when: cloud_prepare_inner_item.when | default(true) | bool
