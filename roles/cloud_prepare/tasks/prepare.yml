@@ -170,7 +170,10 @@
     loop_control:
       loop_var: cloud_prepare_pod_inner_item
       label: "{{ cloud_prepare_pod_inner_item.dest }}"
-    when: (cloud_prepare_pod_inner_item.dest | dirname | default('')) != ''
+    when: >-
+      (cloud_prepare_pod_inner_item.when | default(true) | bool) 
+      and 
+      (cloud_prepare_pod_inner_item.dest | dirname | default('')) != ''
     tags: ["no_print"]
 
   - set_fact:
@@ -202,6 +205,7 @@
     loop_control:
       loop_var: cloud_prepare_pod_inner_item
       label: "{{ cloud_prepare_pod_inner_item.src }} - {{ cloud_prepare_pod_inner_item.dest }}"
+    when: cloud_prepare_pod_inner_item.when | default(true) | bool
 
   - name: >-
         {{ cloud_prepare_inner_title }} -
@@ -218,6 +222,7 @@
     loop_control:
       loop_var: cloud_prepare_pod_inner_item
       label: "{{ cloud_prepare_pod_inner_item.src }} - {{ cloud_prepare_pod_inner_item.dest }}"
+    when: cloud_prepare_pod_inner_item.when | default(true) | bool
 
   ### Generate the environment pod expanded variables ###
 
@@ -226,9 +231,11 @@
       cloud_prepare_vars_files: []
       cloud_prepare_vars_templates: []
       cloud_prepare_vars_env_files: []
+      cloud_prepare_vars_env_templates: []
       cloud_prepare_files_list: []
       cloud_prepare_tpl_list: []
       cloud_prepare_env_files_list: []
+      cloud_prepare_env_tpl_list: []
       cloud_prepare_dir_list: [
         "{{ cloud_prepare_repo_location + '/' + (cloud_prepare_pod_env_dir | default('env')) }}"
       ]
@@ -270,7 +277,6 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src) }}"
-    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["no_print"]
 
   - set_fact:
@@ -299,7 +305,6 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src) }}"
-    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["no_print"]
 
   - set_fact:
@@ -325,7 +330,31 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"
-    when: cloud_prepare_inner_item.when | default(true) | bool
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_prepare_env_tpl_list: >-
+        {{ 
+        cloud_prepare_env_tpl_list
+        + [{ 
+        'src': cloud_prepare_inner_item_src_full, 
+        'dest': cloud_prepare_inner_item_dest_full, 
+        'mode': cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+        }] 
+        }}
+    vars: 
+      cloud_prepare_inner_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_inner_item.src }}"
+      cloud_prepare_inner_item_dest_full: >-
+        {{ cloud_prepare_repo_location }}/{{ 
+        ((cloud_prepare_inner_item.root | default(false) | bool) | 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
+        + cloud_prepare_inner_item.dest
+        }}
+    loop: "{{ cloud_prepare_vars_env_templates | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["no_print"]
 
   - set_fact:
@@ -361,7 +390,6 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.path }}"
-    when: cloud_prepare_inner_item.when | default(true) | bool
     tags: ["print_action"]
 
   - name: "{{ cloud_prepare_inner_title }} - create the other directories"
@@ -431,6 +459,28 @@
         (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
         }}
     loop: "{{ cloud_prepare_env_files_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["print_action"]
+      
+  - name: >-
+      {{ cloud_prepare_inner_title }} -
+      transfer the environment templates to the specified locations
+    become: "{{ cloud_prepare_pod.root }}"
+    template: 
+      src: "{{ cloud_prepare_inner_item.src }}"
+      dest: "{{ cloud_prepare_inner_item.dest }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
+    vars:
+      params: "{{ cloud_prepare_inner_item.params }}"
+    loop: "{{ cloud_prepare_env_tpl_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"
