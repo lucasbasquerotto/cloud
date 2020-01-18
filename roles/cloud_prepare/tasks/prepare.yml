@@ -446,6 +446,18 @@
       label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["print_action"]
 
+  - name: >-
+      {{ cloud_prepare_inner_title }} -
+      remove blank lines of files created from templates
+    replace:
+      path: "{{ cloud_prepare_inner_item.dest }}"
+      regexp: "(^\\s*$)"
+      replace: ""
+    loop: "{{ cloud_prepare_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+
   - name: "{{ cloud_prepare_inner_title }} - copy the environment files to the specified locations"
     become: "{{ cloud_prepare_pod.root }}"
     copy:
@@ -485,6 +497,18 @@
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["print_action"]
+
+  - name: >-
+      {{ cloud_prepare_inner_title }} -
+      remove blank lines of files created from environment templates
+    replace:
+      path: "{{ cloud_prepare_inner_item.dest }}"
+      regexp: "(^\\s*$)"
+      replace: ""
+    loop: "{{ cloud_prepare_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
     
   - include_tasks: "ext/{{ cloud_prepare_pod_orchestration.type }}.build.yml"
     when: cloud_prepare_pod_orchestration.type != 'none'
