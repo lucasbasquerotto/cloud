@@ -22,10 +22,12 @@
       'tags': cloud_main_inner_firewall_tags 
       }) 
       }}
+  tags: ["no_print"]
 
 - set_fact:
     cloud_main_inner_firewalls_final: >-
       {{
       cloud_main_inner_firewalls_final +
       [cloud_main_inner_firewall_result]
-      }}    
+      }}  
+  tags: ["no_print"]  
