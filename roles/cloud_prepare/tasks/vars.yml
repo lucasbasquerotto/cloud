@@ -27,61 +27,16 @@
   tags: ["no_print"]
 
 - set_fact:
-    cloud_prepare_inner_vars_volumes: >-
-      {{ cloud_prepare_inner_vars_volumes + [cloud_prepare_inner_vars_item] }}
-  loop: "{{ cloud_prepare_inner_vars.volumes | default([]) }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_vars_item
-  when: cloud_prepare_inner_vars_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_prepare_inner_vars_files: >-
-      {{ cloud_prepare_inner_vars_files + [cloud_prepare_inner_vars_item] }}
-  loop: "{{ cloud_prepare_inner_vars.files | default([]) }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_vars_item
-  when: cloud_prepare_inner_vars_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_prepare_inner_vars_templates: >-
-      {{ cloud_prepare_inner_vars_templates + [cloud_prepare_inner_vars_item] }}
-  loop: "{{ cloud_prepare_inner_vars.templates | default([]) }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_vars_item
-  when: cloud_prepare_inner_vars_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_prepare_inner_vars_env_files: >-
-      {{ cloud_prepare_inner_vars_env_files + [cloud_prepare_inner_vars_item] }}
-  loop: "{{ cloud_prepare_inner_vars.env_files | default([]) }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_vars_item
-  when: cloud_prepare_inner_vars_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_prepare_inner_vars_env_templates: >-
-      {{ cloud_prepare_inner_vars_env_templates + [cloud_prepare_inner_vars_item] }}
-  loop: "{{ cloud_prepare_inner_vars.env_templates | default([]) }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_vars_item
-  when: cloud_prepare_inner_vars_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- set_fact:
     cloud_prepare_vars_volumes: >-
-      {{ cloud_prepare_vars_volumes + cloud_prepare_inner_vars_volumes }}
+      {{ cloud_prepare_vars_volumes + (cloud_prepare_inner_vars.volumes | default([])) }}
     cloud_prepare_vars_files: >-
-      {{ cloud_prepare_vars_files + cloud_prepare_inner_vars_files }}
+      {{ cloud_prepare_vars_files + (cloud_prepare_inner_vars.files | default([])) }}
     cloud_prepare_vars_templates: >-
-      {{ cloud_prepare_vars_templates + cloud_prepare_inner_vars_templates }}
+      {{ cloud_prepare_vars_templates + (cloud_prepare_inner_vars.templates | default([])) }}
     cloud_prepare_vars_env_files: >-
-      {{ cloud_prepare_vars_env_files + cloud_prepare_inner_vars_env_files }}
+      {{ cloud_prepare_vars_env_files + (cloud_prepare_inner_vars.env_files | default([])) }}
     cloud_prepare_vars_env_templates: >-
-      {{ cloud_prepare_vars_env_templates + cloud_prepare_inner_vars_env_templates }}
+      {{ cloud_prepare_vars_env_templates + (cloud_prepare_inner_vars.env_templates | default([])) }}
   tags: ["no_print"]
 
 # Call itself recursively for the children
