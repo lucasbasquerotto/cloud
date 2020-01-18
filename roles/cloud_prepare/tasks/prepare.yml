@@ -448,7 +448,7 @@
 
   - name: >-
       {{ cloud_prepare_inner_title }} -
-      remove blank lines of files created from templates
+      remove excess of blank lines of files created from templates
     replace:
       path: "{{ cloud_prepare_inner_item.dest }}"
       regexp: "(^\\s*$)"
@@ -500,7 +500,7 @@
 
   - name: >-
       {{ cloud_prepare_inner_title }} -
-      remove blank lines of files created from environment templates
+      remove excess of blank lines of files created from environment templates
     replace:
       path: "{{ cloud_prepare_inner_item.dest }}"
       regexp: "(^\\s*$)"
