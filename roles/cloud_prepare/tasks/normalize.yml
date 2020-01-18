@@ -2,9 +2,10 @@
   set_fact:
     cloud_prepare_normalize_volumes: []
     cloud_prepare_normalize_dir_list: []
-    cloud_prepare_normalize_remote_files: []
-    cloud_prepare_normalize_files: []
-    cloud_prepare_normalize_templates: []
+    cloud_prepare_normalize_repo_files: []
+    cloud_prepare_normalize_env_files: []
+    cloud_prepare_normalize_repo_templates: []
+    cloud_prepare_normalize_env_templates: []
     cloud_prepare_normalize_files_list: []
     cloud_prepare_normalize_tpl_list: []
   tags: ["no_print"]
@@ -31,9 +32,9 @@
 
 - name: "{{ cloud_prepare_normalize_title }}"
   set_fact:
-    cloud_prepare_normalize_files: >-
-      {{ cloud_prepare_normalize_files + [cloud_prepare_normalize_item] }}
-  loop: "{{ cloud_prepare_normalize_src_files | default([]) }}"
+    cloud_prepare_normalize_repo_files: >-
+      {{ cloud_prepare_normalize_repo_files + [cloud_prepare_normalize_item] }}
+  loop: "{{ cloud_prepare_normalize_src_repo_files | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_normalize_item
   when: cloud_prepare_normalize_item.when | default(true) | bool
@@ -41,9 +42,9 @@
 
 - name: "{{ cloud_prepare_normalize_title }}"
   set_fact:
-    cloud_prepare_normalize_remote_files: >-
-      {{ cloud_prepare_normalize_remote_files + [cloud_prepare_normalize_item] }}
-  loop: "{{ cloud_prepare_normalize_src_remote_files | default([]) }}"
+    cloud_prepare_normalize_env_files: >-
+      {{ cloud_prepare_normalize_env_files + [cloud_prepare_normalize_item] }}
+  loop: "{{ cloud_prepare_normalize_src_env_files | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_normalize_item
   when: cloud_prepare_normalize_item.when | default(true) | bool
@@ -51,12 +52,54 @@
 
 - name: "{{ cloud_prepare_normalize_title }}"
   set_fact:
-    cloud_prepare_normalize_templates: >-
-      {{ cloud_prepare_normalize_templates + [cloud_prepare_normalize_item] }}
-  loop: "{{ cloud_prepare_normalize_src_templates | default([]) }}"
+    cloud_prepare_normalize_repo_templates: >-
+      {{ cloud_prepare_normalize_repo_templates + [cloud_prepare_normalize_item] }}
+  loop: "{{ cloud_prepare_normalize_src_repo_templates | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_normalize_item
   when: cloud_prepare_normalize_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_normalize_title }}"
+  set_fact:
+    cloud_prepare_normalize_env_templates: >-
+      {{ cloud_prepare_normalize_env_templates + [cloud_prepare_normalize_item] }}
+  loop: "{{ cloud_prepare_normalize_src_env_templates | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_normalize_item
+  when: cloud_prepare_normalize_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_normalize_title }}"
+  set_fact:
+    cloud_prepare_normalize_files_list: >-
+      {{ 
+      cloud_prepare_normalize_files_list
+      + [{ 
+      'remote_src': 'true',
+      'src': cloud_prepare_normalize_item_src_full, 
+      'dest': cloud_prepare_normalize_item_dest_full, 
+      'dest_rel': cloud_prepare_normalize_item_dest_rel, 
+      'mode': cloud_prepare_normalize_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      }] 
+      }}
+  vars: 
+    cloud_prepare_normalize_item_src_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_normalize_item.src }}
+    cloud_prepare_normalize_item_dest_rel: >-
+      {{ 
+      ((cloud_prepare_normalize_item.root | default(false) | bool) | 
+      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      + cloud_prepare_normalize_item.dest
+      }}
+    cloud_prepare_normalize_item_dest_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_normalize_item_dest_rel }}
+    cloud_prepare_normalize_item_params: "{{ cloud_prepare_normalize_item.params | default({}) }}"
+  loop: "{{ cloud_prepare_normalize_repo_files | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_normalize_item
+    label: "{{ cloud_prepare_normalize_item.dest }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_normalize_title }}"
@@ -84,41 +127,41 @@
     cloud_prepare_normalize_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_normalize_item_dest_rel }}
     cloud_prepare_normalize_item_params: "{{ cloud_prepare_normalize_item.params | default({}) }}"
-  loop: "{{ cloud_prepare_normalize_files | default([]) }}"
+  loop: "{{ cloud_prepare_normalize_env_files | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_normalize_item
     label: "{{ cloud_prepare_normalize_item.dest }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_normalize_title }}"
-  set_fact:
-    cloud_prepare_normalize_files_list: >-
+- set_fact:
+    cloud_prepare_normalize_tpl_list: >-
       {{ 
-      cloud_prepare_normalize_files_list
+      cloud_prepare_normalize_tpl_list
       + [{ 
-      'remote_src': 'true',
-      'src': cloud_prepare_normalize_item_src_full, 
+      'src': cloud_prepare_normalize_item_src_local_full,
       'dest': cloud_prepare_normalize_item_dest_full, 
       'dest_rel': cloud_prepare_normalize_item_dest_rel, 
       'mode': cloud_prepare_normalize_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+      'params': cloud_prepare_normalize_item_params
       }] 
       }}
   vars: 
-    cloud_prepare_normalize_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_normalize_item.src }}"
+    cloud_prepare_normalize_item_src_local_full: >-
+      {{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_normalize_item.src }}
     cloud_prepare_normalize_item_dest_rel: >-
       {{ 
       ((cloud_prepare_normalize_item.root | default(false) | bool) | 
       ternary('', cloud_prepare_pod_env_dir + '/')) 
-      + cloud_prepare_normalize_item.dest
+      + (cloud_prepare_normalize_item.dest | default(cloud_prepare_normalize_item.src)) 
       }}
     cloud_prepare_normalize_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_normalize_item_dest_rel }}
     cloud_prepare_normalize_item_params: "{{ cloud_prepare_normalize_item.params | default({}) }}"
-  loop: "{{ cloud_prepare_normalize_remote_files | default([]) }}"
+  loop: "{{ cloud_prepare_normalize_repo_templates | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_normalize_item
-    label: "{{ cloud_prepare_normalize_item.dest }}"
+    label: "{{ cloud_prepare_normalize_item.dest | default(cloud_prepare_normalize_item.src) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_normalize_title }}"
@@ -146,7 +189,7 @@
     cloud_prepare_normalize_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_normalize_item_dest_rel }}
     cloud_prepare_normalize_item_params: "{{ cloud_prepare_normalize_item.params | default({}) }}"
-  loop: "{{ cloud_prepare_normalize_templates | default([]) }}"
+  loop: "{{ cloud_prepare_normalize_env_templates | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_normalize_item
     label: "{{ cloud_prepare_normalize_item.dest }}"
@@ -212,6 +255,9 @@
   loop_control:
     loop_var: cloud_prepare_normalize_item
     label: "{{ cloud_prepare_normalize_item }}"
+
+- debug:
+    var: cloud_prepare_normalize_files_list
 
 - name: "{{ cloud_prepare_normalize_title }} - copy the files to the specified locations"
   become: "{{ cloud_prepare_pod.root }}"
