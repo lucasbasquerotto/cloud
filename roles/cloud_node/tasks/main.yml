@@ -211,6 +211,7 @@
     cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
     cloud_dns_record: "{{ cloud_node_item.0.record }}"
     cloud_dns_value: "{{ cloud_node_item.1.dns_value }}"
+    cloud_dns_state: "present"
   loop: "{{ (cloud_node_node.dns | default([])) | list | product(cloud_node_ips) | list }}"
   loop_control:
     loop_var: cloud_node_item
@@ -234,6 +235,7 @@
     cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
     cloud_dns_record: "{{ cloud_node_item.0.record }}"
     cloud_dns_value: ""
+    cloud_dns_state: "absent"
   loop: >-
     {{ 
     (cloud_node_node.dns | default([])) | list 
