@@ -192,37 +192,205 @@
     loop_control:
       loop_var: cloud_prepare_inner_item
 
-  - name: >-
-        {{ cloud_prepare_inner_title }} -
-        move the environment files to the pod repository
-    copy:
-      src: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_item.src }}"
-      dest: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dest }}"
-      owner: "{{ cloud_prepare_owner }}"
-      group: "{{ cloud_prepare_group }}"
-      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
+  - set_fact:
+      cloud_prepare_pod_env_files: []
+      cloud_prepare_pod_env_templates: []
+      cloud_prepare_pod_env_files_list: []
+      cloud_prepare_pod_env_tpl_list: []
+      cloud_prepare_pod_dir_list: []
+
+  - set_fact:
+      cloud_prepare_pod_env_files: >-
+        {{ cloud_prepare_pod_env_files + [cloud_prepare_inner_item] }}
     loop: "{{ cloud_prepare_pod.env_files | default([]) }}"
     loop_control:
-      loop_var: cloud_prepare_pod_inner_item
-      label: "{{ cloud_prepare_pod_inner_item.src }} - {{ cloud_prepare_pod_inner_item.dest }}"
-    when: cloud_prepare_pod_inner_item.when | default(true) | bool
+      loop_var: cloud_prepare_inner_item
+    when: cloud_prepare_inner_item.when | default(true) | bool
+    tags: ["no_print"]
 
-  - name: >-
-        {{ cloud_prepare_inner_title }} -
-        move the environment files to the pod repository
-    template: 
-      src: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_item.src }}"
-      dest: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dest }}"
-      owner: "{{ cloud_prepare_owner }}"
-      group: "{{ cloud_prepare_group }}"
-      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
-    vars:
-      params: "{{ cloud_prepare_params }}"
+  - set_fact:
+      cloud_prepare_pod_env_templates: >-
+        {{ cloud_prepare_pod_env_templates + [cloud_prepare_inner_item] }}
     loop: "{{ cloud_prepare_pod.env_templates | default([]) }}"
     loop_control:
-      loop_var: cloud_prepare_pod_inner_item
-      label: "{{ cloud_prepare_pod_inner_item.src }} - {{ cloud_prepare_pod_inner_item.dest }}"
-    when: cloud_prepare_pod_inner_item.when | default(true) | bool
+      loop_var: cloud_prepare_inner_item
+    when: cloud_prepare_inner_item.when | default(true) | bool
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_prepare_pod_env_files_list: >-
+        {{ 
+        cloud_prepare_pod_env_files_list
+        + [{ 
+        'src': cloud_prepare_inner_item_src_full, 
+        'dest': cloud_prepare_inner_item_dest_full, 
+        'dest_rel': cloud_prepare_inner_item_dest_rel, 
+        'mode': cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+        }] 
+        }}
+    vars: 
+      cloud_prepare_inner_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_inner_item.src }}"
+      cloud_prepare_inner_item_dest_rel: >-
+        {{ 
+        ((cloud_prepare_inner_item.root | default(false) | bool) | 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
+        + cloud_prepare_inner_item.dest
+        }}
+      cloud_prepare_inner_item_dest_full: >-
+        {{ cloud_prepare_repo_location }}/{{ cloud_prepare_inner_item_dest_rel }}
+      cloud_prepare_inner_item_params: "{{ cloud_prepare_inner_item.params | default({}) }}"
+    loop: "{{ cloud_prepare_pod_env_files | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_prepare_pod_env_tpl_list: >-
+        {{ 
+        cloud_prepare_pod_env_tpl_list
+        + [{ 
+        'src': cloud_prepare_inner_item_src_full, 
+        'dest': cloud_prepare_inner_item_dest_full, 
+        'dest_rel': cloud_prepare_inner_item_dest_rel, 
+        'mode': cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+        'params': cloud_prepare_inner_item_params
+        }] 
+        }}
+    vars: 
+      cloud_prepare_inner_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_inner_item.src }}"
+      cloud_prepare_inner_item_dest_rel: >-
+        {{ 
+        ((cloud_prepare_inner_item.root | default(false) | bool) | 
+        ternary('', cloud_prepare_pod_env_dir + '/')) 
+        + cloud_prepare_inner_item.dest
+        }}
+      cloud_prepare_inner_item_dest_full: >-
+        {{ cloud_prepare_repo_location }}/{{ cloud_prepare_inner_item_dest_rel }}
+      cloud_prepare_inner_item_params: "{{ cloud_prepare_inner_item.params | default({}) }}"
+    loop: "{{ cloud_prepare_pod_env_templates | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_prepare_pod_dir_list: >-
+        {{ cloud_prepare_pod_dir_list + [cloud_prepare_inner_item.dest | dirname] }}
+    loop: >-
+      {{ 
+      (cloud_prepare_pod_env_files_list | default([])) 
+      + 
+      (cloud_prepare_pod_env_tpl_list | default([])) 
+      }}
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest | dirname }}"
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_prepare_pod_dir_list: >-
+        {{ 
+        cloud_prepare_pod_dir_list + [
+        (cloud_prepare_repo_location + 
+        '/tmp/tpl/' + 
+        cloud_prepare_inner_item.dest_rel) | dirname
+        ] }}
+    loop: "{{ cloud_prepare_pod_env_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest | dirname }}"
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }} - create the other directories"
+    become: "{{ cloud_prepare_pod.root }}"
+    file:
+      state: directory
+      path: "{{ cloud_prepare_inner_item }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(777, 751) }}"
+    loop: "{{ cloud_prepare_pod_dir_list | default([]) | unique | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item }}"
+
+  - name: "{{ cloud_prepare_inner_title }} - copy the pod env files to the specified locations"
+    become: "{{ cloud_prepare_pod.root }}"
+    copy:
+      src: "{{ cloud_prepare_inner_item.src }}"
+      dest: "{{ cloud_prepare_inner_item.dest }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
+    loop: "{{ cloud_prepare_pod_env_files_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["print_action"]
+      
+  - name: >-
+      {{ cloud_prepare_inner_title }} - 
+      transfer the pod env templates to the specified tmp locations
+    become: "{{ cloud_prepare_pod.root }}"
+    template: 
+      src: "{{ cloud_prepare_inner_item.src }}"
+      dest: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
+    vars:
+      params: "{{ cloud_prepare_inner_item.params }}"
+    loop: "{{ cloud_prepare_pod_env_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+    changed_when: false
+    tags: ["print_action"]
+
+  - name: >-
+      {{ cloud_prepare_inner_title }} -
+      remove excess of blank lines of files created from pod env templates
+    replace:
+      path: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+      regexp: "(^\\s*$)"
+      replace: ""
+    loop: "{{ cloud_prepare_pod_env_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+    changed_when: false
+
+  - name: >-
+      {{ cloud_prepare_inner_title }} - 
+      copy the normalized files created from pod env templates
+    become: "{{ cloud_prepare_pod.root }}"
+    copy:
+      remote_src: true
+      src: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+      dest: "{{ cloud_prepare_inner_item.dest }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
+    loop: "{{ cloud_prepare_pod_env_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["print_action"]
 
   ### Generate the environment pod expanded variables ###
 
@@ -286,6 +454,7 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_local_full,
         'dest': cloud_prepare_inner_item_dest_full, 
+        'dest_rel': cloud_prepare_inner_item_dest_rel, 
         'mode': cloud_prepare_inner_item.mode | default(
         (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
         'params': cloud_prepare_inner_item_params
@@ -294,12 +463,14 @@
     vars: 
       cloud_prepare_inner_item_src_local_full: >-
         {{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_inner_item.src }}
-      cloud_prepare_inner_item_dest_full: >-
-        {{ cloud_prepare_repo_location }}/{{ 
+      cloud_prepare_inner_item_dest_rel: >-
+        {{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
         ternary('', cloud_prepare_pod_env_dir + '/')) 
         + (cloud_prepare_inner_item.dest | default(cloud_prepare_inner_item.src)) 
         }}
+      cloud_prepare_inner_item_dest_full: >-
+        {{ cloud_prepare_repo_location }}/{{ cloud_prepare_inner_item_dest_rel }}
       cloud_prepare_inner_item_params: "{{ cloud_prepare_inner_item.params | default({}) }}"
     loop: "{{ cloud_prepare_vars_templates | default([]) }}"
     loop_control:
@@ -339,18 +510,23 @@
         + [{ 
         'src': cloud_prepare_inner_item_src_full, 
         'dest': cloud_prepare_inner_item_dest_full, 
+        'dest_rel': cloud_prepare_inner_item_dest_rel, 
         'mode': cloud_prepare_inner_item.mode | default(
-        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+        'params': cloud_prepare_inner_item_params
         }] 
         }}
     vars: 
       cloud_prepare_inner_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_inner_item.src }}"
-      cloud_prepare_inner_item_dest_full: >-
-        {{ cloud_prepare_repo_location }}/{{ 
+      cloud_prepare_inner_item_dest_rel: >-
+        {{ 
         ((cloud_prepare_inner_item.root | default(false) | bool) | 
         ternary('', cloud_prepare_pod_env_dir + '/')) 
         + cloud_prepare_inner_item.dest
         }}
+      cloud_prepare_inner_item_dest_full: >-
+        {{ cloud_prepare_repo_location }}/{{ cloud_prepare_inner_item_dest_rel }}
+      cloud_prepare_inner_item_params: "{{ cloud_prepare_inner_item.params | default({}) }}"
     loop: "{{ cloud_prepare_vars_env_templates | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
@@ -358,7 +534,8 @@
     tags: ["no_print"]
 
   - set_fact:
-      cloud_prepare_dir_list: "{{ cloud_prepare_dir_list + [cloud_prepare_inner_item.dest | dirname] }}"
+      cloud_prepare_dir_list: >-
+        {{ cloud_prepare_dir_list + [cloud_prepare_inner_item.dest | dirname] }}
     loop: >-
       {{ 
       (cloud_prepare_files_list | default([]))
@@ -366,6 +543,27 @@
       (cloud_prepare_tpl_list | default([])) 
       + 
       (cloud_prepare_env_files_list | default([])) 
+      + 
+      (cloud_prepare_env_tpl_list | default([])) 
+      }}
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest | dirname }}"
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_prepare_dir_list: >-
+        {{ 
+        cloud_prepare_dir_list + [
+        (cloud_prepare_repo_location + 
+        '/tmp/tpl/' + 
+        cloud_prepare_inner_item.dest_rel) | dirname
+        ] }}
+    loop: >-
+      {{ 
+      (cloud_prepare_tpl_list | default([])) 
+      + 
+      (cloud_prepare_env_tpl_list | default([])) 
       }}
     loop_control:
       loop_var: cloud_prepare_inner_item
@@ -426,11 +624,13 @@
       label: "{{ cloud_prepare_inner_item.dest }}"
     tags: ["print_action"]
       
-  - name: "{{ cloud_prepare_inner_title }} - transfer the templates to the specified locations"
+  - name: >-
+      {{ cloud_prepare_inner_title }} - 
+      transfer the templates to the specified tmp locations
     become: "{{ cloud_prepare_pod.root }}"
     template: 
       src: "{{ cloud_prepare_inner_item.src }}"
-      dest: "{{ cloud_prepare_inner_item.dest }}"
+      dest: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
       mode: >-
@@ -443,22 +643,45 @@
     loop: "{{ cloud_prepare_tpl_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
-      label: "{{ cloud_prepare_inner_item.dest }}"
+      label: "tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+    changed_when: false
     tags: ["print_action"]
 
   - name: >-
       {{ cloud_prepare_inner_title }} -
       remove excess of blank lines of files created from templates
     replace:
-      path: "{{ cloud_prepare_inner_item.dest }}"
+      path: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
       regexp: "(^\\s*$)"
       replace: ""
     loop: "{{ cloud_prepare_tpl_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
-      label: "{{ cloud_prepare_inner_item.dest }}"
+      label: "tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+    changed_when: false
 
-  - name: "{{ cloud_prepare_inner_title }} - copy the environment files to the specified locations"
+  - name: "{{ cloud_prepare_inner_title }} - copy the normalized files created from templates"
+    become: "{{ cloud_prepare_pod.root }}"
+    copy:
+      remote_src: true
+      src: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+      dest: "{{ cloud_prepare_inner_item.dest }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
+    loop: "{{ cloud_prepare_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["print_action"]
+
+  - name: >-
+      {{ cloud_prepare_inner_title }} - 
+      copy the environment files to the specified locations
     become: "{{ cloud_prepare_pod.root }}"
     copy:
       src: "{{ cloud_prepare_inner_item.src }}"
@@ -478,11 +701,11 @@
       
   - name: >-
       {{ cloud_prepare_inner_title }} -
-      transfer the environment templates to the specified locations
+      transfer the environment templates to the specified tmp locations
     become: "{{ cloud_prepare_pod.root }}"
     template: 
       src: "{{ cloud_prepare_inner_item.src }}"
-      dest: "{{ cloud_prepare_inner_item.dest }}"
+      dest: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
       mode: >-
@@ -495,20 +718,41 @@
     loop: "{{ cloud_prepare_env_tpl_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
-      label: "{{ cloud_prepare_inner_item.dest }}"
+      label: "tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+    changed_when: false
     tags: ["print_action"]
 
   - name: >-
       {{ cloud_prepare_inner_title }} -
       remove excess of blank lines of files created from environment templates
     replace:
-      path: "{{ cloud_prepare_inner_item.dest }}"
+      path: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
       regexp: "(^\\s*$)"
       replace: ""
-    loop: "{{ cloud_prepare_tpl_list | default([]) }}"
+    loop: "{{ cloud_prepare_env_tpl_list | default([]) }}"
+    loop_control:
+      loop_var: cloud_prepare_inner_item
+      label: "tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+    changed_when: false
+
+  - name: "{{ cloud_prepare_inner_title }} - copy the normalized files created from templates"
+    become: "{{ cloud_prepare_pod.root }}"
+    copy:
+      remote_src: true
+      src: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_inner_item.dest_rel }}"
+      dest: "{{ cloud_prepare_inner_item.dest }}"
+      owner: "{{ cloud_prepare_owner }}"
+      group: "{{ cloud_prepare_group }}"
+      mode: >-
+        {{ 
+        cloud_prepare_inner_item.mode | default(
+        (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+        }}
+    loop: "{{ cloud_prepare_env_tpl_list | default([]) }}"
     loop_control:
       loop_var: cloud_prepare_inner_item
       label: "{{ cloud_prepare_inner_item.dest }}"
+    tags: ["print_action"]
     
   - include_tasks: "ext/{{ cloud_prepare_pod_orchestration.type }}.build.yml"
     when: cloud_prepare_pod_orchestration.type != 'none'

@@ -8,17 +8,7 @@
     cloud_prepare_vars_tpl_src: >-
       {{ cloud_prepare_local_pod_repo }}/{{ ''
       }}{{ cloud_prepare_vars_ctx.name }}
-    cloud_prepare_vars_tpl_dest: >-
-      {{ cloud_prepare_pod_local_tmp_dir }}/vars/cloud_prepare/{{ ''
-      }}{{ cloud_prepare_vars_ctx.name }}
   tags: ["no_print"]
-
-- name: "{{ cloud_prepare_inner_vars_title }} - create the local directories for the template"
-  file:
-    path: "{{ cloud_prepare_vars_tpl_dest | dirname }}"
-    state: directory
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
-  delegate_to: localhost
 
 - name: "{{ cloud_prepare_inner_vars_title }} - populate vars from the template"
   set_fact: 
