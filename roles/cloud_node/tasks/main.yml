@@ -153,7 +153,7 @@
       ternary('ansible_ssh_private_key_file=' + cloud_node_aux.ssh_key_path, '') 
       }}
       instance_type={{ cloud_node_node_id }}
-      instance_index={{ cloud_node_index }}
+      instance_index={{ cloud_node_index + 1 }}
       ansible_host_public_ipv4={{ cloud_node_item.public_ipv4 | default('') }}
       ansible_host_public_ipv6={{ cloud_node_item.public_ipv6 | default('') }}
       ansible_host_private_ip={{ cloud_node_item.private_ip | default('') }}
