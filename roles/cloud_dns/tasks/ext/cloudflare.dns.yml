@@ -1,4 +1,6 @@
-- name: "{{ cloud_dns_title }} - cloudflare dns"
+- name: >-
+    {{ cloud_dns_title }} - cloudflare dns -
+    {{ cloud_dns_record_type }} ({{ cloud_dns_state }})
   cloudflare_dns:
     zone: "{{ cloud_dns_zone | default(omit, true) }}"
     proxied: no
