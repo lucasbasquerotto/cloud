@@ -222,7 +222,7 @@
   tags: ["print_action"]
 
 - name: >-
-    {{ cloud_node_title }} - create the main dns records
+    {{ cloud_node_title }} - destroy the main dns records
     that points to the instance when in the dmz layer
   include_role: 
     name: "cloud_dns"

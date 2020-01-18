@@ -2,7 +2,7 @@
   cloudflare_dns:
     zone: "{{ cloud_dns_zone | default(omit, true) }}"
     proxied: no
-    solo: true
+    solo: "{{ (cloud_dns_state == 'present') | ternary(true, false) }}"
     type: "{{ cloud_dns_record_type }}"
     record: "{{ cloud_dns_record | default(omit, true) }}"
     value: "{{ cloud_dns_value | default(omit, true) }}"
