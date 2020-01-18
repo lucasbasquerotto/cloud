@@ -32,7 +32,7 @@
     digital_ocean_tag:
       api_token: "{{ cloud_node_inner_api_token }}"
       resource_id: "{{ cloud_node_inner_droplet.id }}"
-      name: "{{ cloud_node_env_name }}-{{ cloud_node_inner_item }}"
+      name: "{{ cloud_node_inner_item }}"
       state: "present"
     loop: "{{ cloud_node_inner_tags }}"
     loop_control:

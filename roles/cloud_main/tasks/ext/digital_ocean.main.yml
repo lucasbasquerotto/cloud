@@ -10,7 +10,7 @@
       cloud_main_inner_tags_final: >-
         {{
         cloud_main_inner_tags_final +
-        [cloud_main_env_name + '-' + cloud_main_inner_item]
+        [cloud_main_inner_item]
         }}
     loop: "{{ cloud_main_inner_tags | default([]) }}"
     loop_control:

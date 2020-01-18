@@ -6,7 +6,7 @@
     cloud_main_inner_firewall_tags: >-
       {{
       cloud_main_inner_firewall_tags +
-      [cloud_main_env_name + '-' + cloud_main_inner_tag_item]
+      [cloud_main_inner_tag_item]
       }}
   loop: "{{ cloud_main_inner_firewall.tags | default([]) }}"
   loop_control:
@@ -18,7 +18,7 @@
       {{ 
       cloud_main_inner_firewall | 
       combine({ 
-      'name': cloud_main_env_name + '-' + cloud_main_inner_firewall.name,
+      'name': cloud_main_inner_firewall.name,
       'tags': cloud_main_inner_firewall_tags 
       }) 
       }}
