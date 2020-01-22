@@ -1,0 +1,333 @@
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_volumes: []
+    cloud_prepare_transfer_dir_list: []
+    cloud_prepare_transfer_repo_files: []
+    cloud_prepare_transfer_env_files: []
+    cloud_prepare_transfer_repo_templates: []
+    cloud_prepare_transfer_env_templates: []
+    cloud_prepare_transfer_files_list: []
+    cloud_prepare_transfer_tpl_list: []
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_volumes: >-
+      {{ cloud_prepare_transfer_volumes + [cloud_prepare_transfer_item] }}
+  loop: "{{ cloud_prepare_transfer_src_volumes | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+  when: cloud_prepare_transfer_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_dir_list: >-
+      {{ cloud_prepare_transfer_dir_list + [cloud_prepare_transfer_item] }}
+  loop: "{{ cloud_prepare_transfer_src_dir_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+  when: cloud_prepare_transfer_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_repo_files: >-
+      {{ cloud_prepare_transfer_repo_files + [cloud_prepare_transfer_item] }}
+  loop: "{{ cloud_prepare_transfer_src_repo_files | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+  when: cloud_prepare_transfer_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_env_files: >-
+      {{ cloud_prepare_transfer_env_files + [cloud_prepare_transfer_item] }}
+  loop: "{{ cloud_prepare_transfer_src_env_files | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+  when: cloud_prepare_transfer_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_repo_templates: >-
+      {{ cloud_prepare_transfer_repo_templates + [cloud_prepare_transfer_item] }}
+  loop: "{{ cloud_prepare_transfer_src_repo_templates | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+  when: cloud_prepare_transfer_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_env_templates: >-
+      {{ cloud_prepare_transfer_env_templates + [cloud_prepare_transfer_item] }}
+  loop: "{{ cloud_prepare_transfer_src_env_templates | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+  when: cloud_prepare_transfer_item.when | default(true) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_files_list: >-
+      {{ 
+      cloud_prepare_transfer_files_list
+      + [{ 
+      'remote_src': 'true',
+      'src': cloud_prepare_transfer_item_src_full, 
+      'dest': cloud_prepare_transfer_item_dest_full, 
+      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+      'mode': cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      }] 
+      }}
+  vars: 
+    cloud_prepare_transfer_item_src_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item.src }}
+    cloud_prepare_transfer_item_dest_rel: >-
+      {{ 
+      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
+      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      + cloud_prepare_transfer_item.dest
+      }}
+    cloud_prepare_transfer_item_dest_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
+    cloud_prepare_transfer_item_params: "{{ cloud_prepare_transfer_item.params | default({}) }}"
+  loop: "{{ cloud_prepare_transfer_repo_files | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_files_list: >-
+      {{ 
+      cloud_prepare_transfer_files_list
+      + [{ 
+      'remote_src': 'false',
+      'src': cloud_prepare_transfer_item_src_full, 
+      'dest': cloud_prepare_transfer_item_dest_full, 
+      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+      'mode': cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      }] 
+      }}
+  vars: 
+    cloud_prepare_transfer_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_transfer_item.src }}"
+    cloud_prepare_transfer_item_dest_rel: >-
+      {{ 
+      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
+      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      + cloud_prepare_transfer_item.dest
+      }}
+    cloud_prepare_transfer_item_dest_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
+    cloud_prepare_transfer_item_params: "{{ cloud_prepare_transfer_item.params | default({}) }}"
+  loop: "{{ cloud_prepare_transfer_env_files | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_transfer_tpl_list: >-
+      {{ 
+      cloud_prepare_transfer_tpl_list
+      + [{ 
+      'src': cloud_prepare_transfer_item_src_local_full,
+      'dest': cloud_prepare_transfer_item_dest_full, 
+      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+      'mode': cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+      'params': cloud_prepare_transfer_item_params
+      }] 
+      }}
+  vars: 
+    cloud_prepare_transfer_item_src_local_full: >-
+      {{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_transfer_item.src }}
+    cloud_prepare_transfer_item_dest_rel: >-
+      {{ 
+      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
+      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      + (cloud_prepare_transfer_item.dest | default(cloud_prepare_transfer_item.src)) 
+      }}
+    cloud_prepare_transfer_item_dest_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
+    cloud_prepare_transfer_item_params: "{{ cloud_prepare_transfer_item.params | default({}) }}"
+  loop: "{{ cloud_prepare_transfer_repo_templates | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest | default(cloud_prepare_transfer_item.src) }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_tpl_list: >-
+      {{ 
+      cloud_prepare_transfer_tpl_list
+      + [{ 
+      'src': cloud_prepare_transfer_item_src_full, 
+      'dest': cloud_prepare_transfer_item_dest_full, 
+      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+      'mode': cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+      'params': cloud_prepare_transfer_item_params
+      }] 
+      }}
+  vars: 
+    cloud_prepare_transfer_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_transfer_item.src }}"
+    cloud_prepare_transfer_item_dest_rel: >-
+      {{ 
+      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
+      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      + cloud_prepare_transfer_item.dest
+      }}
+    cloud_prepare_transfer_item_dest_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
+    cloud_prepare_transfer_item_params: "{{ cloud_prepare_transfer_item.params | default({}) }}"
+  loop: "{{ cloud_prepare_transfer_env_templates | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_dir_list: >-
+      {{ cloud_prepare_transfer_dir_list + [cloud_prepare_transfer_item.dest | dirname] }}
+  loop: >-
+    {{ 
+    (cloud_prepare_transfer_files_list | default([])) 
+    + 
+    (cloud_prepare_transfer_tpl_list | default([])) 
+    }}
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest | dirname }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    cloud_prepare_transfer_dir_list: >-
+      {{ 
+      cloud_prepare_transfer_dir_list + [
+      (cloud_prepare_repo_location + 
+      '/tmp/tpl/' + 
+      cloud_prepare_transfer_item.dest_rel) | dirname
+      ] }}
+  loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest | dirname }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }} - create the volume directories"
+  become: "{{ cloud_prepare_pod.root }}"
+  file:
+    state: directory
+    path: "{{ cloud_prepare_transfer_item.path }}"
+    owner: "{{ cloud_prepare_owner }}"
+    group: "{{ cloud_prepare_group }}"
+    mode: >-
+      {{ 
+      cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0777, ''), true) 
+      }}
+  loop: "{{ cloud_prepare_transfer_volumes | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.path }}"
+  tags: ["print_action"]
+
+- name: "{{ cloud_prepare_transfer_title }} - create the other directories"
+  become: "{{ cloud_prepare_pod.root }}"
+  file:
+    state: directory
+    path: "{{ cloud_prepare_transfer_item }}"
+    owner: "{{ cloud_prepare_owner }}"
+    group: "{{ cloud_prepare_group }}"
+    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(777, 751) }}"
+  loop: "{{ cloud_prepare_transfer_dir_list | default([]) | unique | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item }}"
+
+- name: "{{ cloud_prepare_transfer_title }} - copy the files to the specified locations"
+  become: "{{ cloud_prepare_pod.root }}"
+  copy:
+    remote_src: "{{ cloud_prepare_transfer_item.remote_src }}"
+    src: "{{ cloud_prepare_transfer_item.src }}"
+    dest: "{{ cloud_prepare_transfer_item.dest }}"
+    owner: "{{ cloud_prepare_owner }}"
+    group: "{{ cloud_prepare_group }}"
+    mode: >-
+      {{ 
+      cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+      }}
+  loop: "{{ cloud_prepare_transfer_files_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest }}"
+  tags: ["print_action"]
+    
+- name: >-
+    {{ cloud_prepare_transfer_title }} - 
+    transfer the templates to the specified tmp locations
+  become: "{{ cloud_prepare_pod.root }}"
+  template: 
+    src: "{{ cloud_prepare_transfer_item.src }}"
+    dest: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
+    owner: "{{ cloud_prepare_owner }}"
+    group: "{{ cloud_prepare_group }}"
+    mode: >-
+      {{ 
+      cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+      }}
+  vars:
+    params: "{{ cloud_prepare_transfer_item.params }}"
+  loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
+  changed_when: false
+  tags: ["print_action"]
+
+- name: >-
+    {{ cloud_prepare_transfer_title }} -
+    remove excess of blank lines of files created from the templates
+  replace:
+    path: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
+    regexp: "(^\\s*$)"
+    replace: ""
+  loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
+  changed_when: false
+
+- name: >-
+    {{ cloud_prepare_transfer_title }} - 
+    copy the normalized files created from the templates
+  become: "{{ cloud_prepare_pod.root }}"
+  copy:
+    remote_src: true
+    src: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
+    dest: "{{ cloud_prepare_transfer_item.dest }}"
+    owner: "{{ cloud_prepare_owner }}"
+    group: "{{ cloud_prepare_group }}"
+    mode: >-
+      {{ 
+      cloud_prepare_transfer_item.mode | default(
+      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true) 
+      }}
+  loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_transfer_item
+    label: "{{ cloud_prepare_transfer_item.dest }}"
+  tags: ["print_action"]

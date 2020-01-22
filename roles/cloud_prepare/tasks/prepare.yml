@@ -153,11 +153,11 @@
   ### Copy the specified pod env files and templates ###
 
   - name: "{{ cloud_prepare_inner_title }}"
-    include_tasks: "normalize.yml"
+    include_tasks: "transfer.yml"
     vars:
-      cloud_prepare_normalize_title: "{{ cloud_prepare_inner_title }} - pod env"
-      cloud_prepare_normalize_src_env_files: "{{ cloud_prepare_pod.env_files | default([]) }}"
-      cloud_prepare_normalize_src_env_templates: "{{ cloud_prepare_pod.env_templates | default([]) }}"
+      cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - pod env"
+      cloud_prepare_transfer_src_env_files: "{{ cloud_prepare_pod.env_files | default([]) }}"
+      cloud_prepare_transfer_src_env_templates: "{{ cloud_prepare_pod.env_templates | default([]) }}"
 
   ### Generate the environment pod expanded variables ###
 
@@ -183,15 +183,15 @@
       label: "{{ cloud_prepare_inner_item.name }}"
 
   - name: "{{ cloud_prepare_inner_title }}"
-    include_tasks: "normalize.yml"
+    include_tasks: "transfer.yml"
     vars:
-      cloud_prepare_normalize_title: "{{ cloud_prepare_inner_title }} - ctx"
-      cloud_prepare_normalize_src_volumes: "{{ cloud_prepare_vars_volumes | default([]) }}"
-      cloud_prepare_normalize_src_dir_list: "{{ cloud_prepare_dir_list | default([]) }}"
-      cloud_prepare_normalize_src_repo_files: "{{ cloud_prepare_vars_files | default([]) }}"
-      cloud_prepare_normalize_src_env_files: "{{ cloud_prepare_vars_env_files | default([]) }}"
-      cloud_prepare_normalize_src_repo_templates: "{{ cloud_prepare_vars_templates | default([]) }}"
-      cloud_prepare_normalize_src_env_templates: "{{ (cloud_prepare_vars_env_templates | default([])) }}"
+      cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - ctx"
+      cloud_prepare_transfer_src_volumes: "{{ cloud_prepare_vars_volumes | default([]) }}"
+      cloud_prepare_transfer_src_dir_list: "{{ cloud_prepare_dir_list | default([]) }}"
+      cloud_prepare_transfer_src_repo_files: "{{ cloud_prepare_vars_files | default([]) }}"
+      cloud_prepare_transfer_src_env_files: "{{ cloud_prepare_vars_env_files | default([]) }}"
+      cloud_prepare_transfer_src_repo_templates: "{{ cloud_prepare_vars_templates | default([]) }}"
+      cloud_prepare_transfer_src_env_templates: "{{ (cloud_prepare_vars_env_templates | default([])) }}"
     
   ### Build the environment ###
 
