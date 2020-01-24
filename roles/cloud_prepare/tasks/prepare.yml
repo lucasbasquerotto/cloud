@@ -43,6 +43,14 @@
 ### Generate the environment pod context variables ###
 
 - set_fact:
+    cloud_prepare_main_params: >-
+      {{ 
+      cloud_prepare_params | 
+      combine(cloud_prepare_pod.specific_params | default({}), recursive=True) 
+      }}
+  tags: ["no_print"]
+
+- set_fact:
     cloud_prepare_params_pod:
       pod_id: "{{ cloud_prepare_pod_id }}"
       pod: "{{ cloud_prepare_pod }}"
@@ -82,7 +90,7 @@
       cloud_prepare_inner_other_params | 
       combine({ 
       cloud_prepare_inner_item.key: 
-      cloud_prepare_params_dict[cloud_prepare_inner_item.value] }) 
+      cloud_prepare_other_params_dict[cloud_prepare_inner_item.value] }) 
       }}
   loop: "{{ cloud_prepare_pod.other_params | default({}) | dict2items }}"
   loop_control:
@@ -94,7 +102,7 @@
 
 - set_fact:
     cloud_prepare_vars_full:
-      main: "{{ cloud_prepare_params }}"
+      main: "{{ cloud_prepare_main_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
       other: "{{ cloud_prepare_inner_other_params }}"
