@@ -1,6 +1,24 @@
 - block:
   
   - set_fact:
+      cloud_main_inner_tags: "{{ cloud_main_params.tags | default([]) }}"
+      cloud_main_inner_firewalls_list: "{{ cloud_main_params.firewalls | default([]) }}"
+      cloud_main_inner_firewalls_dict: "{{ cloud_main_params.firewalls_dict | default([]) }}"
+      cloud_main_inner_firewalls: []
+    tags: ["no_print"]
+  
+  - set_fact:
+      cloud_main_inner_firewalls: >-
+        {{ 
+        cloud_main_inner_firewalls + 
+        cloud_main_inner_firewalls_dict[cloud_main_inner_item] 
+        }}
+    loop: "{{ cloud_main_inner_firewalls_list }}"
+    loop_control:
+      loop_var: cloud_main_inner_item
+    tags: ["no_print"]
+
+  - set_fact:
       cloud_main_inner_tmp_file_tags_src: "{{ cloud_main_inner_tmp_dir }}/tags.src.txt"
       cloud_main_inner_tmp_file_tags_dest: "{{ cloud_main_inner_tmp_dir }}/tags.dest.txt"
       cloud_main_inner_tags_final: []

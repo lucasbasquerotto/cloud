@@ -16,13 +16,12 @@
   - include_role: 
       name: "cloud_main"
     vars: 
-      cloud_main_title: "prepare - cloud[{{ main_item }}]"
+      cloud_main_title: "[prepare] cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
       cloud_main_credentials: >-
         {{ env.credentials[cloud_main_cloud.credentials] }}
-      cloud_main_cloud_params: >-
-        {{ env.cloud_params[cloud_main_cloud.params] }}
+      cloud_main_cloud_params_dict: "{{ env.cloud_params }}"
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
       cloud_main_state: "present"
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
@@ -533,13 +532,12 @@
   - include_role: 
       name: "cloud_main"
     vars: 
-      cloud_main_title: "[destroy] cloud"
+      cloud_main_title: "[destroy] cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
       cloud_main_credentials: >-
         {{ env.credentials[cloud_main_cloud.credentials] }}
-      cloud_main_cloud_params: >-
-        {{ env.cloud_params[cloud_main_cloud.params] }}
+      cloud_main_cloud_params_dict: "{{ env.cloud_params }}"
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
       cloud_main_state: "absent"
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"

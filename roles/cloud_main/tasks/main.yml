@@ -1,9 +1,34 @@
+- set_fact:
+    cloud_main_other_params: {}
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_main_other_params: >-
+      {{ 
+      cloud_main_other_params | 
+      combine({ 
+      cloud_main_item.key: 
+      cloud_main_cloud_params_dict[cloud_main_item.value] }) 
+      }}
+  loop: "{{ cloud_main_cloud.other_params | default({}) | dict2items }}"
+  loop_control:
+    loop_var: cloud_main_item
+    label: "{{ cloud_main_item.key }} ({{ cloud_main_item.value }})"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_main_params: >-
+      {{ 
+      cloud_main_other_params | 
+      combine(cloud_main_cloud.params | default({}), recursive=True) 
+      }}
+  tags: ["no_print"]
+
 - name: "{{ cloud_main_title }} - prepare the cloud"
   include_tasks: "ext/{{ cloud_main_cloud.type }}.main.yml"
   vars:
     cloud_main_inner_title: "{{ cloud_main_title }} - {{ cloud_main_cloud.type }}"
     cloud_main_inner_api_token: "{{ cloud_main_credentials.api_token }}"
-    cloud_main_inner_tags: "{{ cloud_main_cloud_params.tags | default([]) }}"
-    cloud_main_inner_firewalls: "{{ cloud_main_cloud_params.firewalls | default([]) }}"
+    cloud_main_inner_params: "{{ cloud_main_params }}"
     cloud_main_inner_tmp_dir: "{{ cloud_main_tmp_dir }}"
   when: cloud_main_cloud.type != 'local'
