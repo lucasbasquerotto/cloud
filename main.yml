@@ -25,7 +25,7 @@
         {{ env.cloud_params[cloud_main_cloud.params] }}
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
       cloud_main_state: "present"
-    loop: "{{ env.main.clouds | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
       loop_var: main_item
 
@@ -56,7 +56,7 @@
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_value: "{{ main_item.value }}"
       cloud_dns_state: "present"
-    loop: "{{ env.main.dns | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.type }}"
@@ -84,7 +84,7 @@
     vars:
       main_bucket: "{{ env.buckets[main_item] }}"
       main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-    loop: "{{ (env.main.buckets | default([])) }}"
+    loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item }}"
@@ -125,7 +125,7 @@
       cloud_node_tmp_dir: >-
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -186,13 +186,13 @@
       name: "cloud_repos"
     vars:
       cloud_repos_title: "cloud repositories (local)"
-      cloud_repos_nodes: "{{ env.main.nodes | default([]) }}"
+      cloud_repos_nodes: "{{ env.main[env.ctx].nodes | default([]) }}"
       cloud_repos_nodes_dict: "{{ env.nodes | default({}) }}"
       cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
       cloud_repos_apps_dict: "{{ env.apps | default({}) }}"
       cloud_repos_repos_dict: "{{ env.repos | default({}) }}"
-      cloud_repos_local_pods: "{{ env.main.local.pods | default([]) }}"
-      cloud_repos_local_apps: "{{ env.main.local.apps | default([]) }}"
+      cloud_repos_local_pods: "{{ env.main[env.ctx].local.pods | default([]) }}"
+      cloud_repos_local_apps: "{{ env.main[env.ctx].local.apps | default([]) }}"
       cloud_repos_env_local_pod_dict: "{{ env_local_pod_dict }}"
       cloud_repos_env_local_app_dict: "{{ env_local_app_dict }}"
       cloud_repos_env_dir: "{{ env_dir }}"
@@ -247,7 +247,7 @@
         (ansible_connection == 'local') | 
         ternary(env_local_data_dir_rel | default(''), '') 
         }}
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -296,7 +296,7 @@
         tmp/env/cloud.run.vars_full.yml
       cloud_run_force: "{{ env_force | default(false, true) }}"
       cloud_run_local_pod_dict: "{{ env_local_pod_dict }}"
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -334,7 +334,7 @@
       cron_start: "true"
       cron_cloud: "{{ env.clouds[cron_node.cloud] }}"
       cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes/{{ main_item }}/cron"
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -390,7 +390,7 @@
         }}/{{ env.nodes[main_item].main_pod }}/main
       long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
       long_run_poll: 2
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -440,7 +440,7 @@
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
       cloud_node_allow_destroy_dns: "{{ env.destroy.node_dns | bool }}"
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -486,7 +486,7 @@
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
       cloud_node_allow_destroy_dns: "{{ env.destroy.node_dns | bool }}"
-    loop: "{{ env.main.nodes | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
@@ -522,7 +522,7 @@
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_value: "{{ main_item.value }}"
       cloud_dns_state: "absent"
-    loop: "{{ env.main.dns | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.type }}"
@@ -540,7 +540,7 @@
         {{ env.cloud_params[cloud_main_cloud.params] }}
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
       cloud_main_state: "absent"
-    loop: "{{ env.main.clouds | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: main_item in (env.destroy.clouds | default([]))
