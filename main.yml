@@ -16,7 +16,7 @@
   - include_role: 
       name: "cloud_main"
     vars: 
-      cloud_main_title: "cloud - prepare"
+      cloud_main_title: "prepare - cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
       cloud_main_credentials: >-
@@ -47,7 +47,7 @@
     vars: 
       cloud_dns_title: >-
         create the static dns records - 
-        {{ main_item.type }} - {{ main_item.record }}
+        dns[{{ main_item.type }}] - {{ main_item.record }}
       cloud_dns_type: "{{ main_item.type }}"
       cloud_dns_credentials: >-
         {{ env.credentials[env.dns[main_item].credentials] }}
@@ -106,7 +106,9 @@
   - include_role: 
       name: "cloud_node"
     vars: 
-      cloud_node_title: "cloud - instances - {{ main_item }}"
+      cloud_node_title: >-
+        cloud - instances - node[{{ main_item }}] - 
+        cloud[{{ cloud_node_node.cloud }}]
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
       cloud_node_node: "{{ env.nodes[main_item] }}"
@@ -215,7 +217,7 @@
   - include_role: 
       name: "cloud_prepare"
     vars:
-      cloud_prepare_title: "cloud prepare - {{ main_item }}"
+      cloud_prepare_title: "node[{{ main_item }}]"
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
@@ -277,7 +279,7 @@
   - include_role: 
       name: "cloud_run"
     vars:
-      cloud_run_title: "cloud run - {{ main_item }}"
+      cloud_run_title: "node[{{ main_item }}]"
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"

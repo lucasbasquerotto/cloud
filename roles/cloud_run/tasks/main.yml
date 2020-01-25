@@ -1,7 +1,7 @@
 - name: "{{ cloud_run_title }}"
   include_tasks: "pod.yml"
   vars:
-    cloud_run_pod_title: "{{ cloud_run_title }} - {{ cloud_run_item }}"
+    cloud_run_pod_title: "{{ cloud_run_title }} - pod[{{ cloud_run_item }}]"
     cloud_run_pod_id: "{{ cloud_run_item }}"
     cloud_run_pod: "{{ cloud_run_pods_dict[cloud_run_item] }}"
     cloud_run_pod_orchestration: >-
