@@ -57,54 +57,50 @@
       env_cmd: "{{ cloud_prepare_env_cmd }}"
   tags: ["no_print"]
 
-- set_fact:
-    cloud_prepare_inner_credentials: {}
-    cloud_prepare_inner_other_params: {}
-  tags: ["no_print"]
-  
-- set_fact:
-    cloud_prepare_inner_credentials: >-
-      {{ 
-      cloud_prepare_inner_credentials | 
-      combine({ 
-      cloud_prepare_inner_item.key: 
-      cloud_prepare_credentials_dict[cloud_prepare_inner_item.value] }) 
-      }}
-  loop: "{{ cloud_prepare_pod.credentials | default({}) | dict2items }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_item
-    label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
-  tags: ["no_print"]
-    
-- set_fact:
-    cloud_prepare_inner_other_params: >-
-      {{ 
-      cloud_prepare_inner_other_params | 
-      combine({ 
-      cloud_prepare_inner_item.key: 
-      cloud_prepare_pod_params_dict[cloud_prepare_inner_item.value] }) 
-      }}
-  loop: "{{ cloud_prepare_pod.other_params | default({}) | dict2items }}"
-  loop_control:
-    loop_var: cloud_prepare_inner_item
-    label: "{{ cloud_prepare_inner_item.key }} ({{ cloud_prepare_inner_item.value }})"
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ {} }}"
+    params_mixer_other_params_names: "{{ cloud_prepare_pod.credentials | default({}) }}"
+    params_mixer_params_dict: "{{ cloud_prepare_credentials_dict }}"
   tags: ["no_print"]
 
 - set_fact:
-    cloud_prepare_inner_main_params: >-
-      {{ 
-      cloud_prepare_inner_other_params | default({}) | 
-      combine(cloud_prepare_pod.params | default({}), recursive=True) 
-      }}
+    cloud_prepare_inner_credentials: "{{ params_mixer_params }}"
   tags: ["no_print"]
-    
+
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ cloud_prepare_pod.params | default({}) }}"
+    params_mixer_other_params_names: "{{ cloud_prepare_pod.other_params | default({}) }}"
+    params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_inner_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ cloud_prepare_node.params | default({}) }}"
+    params_mixer_other_params_names: "{{ cloud_prepare_node.other_params | default({}) }}"
+    params_mixer_params_dict: "{{ cloud_prepare_node_params_dict }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_inner_node_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
 ### Generate a file with the environment variables and state (for idempotence) ###
 
 - set_fact:
     cloud_prepare_vars_full:
-      main: "{{ cloud_prepare_inner_main_params }}"
+      main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
+      node_params: "{{ cloud_prepare_inner_node_params }}"
   tags: ["no_print"]
     
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"

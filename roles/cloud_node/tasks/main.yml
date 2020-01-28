@@ -1,3 +1,41 @@
+### Cloud Node Params ###
+
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ cloud_node_node.params | default({}) }}"
+    params_mixer_other_params_names: "{{ cloud_node_node.other_params | default({}) }}"
+    params_mixer_params_dict: "{{ cloud_node_node_params_dict }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_node_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+    
+# - set_fact:
+#     cloud_node_other_params: >-
+#       {{ 
+#       cloud_node_other_params | 
+#       combine({ 
+#       cloud_node_item.key: 
+#       cloud_node_node_params_dict[cloud_node_item.value] }) 
+#       }}
+#   loop: "{{ cloud_node_node.other_params | default({}) | dict2items }}"
+#   loop_control:
+#     loop_var: cloud_node_item
+#     label: "{{ cloud_node_item.key }} ({{ cloud_node_item.value }})"
+#   tags: ["no_print"]
+
+# - set_fact:
+#     cloud_node_params: >-
+#       {{ 
+#       cloud_node_other_params | default({}) | 
+#       combine(cloud_node_node.params | default({}), recursive=True) 
+#       }}
+#   tags: ["no_print"]
+
+### Cloud Node Other Vars ###
+
 - set_fact: 
     cloud_node_host_ssh_public_keys_path: >-
       {{ 
@@ -28,9 +66,9 @@
       host_ssh_public_keys: "{{ cloud_node_host_ssh_public_keys }}"
     cloud_node_user_data_file: >-
       {{ 
-      ((cloud_node_instance_params.user_data_file | default('')) != '' )
+      ((cloud_node_params.instance.user_data_file | default('')) != '' )
       | ternary(
-      cloud_node_env_dir + '/' + cloud_node_instance_params.user_data_file,
+      cloud_node_env_dir + '/' + cloud_node_params.instance.user_data_file,
       ''
       )
       }}
@@ -60,9 +98,9 @@
       [{ 'name':
       cloud_node_env_name + '-' +
       cloud_node_node_id + '-' +
-      cloud_node_node_params.region + '-' +
+      cloud_node_params.region.name + '-' +
       ('%04d' | format(cloud_node_item)),
-      'region_id': cloud_node_node_params.region,
+      'region_id': cloud_node_params.region.name,
       'create':
       (((cloud_node_item | int) <= (cloud_node_instance_count | int))
       and not (cloud_node_shutdown | default(false) | bool)) | 
@@ -98,12 +136,12 @@
     cloud_node_inner_host_user: "{{ cloud_node_node_credentials.host_user }}"
     cloud_node_inner_host_pass: "{{ cloud_node_node_credentials.host_pass }}"
     cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
-    cloud_node_inner_size_id: "{{ cloud_node_node_params.size }}"
-    cloud_node_inner_image_id: "{{ cloud_node_instance_params.image }}"
-    cloud_node_inner_ipv6: "{{ cloud_node_instance_params.ipv6 }}"
+    cloud_node_inner_size_id: "{{ cloud_node_params.size.name }}"
+    cloud_node_inner_image_id: "{{ cloud_node_params.instance.image }}"
+    cloud_node_inner_ipv6: "{{ cloud_node_params.instance.ipv6 }}"
     cloud_node_inner_wait_timeout: "{{ cloud_node_wait_timeout | default(500) }}"
-    cloud_node_inner_tags: "{{ cloud_node_node_params.tags | default([]) }}"
     cloud_node_inner_create: "{{ cloud_node_item.create }}"
+    cloud_node_inner_params: "{{ cloud_node_params }}"
   loop: "{{ cloud_node_cloud_instances | list }}"
   loop_control:
     loop_var: cloud_node_item
@@ -177,7 +215,11 @@
   tags: ["print_action"]
 
 - set_fact:
-    cloud_node_ips: []
+    cloud_node_ips:
+    - name: "ipv4"
+      record_type: "A"
+    - name: "ipv6"
+      record_type: "AAAA"
   tags: ["no_print"]
   
 - set_fact:
@@ -192,8 +234,8 @@
   loop_control:
     loop_var: cloud_node_item
   when: >-
+    (not (cloud_node_shutdown | default(false) | bool)) and 
     (cloud_node_active_hosts | default([]) | length == 1) and 
-    (cloud_node_node.dmz | default('false') | bool) and 
     (cloud_node_item.dns_value != '')
   tags: ["no_print"]
 
@@ -203,52 +245,26 @@
   include_role: 
     name: "cloud_dns"
   vars: 
+    cloud_node_item_dns: "{{ cloud_node_params.dns_dict[cloud_node_item.0] }}"
     cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
-    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item.0.name].type }}"
-    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item.0.name].credentials }}"
+    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].type }}"
+    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].credentials }}"
     cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
-    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.0.name].zone }}"
+    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].zone }}"
     cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
-    cloud_dns_record: "{{ cloud_node_item.0.record }}"
+    cloud_dns_record: "{{ cloud_node_item_dns.record }}"
     cloud_dns_value: "{{ cloud_node_item.1.dns_value }}"
-    cloud_dns_state: "present"
-  loop: "{{ (cloud_node_node.dns | default([])) | list | product(cloud_node_ips) | list }}"
+    cloud_dns_state: "{{ ((cloud_dns_value | default('')) != '') | ternary('present', 'absent') }}"
+  loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
   loop_control:
     loop_var: cloud_node_item
-    label: "{{ cloud_node_item.0.name }} - {{ cloud_node_item.1.name }}"
+    label: "{{ cloud_node_item.0 }} ({{ cloud_node_item_dns.name }}) - {{ cloud_node_item.1.name }}"
   when: >-
-    (cloud_node_dns_dict[cloud_node_item.0.name] is defined) and
-    ((cloud_node_dns_dict[cloud_node_item.0.name].type | default('')) != '')
-  tags: ["print_action"]
-
-- name: >-
-    {{ cloud_node_title }} - destroy the main dns records
-    that points to the instance when in the dmz layer
-  include_role: 
-    name: "cloud_dns"
-  vars: 
-    cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
-    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item.0.name].type }}"
-    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item.0.name].credentials }}"
-    cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
-    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item.0.name].zone }}"
-    cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
-    cloud_dns_record: "{{ cloud_node_item.0.record }}"
-    cloud_dns_value: ""
-    cloud_dns_state: "absent"
-  loop: >-
-    {{ 
-    (cloud_node_node.dns | default([])) | list 
-    | product([
-    { 'name': 'ipv4', 'record_type': 'A' },
-    { 'name': 'ipv6', 'record_type': 'AAAA' }
-    ]) | list 
-    }}
-  loop_control:
-    loop_var: cloud_node_item
-    label: "{{ cloud_node_item.0.name }} - {{ cloud_node_item.1 }}"
-  when: >-
-    (cloud_node_shutdown | default(false) | bool) 
-    and 
+    (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
+    ((cloud_node_dns_dict[cloud_node_item_dns.name].type | default('')) != '') and 
+    (
+    ((cloud_dns_value | default('')) != '') or
+    (not (cloud_node_shutdown | default(false) | bool)) or
     (cloud_node_allow_destroy_dns | default(false) | bool)
+    )
   tags: ["print_action"]

@@ -1,0 +1,25 @@
+- set_fact:
+    params_mixer_other_params: {}
+  tags: ["no_print"]
+    
+- set_fact:
+    params_mixer_other_params: >-
+      {{ 
+      params_mixer_other_params | 
+      combine({ 
+      params_mixer_item.key: 
+      params_mixer_params_dict[params_mixer_item.value] }) 
+      }}
+  loop: "{{ params_mixer_other_params_names | default({}) | dict2items }}"
+  loop_control:
+    loop_var: params_mixer_item
+    label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
+  tags: ["no_print"]
+
+- set_fact:
+    params_mixer_params: >-
+      {{ 
+      params_mixer_other_params | default({}) | 
+      combine(params_mixer_main_params | default({}), recursive=True) 
+      }}
+  tags: ["no_print"]

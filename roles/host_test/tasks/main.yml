@@ -1,3 +1,28 @@
+
+- name: "{{ host_test_title }}"
+  include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ host_test_node.params | default({}) }}"
+    params_mixer_other_params_names: "{{ host_test_node.other_params | default({}) }}"
+    params_mixer_params_dict: "{{ host_test_node_params_dict }}"
+  tags: ["no_print"]    
+
+- name: "{{ host_test_title }}"
+  set_fact:
+    host_test_vars: "{{ params_mixer_params.host_test }}"
+  tags: ["no_print"]
+
+- name: "{{ host_test_title }}"
+  set_fact:
+    host_test_log_file: "{{ host_test_vars.log_file }}"
+    host_test_setup_last_line: "{{ host_test_vars.setup_last_line }}"
+    host_test_initial_connection_timeout: >-
+      {{ host_test_vars.initial_connection_timeout }}
+    host_test_setup_finished_timeout: >-
+      {{ host_test_vars.setup_finished_timeout }}
+  tags: ["no_print"]
+
 - name: >
     {{ host_test_title }} - Wait {{ host_test_initial_connection_timeout }}
     seconds for target connection to become reachable/usable
@@ -30,7 +55,8 @@
   register: host_test_last_line
   changed_when: False
 
-- set_fact: host_test_last_line="{{ host_test_last_line.stdout }}"
+- name: "{{ host_test_title }}"
+  set_fact: host_test_last_line="{{ host_test_last_line.stdout }}"
   tags: ["no_print"]
 
 - debug: msg="last_line='{{ host_test_last_line }}'"

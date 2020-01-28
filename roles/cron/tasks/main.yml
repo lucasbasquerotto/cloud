@@ -1,12 +1,26 @@
+
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ cron_node.params | default({}) }}"
+    params_mixer_other_params_names: "{{ cron_node.other_params | default({}) }}"
+    params_mixer_params_dict: "{{ cron_node_params_dict }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cron_node_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
 - name: "{{ cron_title }}"
   include_tasks: "cron.yml"
   vars:
-    cron_inner_title: "cron - {{ cron_item.user }} - {{ cron_item.src_file }}"
-    cron_src_file: "{{ cron_env_dir }}/{{ cron_item.src_file }}"
-    cron_become: "{{ cron_item.user == 'root' }}"
-    cron_dest_dir: "{{ cron_item.dest_dir }}"
-    cron_user: "{{ cron_item.user }}"
+    cron_item_data: "{{ cron_node_params.cron_dict[cron_item] }}"
+    cron_inner_title: "cron - {{ cron_item_data.user }} - {{ cron_item_data.src_file }}"
+    cron_src_file: "{{ cron_env_dir }}/{{ cron_item_data.src_file }}"
+    cron_become: "{{ cron_item_data.user == 'root' }}"
+    cron_dest_dir: "{{ cron_item_data.dest_dir }}"
+    cron_user: "{{ cron_item_data.user }}"
     cron_inner_start: "{{ cron_start }}"
-  loop: "{{ cron_node.cron | default([]) | list }}"
+  loop: "{{ cron_node_params.cron | default([]) | list }}"
   loop_control:
     loop_var: cron_item

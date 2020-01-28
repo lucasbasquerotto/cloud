@@ -34,7 +34,7 @@
       resource_id: "{{ cloud_node_inner_droplet.id }}"
       name: "{{ cloud_node_inner_item }}"
       state: "present"
-    loop: "{{ cloud_node_inner_tags }}"
+    loop: "{{ cloud_node_inner_params.digital_ocean_tags }}"
     loop_control:
       loop_var: cloud_node_inner_item
       label: "{{ cloud_node_item_name }} - {{ cloud_node_inner_item }}"

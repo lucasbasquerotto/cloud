@@ -113,10 +113,7 @@
       cloud_node_node: "{{ env.nodes[main_item] }}"
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
-      cloud_node_node_params: >-
-        {{ env.node_params[cloud_node_node.params] }}
-      cloud_node_instance_params: >-
-        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_node_params_dict: "{{ env.node_params }}"
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
@@ -155,16 +152,7 @@
     vars: 
       host_test_title: "{{ inventory_hostname }}"
       host_test_node: "{{ env.nodes[instance_type] }}"
-      host_test_node_params: "{{ env.node_params[host_test_node.params] }}"
-      host_test_instance_params: >-
-        {{ env.instance_params[host_test_node_params.params] }}
-      host_test_vars: "{{ host_test_instance_params.host_test }}"
-      host_test_log_file: "{{ host_test_vars.log_file }}"
-      host_test_setup_last_line: "{{ host_test_vars.setup_last_line }}"
-      host_test_initial_connection_timeout: >-
-        {{ host_test_vars.initial_connection_timeout }}
-      host_test_setup_finished_timeout: >-
-        {{ host_test_vars.setup_finished_timeout }}
+      host_test_node_params_dict: "{{ env.node_params }}"
     when: (((env_node | default('')) == '') or (env_node == instance_type))
 
 ###############################################################################
@@ -223,6 +211,7 @@
       cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
       cloud_prepare_node_credentials: >-
         {{ env.credentials[cloud_prepare_node.credentials] }}
+      cloud_prepare_node_params_dict: "{{ env.node_params }}"
       cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_node.cloud] }}"
       cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
@@ -330,7 +319,9 @@
       name: "cron"
     vars:
       cron_title: "cron - {{ main_item }}"
+      cron_node_name: "{{ main_item }}"
       cron_node: "{{ env.nodes[main_item] }}"
+      cron_node_params_dict: "{{ env.nodes_params }}"
       cron_env_dir: "{{ env_dir }}"
       cron_start: "true"
       cron_cloud: "{{ env.clouds[cron_node.cloud] }}"
@@ -426,10 +417,7 @@
       cloud_node_node: "{{ env.nodes[main_item] }}"
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
-      cloud_node_node_params: >-
-        {{ env.node_params[cloud_node_node.params] }}
-      cloud_node_instance_params: >-
-        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_node_params_dict: "{{ env.node_params }}"
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
@@ -472,10 +460,7 @@
       cloud_node_node: "{{ env.nodes[main_item] }}"
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
-      cloud_node_node_params: >-
-        {{ env.node_params[cloud_node_node.params] }}
-      cloud_node_instance_params: >-
-        {{ env.instance_params[cloud_node_node_params.params] }}
+      cloud_node_node_params_dict: "{{ env.node_params }}"
       cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
