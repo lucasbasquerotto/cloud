@@ -428,7 +428,7 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
-      cloud_node_allow_destroy_dns: "{{ env.destroy.node_dns | bool }}"
+      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -471,12 +471,12 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
-      cloud_node_allow_destroy_dns: "{{ env.destroy.node_dns | bool }}"
+      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
     when: >-
-      (main_item in (env.destroy.nodes | default([])))
+      (main_item in (env.destroy[env.ctx].nodes | default([])))
       and 
       (not (cloud_node_node.external | default(false) | bool))
 
@@ -490,7 +490,7 @@
     vars:
       main_bucket: "{{ env.buckets[main_item] }}"
       main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-    loop: "{{ (env.destroy.buckets | default([])) }}"
+    loop: "{{ (env.destroy[env.ctx].buckets | default([])) }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item }}"
@@ -512,7 +512,7 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_item.type }}"
-    when: main_item in (env.destroy.dns | default([]))
+    when: main_item in (env.destroy[env.ctx].dns | default([]))
 
   - include_role: 
       name: "cloud_main"
@@ -528,6 +528,6 @@
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
       loop_var: main_item
-    when: main_item in (env.destroy.clouds | default([]))
+    when: main_item in (env.destroy[env.ctx].clouds | default([]))
 
 ###############################################################################
