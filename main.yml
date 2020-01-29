@@ -428,7 +428,7 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
-      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | bool }}"
+      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | default(false) | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -471,7 +471,7 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
-      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | bool }}"
+      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | default(false) | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
