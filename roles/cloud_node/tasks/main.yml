@@ -89,7 +89,7 @@
 - set_fact:
     cloud_node_cloud_instances: []
     cloud_node_instance_count: "{{ cloud_node_node.amount }}"
-    cloud_node_instance_max: "{{ cloud_node_node.amount_to_check }}"
+    cloud_node_instance_max: "{{ cloud_node_node.max_amount | default(cloud_node_node.amount) }}"
   tags: ["no_print"]
 
 - set_fact:
