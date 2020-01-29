@@ -1,5 +1,6 @@
 
-- include_role:
+- name: "{{ cron_title }}"
+  include_role:
     name: "params_mixer"
   vars:
     params_mixer_main_params: "{{ cron_node.params | default({}) }}"
@@ -7,7 +8,8 @@
     params_mixer_params_dict: "{{ cron_node_params_dict }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cron_title }}"
+  set_fact:
     cron_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
@@ -15,7 +17,7 @@
   include_tasks: "cron.yml"
   vars:
     cron_item_data: "{{ cron_node_params.cron_dict[cron_item] }}"
-    cron_inner_title: "cron - {{ cron_item_data.user }} - {{ cron_item_data.src_file }}"
+    cron_inner_title: "{{ cron_title }} - {{ cron_item_data.user }} - {{ cron_item_data.src_file }}"
     cron_src_file: "{{ cron_env_dir }}/{{ cron_item_data.src_file }}"
     cron_become: "{{ cron_item_data.user == 'root' }}"
     cron_dest_dir: "{{ cron_item_data.dest_dir }}"
