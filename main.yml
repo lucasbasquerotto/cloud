@@ -16,7 +16,7 @@
   - include_role: 
       name: "cloud_main"
     vars: 
-      cloud_main_title: "[prepare] cloud[{{ main_item }}]"
+      cloud_main_title: "{{ env_title }} - [prepare] cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
       cloud_main_credentials: >-
@@ -45,7 +45,7 @@
       name: "cloud_dns"
     vars: 
       cloud_dns_title: >-
-        create the static dns records - 
+        {{ env_title }} - create the static dns records - 
         dns[{{ main_item.type }}] - {{ main_item.record }}
       cloud_dns_type: "{{ main_item.type }}"
       cloud_dns_credentials: >-
@@ -73,7 +73,7 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - name: "create the buckets"
+  - name: "{{ env_title }} - create the buckets"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
@@ -106,7 +106,7 @@
       name: "cloud_node"
     vars: 
       cloud_node_title: >-
-        cloud - instances - node[{{ main_item }}] - 
+        {{ env_title }} - cloud - nodes - node[{{ main_item }}] - 
         cloud[{{ cloud_node_node.cloud }}]
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
@@ -150,7 +150,7 @@
   - include_role: 
       name: "host_test"
     vars: 
-      host_test_title: "{{ inventory_hostname }}"
+      host_test_title: "{{ env_title }} - {{ inventory_hostname }}"
       host_test_node: "{{ env.nodes[instance_type] }}"
       host_test_node_params_dict: "{{ env.node_params }}"
     when: (((env_node | default('')) == '') or (env_node == instance_type))
@@ -174,7 +174,7 @@
   - include_role: 
       name: "cloud_repos"
     vars:
-      cloud_repos_title: "cloud repositories (local)"
+      cloud_repos_title: "{{ env_title }} - cloud repositories (local)"
       cloud_repos_nodes: "{{ env.main[env.ctx].nodes | default([]) }}"
       cloud_repos_nodes_dict: "{{ env.nodes | default({}) }}"
       cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
@@ -204,7 +204,7 @@
   - include_role: 
       name: "cloud_prepare"
     vars:
-      cloud_prepare_title: "node[{{ main_item }}]"
+      cloud_prepare_title: "{{ env_title }} - node[{{ main_item }}]"
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
@@ -267,7 +267,7 @@
   - include_role: 
       name: "cloud_run"
     vars:
-      cloud_run_title: "node[{{ main_item }}]"
+      cloud_run_title: "{{ env_title }} - node[{{ main_item }}]"
       cloud_run_env_name: "{{ env.name }}"
       cloud_run_node_id: "{{ main_item }}"
       cloud_run_node: "{{ env.nodes[main_item] }}"
@@ -318,10 +318,10 @@
   - include_role: 
       name: "cron"
     vars:
-      cron_title: "cron - {{ main_item }}"
+      cron_title: "{{ env_title }} - cron - {{ main_item }}"
       cron_node_name: "{{ main_item }}"
       cron_node: "{{ env.nodes[main_item] }}"
-      cron_node_params_dict: "{{ env.nodes_params }}"
+      cron_node_params_dict: "{{ env.node_params }}"
       cron_env_dir: "{{ env_dir }}"
       cron_start: "true"
       cron_cloud: "{{ env.clouds[cron_node.cloud] }}"
@@ -364,7 +364,7 @@
       name: "long_run"
     vars:
       long_run_title: >-
-        compose exec - 
+        {{ env_title }} - compose exec - 
         {{ env_exec_cmd | b64decode | trim 
         | regex_replace('\n', ' .. ') 
         | truncate(30, False, '...', 10) }}
@@ -411,7 +411,7 @@
       name: "cloud_node"
     vars: 
       cloud_node_title: >-
-        cloud - destroy temporary instances - {{ main_item }}
+        {{ env_title }} - cloud - destroy temporary instances - {{ main_item }}
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
       cloud_node_node: "{{ env.nodes[main_item] }}"
@@ -454,7 +454,7 @@
   - include_role: 
       name: "cloud_node"
     vars: 
-      cloud_node_title: "[destroy] cloud - destroy instances - {{ main_item }}"
+      cloud_node_title: "{{ env_title }} - [destroy] cloud - destroy instances - {{ main_item }}"
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_id: "{{ main_item }}"
       cloud_node_node: "{{ env.nodes[main_item] }}"
@@ -499,7 +499,7 @@
       name: "cloud_dns"
     vars: 
       cloud_dns_title: >-
-        [destroy] dns - {{ main_item.type }} - {{ main_item.record }}
+        {{ env_title }} - [destroy] dns - {{ main_item.type }} - {{ main_item.record }}
       cloud_dns_type: "{{ main_item.type }}"
       cloud_dns_credentials: >-
         {{ env.credentials[env.dns[main_item].credentials] }}
@@ -517,7 +517,7 @@
   - include_role: 
       name: "cloud_main"
     vars: 
-      cloud_main_title: "[destroy] cloud[{{ main_item }}]"
+      cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
       cloud_main_credentials: >-
