@@ -5,34 +5,23 @@
   vars:
     params_mixer_main_params: "{{ cloud_node_node.params | default({}) }}"
     params_mixer_other_params_names: "{{ cloud_node_node.other_params | default({}) }}"
-    params_mixer_params_dict: "{{ cloud_node_node_params_dict }}"
+    params_mixer_shared_params_name: "{{ cloud_node_node.shared_params | default('') }}"
+    params_mixer_shared_params_names_dict: "{{ cloud_node_node_shared_params_dict | default({}) }}"
+    params_mixer_params_dict: "{{ cloud_node_node_params_dict | default({}) }}"
   tags: ["no_print"]
 
 - set_fact:
     cloud_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
-    
-# - set_fact:
-#     cloud_node_other_params: >-
-#       {{ 
-#       cloud_node_other_params | 
-#       combine({ 
-#       cloud_node_item.key: 
-#       cloud_node_node_params_dict[cloud_node_item.value] }) 
-#       }}
-#   loop: "{{ cloud_node_node.other_params | default({}) | dict2items }}"
-#   loop_control:
-#     loop_var: cloud_node_item
-#     label: "{{ cloud_node_item.key }} ({{ cloud_node_item.value }})"
-#   tags: ["no_print"]
 
-# - set_fact:
-#     cloud_node_params: >-
-#       {{ 
-#       cloud_node_other_params | default({}) | 
-#       combine(cloud_node_node.params | default({}), recursive=True) 
-#       }}
-#   tags: ["no_print"]
+- set_fact:
+    cloud_node_params_instance: >-
+      {{ cloud_node_params.instance[cloud_node_cloud.type][cloud_node_params.instance_type] }}
+    cloud_node_params_size: >-
+      {{ cloud_node_params.instance[cloud_node_cloud.type][cloud_node_params.size_type] }}
+    cloud_node_params_region: >-
+      {{ cloud_node_params.instance[cloud_node_cloud.type][cloud_node_params.region_type] }}
+  tags: ["no_print"]
 
 ### Cloud Node Other Vars ###
 
@@ -66,9 +55,9 @@
       host_ssh_public_keys: "{{ cloud_node_host_ssh_public_keys }}"
     cloud_node_user_data_file: >-
       {{ 
-      ((cloud_node_params.instance.user_data_file | default('')) != '' )
+      ((cloud_node_params_instance.user_data_file | default('')) != '' )
       | ternary(
-      cloud_node_env_dir + '/' + cloud_node_params.instance.user_data_file,
+      cloud_node_env_dir + '/' + cloud_node_params_instance.user_data_file,
       ''
       )
       }}
@@ -98,9 +87,9 @@
       [{ 'name':
       cloud_node_env_name + '-' +
       cloud_node_node_id + '-' +
-      cloud_node_params.region.name + '-' +
+      cloud_node_params_region.name + '-' +
       ('%04d' | format(cloud_node_item)),
-      'region_id': cloud_node_params.region.name,
+      'region_id': cloud_node_params_region.name,
       'create':
       (((cloud_node_item | int) <= (cloud_node_instance_count | int))
       and not (cloud_node_shutdown | default(false) | bool)) | 
@@ -136,9 +125,9 @@
     cloud_node_inner_host_user: "{{ cloud_node_node_credentials.host_user }}"
     cloud_node_inner_host_pass: "{{ cloud_node_node_credentials.host_pass }}"
     cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
-    cloud_node_inner_size_id: "{{ cloud_node_params.size.name }}"
-    cloud_node_inner_image_id: "{{ cloud_node_params.instance.image }}"
-    cloud_node_inner_ipv6: "{{ cloud_node_params.instance.ipv6 }}"
+    cloud_node_inner_size_id: "{{ cloud_node_params_size.name }}"
+    cloud_node_inner_image_id: "{{ cloud_node_params_instance.image }}"
+    cloud_node_inner_ipv6: "{{ cloud_node_params_instance.ipv6 }}"
     cloud_node_inner_wait_timeout: "{{ cloud_node_wait_timeout | default(500) }}"
     cloud_node_inner_create: "{{ cloud_node_item.create }}"
     cloud_node_inner_params: "{{ cloud_node_params }}"

@@ -1,27 +1,15 @@
-- set_fact:
-    cloud_main_other_params: {}
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ cloud_main_cloud.params | default({}) }}"
+    params_mixer_other_params_names: "{{ cloud_main_cloud.other_params | default({}) }}"
+    params_mixer_shared_params_name: "{{ cloud_main_cloud.shared_params | default('') }}"
+    params_mixer_shared_params_names_dict: "{{ cloud_main_cloud_shared_params_dict | default({}) }}"
+    params_mixer_params_dict: "{{ cloud_main_cloud_params_dict | default({}) }}"
   tags: ["no_print"]
 
 - set_fact:
-    cloud_main_other_params: >-
-      {{ 
-      cloud_main_other_params | 
-      combine({ 
-      cloud_main_item.key: 
-      cloud_main_cloud_params_dict[cloud_main_item.value] }) 
-      }}
-  loop: "{{ cloud_main_cloud.other_params | default({}) | dict2items }}"
-  loop_control:
-    loop_var: cloud_main_item
-    label: "{{ cloud_main_item.key }} ({{ cloud_main_item.value }})"
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_main_params: >-
-      {{ 
-      cloud_main_other_params | 
-      combine(cloud_main_cloud.params | default({}), recursive=True) 
-      }}
+    cloud_main_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_main_title }} - prepare the cloud"
