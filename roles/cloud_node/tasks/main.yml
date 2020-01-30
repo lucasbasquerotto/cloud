@@ -16,11 +16,11 @@
 
 - set_fact:
     cloud_node_params_instance: >-
-      {{ cloud_node_params.instance[cloud_node_cloud.type][cloud_node_params.instance_type] }}
-    cloud_node_params_size: >-
-      {{ cloud_node_params.instance[cloud_node_cloud.type][cloud_node_params.size_type] }}
+      {{ cloud_node_params.cloud_instance_dict[cloud_node_cloud.type][cloud_node_params.instance_type] }}
     cloud_node_params_region: >-
-      {{ cloud_node_params.instance[cloud_node_cloud.type][cloud_node_params.region_type] }}
+      {{ cloud_node_params.cloud_region_dict[cloud_node_cloud.type][cloud_node_params.region_type] }}
+    cloud_node_params_size: >-
+      {{ cloud_node_params.cloud_size_dict[cloud_node_cloud.type][cloud_node_params.size_type] }}
   tags: ["no_print"]
 
 ### Cloud Node Other Vars ###
