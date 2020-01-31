@@ -99,14 +99,29 @@
     cloud_prepare_inner_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
+- set_fact:
+    cloud_prepare_node_size: >-
+      {{ 
+      cloud_prepare_inner_node_params.cloud_size_dict[
+      cloud_prepare_cloud.type][
+      cloud_prepare_inner_node_params.size_type] 
+      }}
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_inner_node_pod_params:
+      size: "{{ cloud_prepare_node_size }}"
+      node_pod_params: "{{ cloud_prepare_inner_node_params.node_pod_params }}"
+  tags: ["no_print"]
+
 ### Generate a file with the environment variables and state (for idempotence) ###
 
 - set_fact:
     cloud_prepare_vars_full:
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
+      node: "{{ cloud_prepare_inner_node_pod_params }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
-      node_params: "{{ cloud_prepare_inner_node_params }}"
   tags: ["no_print"]
     
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
