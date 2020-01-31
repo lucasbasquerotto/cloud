@@ -111,7 +111,7 @@
 - set_fact:
     cloud_prepare_inner_node_pod_params:
       size: "{{ cloud_prepare_node_size }}"
-      node_pod_params: "{{ cloud_prepare_inner_node_params.node_pod_params }}"
+      node_pod_params: "{{ cloud_prepare_inner_node_params | default({}) }}"
   tags: ["no_print"]
 
 ### Generate a file with the environment variables and state (for idempotence) ###
