@@ -99,6 +99,38 @@
     cloud_prepare_inner_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
+- include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: >-
+      {{ 
+      cloud_prepare_inner_node_params.pod_override_params[cloud_prepare_pod_id] 
+      | default({}) 
+      }}
+    params_mixer_other_params_names: >-
+      {{ 
+      cloud_prepare_inner_node_params.pod_override_other_params[cloud_prepare_pod_id] 
+      | default({}) 
+      }}
+    params_mixer_shared_params_name: >-
+      {{ 
+      cloud_prepare_inner_node_params.pod_override_shared_params[cloud_prepare_pod_id] 
+      | default('') 
+      }}
+    params_mixer_shared_params_names_dict: >-
+      {{ cloud_prepare_pod_shared_params_dict | default({}) }}
+    params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_inner_node_pod_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_inner_params: >-
+      {{ cloud_prepare_inner_params | combine(cloud_prepare_inner_node_pod_params) }}
+  tags: ["no_print"]
+
 - set_fact:
     cloud_prepare_node_size: >-
       {{ 
