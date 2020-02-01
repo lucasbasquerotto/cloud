@@ -136,7 +136,7 @@
       {{ 
       cloud_prepare_inner_node_params.cloud_size_dict[
       cloud_prepare_cloud.type][
-      cloud_prepare_inner_node_params.size_type] 
+      cloud_prepare_inner_node_params.size] 
       }}
   tags: ["no_print"]
 
