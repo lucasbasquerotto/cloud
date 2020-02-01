@@ -209,6 +209,7 @@
     vars:
       cloud_prepare_title: "{{ env_title }} - node[{{ main_item }}]"
       cloud_prepare_env_name: "{{ env.name }}"
+      cloud_prepare_env_local_repo: "{{ env_local_repo }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
       cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
