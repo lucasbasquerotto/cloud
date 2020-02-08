@@ -243,6 +243,7 @@
         (ansible_connection == 'local') | 
         ternary(env_local_data_dir_rel | default(''), '') 
         }}
+      cloud_prepare_meta: "{{ env.meta_params[env.main[env.ctx].meta] | default({}) }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
