@@ -276,7 +276,8 @@
 
 <% set var_run_stage = params.run_stages[var_run_stage_name] %>
 <% set var_all_nodes_and_pods = var_run_stage.all_nodes_and_pods | default(false, true) | bool %>
-<% set var_node_keys = var_main_params.nodes | default([]) %>
+<% set var_main_all_nodes = var_main_params.nodes | default([]) %>
+<% set var_node_keys = var_main_all_nodes %>
 
 <% if not var_all_nodes_and_pods %>
   <% set var_node_keys = var_run_stage.nodes | default([]) %>
@@ -305,10 +306,18 @@
       <% set var_all_pods = var_node_params.all_pods | default(false, true) | bool %>
     <% endif %>
 
+    <% if var_node_name not in var_main_all_nodes %>
+      <% set error = {} %>
+      << error['error.run_stage[' + var_run_stage_name + 
+        '].node[' + var_node_name + 
+        '].node_not_in_ctx'] >>
+    <% endif %>
+
     <% set var_node = params.nodes[var_node_name] | default({}) %>
     <% set var_cloud = params.clouds[var_node.cloud] | default({}) %>
     <% set var_node_tasks_group_name = var_node.tasks_group | default('') %>
-    <% set var_pod_keys = var_node.pods | default([var_node.main_pod]) | default([]) %>
+    <% set var_node_all_pods = var_node.pods | default([var_node.main_pod]) | default([]) %>
+    <% set var_pod_keys = var_node_all_pods %>
 
     <% if not var_all_pods %>
       <% set var_pod_keys = var_node_params.pods | default([]) %>
@@ -322,10 +331,10 @@
 
       <% if var_task.type == '' %>
         <% set error = {} %>
-        << error['error.run_stage' + var_run_stage_name + 
-          '.node' + var_node_name + 
-          '.task.' + var_task_name + 
-          '.type.empty' + ''] >>
+        << error['error.run_stage[' + var_run_stage_name + 
+          '].node[' + var_node_name + 
+          '].task[' + var_task_name + 
+          '].type.empty' + ''] >>
       <% elif var_task.type == 'shell' %>
 
         <% set var_run_shell_params = {
@@ -345,10 +354,10 @@
 
       <% elif var_task.type != 'skip' %>
         <% set error = {} %>
-        << error['error.run_stage' + var_run_stage_name + 
-          '.node' + var_node_name + 
-          '.task.' + var_task_name + 
-          '.type.invalid.' + var_task.type] >>
+        << error['error.run_stage[' + var_run_stage_name + 
+          '].node[' + var_node_name + 
+          '].task[' + var_task_name + 
+          '].type.invalid[' + var_task.type + ']'] >>
       <% endif %>
     <% endif %>
 
@@ -360,6 +369,14 @@
         <% set var_pod_params = var_run_stage_pod_params_dict[var_pod_key] %>
         <% set var_pod_name = var_pod_params.name %>
       <% endif %>
+
+      <% if var_pod_name not in var_node_all_pods %>
+        <% set error = {} %>
+        << error['error.run_stage[' + var_run_stage_name + 
+          '].node[' + var_node_name + 
+          '].pod[' + var_pod_name + 
+          '].pod_not_in_node'] >>
+      <% endif %>      
 
       <% set var_pod = params.pods[var_pod_name] | default({}) %>
       <% set var_pod_tasks_group_name = var_pod.tasks_group | default('') %>
@@ -377,11 +394,11 @@
 
         <% if var_task.type == '' %>
           <% set error = {} %>
-          << error['error.run_stage' + var_run_stage_name + 
-            '.node' + var_node_name + 
-            '.pod' + var_pod_name + 
-            '.task.' + var_task_name + 
-            '.type.empty' + ''] >>
+          << error['error.run_stage[' + var_run_stage_name + 
+            '].node[' + var_node_name + 
+            '].pod[' + var_pod_name + 
+            '].task[' + var_task_name + 
+            '].type.empty' + ''] >>
         <% elif var_task.type == 'shell' %>
 
           <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
@@ -408,11 +425,11 @@
 
         <% elif var_task.type != 'skip' %>
           <% set error = {} %>
-          << error['error.run_stage' + var_run_stage_name + 
-            '.node' + var_node_name + 
-            '.pod' + var_pod_name + 
-            '.task.' + var_task_name + 
-            '.type.invalid.' + var_task.type] >>
+          << error['error.run_stage[' + var_run_stage_name + 
+            '].node[' + var_node_name + 
+            '].pod[' + var_pod_name + 
+            '].task[' + var_task_name + 
+            '].type.invalid.' + var_task.type] >>
         <% endif %>
       <% endif %>
     <% endfor %>
