@@ -298,12 +298,23 @@
   changed_when: false
   tags: ["print_action"]
 
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    template_regex: "^\\s*$"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_transfer_title }}"
+  set_fact:
+    template_regex: "\\n\\s*$"
+  when: cloud_prepare_meta.template_no_empty_lines | default(false) | bool
+  tags: ["no_print"]
+
 - name: >-
     {{ cloud_prepare_transfer_title }} -
     remove excess of blank lines of files created from the templates
   replace:
     path: "{{ cloud_prepare_repo_location }}/tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
-    regexp: "(^\\s*$)"
+    regexp: "{{ template_regex }}"
     replace: ""
   loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
   loop_control:

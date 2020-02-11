@@ -432,7 +432,7 @@
       long_run_cmd: "{{ main_item.task.cmd }}"
       long_run_poll: 2
     loop:
-      <% for main_run_item in ns_run.list %>- filler: ''
+      <% for main_run_item in ns_run.list %>- filler: ""
         <% 
           for main_run_subitem in main_run_item | dict2items | sort(attribute='key') | list
         %><< main_run_subitem.key >>: << main_run_subitem.value | to_json >>
