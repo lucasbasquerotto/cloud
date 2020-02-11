@@ -272,7 +272,7 @@
 
 <% for var_run_stage_name in var_run_stages %>
 
-<% set var_run_shell_params_list = [] %>
+<% set ns_run = namespace(list=[]) %>
 
 <% set var_run_stage = params.run_stages[var_run_stage_name] %>
 <% set var_all_nodes_and_pods = var_run_stage.all_nodes_and_pods | default(false, true) | bool %>
@@ -333,15 +333,15 @@
             var_run_stage_name + '] - task[' + var_task_tag + ']',
           'task': var_task,
           'output_path': var_node.base_dir + '/.node/data/log',
-          'output_file':'run.' + var_run_stage_name + '.' + var_task_tag '.log',
+          'output_file': 'run.' + var_run_stage_name + '.' + var_task_tag + '.log',
           'tmp_path': var_node.base_dir + '/.node/data/tmp',
-          'tmp_file':'run.' + var_run_stage_name + '.' + var_task_tag '.log',
+          'tmp_file': 'run.' + var_run_stage_name + '.' + var_task_tag + '.log',
           'chdir': var_node.base_dir,
           'node_name': var_node_name,
           'pod_name': ''
         } %>  
 
-        <% set var_run_shell_params_list = var_run_shell_params_list + [var_run_shell_params] %>      
+        <% set ns_run.list = ns_run.list + [var_run_shell_params] %> 
 
       <% elif var_task.type != 'skip' %>
         <% set error = {} %>
@@ -396,15 +396,15 @@
               '] - stage[' + var_run_stage_name + '] - task[' + var_task_tag + ']',
             'task': var_task,
             'output_path': var_pod_base_dir + '/data/log/run',
-            'output_file': var_run_stage_name + '.' + var_task_tag '.log',
+            'output_file': var_run_stage_name + '.' + var_task_tag + '.log',
             'tmp_path': var_pod_base_dir + '/data/tmp/run',
-            'tmp_file': var_run_stage_name + '.' + var_task_tag '.log',
+            'tmp_file': var_run_stage_name + '.' + var_task_tag + '.log',
             'chdir': var_pod_repo_location,
             'node_name': var_node_name,
             'pod_name': var_pod_name
           } %>  
 
-          <% set var_run_shell_params_list = var_run_shell_params_list + [var_run_shell_params] %>    
+          <% set ns_run.list = ns_run.list + [var_run_shell_params] %>    
 
         <% elif var_task.type != 'skip' %>
           <% set error = {} %>
@@ -431,7 +431,13 @@
       long_run_path: "{{ main_item.chdir }}"
       long_run_cmd: "{{ main_item.task.cmd }}"
       long_run_poll: 2
-    loop: << var_run_shell_params_list | to_json >>
+    loop:
+      <% for main_run_item in ns_run.list %>- filler: ''
+        <% 
+          for main_run_subitem in main_run_item | dict2items | sort(attribute='key') | list
+        %><< main_run_subitem.key >>: << main_run_subitem.value | to_json >>
+        <% endfor %> 
+      <% endfor %> 
     loop_control:
       loop_var: main_item
       label: "{{ main_item.title }}"
@@ -441,6 +447,8 @@
       (((env_node | default('')) == '') or (env_node == main_item.node_name))
       and
       (((env_pod | default('')) == '') or (env_pod == main_item.pod_name))
+
+<% endfor %>
 
   # - include_role: 
   #     name: "cloud_run"
@@ -464,7 +472,7 @@
   #       tmp/env/cloud.run.vars_full.yml
   #     cloud_run_force: "{{ env_force | default(false, true) }}"
   #     cloud_run_local_pod_dict: "{{ env_local_pod_dict }}"
-  #   loop: "{{ << var_node_names | to_json >> | default([]) | list }}"
+  #   loop: "{{ nodes | default([]) | list }}"
   #   loop_control:
   #     loop_var: main_item
   #   when: >-
@@ -477,8 +485,6 @@
   #     or
   #     ((ansible_connection != 'local') and (cloud_run_cloud.type != 'local'))
   #     )
-
-<% endfor %>
 
 ###############################################################################
 ##################          DEFINE THE CRON JOBS           ####################
