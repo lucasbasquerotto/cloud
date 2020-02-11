@@ -2,8 +2,6 @@
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
-# << params.entrypoint >> #
-
 - name: Play 01.01 - Cloud - Main 
   hosts: main
   tags:
@@ -161,7 +159,7 @@
     when: (((env_node | default('')) == '') or (env_node == instance_type))
 
 ###############################################################################
-##################        PREPARE & START THE PODS         ####################
+######################        PREPARE THE PODS         ########################
 ###############################################################################
 
 - name: Play 02.01 - Prepare the Pods Repositories (Local)
@@ -261,9 +259,32 @@
       )
 
 ###############################################################################
+###########        RUN - MIGRATE THE DATA & START THE PODS         ############
+###############################################################################
 
-- name: Play 02.03 - Start the Pods
-  hosts: main,host
+<% set var_main_params = params.main[params.ctx] %>
+<% set var_all_nodes = var_main_params.nodes | default([]) %>
+<% set var_run_stages = var_main_params.run_stages | default([]) %>
+<% set var_run_stage_node_params_dict = params.run_stage_node_params | default({}) %>
+<% set var_run_stage_pod_params_dict = params.run_stage_pod_params | default({}) %>
+<% set var_tasks_group_dict = params.tasks_groups | default({}) %>
+<% set var_task_dict = params.tasks | default({}) %>
+
+<% for var_run_stage_name in var_run_stages %>
+
+<% set var_run_shell_params_list = [] %>
+
+<% set var_run_stage = params.run_stages[var_run_stage_name] %>
+<% set var_all_nodes_and_pods = var_run_stage.all_nodes_and_pods | default(false, true) | bool %>
+<% set var_node_keys = var_main_params.nodes | default([]) %>
+
+<% if not var_all_nodes_and_pods %>
+  <% set var_node_keys = var_run_stage.nodes | default([]) %>
+<% endif %>
+
+- name: Play 03.<< loop.index >> - Run (<< var_run_stage_name >>)
+  hosts: host
+  strategy: free
   tags:
   - init
   - pod
@@ -273,47 +294,197 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
+  <% for var_node_key in var_node_keys %>
+
+    <% if var_all_nodes_and_pods %>
+      <% set var_node_name = var_node_key %>
+      <% set var_all_pods = true | bool %>
+    <% else %>
+      <% set var_node_params = var_run_stage_node_params_dict[var_node_key] %>
+      <% set var_node_name = var_node_params.name %>
+      <% set var_all_pods = var_node_params.all_pods | default(false, true) | bool %>
+    <% endif %>
+
+    <% set var_node = params.nodes[var_node_name] | default({}) %>
+    <% set var_cloud = params.clouds[var_node.cloud] | default({}) %>
+    <% set var_node_tasks_group_name = var_node.tasks_group | default('') %>
+    <% set var_pod_keys = var_node.pods | default([var_node.main_pod]) | default([]) %>
+
+    <% if not var_all_pods %>
+      <% set var_pod_keys = var_node_params.pods | default([]) %>
+    <% endif %>
+
+    <% if (var_node_tasks_group_name | default('')) != '' %>
+      <% set var_task_tag = var_node_params.task_tag | default(var_run_stage.task_tag) %>
+      <% set var_tasks_group = var_tasks_group_dict[var_node_tasks_group_name] %>
+      <% set var_task_name = var_tasks_group[var_task_tag] %>
+      <% set var_task = var_task_dict[var_task_name] %>
+
+      <% if var_task.type == '' %>
+        <% set error = {} %>
+        << error['error.run_stage' + var_run_stage_name + 
+          '.node' + var_node_name + 
+          '.task.' + var_task_name + 
+          '.type.empty' + ''] >>
+      <% elif var_task.type == 'shell' %>
+
+        <% set var_run_shell_params = {
+          'title': 'node[' + var_node_name + '] - stage[' + 
+            var_run_stage_name + '] - task[' + var_task_tag + ']',
+          'task': var_task,
+          'output_path': var_node.base_dir + '/.node/data/log',
+          'output_file':'run.' + var_run_stage_name + '.' + var_task_tag '.log',
+          'tmp_path': var_node.base_dir + '/.node/data/tmp',
+          'tmp_file':'run.' + var_run_stage_name + '.' + var_task_tag '.log',
+          'chdir': var_node.base_dir,
+          'node_name': var_node_name,
+          'pod_name': ''
+        } %>  
+
+        <% set var_run_shell_params_list = var_run_shell_params_list + [var_run_shell_params] %>      
+
+      <% elif var_task.type != 'skip' %>
+        <% set error = {} %>
+        << error['error.run_stage' + var_run_stage_name + 
+          '.node' + var_node_name + 
+          '.task.' + var_task_name + 
+          '.type.invalid.' + var_task.type] >>
+      <% endif %>
+    <% endif %>
+
+    <% for var_pod_key in var_pod_keys %>
+
+      <% if var_all_pods %>
+        <% set var_pod_name = var_pod_key %>
+      <% else %>
+        <% set var_pod_params = var_run_stage_pod_params_dict[var_pod_key] %>
+        <% set var_pod_name = var_pod_params.name %>
+      <% endif %>
+
+      <% set var_pod = params.pods[var_pod_name] | default({}) %>
+      <% set var_pod_tasks_group_name = var_pod.tasks_group | default('') %>
+      <% set var_pod_tasks_group = var_pod.tasks_group | default({}) %>
+
+      <% set var_task_tag = var_pod_params.task_tag | 
+        default(var_node_params.task_tag) | 
+        default(var_run_stage.task_tag) 
+      %>
+
+      <% if (var_pod_tasks_group_name | default('')) != '' %>
+        <% set var_tasks_group = var_tasks_group_dict[var_pod_tasks_group_name] %>
+        <% set var_task_name = var_tasks_group[var_task_tag] %>
+        <% set var_task = var_task_dict[var_task_name] %>
+
+        <% if var_task.type == '' %>
+          <% set error = {} %>
+          << error['error.run_stage' + var_run_stage_name + 
+            '.node' + var_node_name + 
+            '.pod' + var_pod_name + 
+            '.task.' + var_task_name + 
+            '.type.empty' + ''] >>
+        <% elif var_task.type == 'shell' %>
+
+          <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
+
+          <% set var_pod_repo_location = (var_cloud.type == 'local') | ternary(
+            env_local_pod_dict.dir | default(var_pod_base_dir + '/main'),
+            var_pod_base_dir + '/main'
+          )%> 
+          
+          <% set var_run_shell_params = {
+            'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
+              '] - stage[' + var_run_stage_name + '] - task[' + var_task_tag + ']',
+            'task': var_task,
+            'output_path': var_pod_base_dir + '/data/log/run',
+            'output_file': var_run_stage_name + '.' + var_task_tag '.log',
+            'tmp_path': var_pod_base_dir + '/data/tmp/run',
+            'tmp_file': var_run_stage_name + '.' + var_task_tag '.log',
+            'chdir': var_pod_repo_location,
+            'node_name': var_node_name,
+            'pod_name': var_pod_name
+          } %>  
+
+          <% set var_run_shell_params_list = var_run_shell_params_list + [var_run_shell_params] %>    
+
+        <% elif var_task.type != 'skip' %>
+          <% set error = {} %>
+          << error['error.run_stage' + var_run_stage_name + 
+            '.node' + var_node_name + 
+            '.pod' + var_pod_name + 
+            '.task.' + var_task_name + 
+            '.type.invalid.' + var_task.type] >>
+        <% endif %>
+      <% endif %>
+    <% endfor %>
+  <% endfor %>
+
   - include_role: 
-      name: "cloud_run"
+      name: "long_run"
     vars:
-      cloud_run_title: "{{ env_title }} - node[{{ main_item }}]"
-      cloud_run_env_name: "{{ env.name }}"
-      cloud_run_node_id: "{{ main_item }}"
-      cloud_run_node: "{{ env.nodes[main_item] }}"
-      cloud_run_base_dir: "{{ cloud_run_node.base_dir }}"
-      cloud_run_node_credentials: >-
-        {{ env.credentials[cloud_run_node.credentials] }}
-      cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud] }}"
-      cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
-      cloud_run_pods_dict: "{{ env.pods }}"
-      cloud_run_params_dict: "{{ env.pod_params | default({}) }}"
-      cloud_run_env_pod: "{{ env_pod | default('', true) }}"
-      cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
-      cloud_run_env_vars_relative_file_src: >-
-        tmp/env/cloud.prepare.vars_full.yml
-      cloud_run_env_vars_relative_file_dest: >-
-        tmp/env/cloud.run.vars_full.yml
-      cloud_run_force: "{{ env_force | default(false, true) }}"
-      cloud_run_local_pod_dict: "{{ env_local_pod_dict }}"
-    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+      long_run_title: >-
+        {{ env_title }} - run - {{ main_item.title }}
+      long_run_become: "{{ main_item.task.root | default(false) }}"
+      long_run_output_path: "{{ main_item.output_path }}"
+      long_run_output_file:  "{{ main_item.output_file }}"
+      long_run_tmp_path:  "{{ main_item.tmp_path }}"
+      long_run_tmp_file:  "{{ main_item.tmp_file }}"
+      long_run_path: "{{ main_item.chdir }}"
+      long_run_cmd: "{{ main_item.task.cmd }}"
+      long_run_poll: 2
+    loop: << var_run_shell_params_list | to_json >>
     loop_control:
       loop_var: main_item
+      label: "{{ main_item.title }}"
     when: >-
-      ((ansible_connection == 'local') or (main_item == instance_type))
+      (main_item.node_name == instance_type)
       and
-      (((env_node | default('')) == '') or (env_node == main_item))
-      and 
-      (
-      ((ansible_connection == 'local') and (cloud_run_cloud.type == 'local'))
-      or
-      ((ansible_connection != 'local') and (cloud_run_cloud.type != 'local'))
-      )
+      (((env_node | default('')) == '') or (env_node == main_item.node_name))
+      and
+      (((env_pod | default('')) == '') or (env_pod == main_item.pod_name))
+
+  # - include_role: 
+  #     name: "cloud_run"
+  #   vars:
+  #     cloud_run_title: "{{ env_title }} - node[{{ main_item }}]"
+  #     cloud_run_env_name: "{{ env.name }}"
+  #     cloud_run_node_id: "{{ main_item }}"
+  #     cloud_run_node: "{{ env.nodes[main_item] }}"
+  #     cloud_run_base_dir: "{{ cloud_run_node.base_dir }}"
+  #     cloud_run_node_credentials: >-
+  #       {{ env.credentials[cloud_run_node.credentials] }}
+  #     cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud] }}"
+  #     cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
+  #     cloud_run_pods_dict: "{{ env.pods }}"
+  #     cloud_run_params_dict: "{{ env.pod_params | default({}) }}"
+  #     cloud_run_env_pod: "{{ env_pod | default('', true) }}"
+  #     cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
+  #     cloud_run_env_vars_relative_file_src: >-
+  #       tmp/env/cloud.prepare.vars_full.yml
+  #     cloud_run_env_vars_relative_file_dest: >-
+  #       tmp/env/cloud.run.vars_full.yml
+  #     cloud_run_force: "{{ env_force | default(false, true) }}"
+  #     cloud_run_local_pod_dict: "{{ env_local_pod_dict }}"
+  #   loop: "{{ << var_node_names | to_json >> | default([]) | list }}"
+  #   loop_control:
+  #     loop_var: main_item
+  #   when: >-
+  #     ((ansible_connection == 'local') or (main_item == instance_type))
+  #     and
+  #     (((env_node | default('')) == '') or (env_node == main_item))
+  #     and 
+  #     (
+  #     ((ansible_connection == 'local') and (cloud_run_cloud.type == 'local'))
+  #     or
+  #     ((ansible_connection != 'local') and (cloud_run_cloud.type != 'local'))
+  #     )
+
+<% endfor %>
 
 ###############################################################################
 ##################          DEFINE THE CRON JOBS           ####################
 ###############################################################################
 
-- name: Play 03 - Define the cron jobs
+- name: Play 04 - Define the cron jobs
   hosts: main,host
   tags:
   - init
@@ -354,7 +525,7 @@
 ##################       EXECUTE COMMANDS ON-THE-FLY       ####################
 ###############################################################################
 
-- name: Play 04 - Execute instruction on-the-fly
+- name: Play 05 - Execute instruction on-the-fly
   hosts: host
   tags:
   - never
@@ -363,12 +534,6 @@
   tasks:
   - include_tasks: "tasks/env.yml"
     tags: ["no_print"]
-
-  - debug:
-      var: env_exec_become
-
-  - debug:
-      var: env_node
 
   - include_role: 
       name: "long_run"
@@ -406,7 +571,7 @@
 ##################            DESTROY THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 05.01 - Delete Temporary Cloud Instances
+- name: Play 06.01 - Delete Temporary Cloud Instances
   hosts: main
   tags:
   - init
@@ -452,7 +617,7 @@
 
 ###############################################################################
 
-- name: Play 05.02 - Delete everything that was previously created
+- name: Play 06.02 - Delete everything that was previously created
   hosts: main
   tags:
   - never
