@@ -264,24 +264,198 @@
 
 <% set var_main_params = params.main[params.ctx] %>
 <% set var_all_nodes = var_main_params.nodes | default([]) %>
-<% set var_run_stages = var_main_params.run_stages | default([]) %>
-<% set var_run_stage_node_params_dict = params.run_stage_node_params | default({}) %>
-<% set var_run_stage_pod_params_dict = params.run_stage_pod_params | default({}) %>
+<% set var_main_run_stages = var_main_params.run_stages | default([]) %>
+<% set var_run_stage_tasks_dict = params.run_stage_tasks | default({}) %>
+<% set var_run_stage_node_pods_dict = params.run_stage_node_pods | default({}) %>
 <% set var_tasks_group_dict = params.tasks_groups | default({}) %>
 <% set var_task_dict = params.tasks | default({}) %>
 
-<% for var_run_stage_name in var_run_stages %>
+<% set ns_outer_run = namespace(first=true) %>
 
-<% set ns_run = namespace(list=[]) %>
+<% for var_run_stage_name in var_main_run_stages %>
 
-<% set var_run_stage = params.run_stages[var_run_stage_name] %>
-<% set var_all_nodes_and_pods = var_run_stage.all_nodes_and_pods | default(false, true) | bool %>
-<% set var_main_all_nodes = var_main_params.nodes | default([]) %>
-<% set var_node_keys = var_main_all_nodes %>
+  <% set ns_run = namespace(list=[]) %>
+  <% set var_run_stages = params.run_stages[var_run_stage_name] %>
 
-<% if not var_all_nodes_and_pods %>
-  <% set var_node_keys = var_run_stage.nodes | default([]) %>
+  <% for var_run_stage_task_name in var_run_stages %>
+
+    <% set var_run_stage_task = params.run_stage_tasks[var_run_stage_task_name] %>
+    <% set var_task_tag = var_run_stage_task.task_tag | default('') %>
+    <% set var_nodes_tasks = var_run_stage_task.nodes_tasks | default(false, true) | bool %>
+    <% set var_pods_tasks = var_run_stage_task.pods_tasks | default(false, true) | bool %>
+    <% set var_partial_pods = var_run_stage_task.partial_pods | default(false, true) | bool %>
+    <% set var_all_nodes = var_run_stage_task.all_nodes | default(false, true) | bool %>
+    <% set var_main_all_nodes = var_main_params.nodes | default([]) %>
+    <% set var_node_keys = var_main_all_nodes %>
+
+    <% if var_all_nodes and var_partial_pods %>
+      <% set error = {} %>
+      << error['error.run_stage[' + var_run_stage_name + 
+        '].run_stage_task[' + var_run_stage_task_name + 
+        '].both_all_nodes_and_partial_pods_defined'] >>
+    <% endif %>
+
+    <% if (not var_all_nodes) and ((var_run_stage_task.nodes | default([]) | length) == 0) %>
+      <% set error = {} %>
+      << error['error.run_stage[' + var_run_stage_name + 
+        '].run_stage_task[' + var_run_stage_task_name + 
+        '].neither_all_nodes_nor_nodes_defined'] >>
+    <% endif %>
+
+    <% if not var_all_nodes %>
+      <% set var_node_keys = var_run_stage_task.nodes | default([]) %>
+    <% endif %>
+
+    <% for var_node_key in var_node_keys %>
+
+      <% if not var_partial_pods %>
+        <% set var_node_name = var_node_key %>
+      <% else %>
+        <% set var_run_stage_node_pods_info = var_run_stage_node_pods_dict[var_node_key] %>
+        <% set var_node_name = var_run_stage_node_pods_info.node %>
+        <% set var_pod_names = var_run_stage_node_pods_info.pods | default([]) %>
+      <% endif %>
+
+      <% if var_node_name not in var_main_all_nodes %>
+        <% set error = {} %>
+        << error['error.run_stage[' + var_run_stage_name + 
+          '].run_stage_task[' + var_run_stage_task_name + 
+          '].node[' + var_node_name + 
+          '].node_not_in_ctx'] >>
+      <% endif %>
+
+      <% set var_node = params.nodes[var_node_name] | default({}) %>
+      <% set var_cloud = params.clouds[var_node.cloud] | default({}) %>
+      <% set var_tasks_group_name = var_node.tasks_group | default('') %>
+      <% set var_node_all_pods = var_node.pods | default([var_node.main_pod]) | default([]) %>
+
+      <% if not var_partial_pods %>
+        <% set var_pod_names = var_node_all_pods %>
+      <% endif %>
+
+      <% if var_nodes_tasks and ((var_tasks_group_name | default('')) != '') %>
+        <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
+        <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
+        <% set var_task = var_task_dict[var_task_name] | default({}) %>
+        <% set var_task_type = var_task.type | default('') %>
+
+        <% if var_task_type == '' %>
+          <% set error = {} %>
+          << error['error.run_stage[' + var_run_stage_name + 
+            '].run_stage_task[' + var_run_stage_task_name + 
+            '].node[' + var_node_name + 
+            '].task_tag[' + var_task_tag + 
+            '].tasks_group[' + var_tasks_group_name + 
+            '].task[' + var_task_name + 
+            '].type.empty' + ''] >>
+        <% elif var_task_type == 'shell' %>
+
+          <% set var_run_shell_params = {
+            'title': 'node[' + var_node_name + 
+              '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
+              '] - task[' + var_task_tag + ']',
+            'task': var_task,
+            'output_path': var_node.base_dir + '/.node/data/log',
+            'output_file': 'run.' + var_run_stage_task_name + '.' + var_task_tag + '.log',
+            'tmp_path': var_node.base_dir + '/.node/data/tmp',
+            'tmp_file': 'run.' + var_run_stage_task_name + '.' + var_task_tag + '.log',
+            'chdir': var_node.base_dir,
+            'node_name': var_node_name,
+            'pod_name': ''
+          } %>  
+
+          <% set ns_run.list = ns_run.list + [var_run_shell_params] %> 
+
+        <% elif var_task_type != 'skip' %>
+          <% set error = {} %>
+          << error['error.run_stage[' + var_run_stage_name + 
+            '].run_stage_task[' + var_run_stage_task_name + 
+            '].node[' + var_node_name + 
+            '].task_tag[' + var_task_tag + 
+            '].tasks_group[' + var_tasks_group_name + 
+            '].task[' + var_task_name + 
+            '].type.invalid[' + var_task_type + ']'] >>
+        <% endif %>
+      <% endif %>
+
+      <% for var_pod_name in var_pod_names %>
+
+        <% if var_pod_name not in var_node_all_pods %>
+          <% set error = {} %>
+          << error['error.run_stage[' + var_run_stage_name + 
+            '].run_stage_task[' + var_run_stage_task_name + 
+            '].node[' + var_node_name + 
+            '].pod[' + var_pod_name + 
+            '].pod_not_in_node'] >>
+        <% endif %>      
+
+        <% set var_pod = params.pods[var_pod_name] | default({}) %>
+        <% set var_tasks_group_name = var_pod.tasks_group | default('') %>
+
+        <% if var_pods_tasks and ((var_tasks_group_name | default('')) != '') %>
+          <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
+          <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
+          <% set var_task = var_task_dict[var_task_name] | default({}) %>
+          <% set var_task_type = var_task.type | default('') %>
+
+          <% if var_task_type == '' %>
+            <% set error = {} %>
+            << error['error.run_stage[' + var_run_stage_name + 
+              '].run_stage_task[' + var_run_stage_task_name + 
+              '].node[' + var_node_name + 
+              '].pod[' + var_pod_name + 
+              '].task_tag[' + var_task_tag + 
+              '].tasks_group[' + var_tasks_group_name + 
+              '].task[' + var_task_name + 
+              '].type.empty' + ''] >>
+          <% elif var_task_type == 'shell' %>
+
+            <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
+
+            <% set var_pod_repo_location = (var_cloud.type == 'local') | ternary(
+              env_local_pod_dict.dir | default(var_pod_base_dir + '/main'),
+              var_pod_base_dir + '/main'
+            )%> 
+            
+            <% set var_run_shell_params = {
+              'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
+                '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
+                '] - task[' + var_task_tag + ']',
+              'task': var_task,
+              'output_path': var_pod_base_dir + '/data/log/run',
+              'output_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
+              'tmp_path': var_pod_base_dir + '/data/tmp/run',
+              'tmp_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
+              'chdir': var_pod_repo_location,
+              'node_name': var_node_name,
+              'pod_name': var_pod_name
+            } %>  
+
+            <% set ns_run.list = ns_run.list + [var_run_shell_params] %>  
+
+          <% elif var_task_type != 'skip' %>
+            <% set error = {} %>
+            << error['error.run_stage[' + var_run_stage_name + 
+              '].run_stage_task[' + var_run_stage_task_name + 
+              '].node[' + var_node_name + 
+              '].pod[' + var_pod_name + 
+              '].task_tag[' + var_task_tag + 
+              '].tasks_group[' + var_tasks_group_name + 
+              '].task[' + var_task_name + 
+              '].type.invalid.' + var_task_type] >>
+          <% endif %>
+        <% endif %>
+      <% endfor %>
+    <% endfor %>
+  <% endfor %>
+
+<% if (ns_run.list | length) > 0 %>
+
+<% if not (ns_outer_run.first | bool) %>
+###############################################################################
 <% endif %>
+
+<% set ns_outer_run.first = false %>
 
 - name: Play 03.<< loop.index >> - Run (<< var_run_stage_name >>)
   hosts: host
@@ -294,146 +468,6 @@
   tasks:
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
-
-  <% for var_node_key in var_node_keys %>
-
-    <% if var_all_nodes_and_pods %>
-      <% set var_node_name = var_node_key %>
-      <% set var_all_pods = true | bool %>
-    <% else %>
-      <% set var_node_params = var_run_stage_node_params_dict[var_node_key] %>
-      <% set var_node_name = var_node_params.name %>
-      <% set var_all_pods = var_node_params.all_pods | default(false, true) | bool %>
-    <% endif %>
-
-    <% if var_node_name not in var_main_all_nodes %>
-      <% set error = {} %>
-      << error['error.run_stage[' + var_run_stage_name + 
-        '].node[' + var_node_name + 
-        '].node_not_in_ctx'] >>
-    <% endif %>
-
-    <% set var_node = params.nodes[var_node_name] | default({}) %>
-    <% set var_cloud = params.clouds[var_node.cloud] | default({}) %>
-    <% set var_node_tasks_group_name = var_node.tasks_group | default('') %>
-    <% set var_node_all_pods = var_node.pods | default([var_node.main_pod]) | default([]) %>
-    <% set var_pod_keys = var_node_all_pods %>
-
-    <% if not var_all_pods %>
-      <% set var_pod_keys = var_node_params.pods | default([]) %>
-    <% endif %>
-
-    <% if (var_node_tasks_group_name | default('')) != '' %>
-      <% set var_task_tag = var_node_params.task_tag | default(var_run_stage.task_tag) %>
-      <% set var_tasks_group = var_tasks_group_dict[var_node_tasks_group_name] %>
-      <% set var_task_name = var_tasks_group[var_task_tag] %>
-      <% set var_task = var_task_dict[var_task_name] %>
-
-      <% if var_task.type == '' %>
-        <% set error = {} %>
-        << error['error.run_stage[' + var_run_stage_name + 
-          '].node[' + var_node_name + 
-          '].task[' + var_task_name + 
-          '].type.empty' + ''] >>
-      <% elif var_task.type == 'shell' %>
-
-        <% set var_run_shell_params = {
-          'title': 'node[' + var_node_name + '] - stage[' + 
-            var_run_stage_name + '] - task[' + var_task_tag + ']',
-          'task': var_task,
-          'output_path': var_node.base_dir + '/.node/data/log',
-          'output_file': 'run.' + var_run_stage_name + '.' + var_task_tag + '.log',
-          'tmp_path': var_node.base_dir + '/.node/data/tmp',
-          'tmp_file': 'run.' + var_run_stage_name + '.' + var_task_tag + '.log',
-          'chdir': var_node.base_dir,
-          'node_name': var_node_name,
-          'pod_name': ''
-        } %>  
-
-        <% set ns_run.list = ns_run.list + [var_run_shell_params] %> 
-
-      <% elif var_task.type != 'skip' %>
-        <% set error = {} %>
-        << error['error.run_stage[' + var_run_stage_name + 
-          '].node[' + var_node_name + 
-          '].task[' + var_task_name + 
-          '].type.invalid[' + var_task.type + ']'] >>
-      <% endif %>
-    <% endif %>
-
-    <% for var_pod_key in var_pod_keys %>
-
-      <% if var_all_pods %>
-        <% set var_pod_name = var_pod_key %>
-      <% else %>
-        <% set var_pod_params = var_run_stage_pod_params_dict[var_pod_key] %>
-        <% set var_pod_name = var_pod_params.name %>
-      <% endif %>
-
-      <% if var_pod_name not in var_node_all_pods %>
-        <% set error = {} %>
-        << error['error.run_stage[' + var_run_stage_name + 
-          '].node[' + var_node_name + 
-          '].pod[' + var_pod_name + 
-          '].pod_not_in_node'] >>
-      <% endif %>      
-
-      <% set var_pod = params.pods[var_pod_name] | default({}) %>
-      <% set var_pod_tasks_group_name = var_pod.tasks_group | default('') %>
-      <% set var_pod_tasks_group = var_pod.tasks_group | default({}) %>
-
-      <% set var_task_tag = var_pod_params.task_tag | 
-        default(var_node_params.task_tag) | 
-        default(var_run_stage.task_tag) 
-      %>
-
-      <% if (var_pod_tasks_group_name | default('')) != '' %>
-        <% set var_tasks_group = var_tasks_group_dict[var_pod_tasks_group_name] %>
-        <% set var_task_name = var_tasks_group[var_task_tag] %>
-        <% set var_task = var_task_dict[var_task_name] %>
-
-        <% if var_task.type == '' %>
-          <% set error = {} %>
-          << error['error.run_stage[' + var_run_stage_name + 
-            '].node[' + var_node_name + 
-            '].pod[' + var_pod_name + 
-            '].task[' + var_task_name + 
-            '].type.empty' + ''] >>
-        <% elif var_task.type == 'shell' %>
-
-          <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
-
-          <% set var_pod_repo_location = (var_cloud.type == 'local') | ternary(
-            env_local_pod_dict.dir | default(var_pod_base_dir + '/main'),
-            var_pod_base_dir + '/main'
-          )%> 
-          
-          <% set var_run_shell_params = {
-            'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
-              '] - stage[' + var_run_stage_name + '] - task[' + var_task_tag + ']',
-            'task': var_task,
-            'output_path': var_pod_base_dir + '/data/log/run',
-            'output_file': var_run_stage_name + '.' + var_task_tag + '.log',
-            'tmp_path': var_pod_base_dir + '/data/tmp/run',
-            'tmp_file': var_run_stage_name + '.' + var_task_tag + '.log',
-            'chdir': var_pod_repo_location,
-            'node_name': var_node_name,
-            'pod_name': var_pod_name
-          } %>  
-
-          <% set ns_run.list = ns_run.list + [var_run_shell_params] %>    
-
-        <% elif var_task.type != 'skip' %>
-          <% set error = {} %>
-          << error['error.run_stage[' + var_run_stage_name + 
-            '].node[' + var_node_name + 
-            '].pod[' + var_pod_name + 
-            '].task[' + var_task_name + 
-            '].type.invalid.' + var_task.type] >>
-        <% endif %>
-      <% endif %>
-    <% endfor %>
-  <% endfor %>
 
   - include_role: 
       name: "long_run"
@@ -448,13 +482,17 @@
       long_run_path: "{{ main_item.chdir }}"
       long_run_cmd: "{{ main_item.task.cmd }}"
       long_run_poll: 2
-    loop:
-      <% for main_run_item in ns_run.list %>- filler: ""
-        <% 
-          for main_run_subitem in main_run_item | dict2items | sort(attribute='key') | list
-        %><< main_run_subitem.key >>: << main_run_subitem.value | to_json >>
-        <% endfor %> 
+    loop: <% if (ns_run.list | length) == 0 %>[]<% else %>
+      <% for main_run_item in ns_run.list %>      
+      
+      <% 
+        for main_run_subitem in main_run_item | dict2items | sort(attribute='key') | list
+      %><< (loop.index == 1) | ternary('- ', '  ') >><< 
+        main_run_subitem.key >>: << main_run_subitem.value | to_json 
+      >>
       <% endfor %> 
+      <% endfor %><% endif %>
+    
     loop_control:
       loop_var: main_item
       label: "{{ main_item.title }}"
@@ -465,6 +503,7 @@
       and
       (((env_pod | default('')) == '') or (env_pod == main_item.pod_name))
 
+<% endif %>
 <% endfor %>
 
   # - include_role: 
