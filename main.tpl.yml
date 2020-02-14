@@ -207,7 +207,7 @@
   - include_role: 
       name: "cloud_prepare"
     vars:
-      cloud_prepare_title: "{{ env_title }} - node[{{ main_item }}]"
+      cloud_prepare_title: "{{ env_title }} - prepare - node[{{ main_item }}]"
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_env_local_repo: "{{ env_local_repo }}"
       cloud_prepare_node_id: "{{ main_item }}"
@@ -218,7 +218,6 @@
       cloud_prepare_node_params_dict: "{{ env.node_params | default({}) }}"
       cloud_prepare_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_node.cloud] }}"
-      cloud_prepare_orchestrations_dict: "{{ env.orchestrations }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_pod_params_dict: "{{ env.pod_params | default({}) }}"
       cloud_prepare_pod_shared_params_dict: "{{ env.pod_shared_params | default({}) }}"
@@ -269,6 +268,8 @@
 <% set var_run_stage_node_pods_dict = params.run_stage_node_pods | default({}) %>
 <% set var_tasks_group_dict = params.tasks_groups | default({}) %>
 <% set var_task_dict = params.tasks | default({}) %>
+<% set var_local_base_dir_pod = local_params.base_dir_pod | default({}) %>
+<% set var_local_pod_dir_dict = env_params.local_pod_dir | default({}) %>
 
 <% set ns_outer_run = namespace(first=true) %>
 
@@ -348,9 +349,9 @@
             '].tasks_group[' + var_tasks_group_name + 
             '].task[' + var_task_name + 
             '].type.empty' + ''] >>
-        <% elif var_task_type == 'shell' %>
+        <% elif var_task_type in ['task', 'shell'] %>
 
-          <% set var_run_shell_params = {
+          <% set var_run_task_params = {
             'title': 'node[' + var_node_name + 
               '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
               '] - task[' + var_task_tag + ']',
@@ -364,7 +365,7 @@
             'pod_name': ''
           } %>  
 
-          <% set ns_run.list = ns_run.list + [var_run_shell_params] %> 
+          <% set ns_run.list = ns_run.list + [var_run_task_params] %> 
 
         <% elif var_task_type != 'skip' %>
           <% set error = {} %>
@@ -408,16 +409,21 @@
               '].tasks_group[' + var_tasks_group_name + 
               '].task[' + var_task_name + 
               '].type.empty' + ''] >>
-          <% elif var_task_type == 'shell' %>
+          <% elif var_task_type in ['task', 'shell'] %>
 
             <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
 
-            <% set var_pod_repo_location = (var_cloud.type == 'local') | ternary(
-              env_local_pod_dict.dir | default(var_pod_base_dir + '/main'),
-              var_pod_base_dir + '/main'
-            )%> 
+            <% set var_pod_repo_location = var_pod_base_dir + '/main' %>
             
-            <% set var_run_shell_params = {
+            <% if (var_cloud.type == 'local') and 
+              ((var_local_pod_dir_dict[var_pod_name] | default('')) != '') 
+            %>
+              <% set var_pod_repo_location = var_local_base_dir_pod + '/' + 
+                var_local_pod_dir_dict[var_pod_name] 
+              %>
+            <% endif %>
+            
+            <% set var_run_task_params = {
               'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
                 '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
                 '] - task[' + var_task_tag + ']',
@@ -431,7 +437,7 @@
               'pod_name': var_pod_name
             } %>  
 
-            <% set ns_run.list = ns_run.list + [var_run_shell_params] %>  
+            <% set ns_run.list = ns_run.list + [var_run_task_params] %>  
 
           <% elif var_task_type != 'skip' %>
             <% set error = {} %>
@@ -458,11 +464,10 @@
 <% set ns_outer_run.first = false %>
 
 - name: Play 03.<< loop.index >> - Run (<< var_run_stage_name >>)
-  hosts: host
+  hosts: main,host
   strategy: free
   tags:
   - init
-  - pod
   - run
   gather_facts: no
   tasks:
@@ -470,18 +475,21 @@
     tags: ["no_print"]
 
   - include_role: 
-      name: "long_run"
+      name: "cloud_run"
     vars:
-      long_run_title: >-
-        {{ env_title }} - run - {{ main_item.title }}
-      long_run_become: "{{ main_item.task.root | default(false) }}"
-      long_run_output_path: "{{ main_item.output_path }}"
-      long_run_output_file:  "{{ main_item.output_file }}"
-      long_run_tmp_path:  "{{ main_item.tmp_path }}"
-      long_run_tmp_file:  "{{ main_item.tmp_file }}"
-      long_run_path: "{{ main_item.chdir }}"
-      long_run_cmd: "{{ main_item.task.cmd }}"
-      long_run_poll: 2
+      cloud_run_title: "{{ env_title }} - run - {{ main_item.title }}"
+      cloud_run_task: "{{ main_item.task }}"
+      cloud_run_default_output_path: "{{ main_item.output_path }}"
+      cloud_run_default_output_file: "{{ main_item.output_file }}"
+      cloud_run_default_tmp_path: "{{ main_item.tmp_path }}"
+      cloud_run_default_tmp_file: "{{ main_item.tmp_file }}"
+      cloud_run_default_chdir: "{{ main_item.chdir }}"
+      cloud_run_env: "{{ env }}"
+      cloud_run_node_name: "{{ main_item.node_name | default('') }}"
+      cloud_run_node: "{{ env.nodes[cloud_run_node_name] | default({}) }}"
+      cloud_run_pod_name: "{{ main_item.pod_name | default('') }}"
+      cloud_run_pod: "{{ env.pods[cloud_run_pod_name] | default({}) }}"
+      cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud | default('')] | default({}) }}"
     loop: <% if (ns_run.list | length) == 0 %>[]<% else %>
       <% for main_run_item in ns_run.list %>      
       
@@ -497,50 +505,18 @@
       loop_var: main_item
       label: "{{ main_item.title }}"
     when: >-
-      (main_item.node_name == instance_type)
+      ((ansible_connection == 'local') or (main_item.node_name == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == main_item.node_name))
-      and
-      (((env_pod | default('')) == '') or (env_pod == main_item.pod_name))
+      and 
+      (
+      ((ansible_connection == 'local') and ((cloud_run_cloud.type | default('')) == 'local'))
+      or
+      ((ansible_connection != 'local') and ((cloud_run_cloud.type | default('')) != 'local'))
+      )
 
 <% endif %>
 <% endfor %>
-
-  # - include_role: 
-  #     name: "cloud_run"
-  #   vars:
-  #     cloud_run_title: "{{ env_title }} - node[{{ main_item }}]"
-  #     cloud_run_env_name: "{{ env.name }}"
-  #     cloud_run_node_id: "{{ main_item }}"
-  #     cloud_run_node: "{{ env.nodes[main_item] }}"
-  #     cloud_run_base_dir: "{{ cloud_run_node.base_dir }}"
-  #     cloud_run_node_credentials: >-
-  #       {{ env.credentials[cloud_run_node.credentials] }}
-  #     cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud] }}"
-  #     cloud_run_orchestrations_dict: "{{ env.orchestrations }}"
-  #     cloud_run_pods_dict: "{{ env.pods }}"
-  #     cloud_run_params_dict: "{{ env.pod_params | default({}) }}"
-  #     cloud_run_env_pod: "{{ env_pod | default('', true) }}"
-  #     cloud_run_env_cmd: "{{ env_cmd | default('', true) }}"
-  #     cloud_run_env_vars_relative_file_src: >-
-  #       tmp/env/cloud.prepare.vars_full.yml
-  #     cloud_run_env_vars_relative_file_dest: >-
-  #       tmp/env/cloud.run.vars_full.yml
-  #     cloud_run_force: "{{ env_force | default(false, true) }}"
-  #     cloud_run_local_pod_dict: "{{ env_local_pod_dict }}"
-  #   loop: "{{ nodes | default([]) | list }}"
-  #   loop_control:
-  #     loop_var: main_item
-  #   when: >-
-  #     ((ansible_connection == 'local') or (main_item == instance_type))
-  #     and
-  #     (((env_node | default('')) == '') or (env_node == main_item))
-  #     and 
-  #     (
-  #     ((ansible_connection == 'local') and (cloud_run_cloud.type == 'local'))
-  #     or
-  #     ((ansible_connection != 'local') and (cloud_run_cloud.type != 'local'))
-  #     )
 
 ###############################################################################
 ##################          DEFINE THE CRON JOBS           ####################
@@ -601,7 +577,7 @@
       name: "long_run"
     vars:
       long_run_title: >-
-        {{ env_title }} - compose exec - 
+        {{ env_title }} - exec - 
         {{ env_exec_cmd | b64decode | trim 
         | regex_replace('\n', ' .. ') 
         | truncate(30, False, '...', 10) }}

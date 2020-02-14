@@ -250,11 +250,6 @@
       cloud_prepare_transfer_src_repo_templates: "{{ cloud_prepare_vars_templates | default([]) }}"
       cloud_prepare_transfer_src_env_templates: "{{ (cloud_prepare_vars_env_templates | default([])) }}"
     
-  ### Build the environment ###
-
-  - include_tasks: "ext/{{ cloud_prepare_pod_orchestration.type }}.build.yml"
-    when: cloud_prepare_pod_orchestration.type != 'none'
-
   when: cloud_prepare_diff.changed or (cloud_prepare_cloud.type == 'local')
 
 - name: "{{ cloud_prepare_inner_title }} - debug - inner"

@@ -1,16 +1,34 @@
 - name: "{{ cloud_run_title }}"
-  include_tasks: "pod.yml"
+  set_fact:
+    cloud_run_inner_title: "{{ cloud_run_title }} - {{ cloud_run_task.type }}"
+  tags: ["no_print"]
+  
+- name: "{{ cloud_run_inner_title }}"
+  include_tasks: "ext/{{ cloud_run_task.file }}"
   vars:
-    cloud_run_pod_title: "{{ cloud_run_title }} - pod[{{ cloud_run_item }}]"
-    cloud_run_pod_id: "{{ cloud_run_item }}"
-    cloud_run_pod: "{{ cloud_run_pods_dict[cloud_run_item] }}"
-    cloud_run_pod_orchestration: >-
-      {{ cloud_run_orchestrations_dict[cloud_run_pod.orchestration] }}
-    cloud_run_pod_base_dir: "{{ cloud_run_base_dir }}/{{ cloud_run_item }}"
-    cloud_run_params: "{{ cloud_run_params_dict[cloud_run_pod.params] }}"
-    cloud_run_host_user: "{{ cloud_run_node_credentials.host_user }}"
-    cloud_run_host_group: "{{ cloud_run_node_credentials.host_user }}"
-  loop: "{{ cloud_run_node.pods | default([cloud_run_node.main_pod]) | list }}"
-  loop_control:
-    loop_var: cloud_run_item
-  when: cloud_run_env_pod in ['', cloud_run_item]
+    params:
+      title: "{{ cloud_run_title }} - {{ cloud_run_task.file }}"
+      task: "{{ cloud_run_task }}"
+      default_output_path: "{{ cloud_run_default_output_path }}"
+      default_output_file: "{{ cloud_run_default_output_file }}"
+      default_tmp_path: "{{ cloud_run_default_tmp_path }}"
+      default_tmp_file: "{{ cloud_run_default_tmp_file }}"
+      default_chdir: "{{ cloud_run_default_chdir }}"
+      env: "{{ cloud_run_env }}"
+      node_name: "{{ cloud_run_node_name }}"
+  when: cloud_run_task.type == 'task'
+
+- name: "{{ cloud_run_inner_title }}"
+  include_role: 
+    name: "long_run"
+  vars:
+    long_run_title: "{{ cloud_run_inner_title }}"
+    long_run_become: "{{ cloud_run_task.root | default(false) }}"
+    long_run_output_path: "{{ cloud_run_task.output_path | default(cloud_run_default_output_path) }}"
+    long_run_output_file: "{{ cloud_run_task.output_file | default(cloud_run_default_output_file) }}"
+    long_run_tmp_path: "{{ cloud_run_task.tmp_path | default(cloud_run_default_tmp_path) }}"
+    long_run_tmp_file: "{{ cloud_run_task.tmp_file | default(cloud_run_default_tmp_file) }}"
+    long_run_path: "{{ cloud_run_task.chdir | default(cloud_run_default_chdir) }}"
+    long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
+    long_run_cmd: "{{ cloud_run_task.cmd }}"
+  when: cloud_run_task.type == 'shell'
