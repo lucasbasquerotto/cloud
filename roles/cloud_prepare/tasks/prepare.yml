@@ -151,6 +151,7 @@
 
 - set_fact:
     cloud_prepare_vars_full:
+      ctx: "{{ cloud_prepare_ctx }}"
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       node: "{{ cloud_prepare_inner_node_pod_params }}"

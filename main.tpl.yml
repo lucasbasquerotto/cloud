@@ -208,6 +208,7 @@
       name: "cloud_prepare"
     vars:
       cloud_prepare_title: "{{ env_title }} - prepare - node[{{ main_item }}]"
+      cloud_prepare_ctx: "{{ env.ctx }}"
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_env_local_repo: "{{ env_local_repo }}"
       cloud_prepare_node_id: "{{ main_item }}"
