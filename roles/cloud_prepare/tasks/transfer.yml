@@ -90,7 +90,7 @@
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
       ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      ternary('', cloud_prepare_dest_dir_base + '/')) 
       + cloud_prepare_transfer_item.dest
       }}
     cloud_prepare_transfer_item_dest_full: >-
@@ -121,7 +121,7 @@
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
       ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      ternary('', cloud_prepare_dest_dir_base + '/')) 
       + cloud_prepare_transfer_item.dest
       }}
     cloud_prepare_transfer_item_dest_full: >-
@@ -152,7 +152,7 @@
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
       ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      ternary('', cloud_prepare_dest_dir_base + '/')) 
       + (cloud_prepare_transfer_item.dest | default(cloud_prepare_transfer_item.src)) 
       }}
     cloud_prepare_transfer_item_dest_full: >-
@@ -183,7 +183,7 @@
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
       ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_pod_env_dir + '/')) 
+      ternary('', cloud_prepare_dest_dir_base + '/')) 
       + cloud_prepare_transfer_item.dest
       }}
     cloud_prepare_transfer_item_dest_full: >-

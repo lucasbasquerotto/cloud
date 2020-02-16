@@ -208,8 +208,8 @@
       name: "cloud_prepare"
     vars:
       cloud_prepare_title: "{{ env_title }} - prepare - node[{{ main_item }}]"
-      cloud_prepare_ctx: "{{ env.ctx }}"
       cloud_prepare_env_name: "{{ env.name }}"
+      cloud_prepare_ctx_name: "{{ env.ctx }}"
       cloud_prepare_env_local_repo: "{{ env_local_repo }}"
       cloud_prepare_node_id: "{{ main_item }}"
       cloud_prepare_node: "{{ env.nodes[main_item] }}"
@@ -238,12 +238,8 @@
         (ansible_connection == 'local') | 
         ternary(env_local_data_dir | default(''), '') 
         }}
-      cloud_prepare_local_data_dir_rel: >-
-        {{ 
-        (ansible_connection == 'local') | 
-        ternary(env_local_data_dir_rel | default(''), '') 
-        }}
       cloud_prepare_meta: "{{ env.meta_params[env.main[env.ctx].meta] | default({}) }}"
+      cloud_prepare_base_dir_rel: "../../../../../.."
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item

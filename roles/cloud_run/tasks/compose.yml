@@ -1,6 +1,0 @@
-- name: "{{ cloud_run_inner_title }} - run the images"
-  become: "{{ cloud_run_pod.root }}"
-  command: "docker-compose up -d --remove-orphans"
-  args:
-    chdir: "{{ cloud_run_pod_repo_location }}/"
-  tags: ["print_action"]

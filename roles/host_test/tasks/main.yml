@@ -26,7 +26,7 @@
   tags: ["no_print"]
 
 - name: >
-    {{ host_test_title }} - Wait {{ host_test_initial_connection_timeout }}
+    {{ host_test_title }} - wait {{ host_test_initial_connection_timeout }}
     seconds for target connection to become reachable/usable
   wait_for_connection:
     delay: 0
@@ -38,7 +38,7 @@
   setup:
 
 - name: >
-    {{ host_test_title }} - Make sure the file "{{ host_test_log_file }}"
+    {{ host_test_title }} - make sure the file "{{ host_test_log_file }}"
     has "{{ host_test_setup_last_line }}" in it
     (wait {{ host_test_setup_finished_timeout }} seconds)
   wait_for:

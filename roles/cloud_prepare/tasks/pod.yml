@@ -4,7 +4,7 @@
   fail:
     msg: >-
       [Error] Specify the environment repo variable: 
-      pod[cloud_prepare_pod_id][{{ cloud_prepare_pod_item }}]
+      pod[cloud_prepare_pod_name][{{ cloud_prepare_pod_item }}]
   when: ((cloud_prepare_pod[cloud_prepare_pod_item] | default('')) == '')
   loop:
   - "repo"
@@ -116,7 +116,7 @@
     ignore_errors: "{{ cloud_prepare_cloud.type == 'local' }}"
     when: cloud_prepare_pod.root in ['yes', 'true']
 
-  when: cloud_prepare_pod_id == cloud_prepare_node.main_pod
+  when: cloud_prepare_pod_name == cloud_prepare_node.main_pod
 
 ### Prepare the temporary directory (to catch errors before updating the real one) ###
 

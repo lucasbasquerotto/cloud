@@ -40,18 +40,29 @@
     cloud_prepare_pod_env_dir: "{{ cloud_prepare_pod.env_dir | default('env') }}"
   tags: ["no_print"]
 
+- set_fact:
+    cloud_prepare_dest_dir_base: >-
+      {{ cloud_prepare_pod_env_dir }}/{{ cloud_prepare_pod_identifier }}
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_prepare_dest_dir_base_full: >-
+      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_dest_dir_base }}
+  tags: ["no_print"]
+
 ### Generate the environment pod context variables ###
 
 - set_fact:
     cloud_prepare_params_pod:
-      pod_id: "{{ cloud_prepare_pod_id }}"
+      identifier: "{{ cloud_prepare_pod_identifier }}"
+      name: "{{ cloud_prepare_pod_name }}"
       pod: "{{ cloud_prepare_pod }}"
       app: "{{ cloud_prepare_local_app_dict }}"
       git_commit: "{{ cloud_prepare_git_result.after }}"
       repo_name: "{{ cloud_prepare_env_name }}"
       env_local_repo: "{{ cloud_prepare_env_local_repo }}"
       repo: "{{ cloud_prepare_pod_inner_repo }}"
-      pod_env_dir: "{{ cloud_prepare_pod_env_dir | default('env') }}"
+      env_dir: "{{ cloud_prepare_pod_env_dir }}"
       repo_location: "{{ cloud_prepare_repo_location }}"
       data_dir: "{{ cloud_prepare_pod_data_dir }}"
       local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
@@ -105,17 +116,17 @@
   vars:
     params_mixer_main_params: >-
       {{ 
-      cloud_prepare_inner_node_params.pod_override_params[cloud_prepare_pod_id] 
+      cloud_prepare_inner_node_params.pod_override_params[cloud_prepare_pod_name] 
       | default({}) 
       }}
     params_mixer_other_params_names: >-
       {{ 
-      cloud_prepare_inner_node_params.pod_override_other_params[cloud_prepare_pod_id] 
+      cloud_prepare_inner_node_params.pod_override_other_params[cloud_prepare_pod_name] 
       | default({}) 
       }}
     params_mixer_shared_params_name: >-
       {{ 
-      cloud_prepare_inner_node_params.pod_override_shared_params[cloud_prepare_pod_id] 
+      cloud_prepare_inner_node_params.pod_override_shared_params[cloud_prepare_pod_name] 
       | default('') 
       }}
     params_mixer_shared_params_names_dict: >-
@@ -147,15 +158,25 @@
       node_pod_params: "{{ cloud_prepare_inner_node_params | default({}) }}"
   tags: ["no_print"]
 
+- set_fact:
+    cloud_prepare_inner_dirs:
+      base_dir_rel: "{{ cloud_prepare_base_dir_rel }}"
+      apps_dir_base: "{{ cloud_prepare_base_dir_rel }}/apps"
+      dest_dir_base: "{{ cloud_prepare_dest_dir_base }}"
+      dest_dir_base_full: "{{ cloud_prepare_dest_dir_base_full }}"
+  tags: ["no_print"]
+
 ### Generate a file with the environment variables and state (for idempotence) ###
 
 - set_fact:
     cloud_prepare_vars_full:
-      ctx: "{{ cloud_prepare_ctx }}"
+      env_name: "{{ cloud_prepare_env_name }}"
+      ctx_name: "{{ cloud_prepare_ctx_name }}"
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       node: "{{ cloud_prepare_inner_node_pod_params }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
+      dirs: "{{ cloud_prepare_inner_dirs }}"
   tags: ["no_print"]
     
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
@@ -225,9 +246,7 @@
       cloud_prepare_vars_templates: []
       cloud_prepare_vars_env_files: []
       cloud_prepare_vars_env_templates: []
-      cloud_prepare_dir_list: [
-        "{{ cloud_prepare_repo_location + '/' + (cloud_prepare_pod_env_dir | default('env')) }}"
-      ]
+      cloud_prepare_dir_list: ["{{ cloud_prepare_dest_dir_base_full }}"]
     tags: ["no_print"]
 
   - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars.yml"

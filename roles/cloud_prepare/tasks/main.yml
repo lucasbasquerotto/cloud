@@ -2,9 +2,12 @@
   include_tasks: "pod.yml"
   vars:
     cloud_prepare_pod_title: "{{ cloud_prepare_title }} - pod[{{ cloud_prepare_item }}]"
-    cloud_prepare_pod_id: "{{ cloud_prepare_item }}"
+    cloud_prepare_pod_name: "{{ cloud_prepare_item }}"
     cloud_prepare_pod: "{{ cloud_prepare_pods_dict[cloud_prepare_item] }}"
     cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_item }}"
+    cloud_prepare_pod_identifier: >-
+      {{ cloud_prepare_env_name }}/{{ cloud_prepare_ctx_name }}/{{ cloud_prepare_pod_name }}
+
     cloud_prepare_host_user: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_host_group: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_local_pod_repo: >-
@@ -20,13 +23,10 @@
     cloud_prepare_pod_local_data_dir_inside: >-
       {{ 
       (cloud_prepare_local_data_dir_inside | default('') != '')
-      | ternary(cloud_prepare_local_data_dir_inside + '/' + cloud_prepare_item, '') 
+      | ternary(cloud_prepare_local_data_dir_inside + '/' + cloud_prepare_pod_identifier, '') 
       }}
     cloud_prepare_pod_local_data_dir_rel: >-
-      {{ 
-      (cloud_prepare_local_data_dir_rel | default('') != '')
-      | ternary(cloud_prepare_local_data_dir_rel + '/' + cloud_prepare_item, '') 
-      }}
+      {{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}
   loop: "{{ cloud_prepare_node.pods | default([cloud_prepare_node.main_pod]) | list }}"
   loop_control:
     loop_var: cloud_prepare_item
