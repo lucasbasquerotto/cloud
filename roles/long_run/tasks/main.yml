@@ -30,7 +30,7 @@
     mode: 0741
 
 - name: >-
-    [{{ long_run_title }}] - start the execution of 
+    [{{ long_run_title }}] - {{ long_run_path }} - start the execution of 
     "{{ long_run_cmd | trim | regex_replace('\n', ' .. ') | truncate(60, False, '...', 20) }}"
   become: "{{ long_run_become }}"
   shell: |
