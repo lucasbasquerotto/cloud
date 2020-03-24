@@ -1,2 +1,8 @@
 /main.yml
 **/*.pyc
+
+/env/
+/env-*/
+
+/custom/
+/custom-*/

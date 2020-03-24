@@ -1,3 +1,5 @@
+<% set env_var_hooks = env.hooks[env.main[env.ctx].hooks | default('')] | default({}) %>
+
 ###############################################################################
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
@@ -13,8 +15,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_cloud_main }}"
-    when: (env.main[env.ctx].hooks.before_cloud_main | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_cloud_main }}"
+    when: (env_var_hooks.before_cloud_main | default('')) != ''
       
   - include_role: 
       name: "cloud_main"
@@ -32,8 +34,8 @@
     loop_control:
       loop_var: main_item
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_cloud_main }}"
-    when: (env.main[env.ctx].hooks.after_cloud_main | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_cloud_main }}"
+    when: (env_var_hooks.after_cloud_main | default('')) != ''
 
 ###############################################################################
 
@@ -48,8 +50,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_dns }}"
-    when: (env.main[env.ctx].hooks.before_dns | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_dns }}"
+    when: (env_var_hooks.before_dns | default('')) != ''
 
   - include_role: 
       name: "cloud_dns"
@@ -70,8 +72,8 @@
       loop_var: main_item
       label: "{{ main_item.type }}"
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_dns }}"
-    when: (env.main[env.ctx].hooks.after_dns | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_dns }}"
+    when: (env_var_hooks.after_dns | default('')) != ''
 
 ###############################################################################
 
@@ -86,8 +88,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_buckets }}"
-    when: (env.main[env.ctx].hooks.before_buckets | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_buckets }}"
+    when: (env_var_hooks.before_buckets | default('')) != ''
 
   - name: "{{ env_title }} - create the buckets"
     aws_s3:
@@ -104,8 +106,8 @@
       loop_var: main_item
       label: "{{ main_item }}"
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_buckets }}"
-    when: (env.main[env.ctx].hooks.after_buckets | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_buckets }}"
+    when: (env_var_hooks.after_buckets | default('')) != ''
 
 ###############################################################################
 
@@ -121,8 +123,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_nodes }}"
-    when: (env.main[env.ctx].hooks.before_nodes | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_nodes }}"
+    when: (env_var_hooks.before_nodes | default('')) != ''
 
   - include_role: 
       name: "cloud_node"
@@ -156,8 +158,8 @@
       and 
       (not (cloud_node_node.external | default(false) | bool))
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_nodes }}"
-    when: (env.main[env.ctx].hooks.after_nodes | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_nodes }}"
+    when: (env_var_hooks.after_nodes | default('')) != ''
 
 ###############################################################################
 
@@ -173,8 +175,11 @@
   - include_tasks: "tasks/env.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_wait_nodes }}"
-    when: (env.main[env.ctx].hooks.before_wait_nodes | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_wait_nodes }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.before_wait_nodes | default('')) != '')
     
   - include_role: 
       name: "host_test"
@@ -185,8 +190,11 @@
       host_test_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
     when: (((env_node | default('')) == '') or (env_node == instance_type))
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_wait_nodes }}"
-    when: (env.main[env.ctx].hooks.after_wait_nodes | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_wait_nodes }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.after_wait_nodes | default('')) != '')
 
 ###############################################################################
 ######################        PREPARE THE PODS         ########################
@@ -204,8 +212,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_local_prepare }}"
-    when: (env.main[env.ctx].hooks.before_local_prepare | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_local_prepare }}"
+    when: (env_var_hooks.before_local_prepare | default('')) != ''
 
   - include_role: 
       name: "cloud_repos"
@@ -223,8 +231,8 @@
       cloud_repos_env_dir: "{{ env_dir }}"
       cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}"
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_local_prepare }}"
-    when: (env.main[env.ctx].hooks.after_local_prepare | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_local_prepare }}"
+    when: (env_var_hooks.after_local_prepare | default('')) != ''
 
 ###############################################################################
 
@@ -240,8 +248,11 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_remote_prepare }}"
-    when: (env.main[env.ctx].hooks.before_remote_prepare | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_remote_prepare }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.before_remote_prepare | default('')) != '')
 
   - include_role: 
       name: "cloud_prepare"
@@ -293,8 +304,11 @@
       ((ansible_connection != 'local') and (cloud_prepare_cloud.type != 'local'))
       )
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_remote_prepare }}"
-    when: (env.main[env.ctx].hooks.after_remote_prepare | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_remote_prepare }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.after_remote_prepare | default('')) != '')
 
 ###############################################################################
 ###########        RUN - MIGRATE THE DATA & START THE PODS         ############
@@ -572,8 +586,11 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_cron }}"
-    when: (env.main[env.ctx].hooks.before_cron | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_cron }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.before_cron | default('')) != '')
 
   - include_role: 
       name: "cron"
@@ -601,8 +618,11 @@
       ((ansible_connection != 'local') and (cron_cloud.type != 'local'))
       )
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_cron }}"
-    when: (env.main[env.ctx].hooks.after_cron | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_cron }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.after_cron | default('')) != '')
 
 ###############################################################################
 ##################       EXECUTE COMMANDS ON-THE-FLY       ####################
@@ -618,8 +638,11 @@
   - include_tasks: "tasks/env.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_exec }}"
-    when: (env.main[env.ctx].hooks.before_exec | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_exec }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.before_exec | default('')) != '')
 
   - include_role: 
       name: "long_run"
@@ -653,8 +676,11 @@
       and
       (((env_node | default('')) == '') or (env_node == main_item))
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_exec }}"
-    when: (env.main[env.ctx].hooks.after_exec | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_exec }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_var_hooks.after_exec | default('')) != '')
 
 ###############################################################################
 ##################            DESTROY THE CLOUD            ####################
@@ -671,8 +697,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_delete_tmp }}"
-    when: (env.main[env.ctx].hooks.before_delete_tmp | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_delete_tmp }}"
+    when: (env_var_hooks.before_delete_tmp | default('')) != ''
 
   - include_role: 
       name: "cloud_node"
@@ -707,12 +733,12 @@
       and 
       (not (cloud_node_node.external | default(false) | bool))
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_delete_tmp }}"
-    when: (env.main[env.ctx].hooks.after_delete_tmp | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_delete_tmp }}"
+    when: (env_var_hooks.after_delete_tmp | default('')) != ''
 
 ###############################################################################
 
-- name: Play 06.02 - Delete everything that was previously created
+- name: Play 06.02 - Delete everything that was created previously
   hosts: main
   tags:
   - never
@@ -722,8 +748,8 @@
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.before_delete_main }}"
-    when: (env.main[env.ctx].hooks.before_delete_main | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.before_delete_main }}"
+    when: (env_var_hooks.before_delete_main | default('')) != ''
    
   - include_role: 
       name: "cloud_node"
@@ -806,7 +832,7 @@
       loop_var: main_item
     when: main_item in (env.destroy[env.ctx].clouds | default([]))
 
-  - include_tasks: "{{ env.main[env.ctx].hooks.after_delete_main }}"
-    when: (env.main[env.ctx].hooks.after_delete_main | default('')) != ''
+  - include_tasks: "{{ env_var_hooks.after_delete_main }}"
+    when: (env_var_hooks.after_delete_main | default('')) != ''
 
 ###############################################################################
