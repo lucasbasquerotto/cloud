@@ -207,6 +207,9 @@
       node: "{{ cloud_prepare_inner_node_pod_params }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
       dirs: "{{ cloud_prepare_inner_dirs }}"
+      dependencies: "{{ cloud_prepare_dependencies }}"
+      dependencies_node_ip_dict: "{{ cloud_prepare_dependencies_ip_dict }}"
+      dependencies_node_ips_dict: "{{ cloud_prepare_dependencies_ips_dict }}"
   tags: ["no_print"]
     
 - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"

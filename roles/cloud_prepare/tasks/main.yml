@@ -1,4 +1,44 @@
 - name: "{{ cloud_prepare_title }}"
+  set_fact:
+    cloud_prepare_dependencies: []
+    cloud_prepare_dependencies_ip_dict: {}
+    cloud_prepare_dependencies_ips_dict: {}
+
+- name: "{{ cloud_prepare_title }}"
+  include_tasks: "dependency.yml"
+  vars:
+    cloud_prepare_dependency_title: "{{ cloud_prepare_title }} - dependency[{{ cloud_prepare_item.host }}]"
+    cloud_prepare_dependency_host: "{{ cloud_prepare_item.host }}"
+    cloud_prepare_dependency_node: "{{ cloud_prepare_item.node }}"
+    cloud_prepare_dependency_all: "{{ cloud_prepare_item.all | default(false) | bool }}"
+    cloud_prepare_dependency_field: >-
+      {{ 
+      cloud_prepare_item.public | default(false) | bool | 
+      ternary('ansible_host_public_ipv6', 'ansible_host_private_ip') 
+      }}
+    cloud_prepare_dependency_total_src_nodes: "{{ groups[cloud_prepare_node_id] | length }}"
+    cloud_prepare_dependency_ips: >-
+      {{ 
+      groups[cloud_prepare_dependency_node] | 
+      map('extract', hostvars, [cloud_prepare_dependency_field]) | list
+      }}
+  loop: "{{ cloud_prepare_node.dependencies | default([]) | list }}"
+  loop_control:
+    loop_var: cloud_prepare_item
+
+- name: "{{ cloud_prepare_title }} - define the dependencies ips"
+  become: true
+  lineinfile:
+    dest: "/etc/hosts"
+    regexp: '.*{{ cloud_prepare_item.host }}$'
+    line: "{{ cloud_prepare_item.ip }} {{ cloud_prepare_item.host }}"
+    state: present
+  loop: "{{ cloud_prepare_dependencies }}"
+  loop_control:
+    label: "{{ cloud_prepare_item.host }}"
+    loop_var: cloud_prepare_item
+
+- name: "{{ cloud_prepare_title }}"
   include_tasks: "pod.yml"
   vars:
     cloud_prepare_pod_title: "{{ cloud_prepare_title }} - pod[{{ cloud_prepare_item }}]"
@@ -7,7 +47,6 @@
     cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_item }}"
     cloud_prepare_pod_identifier: >-
       {{ cloud_prepare_env_name }}/{{ cloud_prepare_ctx_name }}/{{ cloud_prepare_pod_name }}
-
     cloud_prepare_host_user: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_host_group: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_local_pod_repo: >-

@@ -1,0 +1,66 @@
+- block:
+
+  - name: "{{ cloud_prepare_dependency_title }}"
+    set_fact:
+      cloud_prepare_dependency_index_aux: >-
+        {{ 
+        (cloud_prepare_dependency_ips | length) *
+        (cloud_prepare_instance_index | int) / 
+        (cloud_prepare_dependency_total_src_nodes | int)
+        }}
+
+  - name: "{{ cloud_prepare_dependency_title }}"
+    set_fact:
+      cloud_prepare_dependency_index: "{{ (cloud_prepare_dependency_index_aux | int) - 1}}"
+
+  - name: "{{ cloud_prepare_dependency_title }}"
+    set_fact:
+      cloud_prepare_dependencies: >-
+        {{ 
+        cloud_prepare_dependencies + 
+        [{ 
+        'host': cloud_prepare_dependency_host,
+        'ip': cloud_prepare_dependency_ips[cloud_prepare_dependency_index | int] 
+        }]
+        }}
+
+  - name: "{{ cloud_prepare_dependency_title }}"
+    set_fact:
+      cloud_prepare_dependencies_ip_dict: >-
+        {{ 
+        cloud_prepare_dependencies_ip_dict | combine({
+        cloud_prepare_dependency_host:
+        cloud_prepare_dependency_ips[cloud_prepare_dependency_index | int] 
+        })
+        }}
+
+  when: (not (cloud_prepare_dependency_all | bool)) and ((cloud_prepare_dependency_ips | length) > 0)
+
+- block:
+
+  - name: "{{ cloud_prepare_dependency_title }}"
+    set_fact:
+      cloud_prepare_dependencies: >-
+        {{ 
+        cloud_prepare_dependencies + 
+        [{ 
+        'host': cloud_prepare_dependency_host + '-' + cloud_prepare_dependency_index,
+        'ip': cloud_prepare_dependency_item 
+        }]
+        }}
+    loop: "{{ cloud_prepare_dependency_ips | flatten(levels=1) }}"
+    loop_control:
+      index_var: cloud_prepare_dependency_index
+      loop_var: cloud_prepare_dependency_item
+
+  when: cloud_prepare_dependency_all | bool
+
+- name: "{{ cloud_prepare_dependency_title }}"
+  set_fact:
+    cloud_prepare_dependencies_ips_dict: >-
+      {{ 
+      cloud_prepare_dependencies_ips_dict | combine({
+      cloud_prepare_dependency_host:
+      cloud_prepare_dependency_ips 
+      })
+      }}

@@ -279,6 +279,7 @@
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file: >-
         tmp/env/cloud.prepare.vars_full.yml
+      cloud_prepare_instance_index: "{{ instance_index }}"
       cloud_prepare_local_pod_dict: "{{ env_local_pod_dict }}"
       cloud_prepare_local_app_dict: "{{ env_local_app_dict }}"
       cloud_prepare_local_data_dir_inside: >-
