@@ -25,6 +25,7 @@
   loop: "{{ cloud_prepare_node.dependencies | default([]) | list }}"
   loop_control:
     loop_var: cloud_prepare_item
+  when: cloud_prepare_cloud.type != 'local'
 
 - name: "{{ cloud_prepare_title }} - define the dependencies ips"
   become: true
