@@ -1,5 +1,14 @@
 ### Cloud Node Params ###
 
+- name: "{{ cloud_node_title }} - ensure the inventory contains {{ '[' + cloud_node_node_id + ']' }}"
+  lineinfile:
+    name: "{{ cloud_node_hosts_file }}"
+    line: "{{ '[' + cloud_node_node_id + ']' }}"
+    state: present
+  check_mode: yes
+  register: cloud_node_conf
+  failed_when: (cloud_node_conf is changed) or (cloud_node_conf is failed)
+
 - include_role:
     name: "params_mixer"
   vars:
