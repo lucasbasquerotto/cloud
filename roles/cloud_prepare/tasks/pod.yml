@@ -9,7 +9,6 @@
   loop:
   - "repo"
   - "ctx"
-  - "params"
   loop_control:
     loop_var: cloud_prepare_pod_item
 
