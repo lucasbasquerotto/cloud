@@ -237,12 +237,6 @@
     (cloud_node_item.dns_value != '')
   tags: ["no_print"]
 
-- debug:
-    var: cloud_node_active_hosts
-
-- debug:
-    var: cloud_node_ips
-    
 - name: >-
     {{ cloud_node_title }} - create or destroy the main dns records
     that points to the instance
