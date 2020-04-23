@@ -1,16 +1,3 @@
-- debug:
-    var: cloud_dns_zone
-- debug:
-    var: cloud_dns_state
-- debug:
-    var: cloud_dns_record_type
-- debug:
-    var: cloud_dns_record
-- debug:
-    var: cloud_dns_value
-- debug:
-    var: cloud_dns_credentials
-    
 - name: >-
     {{ cloud_dns_title }} - cloudflare dns -
     {{ cloud_dns_record_type }} ({{ cloud_dns_state }})
