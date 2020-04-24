@@ -11,5 +11,4 @@
     account_email: "{{ cloud_dns_credentials.email }}"
     account_api_token: "{{ cloud_dns_credentials.token }}"
     state: "{{ cloud_dns_state }}"
-  when: false
   tags: ["print_action"]

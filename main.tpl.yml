@@ -54,13 +54,14 @@
   - include_role: 
       name: "cloud_dns"
     vars: 
+      main_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
         {{ env_title }} - create the static dns records - 
-        dns[{{ main_item.type }}] - {{ main_item.record }}
-      cloud_dns_type: "{{ main_item.type }}"
+        dns[{{ main_dns.type }}] - {{ main_item.record }}
+      cloud_dns_type: "{{ main_dns.type }}"
       cloud_dns_credentials: >-
-        {{ env.credentials[env.dns[main_item].credentials] }}
-      cloud_dns_zone: "{{ env.dns[main_item].zone }}"
+        {{ env.credentials[main_dns.credentials] }}
+      cloud_dns_zone: "{{ main_dns.zone }}"
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_value: "{{ main_item.value }}"
@@ -68,7 +69,7 @@
     loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.type }}"
+      label: "{{ main_item.name }}"
 
   - include_tasks: "{{ env_hooks.after_dns }}"
     when: (env_hooks.after_dns | default('')) != ''
