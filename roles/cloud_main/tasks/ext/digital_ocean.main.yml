@@ -11,7 +11,7 @@
     cloud_main_inner_firewalls: >-
       {{ 
       cloud_main_inner_firewalls + 
-      cloud_main_inner_firewalls_dict[cloud_main_inner_item] 
+      [cloud_main_inner_firewalls_dict[cloud_main_inner_item]] 
       }}
   loop: "{{ cloud_main_inner_firewalls_list }}"
   loop_control:
