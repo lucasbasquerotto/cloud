@@ -18,48 +18,52 @@ author:
 - Michael Gruener (@mgruener)
 requirements:
    - python >= 2.6
-version_added: "2.1"
 short_description: Manage Cloudflare DNS records
 description:
    - "Manages dns records via the Cloudflare API, see the docs: U(https://api.cloudflare.com/)"
 options:
-  account_api_token:
+  api_token:
     description:
-    - Account API token.
+    - API token.
+    - Required for api token authentication.
+    - "You can obtain your API token from the bottom of the Cloudflare 'My Account' page, found here: U(https://dash.cloudflare.com/)"
+    type: str
+    required: false
+  account_api_key:
+    description:
+    - Account API key.
+    - Required for api keys authentication.
     - "You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://dash.cloudflare.com/)"
     type: str
-    required: true
+    required: false
+    aliases: [ account_api_token ]
   account_email:
     description:
-    - Account email.
+    - Account email. Required for api keys authentication.
     type: str
-    required: true
+    required: false
   algorithm:
     description:
     - Algorithm number.
     - Required for C(type=DS) and C(type=SSHFP) when C(state=present).
     type: int
-    version_added: '2.7'
   cert_usage:
     description:
     - Certificate usage number.
     - Required for C(type=TLSA) when C(state=present).
     type: int
     choices: [ 0, 1, 2, 3 ]
-    version_added: '2.7'
   hash_type:
     description:
     - Hash type number.
     - Required for C(type=DS), C(type=SSHFP) and C(type=TLSA) when C(state=present).
     type: int
     choices: [ 1, 2 ]
-    version_added: '2.7'
   key_tag:
     description:
     - DNSSEC key tag.
     - Needed for C(type=DS) when C(state=present).
     type: int
-    version_added: '2.7'
   port:
     description:
     - Service port.
@@ -81,7 +85,6 @@ options:
     - Proxy through Cloudflare network or just use DNS.
     type: bool
     default: no
-    version_added: '2.3'
   record:
     description:
     - Record to add.
@@ -96,7 +99,6 @@ options:
     - Required for C(type=TLSA) when C(state=present).
     choices: [ 0, 1 ]
     type: int
-    version_added: '2.7'
   service:
     description:
     - Record service.
@@ -152,76 +154,84 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Create a test.my.com A record to point to 127.0.0.1
+- name: Create a test.example.net A record to point to 127.0.0.1
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     record: test
     type: A
     value: 127.0.0.1
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
   register: record
 
-- name: Create a my.com CNAME record to example.com
+- name: Create a record using api token
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
+    record: test
+    type: A
+    value: 127.0.0.1
+    api_token: dummyapitoken
+
+- name: Create a example.net CNAME record to example.com
+  cloudflare_dns:
+    zone: example.net
     type: CNAME
     value: example.com
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
 - name: Change its TTL
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     ttl: 600
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
 - name: Delete the record
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: absent
 
-- name: create a my.com CNAME record to example.com and proxy through Cloudflare's network
+- name: create a example.net CNAME record to example.com and proxy through Cloudflare's network
   cloudflare_dns:
-    zone: my.com
+    zone: example.net
     type: CNAME
     value: example.com
     proxied: yes
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
-# This deletes all other TXT records named "test.my.com"
-- name: Create TXT record "test.my.com" with value "unique value"
+# This deletes all other TXT records named "test.example.net"
+- name: Create TXT record "test.example.net" with value "unique value"
   cloudflare_dns:
-    domain: my.com
+    domain: example.net
     record: test
     type: TXT
     value: unique value
     solo: true
     account_email: test@example.com
-    account_api_token: dummyapitoken
+    account_api_key: dummyapitoken
     state: present
 
-- name: Create an SRV record _foo._tcp.my.com
+- name: Create an SRV record _foo._tcp.example.net
   cloudflare_dns:
-    domain: my.com
+    domain: example.net
     service: foo
     proto: tcp
     port: 3500
     priority: 10
     weight: 20
     type: SRV
-    value: fooserver.my.com
+    value: fooserver.example.net
 
 - name: Create a SSHFP record login.example.com
   cloudflare_dns:
@@ -270,7 +280,7 @@ record:
             description: The record creation date.
             returned: success
             type: str
-            sample: 2016-03-25T19:09:42.516553Z
+            sample: "2016-03-25T19:09:42.516553Z"
         data:
             description: Additional record data.
             returned: success, if type is SRV, DS, SSHFP or TLSA
@@ -303,7 +313,7 @@ record:
             description: Record modification date.
             returned: success
             type: str
-            sample: 2016-03-25T19:09:42.516553Z
+            sample: "2016-03-25T19:09:42.516553Z"
         name:
             description: The record name as FQDN (including _service and _proto for SRV).
             returned: success
@@ -367,7 +377,8 @@ class CloudflareAPI(object):
 
     def __init__(self, module):
         self.module = module
-        self.account_api_token = module.params['account_api_token']
+        self.api_token = module.params['api_token']
+        self.account_api_key = module.params['account_api_key']
         self.account_email = module.params['account_email']
         self.algorithm = module.params['algorithm']
         self.cert_usage = module.params['cert_usage']
@@ -418,9 +429,17 @@ class CloudflareAPI(object):
                 self.module.fail_json(msg="DS records only apply to subdomains.")
 
     def _cf_simple_api_call(self, api_call, method='GET', payload=None):
-        headers = {'X-Auth-Email': self.account_email,
-                   'X-Auth-Key': self.account_api_token,
-                   'Content-Type': 'application/json'}
+        if self.api_token:
+            headers = {
+                'Authorization': 'Bearer ' + self.api_token,
+                'Content-Type': 'application/json',
+            }
+        else:
+            headers = {
+                'X-Auth-Email': self.account_email,
+                'X-Auth-Key': self.account_api_key,
+                'Content-Type': 'application/json',
+            }
         data = None
         if payload:
             try:
@@ -479,11 +498,11 @@ class CloudflareAPI(object):
 
         if not result.get('success'):
             if not 'success' in result:
-                error_msg += "; Error details: {0}".format(result.get('error'))
+                error_msg += "; Unexpected error details: {0}".format(result.get('error'))
                 self.module.fail_json(msg=error_msg)
-
+                
             error_msg += "; Error details: "
-            for error in result.get('errors'):
+            for error in result['errors']:
                 error_msg += "code: {0}, error: {1}; ".format(error['code'], error['message'])
                 if 'error_chain' in error:
                     for chain_error in error['error_chain']:
@@ -770,8 +789,9 @@ class CloudflareAPI(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            account_api_token=dict(type='str', required=True, no_log=True),
-            account_email=dict(type='str', required=True),
+            api_token=dict(type='str', required=False, no_log=True),
+            account_api_key=dict(type='str', required=False, no_log=True, aliases=['account_api_token']),
+            account_email=dict(type='str', required=False),
             algorithm=dict(type='int'),
             cert_usage=dict(type='int', choices=[0, 1, 2, 3]),
             hash_type=dict(type='int', choices=[1, 2]),
@@ -801,6 +821,8 @@ def main():
         ],
     )
 
+    if not module.params['api_token'] and not (module.params['account_api_key'] and module.params['account_email']):
+        module.fail_json(msg="Either api_token or account_api_key and account_email params are required.")
     if module.params['type'] == 'SRV':
         if not ((module.params['weight'] is not None and module.params['port'] is not None
                  and not (module.params['value'] is None or module.params['value'] == ''))
