@@ -74,7 +74,7 @@
       name: "{{ cloud_prepare_pod_name }}"
       pod: "{{ cloud_prepare_pod }}"
       app: "{{ cloud_prepare_local_app_dict }}"
-      git_commit: "{{ cloud_prepare_git_commits[0] }}"
+      git_commit: "{{ cloud_prepare_git_commit }}"
       repo_name: "{{ cloud_prepare_env_name }}"
       env_local_repo: "{{ cloud_prepare_env_local_repo }}"
       repo: "{{ cloud_prepare_pod_inner_repo }}"
