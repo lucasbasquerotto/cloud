@@ -31,36 +31,6 @@
     cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
     cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
 
-### Create the environment pod repositories in the env folders (when defined) ###
-
-- include_role: 
-    name: "cloud_git"
-  vars:
-    cloud_prepare_pod_inner_env_repo: >-
-      {{ cloud_prepare_repos_dict[cloud_prepare_pod_inner_item.repo] }}
-    cloud_git_key: "{{ cloud_prepare_pod_inner_item.repo }}"
-    cloud_git_title: >-
-      {{ cloud_prepare_inner_title }} -
-      environment pod repository
-      ({{ cloud_prepare_repo_location }}/{{ 
-      cloud_prepare_pod_inner_item.dir | default('') }})
-    cloud_git_become: "{{ cloud_prepare_pod.root }}"
-    cloud_git_repo: "{{ cloud_prepare_pod_inner_env_repo.src }}"
-    cloud_git_version: "{{ cloud_prepare_pod_inner_env_repo.version }}"
-    cloud_git_private: "{{ cloud_prepare_pod_inner_env_repo.private | default(false) }}"
-    cloud_git_key_file_encrypted: >-
-      {{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_env_repo.key_file_encrypted }}
-    cloud_git_dest: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dir }}"
-    cloud_git_tmp_dir: >-
-      {{ cloud_prepare_pod_base_dir }}/tmp/repo/{{ cloud_prepare_pod_inner_item.repo }}
-    cloud_git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
-    cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
-    cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
-  loop: "{{ cloud_prepare_pod.env_repos | default([]) }}"
-  loop_control:
-    loop_var: cloud_prepare_pod_inner_item
-    label: "{{ cloud_prepare_pod_inner_item.repo }}"
-
 - set_fact:
     cloud_prepare_git_result: "{{ cloud_git_result }}"
   tags: ["no_print"]
@@ -69,6 +39,23 @@
     cloud_prepare_git_commit: "{{ cloud_prepare_git_result.after }}"
     cloud_prepare_pod_env_dir: "{{ cloud_prepare_pod.env_dir | default('env') }}"
   tags: ["no_print"]
+
+### Create the environment pod repositories in the env folders (when defined) ###
+
+- set_fact:
+    cloud_prepare_env_repos_commits: []
+  tags: ["no_print"]
+
+- include_tasks: "env_repos"
+  vars:
+    cloud_prepare_pod_inner_env_repo: >-
+      {{ cloud_prepare_repos_dict[cloud_prepare_pod_inner_item.repo] }}
+  loop: "{{ cloud_prepare_pod.env_repos | default([]) }}"
+  loop_control:
+    loop_var: cloud_prepare_pod_inner_item
+    label: "{{ cloud_prepare_pod_inner_item.repo }}"
+
+### Generate the environment pod context variables ###
 
 - set_fact:
     cloud_prepare_dest_dir_base: >-
@@ -80,15 +67,13 @@
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_dest_dir_base }}
   tags: ["no_print"]
 
-### Generate the environment pod context variables ###
-
 - set_fact:
     cloud_prepare_params_pod:
       identifier: "{{ cloud_prepare_pod_identifier }}"
       name: "{{ cloud_prepare_pod_name }}"
       pod: "{{ cloud_prepare_pod }}"
       app: "{{ cloud_prepare_local_app_dict }}"
-      git_commit: "{{ cloud_prepare_git_result.after }}"
+      git_commit: "{{ cloud_prepare_git_commits[0] }}"
       repo_name: "{{ cloud_prepare_env_name }}"
       env_local_repo: "{{ cloud_prepare_env_local_repo }}"
       repo: "{{ cloud_prepare_pod_inner_repo }}"
@@ -97,6 +82,7 @@
       data_dir: "{{ cloud_prepare_pod_data_dir }}"
       local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
+      env_repos_commits: "{{ cloud_prepare_env_repos_commits }}"
   tags: ["no_print"]
 
 - include_role:
