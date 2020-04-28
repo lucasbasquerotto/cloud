@@ -46,7 +46,8 @@
     cloud_prepare_env_repos_commits: []
   tags: ["no_print"]
 
-- include_tasks: "env_repos"
+- name: "{{ cloud_prepare_inner_title }}"
+  include_tasks: "env_repos.yml"
   vars:
     cloud_prepare_pod_inner_env_repo: >-
       {{ cloud_prepare_repos_dict[cloud_prepare_pod_inner_item.repo] }}
