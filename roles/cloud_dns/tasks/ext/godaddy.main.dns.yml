@@ -1,0 +1,78 @@
+- name: "{{ cloud_dns_title }} - godaddy dns"
+  set_fact:
+    cloud_dns_inner_title: "{{ cloud_dns_title }} - godaddy dns"
+    cloud_dns_godaddy_api_server_url: >-
+      {{ cloud_dns_credentials.api_server }}/{{ ''
+      }}v{{ cloud_dns_credentials.api_version }}/domains{{ ''
+      }}/{{ cloud_dns_zone }}/records{{ ''
+      }}/{{ cloud_dns_record_type }}{{ ''
+      }}/{{ cloud_dns_record }}
+    cloud_dns_godaddy_authorization: >-
+      sso-key {{ cloud_dns_credentials.api_key }}:{{ cloud_dns_credentials.api_secret }}
+    cloud_dns_godaddy_body: []
+
+- name: "{{ cloud_dns_title }} - validate"
+  fail:
+    msg: "{{ cloud_dns_title }} - {{ cloud_dns_godaddy_item.name }} not specified"
+  loop:
+  - { name: "dns_zone", value: "{{ cloud_dns_zone }}" }
+  - { name: "dns_record_type", value: "{{ cloud_dns_record_type }}" }
+  - { name: "dns_record_name", value: "{{ cloud_dns_record }}" }
+  loop_control:
+    loop_var: cloud_dns_godaddy_item
+    label: "{{ cloud_dns_godaddy_item.name }}"
+  when: (cloud_dns_godaddy_item.value | default('')) == ''
+
+- block:
+
+  - name: "{{ cloud_dns_title }} - define the record"
+    set_fact:
+      cloud_dns_godaddy_record:
+        type: "{{ cloud_dns_record_type }}"
+        name: "{{ cloud_dns_record }}"
+        data: "{{ cloud_dns_value }}"
+        ttl: "{{ cloud_dns_ttl | default('') }}"
+        priority: "{{ cloud_dns_priority | default('') }}"
+        service: "{{ cloud_dns_service | default('') }}"
+        protocol: "{{ cloud_dns_protocol | default('') }}"
+        port: "{{ cloud_dns_port | default('') }}"
+        weight: "{{ cloud_dns_weight | default('') }}"
+      cloud_dns_godaddy_record_final: {}
+
+  - name: "{{ cloud_dns_inner_title }} - define the record without empty fields"
+    set_fact: 
+      cloud_dns_godaddy_record_final: >-
+        {{ 
+        cloud_dns_godaddy_record_final | combine({ 
+        cloud_dns_godaddy_item.key: cloud_dns_godaddy_item.value }) 
+        }}
+    loop: "{{ cloud_dns_godaddy_record | dict2items | list }}"
+    loop_control:
+      loop_var: cloud_dns_godaddy_item
+      label: "{{ cloud_dns_godaddy_item.key }}"
+    when: cloud_dns_godaddy_item.value != ''
+
+  - name: "{{ cloud_dns_inner_title }} - setup the body"
+    set_fact:
+      cloud_dns_godaddy_body: "{{ [cloud_dns_godaddy_record_final] }}"
+
+  - name: "{{ cloud_dns_inner_title }} - print body"
+    debug:
+      var: cloud_dns_godaddy_body
+      verbosity:  3
+
+  when: cloud_dns_state == 'present'
+
+- name: >-
+    {{ cloud_dns_inner_title }} - call godaddy api to 
+    {{ (cloud_dns_state == 'present') | ternary('create/update the record', 'delete the record')
+    ({{ cloud_dns_godaddy_api_server_url }})
+  uri:
+    url: "{{ cloud_dns_godaddy_api_server_url }}"
+    method: "PUT"
+    body: "{{ cloud_dns_godaddy_body | to_nice_json }}"
+    body_format: "json"
+    headers:
+      Authorization: "{{ cloud_dns_godaddy_authorization }}"
+      Accept: "application/json"
+
