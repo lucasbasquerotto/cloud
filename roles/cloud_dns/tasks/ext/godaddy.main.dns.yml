@@ -9,9 +9,11 @@
       }}/{{ cloud_dns_record }}
     cloud_dns_godaddy_authorization: >-
       sso-key {{ cloud_dns_credentials.api_key }}:{{ cloud_dns_credentials.api_secret }}
+    cloud_dns_godaddy_old_record: {}
     cloud_dns_godaddy_body: []
+    cloud_dns_godaddy_execute: true
 
-- name: "{{ cloud_dns_title }} - validate"
+- name: "{{ cloud_dns_title }} - validate required params"
   fail:
     msg: "{{ cloud_dns_title }} - {{ cloud_dns_godaddy_item.name }} not specified"
   loop:
@@ -23,9 +25,31 @@
     label: "{{ cloud_dns_godaddy_item.name }}"
   when: (cloud_dns_godaddy_item.value | default('')) == ''
 
+- name: "{{ cloud_dns_title }} - validate state"
+  fail:
+    msg: "{{ cloud_dns_title }} - dns state should be either 'present' or 'absent'"
+  when: cloud_dns_state not in ['present', 'absent']
+
+- name: >-
+    {{ cloud_dns_inner_title }} - verify if the record is there
+    ({{ cloud_dns_godaddy_api_server_url }})
+  uri:
+    url: "{{ cloud_dns_godaddy_api_server_url }}"
+    method: "GET"
+    body_format: "json"
+    headers:
+      Authorization: "{{ cloud_dns_godaddy_authorization }}"
+      Accept: "application/json"
+  register: "cloud_dns_godaddy_result"
+
+- name: "{{ cloud_dns_inner_title }} - get old record"
+  set_fact:
+    cloud_dns_godaddy_old_record: "{{ cloud_dns_godaddy_result.json[0] }}"
+  when: ((cloud_dns_godaddy_result.json | default([])) | length) > 0
+
 - block:
 
-  - name: "{{ cloud_dns_title }} - define the record"
+  - name: "{{ cloud_dns_title }} - define the new record"
     set_fact:
       cloud_dns_godaddy_record:
         type: "{{ cloud_dns_record_type }}"
@@ -37,6 +61,8 @@
         protocol: "{{ cloud_dns_protocol | default('') }}"
         port: "{{ cloud_dns_port | default('') }}"
         weight: "{{ cloud_dns_weight | default('') }}"
+      cloud_dns_godaddy_diffs_aux: {}
+      cloud_dns_godaddy_diffs: {}
       cloud_dns_godaddy_record_final: {}
 
   - name: "{{ cloud_dns_inner_title }} - define the record without empty fields"
@@ -46,11 +72,46 @@
         cloud_dns_godaddy_record_final | combine({ 
         cloud_dns_godaddy_item.key: cloud_dns_godaddy_item.value }) 
         }}
-    loop: "{{ cloud_dns_godaddy_record | dict2items | list }}"
+    loop: "{{ cloud_dns_godaddy_record | default({}) | dict2items | list }}"
     loop_control:
       loop_var: cloud_dns_godaddy_item
       label: "{{ cloud_dns_godaddy_item.key }}"
     when: cloud_dns_godaddy_item.value != ''
+
+  - name: "{{ cloud_dns_title }} - verify differences between new and old records"
+    set_fact:
+      cloud_dns_godaddy_diffs_aux:
+        type: "{{ (tmp_new.type | default('')) != (tmp_old.type | default('')) }}"
+        name: "{{ (tmp_new.name | default('')) != (tmp_old.name | default('')) }}"
+        data: "{{ (tmp_new.data | default('')) != (tmp_old.data | default('')) }}"
+        ttl: "{{ (tmp_new.ttl | default('600') | string) != (tmp_old.ttl | default('600') | string) }}"
+        priority: "{{ (tmp_new.priority | default('')) != (tmp_old.priority | default('')) }}"
+        service: "{{ (tmp_new.service | default('')) != (tmp_old.service | default('')) }}"
+        protocol: "{{ (tmp_new.protocol | default('')) != (tmp_old.protocol | default('')) }}"
+        port: "{{ (tmp_new.port | default('')) != (tmp_old.port | default('')) }}"
+        weight: "{{ (tmp_new.weight | default('')) != (tmp_old.weight | default('')) }}"
+    vars:
+      tmp_new: "{{ cloud_dns_godaddy_record_final }}"
+      tmp_old: "{{ cloud_dns_godaddy_old_record }}"
+    when: (cloud_dns_godaddy_old_record | default({}) | dict2items | length) > 0
+
+  - name: "{{ cloud_dns_inner_title }} - define the differences"
+    set_fact: 
+      cloud_dns_godaddy_diffs: >-
+        {{ 
+        cloud_dns_godaddy_diffs | combine({ 
+        cloud_dns_godaddy_item.key: cloud_dns_godaddy_item.value }) 
+        }}
+    loop: "{{ cloud_dns_godaddy_diffs_aux | default({}) | dict2items | list }}"
+    loop_control:
+      loop_var: cloud_dns_godaddy_item
+      label: "{{ cloud_dns_godaddy_item.key }}"
+    when: cloud_dns_godaddy_item.value | default(false) | bool
+  
+  - name: "{{ cloud_dns_inner_title }} - get old record"
+    set_fact:
+      cloud_dns_godaddy_execute: false
+    when: (cloud_dns_godaddy_diffs | default({}) | dict2items | length) == 0
 
   - name: "{{ cloud_dns_inner_title }} - setup the body"
     set_fact:
@@ -63,9 +124,17 @@
 
   when: cloud_dns_state == 'present'
 
+- name: "{{ cloud_dns_inner_title }} - verify if api should be called to delete the record"
+  set_fact:
+    cloud_dns_godaddy_execute: false
+  when: >-
+    (cloud_dns_state == 'absent')
+    and
+    ((cloud_dns_godaddy_result.json | default([]) | length) == 0)
+
 - name: >-
-    {{ cloud_dns_inner_title }} - call godaddy api to 
-    {{ (cloud_dns_state == 'present') | ternary('create/update the record', 'delete the record')
+    {{ cloud_dns_inner_title }} - call godaddy api to
+    {{ (cloud_dns_state == 'present') | ternary('create/update the record', 'delete the record') }}
     ({{ cloud_dns_godaddy_api_server_url }})
   uri:
     url: "{{ cloud_dns_godaddy_api_server_url }}"
@@ -75,4 +144,6 @@
     headers:
       Authorization: "{{ cloud_dns_godaddy_authorization }}"
       Accept: "application/json"
+  changed_when: cloud_dns_godaddy_execute | bool
+  when: cloud_dns_godaddy_execute | bool
 

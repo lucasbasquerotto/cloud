@@ -46,6 +46,7 @@
   gather_facts: no  
   tasks:  
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_dns }}"
@@ -85,6 +86,7 @@
   gather_facts: no  
   tasks:  
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_buckets }}"
@@ -120,6 +122,7 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_nodes }}"
@@ -209,6 +212,7 @@
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_local_prepare }}"
@@ -245,6 +249,7 @@
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_remote_prepare }}"
@@ -525,6 +530,7 @@
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_role: 
@@ -584,6 +590,7 @@
   gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_cron }}"
@@ -695,6 +702,7 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_delete_tmp }}"
@@ -799,21 +807,22 @@
   - include_role: 
       name: "cloud_dns"
     vars: 
+      main_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
-        {{ env_title }} - [destroy] dns - {{ main_item.type }} - {{ main_item.record }}
-      cloud_dns_type: "{{ main_item.type }}"
+        {{ env_title }} - delete the static dns records - 
+        dns[{{ main_dns.type }}] - {{ main_item.record }}
+      cloud_dns_type: "{{ main_dns.type }}"
       cloud_dns_credentials: >-
-        {{ env.credentials[env.dns[main_item].credentials] }}
-      cloud_dns_zone: "{{ env.dns[main_item].zone }}"
+        {{ env.credentials[main_dns.credentials] }}
+      cloud_dns_zone: "{{ main_dns.zone }}"
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
-      cloud_dns_value: "{{ main_item.value }}"
+      cloud_dns_value: ""
       cloud_dns_state: "absent"
-    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
+    loop: "{{ env.destroy[env.ctx].dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item.type }}"
-    when: main_item in (env.destroy[env.ctx].dns | default([]))
+      label: "{{ main_item.name }}"
 
   - include_role: 
       name: "cloud_main"
