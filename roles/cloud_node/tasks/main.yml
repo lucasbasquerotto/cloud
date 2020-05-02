@@ -251,7 +251,11 @@
     cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].zone }}"
     cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
     cloud_dns_record: "{{ cloud_node_item_dns.record }}"
-    cloud_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
+    cloud_dns_data_list: >-
+      {{ 
+      ((cloud_node_item.1.dns_value | default('')) != '') | 
+      ternary([{ 'value': cloud_node_item.1.dns_value }], []) 
+      }}
     cloud_dns_state: "{{ ((cloud_dns_value | default('')) != '') | ternary('present', 'absent') }}"
   loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
   loop_control:

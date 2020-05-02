@@ -1,0 +1,42 @@
+- name: "{{ cloud_dns_title }} - define the new record"
+  set_fact:
+    cloud_dns_godaddy_record_aux:
+      type: "{{ cloud_dns_record_type }}"
+      name: "{{ cloud_dns_record }}"
+      data: "{{ cloud_dns_item.value | default('') }}"
+      ttl: "{{ cloud_dns_item.ttl | default('') }}"
+      priority: "{{ cloud_dns_item.priority | default('') }}"
+      service: "{{ cloud_dns_item.service | default('') }}"
+      protocol: "{{ cloud_dns_item.protocol | default('') }}"
+      port: "{{ cloud_dns_item.port | default('') }}"
+      weight: "{{ cloud_dns_item.weight | default('') }}"
+
+- name: "{{ cloud_dns_inner_title }} - empty record"
+  set_fact: 
+    cloud_dns_godaddy_record: {}
+
+- name: "{{ cloud_dns_inner_title }} - define the record without empty fields"
+  set_fact: 
+    cloud_dns_godaddy_record: >-
+      {{ 
+      cloud_dns_godaddy_record | combine({ 
+      cloud_dns_godaddy_item.key: cloud_dns_godaddy_item.value }) 
+      }}
+  loop: "{{ cloud_dns_godaddy_record_aux | default({}) | dict2items | list }}"
+  loop_control:
+    loop_var: cloud_dns_godaddy_item
+    label: "{{ cloud_dns_godaddy_item.key }}"
+  when: cloud_dns_godaddy_item.value != ''
+
+- name: "{{ cloud_dns_inner_title }} - define the record without empty fields"
+  set_fact: 
+    cloud_dns_godaddy_record: >-
+      {{ 
+      cloud_dns_godaddy_record | 
+      combine({ 'ttl': cloud_dns_godaddy_record.ttl | default(600) | int }) 
+      }}
+
+- name:
+  set_fact:
+    cloud_dns_godaddy_records: >-
+      {{ cloud_dns_godaddy_records + [cloud_dns_godaddy_record] }}

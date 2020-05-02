@@ -1,0 +1,28 @@
+- name: "{{ diff_title }} - create empty lists"
+  set_fact: 
+    diff_list_str_1: []
+    diff_list_str_2: []
+
+- name: "{{ diff_title }} - create a new list with the objects as json from list 1"
+  set_fact: 
+    diff_list_str_1: >-
+      {{ diff_list_str_1 + [diff_item | to_nice_json] }}
+  loop: "{{ diff_list_1 | default([]) | flatten(levels=1) }}"
+  loop_control:
+    loop_var: diff_item
+    index_var: diff_index
+    label: "{{ diff_index }}"
+
+- name: "{{ diff_title }} - create a new list with the objects as json from list 2"
+  set_fact: 
+    diff_list_str_2: >-
+      {{ diff_list_str_2 + [diff_item | to_nice_json] }}
+  loop: "{{ diff_list_2 | default([]) | flatten(levels=1) }}"
+  loop_control:
+    loop_var: diff_item
+    index_var: diff_index
+    label: "{{ diff_index }}"
+
+- name: "{{ diff_title }} - define simetric difference"
+  set_fact: 
+    diff_list_result: "{{ diff_list_str_1 | symmetric_difference(diff_list_str_2) }}"
