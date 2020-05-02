@@ -1,3 +1,6 @@
+- debug:
+    var: cloud_dns_data_list
+
 - name: "{{ cloud_dns_title }} - godaddy dns"
   set_fact:
     cloud_dns_inner_title: "{{ cloud_dns_title }} - godaddy dns"
