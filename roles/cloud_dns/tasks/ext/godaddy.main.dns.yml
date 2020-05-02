@@ -37,7 +37,7 @@
   set_fact:
     cloud_dns_final_state: "absent"
   when: >-
-    ( cloud_dns_state == 'present') and 
+    (cloud_dns_state == 'present') and 
     ((cloud_dns_data_list | default([]) | length) == 0)
 
 - name: >-

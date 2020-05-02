@@ -213,11 +213,7 @@
   tags: ["print_action"]
 
 - set_fact:
-    cloud_node_ips:
-    - name: "ipv4"
-      record_type: "A"
-    - name: "ipv6"
-      record_type: "AAAA"
+    cloud_node_ips: []
   tags: ["no_print"]
   
 - set_fact:
@@ -233,7 +229,7 @@
     loop_var: cloud_node_item
   when: >-
     (not (cloud_node_shutdown | default(false) | bool)) and 
-    (cloud_node_active_hosts | default([]) | length == 1) and 
+    (cloud_node_active_hosts | default([]) | length <= 1) and 
     (cloud_node_item.dns_value != '')
   tags: ["no_print"]
 
@@ -247,6 +243,7 @@
     name: "cloud_dns"
   vars: 
     cloud_node_item_dns: "{{ cloud_node_params.dns_dict[cloud_node_item.0] }}"
+    cloud_dns_item_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
     cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
     cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].type }}"
     cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].credentials }}"
@@ -256,10 +253,10 @@
     cloud_dns_record: "{{ cloud_node_item_dns.record }}"
     cloud_dns_data_list: >-
       {{ 
-      ((cloud_node_item.1.dns_value | default('')) != '') | 
-      ternary([{ 'value': cloud_node_item.1.dns_value | default('') }], []) 
+      (cloud_dns_item_dns_value != '') | 
+      ternary([{ 'value': cloud_dns_item_dns_value }], []) 
       }}
-    cloud_dns_state: "{{ ((cloud_dns_value | default('')) != '') | ternary('present', 'absent') }}"
+    cloud_dns_state: "{{ (cloud_dns_item_dns_value != '') | ternary('present', 'absent') }}"
   loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
   loop_control:
     loop_var: cloud_node_item
@@ -270,8 +267,7 @@
     (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
     ((cloud_node_dns_dict[cloud_node_item_dns.name].type | default('')) != '') and 
     (
-    ((cloud_dns_value | default('')) != '') or
-    (not (cloud_node_shutdown | default(false) | bool)) or
+    (cloud_dns_item_dns_value != '') or
     (cloud_node_allow_destroy_dns | default(false) | bool)
     )
   tags: ["print_action"]
