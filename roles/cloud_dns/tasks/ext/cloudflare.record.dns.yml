@@ -12,4 +12,3 @@
     account_email: "{{ cloud_dns_credentials.email }}"
     account_api_token: "{{ cloud_dns_credentials.token }}"
     state: "{{ cloud_dns_final_state }}"
-  tags: ["print_action"]

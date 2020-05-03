@@ -11,7 +11,6 @@
     version: "{{ discourse_docker_version }}"
     dest: "{{ discourse_location }}"
     update: yes
-  tags: ["print_action"]
     
 - name: "{{ discourse_title }} - set_fact"
   set_fact: 

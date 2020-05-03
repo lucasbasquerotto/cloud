@@ -241,7 +241,6 @@
   loop_control:
     loop_var: cloud_prepare_transfer_item
     label: "{{ cloud_prepare_transfer_item.path }}"
-  tags: ["print_action"]
 
 - name: "{{ cloud_prepare_transfer_title }} - create the other directories"
   become: "{{ cloud_prepare_pod.root }}"
@@ -277,7 +276,6 @@
     loop_var: cloud_prepare_transfer_item
     label: "tmp/tpl/{{ cloud_prepare_transfer_item.dest_rel }}"
   changed_when: false
-  tags: ["print_action"]
 
 - name: "{{ cloud_prepare_transfer_title }}"
   set_fact:
@@ -322,7 +320,6 @@
   loop_control:
     loop_var: cloud_prepare_transfer_item
     label: "{{ cloud_prepare_transfer_item.dest }}"
-  tags: ["print_action"]
 
 - name: "{{ cloud_prepare_transfer_title }} - copy the static files to the specified locations"
   become: "{{ cloud_prepare_pod.root }}"
@@ -341,4 +338,3 @@
   loop_control:
     loop_var: cloud_prepare_transfer_item
     label: "{{ cloud_prepare_transfer_item.dest }}"
-  tags: ["print_action"]

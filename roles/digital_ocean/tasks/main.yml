@@ -36,7 +36,6 @@
     loop_control:
       loop_var: digital_ocean_item
     when: digital_ocean_diff.changed and ((digital_ocean_instance_count | int) > 0)
-    tags: ["print_action"]
 
   - name: "{{ digital_ocean_title }} - tags tmp file dest"
     copy: 
@@ -81,7 +80,6 @@
       loop_var: digital_ocean_item
       label: "{{ digital_ocean_item.name }}"
     when: digital_ocean_diff.changed and ((digital_ocean_instance_count | int) > 0)
-    tags: ["print_action"]
 
   - name: "{{ digital_ocean_title }} - firewalls tmp file dest"
     copy: 

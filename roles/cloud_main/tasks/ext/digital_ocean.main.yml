@@ -45,7 +45,6 @@
     loop: "{{ cloud_main_inner_tags_final | default([]) }}"
     loop_control:
       loop_var: cloud_main_inner_item
-    tags: ["print_action"]
 
   when: (cloud_main_inner_tags | default([])) | length > 0
 
@@ -79,6 +78,5 @@
     loop_control:
       loop_var: cloud_main_inner_item
       label: "{{ cloud_main_inner_item.name }}"
-    tags: ["print_action"]
 
   when: (cloud_main_inner_firewalls | default([])) | length > 0

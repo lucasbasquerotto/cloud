@@ -2,6 +2,19 @@
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
+- name: Play 0 - Main - Load Environment
+  hosts: main
+  tags:
+  - always
+  gather_facts: no  
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
+
+###############################################################################
+##################            PREPARE THE CLOUD            ####################
+###############################################################################
+
 - name: Play 01.01 - Cloud - Main 
   hosts: main
   tags:
@@ -11,6 +24,7 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_cloud_main }}"
@@ -754,6 +768,7 @@
   gather_facts: no  
   tasks:
   - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
     tags: ["no_print"]
 
   - include_tasks: "{{ env_hooks.before_delete_main }}"

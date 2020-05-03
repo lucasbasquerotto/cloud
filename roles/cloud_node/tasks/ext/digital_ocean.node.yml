@@ -19,7 +19,6 @@
     ipv6: "{{ cloud_node_inner_ipv6 | default(omit) }}"
     user_data: "{{ cloud_node_inner_user_data }}"
   register: cloud_node_inner_details
-  tags: ["print_action"]
 
 - block:
 
@@ -38,7 +37,6 @@
     loop_control:
       loop_var: cloud_node_inner_item
       label: "{{ cloud_node_item_name }} - {{ cloud_node_inner_item }}"
-    tags: ["print_action"]
     
   - set_fact: 
       cloud_node_inner_host: 

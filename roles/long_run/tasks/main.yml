@@ -58,9 +58,7 @@
 - name: '[{{ long_run_title }}]'
   debug: 
     msg: "before: {{ long_run_before }}"
-  tags: ["print_action"]
 
 - name: '[{{ long_run_title }}]'
   debug: 
     msg: "after: {{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
-  tags: ["print_action"]

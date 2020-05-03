@@ -206,11 +206,9 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_id }}"
     insertafter: "\\[{{ cloud_node_node_id }}\\]"
     block: "{{ cloud_node_hosts_info }}"
-  tags: ["print_action"]
 
 - name: '{{ cloud_node_title }} - refresh inventory'
   meta: refresh_inventory
-  tags: ["print_action"]
 
 - set_fact:
     cloud_node_ips: []
@@ -270,4 +268,3 @@
     (cloud_dns_item_dns_value != '') or
     (cloud_node_allow_destroy_dns | default(false) | bool)
     )
-  tags: ["print_action"]

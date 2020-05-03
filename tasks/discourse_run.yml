@@ -15,4 +15,3 @@
   when: >-
     (main_item.0.vars.cloud.instance_type == instance_type) and 
     not (main_item.1.skip | default(false) | bool)
-  tags: [print_action]

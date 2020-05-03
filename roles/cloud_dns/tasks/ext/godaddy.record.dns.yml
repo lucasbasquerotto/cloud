@@ -10,10 +10,12 @@
       protocol: "{{ cloud_dns_item.protocol | default('') }}"
       port: "{{ cloud_dns_item.port | default('') }}"
       weight: "{{ cloud_dns_item.weight | default('') }}"
+  tags: ["no_print"]
 
 - name: "{{ cloud_dns_inner_title }} - empty record"
   set_fact: 
     cloud_dns_godaddy_record: {}
+  tags: ["no_print"]
 
 - name: "{{ cloud_dns_inner_title }} - define the record without empty fields"
   set_fact: 
@@ -27,6 +29,7 @@
     loop_var: cloud_dns_godaddy_item
     label: "{{ cloud_dns_godaddy_item.key }}"
   when: cloud_dns_godaddy_item.value != ''
+  tags: ["no_print"]
 
 - name: "{{ cloud_dns_inner_title }} - define the record without empty fields"
   set_fact: 
@@ -35,8 +38,10 @@
       cloud_dns_godaddy_record | 
       combine({ 'ttl': cloud_dns_godaddy_record.ttl | default(600) | int }) 
       }}
+  tags: ["no_print"]
 
 - name:
   set_fact:
     cloud_dns_godaddy_records: >-
       {{ cloud_dns_godaddy_records + [cloud_dns_godaddy_record] }}
+  tags: ["no_print"]

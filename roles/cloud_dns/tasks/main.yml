@@ -1,2 +1,3 @@
 - name: "{{ cloud_dns_title }} - {{ cloud_dns_type }} record"
   include_tasks: "ext/{{ cloud_dns_type }}.main.dns.yml"
+  tags: ["no_print"]

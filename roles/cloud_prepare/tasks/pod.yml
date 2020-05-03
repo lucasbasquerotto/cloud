@@ -138,7 +138,6 @@
     debug: 
       msg: "variables unchanged"
     when: not cloud_prepare_diff.changed
-    tags: ["print_action"]
 
   when: not (cloud_prepare_pod.fast_prepare | default(false) | bool)
 
@@ -163,7 +162,6 @@
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
       mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
-    tags: ["print_action"]
 
   when: >-
     (cloud_prepare_pod.fast_prepare | default(false) | bool) or

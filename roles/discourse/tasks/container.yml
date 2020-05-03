@@ -79,4 +79,3 @@
     maximum_backups: "{{ discourse_var_maximum_backups | default('') }}"
     backup_frequency: "{{ discourse_var_backup_frequency | default('') }}"
     s3_backup_bucket: "{{ discourse_var_s3_backup_bucket | default('') }}"
-  tags: ["print_action"]

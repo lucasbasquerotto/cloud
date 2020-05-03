@@ -2,6 +2,7 @@
   set_fact: 
     diff_list_str_1: []
     diff_list_str_2: []
+  tags: ["no_print"]
 
 - name: "{{ diff_title }} - create a new list with the objects as json from list 1"
   set_fact: 
@@ -12,6 +13,7 @@
     loop_var: diff_item
     index_var: diff_index
     label: "{{ diff_index }}"
+  tags: ["no_print"]
 
 - name: "{{ diff_title }} - create a new list with the objects as json from list 2"
   set_fact: 
@@ -22,7 +24,9 @@
     loop_var: diff_item
     index_var: diff_index
     label: "{{ diff_index }}"
+  tags: ["no_print"]
 
 - name: "{{ diff_title }} - define simetric difference"
   set_fact: 
     diff_list_result: "{{ diff_list_str_1 | symmetric_difference(diff_list_str_2) }}"
+  tags: ["no_print"]

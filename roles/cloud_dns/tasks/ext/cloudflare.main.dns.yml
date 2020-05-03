@@ -12,6 +12,7 @@
     index_var: cloud_dns_index
     label: "{{ cloud_dns_index }}"
   when: cloud_dns_state == 'present'
+  tags: ["no_print"]
 
 - name: >-
     {{ cloud_dns_title }} - cloudflare dns - delete record -
@@ -23,3 +24,4 @@
   when: >-
     (cloud_dns_state == 'absent') or 
     ((cloud_dns_data_list | default([]) | length) == 0)
+  tags: ["no_print"]
