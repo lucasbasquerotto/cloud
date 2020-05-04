@@ -1,5 +1,5 @@
 
-- name: "{{ cron_title }}"
+- name: "{{ cron_title }} - generate node params"
   include_role:
     name: "params_mixer"
   vars:
@@ -8,7 +8,6 @@
     params_mixer_shared_params_name: "{{ cron_node.shared_params | default('') }}"
     params_mixer_shared_params_names_dict: "{{ cron_node_shared_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cron_node_params_dict }}"
-  tags: ["no_print"]
 
 - name: "{{ cron_title }}"
   set_fact:

@@ -86,7 +86,8 @@
       env_repos_commits: "{{ cloud_prepare_env_repos_commits }}"
   tags: ["no_print"]
 
-- include_role:
+- name: "{{ cloud_prepare_inner_title }} - generate credentials params"
+  include_role:
     name: "params_mixer"
   vars:
     params_mixer_main_params: {}
@@ -94,13 +95,13 @@
     params_mixer_shared_params_name: ""
     params_mixer_shared_params_names_dict: {}
     params_mixer_params_dict: "{{ cloud_prepare_credentials_dict }}"
-  tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_inner_credentials: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- include_role:
+- name: "{{ cloud_prepare_inner_title }} - generate pod params"
+  include_role:
     name: "params_mixer"
   vars:
     params_mixer_main_params: "{{ cloud_prepare_pod.params | default({}) }}"
@@ -108,13 +109,13 @@
     params_mixer_shared_params_name: "{{ cloud_prepare_pod.shared_params | default('') }}"
     params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"
-  tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_inner_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- include_role:
+- name: "{{ cloud_prepare_inner_title }} - generate node params"
+  include_role:
     name: "params_mixer"
   vars:
     params_mixer_main_params: "{{ cloud_prepare_node.params | default({}) }}"
@@ -122,13 +123,13 @@
     params_mixer_shared_params_name: "{{ cloud_prepare_node.shared_params | default('') }}"
     params_mixer_shared_params_names_dict: "{{ cloud_prepare_node_shared_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cloud_prepare_node_params_dict }}"
-  tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_inner_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- include_role:
+- name: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params"
+  include_role:
     name: "params_mixer"
   vars:
     params_mixer_main_params: >-
@@ -149,7 +150,6 @@
     params_mixer_shared_params_names_dict: >-
       {{ cloud_prepare_pod_shared_params_dict | default({}) }}
     params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"
-  tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_inner_node_pod_params: "{{ params_mixer_params }}"

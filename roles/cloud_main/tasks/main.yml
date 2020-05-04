@@ -1,4 +1,5 @@
-- include_role:
+- name: "{{ cloud_main_title }} - generate cloud params"
+  include_role:
     name: "params_mixer"
   vars:
     params_mixer_main_params: "{{ cloud_main_cloud.params | default({}) }}"
@@ -6,7 +7,6 @@
     params_mixer_shared_params_name: "{{ cloud_main_cloud.shared_params | default('') }}"
     params_mixer_shared_params_names_dict: "{{ cloud_main_cloud_shared_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cloud_main_cloud_params_dict | default({}) }}"
-  tags: ["no_print"]
 
 - set_fact:
     cloud_main_params: "{{ params_mixer_params }}"

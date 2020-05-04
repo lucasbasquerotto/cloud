@@ -1,5 +1,5 @@
 
-- name: "{{ host_test_title }}"
+- name: "{{ host_test_title }} - generate node params"
   include_role:
     name: "params_mixer"
   vars:
@@ -8,7 +8,6 @@
     params_mixer_shared_params_name: "{{ host_test_node.shared_params | default('') }}"
     params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
-  tags: ["no_print"]
 
 - name: "{{ host_test_title }}"
   set_fact:
