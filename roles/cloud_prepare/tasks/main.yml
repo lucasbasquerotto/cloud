@@ -14,7 +14,7 @@
     cloud_prepare_dependency_field: >-
       {{ 
       cloud_prepare_item.public | default(false) | bool | 
-      ternary('ansible_host_public_ipv6', 'ansible_host_private_ip') 
+      ternary('ansible_host_public_ipv4', 'ansible_host_private_ip') 
       }}
     cloud_prepare_dependency_total_src_nodes: "{{ groups[cloud_prepare_node_id] | length }}"
     cloud_prepare_dependency_ips: >-
