@@ -350,15 +350,30 @@
 
 <% set ns_outer_run = namespace(first=true) %>
 
-<% for var_run_stage_name in var_main_run_stages %>
+<% for var_run_stage_item in var_main_run_stages %>
+    <% if var_run_stage_item.tasks is defined %>
+      <% set var_direct = true | bool %>
+      <% set var_run_stage_name = loop.index | string %>
+      <% set var_run_stages = var_run_stage_item.tasks %>
+    <% else %>
+      <% set var_direct = false | bool %>
+      <% set var_run_stage_name = var_run_stage_item %>
+      <% set var_run_stages = params.run_stages[var_run_stage_name] %>
+    <% endif %>
 
   <% set ns_run = namespace(list=[]) %>
-  <% set var_run_stages = params.run_stages[var_run_stage_name] %>
 
-  <% for var_run_stage_task_name in var_run_stages %>
-
-    <% set var_run_stage_task = params.run_stage_tasks[var_run_stage_task_name] %>
-    <% set var_task_tag = var_run_stage_task.task_tag | default('') %>
+  <% for var_run_stage_task_item in var_run_stages %>
+    <% if var_direct %>
+      <% set var_run_stage_task_name = var_run_stage_task_item.name %>
+      <% set var_run_stage_task = var_run_stage_task_item %>
+      <% set var_task_tag = '_direct_' %>
+    <% else %>
+      <% set var_run_stage_task_name = var_run_stage_task_item %>
+      <% set var_run_stage_task = params.run_stage_tasks[var_run_stage_task_name] %>
+      <% set var_task_tag = var_run_stage_task.task_tag | default('') %>
+    <% endif %>
+    
     <% set var_nodes_tasks = var_run_stage_task.nodes_tasks | default(false, true) | bool %>
     <% set var_pods_tasks = var_run_stage_task.pods_tasks | default(false, true) | bool %>
     <% set var_partial_pods = var_run_stage_task.partial_pods | default(false, true) | bool %>
@@ -366,13 +381,15 @@
     <% set var_main_all_nodes = var_main_params.nodes | default([]) %>
     <% set var_node_keys = var_main_all_nodes %>
 
-    <% if var_all_nodes and var_partial_pods %>
-      <% set error = {} %>
-      << error['error.run_stage[' + var_run_stage_name + 
-        '].run_stage_task[' + var_run_stage_task_name + 
-        '].both_all_nodes_and_partial_pods_defined'] >>
+    <% if not var_direct %>
+      <% if var_all_nodes and var_partial_pods %>
+        <% set error = {} %>
+        << error['error.run_stage[' + var_run_stage_name + 
+          '].run_stage_task[' + var_run_stage_task_name + 
+          '].both_all_nodes_and_partial_pods_defined'] >>
+      <% endif %>
     <% endif %>
-
+    
     <% if (not var_all_nodes) and ((var_run_stage_task.nodes | default([]) | length) == 0) %>
       <% set error = {} %>
       << error['error.run_stage[' + var_run_stage_name + 
@@ -384,14 +401,18 @@
       <% set var_node_keys = var_run_stage_task.nodes | default([]) %>
     <% endif %>
 
-    <% for var_node_key in var_node_keys %>
-
+    <% for var_node_key in var_node_keys | unique %>
       <% if not var_partial_pods %>
         <% set var_node_name = var_node_key %>
       <% else %>
-        <% set var_run_stage_node_pods_info = var_run_stage_node_pods_dict[var_node_key] %>
-        <% set var_node_name = var_run_stage_node_pods_info.node %>
-        <% set var_pod_names = var_run_stage_node_pods_info.pods | default([]) %>
+        <% if var_direct %>
+          <% set var_node_name = var_node_key %>
+          <% set var_pod_names = var_run_stage_task_item.pods_per_node[var_node_name] | default([]) %>
+        <% else %>
+          <% set var_run_stage_node_pods_info = var_run_stage_node_pods_dict[var_node_key] %>
+          <% set var_node_name = var_run_stage_node_pods_info.node %>
+          <% set var_pod_names = var_run_stage_node_pods_info.pods | default([]) %>
+        <% endif %>
       <% endif %>
 
       <% if var_node_name not in var_main_all_nodes %>
@@ -411,9 +432,15 @@
         <% set var_pod_names = var_node_all_pods %>
       <% endif %>
 
-      <% if var_nodes_tasks and ((var_tasks_group_name | default('')) != '') %>
-        <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
-        <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
+      <% if var_nodes_tasks and (var_direct or ((var_tasks_group_name | default('')) != '')) %>
+        <% if var_direct %>
+          <% set var_tasks_group_name = 'no_group' %>
+          <% set var_task_name = var_run_stage_task_item.name %>
+        <% else %>
+          <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
+          <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
+        <% endif %>
+        
         <% set var_task = var_task_dict[var_task_name] | default({}) %>
         <% set var_task_type = var_task.type | default('') %>
 
@@ -443,7 +470,6 @@
           } %>  
 
           <% set ns_run.list = ns_run.list + [var_run_task_params] %> 
-
         <% elif var_task_type != 'skip' %>
           <% set error = {} %>
           << error['error.run_stage[' + var_run_stage_name + 
@@ -456,79 +482,85 @@
         <% endif %>
       <% endif %>
 
-      <% for var_pod_name in var_pod_names %>
-
-        <% if var_pod_name not in var_node_all_pods %>
-          <% set error = {} %>
-          << error['error.run_stage[' + var_run_stage_name + 
-            '].run_stage_task[' + var_run_stage_task_name + 
-            '].node[' + var_node_name + 
-            '].pod[' + var_pod_name + 
-            '].pod_not_in_node'] >>
-        <% endif %>      
-
-        <% set var_pod = params.pods[var_pod_name] | default({}) %>
-        <% set var_tasks_group_name = var_pod.tasks_group | default('') %>
-
-        <% if var_pods_tasks and ((var_tasks_group_name | default('')) != '') %>
-          <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
-          <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
-          <% set var_task = var_task_dict[var_task_name] | default({}) %>
-          <% set var_task_type = var_task.type | default('') %>
-
-          <% if var_task_type == '' %>
+      <% if var_pods_tasks %>
+        <% for var_pod_name in var_pod_names | unique %>
+          <% if var_pod_name not in var_node_all_pods %>
             <% set error = {} %>
             << error['error.run_stage[' + var_run_stage_name + 
               '].run_stage_task[' + var_run_stage_task_name + 
               '].node[' + var_node_name + 
               '].pod[' + var_pod_name + 
-              '].task_tag[' + var_task_tag + 
-              '].tasks_group[' + var_tasks_group_name + 
-              '].task[' + var_task_name + 
-              '].type.empty' + ''] >>
-          <% elif var_task_type in ['task', 'shell'] %>
+              '].pod_not_in_node'] >>
+          <% endif %>      
 
-            <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
+          <% set var_pod = params.pods[var_pod_name] | default({}) %>
+          <% set var_tasks_group_name = var_pod.tasks_group | default('') %>
 
-            <% set var_pod_repo_location = var_pod_base_dir + '/main' %>
-            
-            <% if (var_cloud.type == 'local') and 
-              ((var_local_pod_dir_dict[var_pod_name] | default('')) != '') 
-            %>
-              <% set var_pod_repo_location = var_local_base_dir_pod + '/' + 
-                var_local_pod_dir_dict[var_pod_name] 
-              %>
+          <% if var_direct or ((var_tasks_group_name | default('')) != '') %>
+            <% if var_direct %>
+              <% set var_tasks_group_name = 'no_group' %>
+              <% set var_task_name = var_run_stage_task_item.name %>
+            <% else %>
+              <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
+              <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
             <% endif %>
             
-            <% set var_run_task_params = {
-              'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
-                '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
-                '] - task[' + var_task_tag + ']',
-              'task': var_task,
-              'output_path': var_pod_base_dir + '/data/log/run',
-              'output_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
-              'tmp_path': var_pod_base_dir + '/data/tmp/run',
-              'tmp_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
-              'chdir': var_pod_repo_location,
-              'node_name': var_node_name,
-              'pod_name': var_pod_name
-            } %>  
+            <% set var_task = var_task_dict[var_task_name] | default({}) %>
+            <% set var_task_type = var_task.type | default('') %>
 
-            <% set ns_run.list = ns_run.list + [var_run_task_params] %>  
+            <% if var_task_type == '' %>
+              <% set error = {} %>
+              << error['error.run_stage[' + var_run_stage_name + 
+                '].run_stage_task[' + var_run_stage_task_name + 
+                '].node[' + var_node_name + 
+                '].pod[' + var_pod_name + 
+                '].task_tag[' + var_task_tag + 
+                '].tasks_group[' + var_tasks_group_name + 
+                '].task[' + var_task_name + 
+                '].type.empty' + ''] >>
+            <% elif var_task_type in ['task', 'shell'] %>
+              <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
 
-          <% elif var_task_type != 'skip' %>
-            <% set error = {} %>
-            << error['error.run_stage[' + var_run_stage_name + 
-              '].run_stage_task[' + var_run_stage_task_name + 
-              '].node[' + var_node_name + 
-              '].pod[' + var_pod_name + 
-              '].task_tag[' + var_task_tag + 
-              '].tasks_group[' + var_tasks_group_name + 
-              '].task[' + var_task_name + 
-              '].type.invalid.' + var_task_type] >>
+              <% set var_pod_repo_location = var_pod_base_dir + '/main' %>
+              
+              <% if (var_cloud.type == 'local') and 
+                ((var_local_pod_dir_dict[var_pod_name] | default('')) != '') 
+              %>
+                <% set var_pod_repo_location = var_local_base_dir_pod + '/' + 
+                  var_local_pod_dir_dict[var_pod_name] 
+                %>
+              <% endif %>
+              
+              <% set var_run_task_params = {
+                'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
+                  '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
+                  '] - task[' + var_task_tag + ']',
+                'task': var_task,
+                'output_path': var_pod_base_dir + '/data/log/run',
+                'output_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
+                'tmp_path': var_pod_base_dir + '/data/tmp/run',
+                'tmp_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
+                'chdir': var_pod_repo_location,
+                'node_name': var_node_name,
+                'pod_name': var_pod_name
+              } %>  
+
+              <% set ns_run.list = ns_run.list + [var_run_task_params] %>  
+
+            <% elif var_task_type != 'skip' %>
+              <% set error = {} %>
+              << error['error.run_stage[' + var_run_stage_name + 
+                '].run_stage_task[' + var_run_stage_task_name + 
+                '].node[' + var_node_name + 
+                '].pod[' + var_pod_name + 
+                '].task_tag[' + var_task_tag + 
+                '].tasks_group[' + var_tasks_group_name + 
+                '].task[' + var_task_name + 
+                '].type.invalid.' + var_task_type] >>
+            <% endif %>
           <% endif %>
-        <% endif %>
-      <% endfor %>
+        <% endfor %>
+      <% endif %>
     <% endfor %>
   <% endfor %>
 
@@ -569,16 +601,10 @@
       cloud_run_pod: "{{ env.pods[cloud_run_pod_name] | default({}) }}"
       cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud | default('')] | default({}) }}"
     loop: <% if (ns_run.list | length) == 0 %>[]<% else %>
-      <% for main_run_item in ns_run.list %>      
-      
-      <% 
-        for main_run_subitem in main_run_item | dict2items | sort(attribute='key') | list
-      %><< (loop.index == 1) | ternary('- ', '  ') >><< 
-        main_run_subitem.key >>: << main_run_subitem.value | to_json 
-      >>
-      <% endfor %> 
-      <% endfor %><% endif %>
-    
+      <% for main_run_item in ns_run.list %>     
+      << '\n' >>
+      - << main_run_item | to_nice_yaml(indent=2) | replace('\n', '\n        ') >>
+      <% endfor %><% endif %>  
     loop_control:
       loop_var: main_item
       label: "{{ main_item.title }}"
