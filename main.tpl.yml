@@ -365,9 +365,9 @@
 
   <% for var_run_stage_task_item in var_run_stages %>
     <% if var_direct %>
-      <% set var_run_stage_task_name = var_run_stage_task_item.name %>
+      <% set var_run_stage_task_name = loop.index | string %>
       <% set var_run_stage_task = var_run_stage_task_item %>
-      <% set var_task_tag = '_direct_' %>
+      <% set var_task_tag = var_run_stage_task_item.name %>
     <% else %>
       <% set var_run_stage_task_name = var_run_stage_task_item %>
       <% set var_run_stage_task = params.run_stage_tasks[var_run_stage_task_name] %>
