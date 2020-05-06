@@ -4,6 +4,7 @@
   nsupdate:
     key_name: "{{ cloud_dns_credentials.key_name }}"
     key_secret: "{{ cloud_dns_credentials.key_secret }}"
+    key_algorithm: "{{ cloud_dns_credentials.key_algorithm }}"
     server: "{{ cloud_dns_credentials.server }}"
     zone: "{{ cloud_dns_zone }}"
     type: "{{ cloud_dns_record_type }}"

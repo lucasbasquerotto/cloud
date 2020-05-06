@@ -1,3 +1,8 @@
 - name: "{{ cloud_dns_title }} - {{ cloud_dns_type }} record"
+  fail:
+    msg: "{{ cloud_dns_title }} - dns zone not defined"
+  when: (cloud_dns_zone | default('')) == ''
+
+- name: "{{ cloud_dns_title }} - {{ cloud_dns_type }} record"
   include_tasks: "ext/{{ cloud_dns_type }}.main.dns.yml"
   tags: ["no_print"]
