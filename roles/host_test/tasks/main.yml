@@ -4,9 +4,11 @@
     name: "params_mixer"
   vars:
     params_mixer_main_params: "{{ host_test_node.params | default({}) }}"
-    params_mixer_other_params_names: "{{ host_test_node.other_params | default({}) }}"
-    params_mixer_shared_params_name: "{{ host_test_node.shared_params | default('') }}"
+    params_mixer_group_params_names: "{{ host_test_node.group_params | default({}) }}"
+    params_mixer_shared_params_names: "{{ host_test_node.shared_params | default([]) }}"
     params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
+    params_mixer_shared_group_params_name: "{{ host_test_node.shared_group_params | default('') }}"
+    params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
 
 - name: "{{ host_test_title }}"

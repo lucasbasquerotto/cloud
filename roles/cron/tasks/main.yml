@@ -4,9 +4,11 @@
     name: "params_mixer"
   vars:
     params_mixer_main_params: "{{ cron_node.params | default({}) }}"
-    params_mixer_other_params_names: "{{ cron_node.other_params | default({}) }}"
-    params_mixer_shared_params_name: "{{ cron_node.shared_params | default('') }}"
+    params_mixer_group_params_names: "{{ cron_node.group_params | default({}) }}"
+    params_mixer_shared_params_names: "{{ cron_node.shared_params | default([]) }}"
     params_mixer_shared_params_names_dict: "{{ cron_node_shared_params_dict | default({}) }}"
+    params_mixer_shared_group_params_name: "{{ cron_node.shared_group_params | default('') }}"
+    params_mixer_shared_group_params_names_dict: "{{ cron_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cron_node_params_dict }}"
 
 - name: "{{ cron_title }}"

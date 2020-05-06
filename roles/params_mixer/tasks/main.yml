@@ -1,34 +1,57 @@
 - set_fact:
-    params_mixer_shared_params_names: {}
+    params_mixer_shared_group_params_names: {}
   tags: ["no_print"]
 
 - set_fact:
-    params_mixer_shared_params_names: >-
-      {{ params_mixer_shared_params_names_dict[params_mixer_shared_params_name] }}
-  when: (params_mixer_shared_params_name | default('')) != ''
-  tags: ["no_print"]
-  
-- set_fact:
-    params_mixer_full_params_names: >-
-      {{ 
-      params_mixer_shared_params_names | 
-      combine(params_mixer_other_params_names) 
-      }}
+    params_mixer_shared_group_params_names: >-
+      {{ params_mixer_shared_group_params_names_dict[params_mixer_shared_group_params_name] }}
+  when: (params_mixer_shared_group_params_name | default('')) != ''
   tags: ["no_print"]
 
 - set_fact:
-    params_mixer_other_params: {}
+    params_mixer_shared_group_params: {}
   tags: ["no_print"]
-    
+
 - set_fact:
-    params_mixer_other_params: >-
+    params_mixer_shared_group_params: >-
       {{ 
-      params_mixer_other_params | 
+      params_mixer_shared_group_params | 
       combine({ 
       params_mixer_item.key: 
       params_mixer_params_dict[params_mixer_item.value] }) 
       }}
-  loop: "{{ params_mixer_full_params_names | default({}) | dict2items }}"
+  loop: "{{ params_mixer_shared_group_params_names | default({}) | dict2items }}"
+  loop_control:
+    loop_var: params_mixer_item
+    label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
+  tags: ["no_print"]
+
+- set_fact:
+    params_mixer_mixed_shared_params: {}
+  tags: ["no_print"]
+    
+- set_fact:
+    params_mixer_mixed_shared_params: >-
+      {{ params_mixer_mixed_shared_params | combine(params_mixer_shared_params_names_dict[params_mixer_item]) }}
+  loop: "{{ params_mixer_shared_params_names | default([]) }}"
+  loop_control:
+    loop_var: params_mixer_item
+    label: "{{ params_mixer_item }})"
+  tags: ["no_print"]
+
+- set_fact:
+    params_mixer_group_params: {}
+  tags: ["no_print"]
+    
+- set_fact:
+    params_mixer_group_params: >-
+      {{ 
+      params_mixer_group_params | 
+      combine({ 
+      params_mixer_item.key: 
+      params_mixer_params_dict[params_mixer_item.value] }) 
+      }}
+  loop: "{{ params_mixer_group_params_names | default({}) | dict2items }}"
   loop_control:
     loop_var: params_mixer_item
     label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
@@ -37,7 +60,9 @@
 - set_fact:
     params_mixer_params: >-
       {{ 
-      params_mixer_other_params | default({}) | 
+      params_mixer_shared_group_params | default({}) | 
+      combine(params_mixer_mixed_shared_params | default({}), recursive=True) | 
+      combine(params_mixer_group_params | default({}), recursive=True) | 
       combine(params_mixer_main_params | default({}), recursive=True) 
       }}
   tags: ["no_print"]
