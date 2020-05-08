@@ -138,27 +138,11 @@
   include_role:
     name: "params_mixer"
   vars:
-    params_mixer_main_params: >-
-      {{ 
-      cloud_prepare_inner_node_params.pod_override_params[cloud_prepare_pod_name] 
-      | default({}) 
-      }}
-    params_mixer_group_params_names: >-
-      {{ 
-      cloud_prepare_inner_node_params.pod_override_group_params[cloud_prepare_pod_name] 
-      | default({}) 
-      }}
-    params_mixer_shared_params_names: >-
-      {{ 
-      cloud_prepare_inner_node_params.pod_override_shared_params[cloud_prepare_pod_name] 
-      | default([])
-      }}
+    params_mixer_main_params: "{{ cloud_prepare_pod_info.params | default({}) }}"
+    params_mixer_group_params_names: "{{ cloud_prepare_pod_info.group_params | default({}) }}"
+    params_mixer_shared_params_names: "{{ cloud_prepare_pod_info.shared_params | default([]) }}"
     params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
-    params_mixer_shared_group_params_name: >-
-      {{ 
-      cloud_prepare_inner_node_params.pod_override_shared_group_params[cloud_prepare_pod_name] 
-      | default('') 
-      }}
+    params_mixer_shared_group_params_name: "{{ cloud_prepare_pod_info.shared_group_params | default('') }}"
     params_mixer_shared_group_params_names_dict: >-
       {{ cloud_prepare_pod_shared_group_params_dict | default({}) }}
     params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"

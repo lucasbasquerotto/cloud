@@ -42,6 +42,7 @@
 - name: "{{ cloud_prepare_title }}"
   include_tasks: "pod.yml"
   vars:
+    cloud_prepare_pod_info: "{{ cloud_prepare_item }}"
     cloud_prepare_pod_name: "{{ cloud_prepare_item.name | default(cloud_prepare_item) }}"
     cloud_prepare_pod_key: "{{ cloud_prepare_item.key | default(cloud_prepare_item.name) | default(cloud_prepare_item) }}"
     cloud_prepare_pod_main: >-
