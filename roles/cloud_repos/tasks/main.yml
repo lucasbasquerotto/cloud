@@ -1,15 +1,11 @@
 - set_fact:
-    cloud_repos_pods: []
+    cloud_repos_pods_list: []
   tags: ["no_print"]
 
 - set_fact:
-    cloud_repos_pods: >-
-      {{ 
-      cloud_repos_pods + 
-      (cloud_repos_node.pods | default([cloud_repos_node.main_pod])) 
-      }}
+    cloud_repos_pods_list: "{{ cloud_repos_pods_list + (cloud_repos_node.pods | default([])) }}"
   vars:
-    cloud_repos_node_key: "{{ cloud_repos_item.node | default(cloud_repos_item.name) | default(cloud_repos_item) }}"
+    cloud_repos_node_key: "{{ cloud_repos_item.key | default(cloud_repos_item.name) | default(cloud_repos_item) }}"
     cloud_repos_node: "{{ cloud_repos_nodes_dict[cloud_repos_node_key] }}"
   loop: "{{ cloud_repos_nodes }}"
   loop_control:
@@ -17,14 +13,33 @@
   tags: ["no_print"]
 
 - set_fact:
-    cloud_repos_pods: "{{ cloud_repos_pods | unique }}"
+    cloud_repos_pods_names: []
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_repos_pods_names: "{{ cloud_repos_pods_names + [cloud_repos_pod_name] }}"
+  vars:
+    cloud_repos_pod_name: "{{ cloud_repos_item.name | default(cloud_repos_item) }}"
+  loop: "{{ cloud_repos_pods_list }}"
+  loop_control:
+    loop_var: cloud_repos_item
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_repos_pods_names_unique: "{{ cloud_repos_pods_names | unique }}"
+  tags: ["no_print"]
+
+- fail:
+    msg: "there are pods with duplicated names"
+  when: (cloud_repos_pods_names | length) != (cloud_repos_pods_names_unique | length)
   tags: ["no_print"]
 
 - include_tasks: "layer.yml"
   vars:
     cloud_repos_layer_type: "pod"
-    cloud_repos_layer_name: "{{ cloud_repos_item }}"
-    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_name] }}"
+    cloud_repos_layer_name: "{{ cloud_repos_item.name | default(cloud_repos_item) }}"
+    cloud_repos_layer_key: "{{ cloud_repos_item.key | default(cloud_repos_item.name) | default(cloud_repos_item) }}"
+    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_key] }}"
     cloud_repos_layer_title: >-
       {{ cloud_repos_title }} - pods - repositories - local (for remote) - 
       {{ cloud_repos_layer.repo }}
@@ -34,10 +49,10 @@
     cloud_repos_layer_git_force: yes
     cloud_repos_layer_dir_mode: "0755"
     cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
-  loop: "{{ cloud_repos_pods }}"
+  loop: "{{ cloud_repos_pods_list }}"
   loop_control:
     loop_var: cloud_repos_item
-  when: not (cloud_repos_item in (cloud_repos_local_pods | default([])))
+  when: not (cloud_repos_layer_key in (cloud_repos_local_pods | default([])))
 
 - fail: 
     msg: "local pod {{ cloud_repos_item }} is not defined"
@@ -62,7 +77,8 @@
   vars:
     cloud_repos_layer_type: "pod"
     cloud_repos_layer_name: "{{ cloud_repos_item }}"
-    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_name] }}"
+    cloud_repos_layer_key: "{{ cloud_repos_item }}"
+    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_key] }}"
     cloud_repos_layer_title: >-
       {{ cloud_repos_title }} - pods - repositories - local (for remote) - 
       {{ cloud_repos_layer.repo }}

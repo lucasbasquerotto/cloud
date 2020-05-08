@@ -148,7 +148,7 @@
     vars: 
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_node_node_key: "{{ main_item.node | default(main_item.name) | default(main_item) }}"
+      cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_title: >-
         {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] - 
@@ -283,7 +283,7 @@
       cloud_prepare_ctx_name: "{{ env.ctx }}"
       cloud_prepare_env_local_repo: "{{ env_local_repo }}"
       cloud_prepare_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_prepare_node_key: "{{ main_item.node | default(main_item.name) | default(main_item) }}"
+      cloud_prepare_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
       cloud_prepare_title: "{{ env_title }} - prepare - node[{{ cloud_prepare_node_name }}]"
       cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
@@ -372,7 +372,7 @@
       <% set var_run_stages = params.run_stages[var_run_stage_name] %>
     <% endif %>
 
-  <% set ns_run = namespace(list=[]) %>
+  <% set ns_run = namespace(list=[], pod_map={}, all_pod_names=[]) %>
 
   <% for var_run_stage_task_item in var_run_stages %>
     <% if var_direct %>
@@ -434,14 +434,22 @@
       <% endif %>
 
       <% set var_node_item = ns_outer_run.node_map[var_node_name] %>
-      <% set var_node_key = var_node_item.node | default(var_node_item.name) | default(var_node_item) %>
+      <% set var_node_key = var_node_item.key | default(var_node_item.name) | default(var_node_item) %>
       <% set var_node = params.nodes[var_node_key] | default({}) %>
       <% set var_cloud = params.clouds[var_node.cloud] | default({}) %>
       <% set var_tasks_group_name = var_node.tasks_group | default('') %>
-      <% set var_node_all_pods = var_node.pods | default([var_node.main_pod]) | default([]) %>
+      <% set var_node_all_pods = var_node.pods | default([]) %>
+
+      <% for var_pod_item in var_node_all_pods %>
+        <% set var_pod_name = var_pod_item.name | default(var_pod_item) %>
+        <% set ns_run.pod_map = ns_run.pod_map | combine({ 
+          var_pod_name: var_pod_item 
+        }) %>
+        <% set ns_run.all_pod_names = ns_run.all_pod_names + [var_pod_name] %>
+      <% endfor %>
 
       <% if not var_partial_pods %>
-        <% set var_pod_names = var_node_all_pods %>
+        <% set var_pod_names = ns_run.all_pod_names %>
       <% endif %>
 
       <% if var_nodes_tasks and (var_direct or ((var_tasks_group_name | default('')) != '')) %>
@@ -496,7 +504,7 @@
 
       <% if var_pods_tasks %>
         <% for var_pod_name in var_pod_names | unique %>
-          <% if var_pod_name not in var_node_all_pods %>
+          <% if var_pod_name not in ns_run.all_pod_names %>
             <% set error = {} %>
             << error['error.run_stage[' + var_run_stage_name + 
               '].run_stage_task[' + var_run_stage_task_name + 
@@ -505,7 +513,9 @@
               '].pod_not_in_node'] >>
           <% endif %>      
 
-          <% set var_pod = params.pods[var_pod_name] | default({}) %>
+          <% set var_pod_item = ns_run.pod_map[var_pod_name] %>
+          <% set var_pod_key = var_pod_item.key | default(var_pod_item.name) | default(var_pod_item) %>
+          <% set var_pod = params.pods[var_pod_key] | default({}) %>
           <% set var_tasks_group_name = var_pod.tasks_group | default('') %>
 
           <% if var_direct or ((var_tasks_group_name | default('')) != '') %>
@@ -612,7 +622,7 @@
         {{ cloud_run_node_item.name | default(cloud_run_node_item) | default('') }}
       cloud_run_node_key: >-
         {{ 
-        cloud_run_node_item.node | default(cloud_run_node_item.name) | 
+        cloud_run_node_item.key | default(cloud_run_node_item.name) | 
         default(cloud_run_node_item) | default('') 
         }}
       cloud_run_node: "{{ env.nodes[cloud_run_node_key] | default({}) }}"
@@ -667,7 +677,7 @@
       name: "cron"
     vars:
       cron_node_name: "{{ main_item.name | default(main_item) }}"
-      cron_node_key: "{{ main_item.node | default(main_item.name) | default(main_item) }}"
+      cron_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cron_node: "{{ env.nodes[cron_node_key] }}"
       cron_title: "{{ env_title }} - cron - {{ cron_node_name }}"
       cron_node_params_dict: "{{ env.node_params | default({}) }}"
@@ -698,65 +708,10 @@
       ((env_hooks.after_cron | default('')) != '')
 
 ###############################################################################
-##################       EXECUTE COMMANDS ON-THE-FLY       ####################
-###############################################################################
-
-- name: Play 05 - Execute instruction on-the-fly
-  hosts: host
-  tags:
-  - never
-  - exec
-  gather_facts: no  
-  tasks:
-  - include_tasks: "tasks/env.yml"
-    tags: ["no_print"]
-
-  - include_tasks: "{{ env_hooks.before_exec }}"
-    when: >-
-      (((env_node | default('')) == '') or (env_node == instance_type))
-      and
-      ((env_hooks.before_exec | default('')) != '')
-
-  - include_role: 
-      name: "long_run"
-    vars:
-      main_node_name: "{{ main_item.name | default(main_item) }}"
-      main_node_key: "{{ main_item.node | default(main_item.name) | default(main_item) }}"
-      main_node: "{{ env.nodes[main_node_key] }}"
-      long_run_title: >-
-        {{ env_title }} - exec - 
-        {{ env_exec_cmd | b64decode | trim 
-        | regex_replace('\n', ' .. ') 
-        | truncate(30, False, '...', 10) }}
-      long_run_become: "{{ env_exec_become | default(false) }}"
-      long_run_output_path: "{{ main_node.base_dir }}/{{ main_node.main_pod }}/data/log"
-      long_run_output_file: "env-exec.log"
-      long_run_tmp_path: "{{ main_node.base_dir }}/{{ main_node.main_pod }}/data/tmp"
-      long_run_tmp_file: "env-exec"
-      long_run_path: "{{ main_node.base_dir }}/{{ main_node.main_pod }}/main"
-      long_run_cmd: "{{ env_exec_cmd | b64decode | trim }}"
-      long_run_poll: 2
-    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
-    loop_control:
-      loop_var: main_item
-    when: >-
-      ((env_exec_cmd | default('')) != '')
-      and
-      (main_node_name == instance_type)
-      and
-      (((env_node | default('')) == '') or (env_node == main_node_name))
-
-  - include_tasks: "{{ env_hooks.after_exec }}"
-    when: >-
-      (((env_node | default('')) == '') or (env_node == instance_type))
-      and
-      ((env_hooks.after_exec | default('')) != '')
-
-###############################################################################
 ##################            DESTROY THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 06.01 - Delete Temporary Cloud Instances
+- name: Play 05.01 - Delete Temporary Cloud Instances
   hosts: main
   tags:
   - init
@@ -776,7 +731,7 @@
     vars: 
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_node_node_key: "{{ main_item.node | default(main_item.name) | default(main_item) }}"
+      cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_title: >-
         {{ env_title }} - cloud - destroy temporary instances - {{ cloud_node_node_name }}
@@ -811,7 +766,7 @@
 
 ###############################################################################
 
-- name: Play 06.02 - Delete everything that was created previously
+- name: Play 05.02 - Delete everything that was created previously
   hosts: main
   tags:
   - never
@@ -830,7 +785,7 @@
     vars: 
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_node_node_key: "{{ main_item.node | default(main_item.name) | default(main_item) }}"
+      cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_title: "{{ env_title }} - [destroy] cloud - destroy instances - {{ cloud_node_node_name }}"
       cloud_node_node_credentials: >-
