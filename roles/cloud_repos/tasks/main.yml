@@ -9,7 +9,8 @@
       (cloud_repos_node.pods | default([cloud_repos_node.main_pod])) 
       }}
   vars:
-    cloud_repos_node: "{{ cloud_repos_nodes_dict[cloud_repos_item] }}"
+    cloud_repos_node_key: "{{ cloud_repos_item.node | default(cloud_repos_item.name) | default(cloud_repos_item) }}"
+    cloud_repos_node: "{{ cloud_repos_nodes_dict[cloud_repos_node_key] }}"
   loop: "{{ cloud_repos_nodes }}"
   loop_control:
     loop_var: cloud_repos_item

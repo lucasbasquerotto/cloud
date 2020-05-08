@@ -16,6 +16,7 @@
       default_chdir: "{{ cloud_run_default_chdir }}"
       env: "{{ cloud_run_env }}"
       node_name: "{{ cloud_run_node_name }}"
+      node_key: "{{ cloud_run_node_key }}"
   when: cloud_run_task.type == 'task'
 
 - name: "{{ cloud_run_inner_title }}"

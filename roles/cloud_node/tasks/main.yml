@@ -1,13 +1,18 @@
 ### Cloud Node Params ###
 
-- name: "{{ cloud_node_title }} - ensure the inventory contains {{ '[' + cloud_node_node_id + ']' }}"
+- name: "{{ cloud_node_title }} - ensure the inventory contains {{ '[' + cloud_node_node_name + ']' }}"
   lineinfile:
     name: "{{ cloud_node_hosts_file }}"
-    line: "{{ '[' + cloud_node_node_id + ']' }}"
+    line: "{{ '[' + cloud_node_node_name + ']' }}"
     state: present
   check_mode: yes
   register: cloud_node_conf
-  failed_when: (cloud_node_conf is changed) or (cloud_node_conf is failed)
+  failed_when: cloud_node_conf is failed
+
+- name: "{{ cloud_node_title }} - ensure the inventory contains {{ '[' + cloud_node_node_name + ']' }}"
+  fail:
+    msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_node_name + ']' }}"
+  when: cloud_node_conf is changed
 
 - name: "{{ cloud_node_title }} - generate node params"
   include_role:
@@ -56,7 +61,7 @@
       []
       )
       }}
-    cloud_node_ssh_key_filename: "{{ cloud_node_node_id + '.key' }}"
+    cloud_node_ssh_key_filename: "{{ cloud_node_node_name + '.key' }}"
   tags: ["no_print"]
 
 - set_fact: 
@@ -97,7 +102,7 @@
       {{ cloud_node_cloud_instances +
       [{ 'name':
       cloud_node_env_name + '-' +
-      cloud_node_node_id + '-' +
+      cloud_node_node_name + '-' +
       cloud_node_params_region.name + '-' +
       ('%04d' | format(cloud_node_item)),
       'region_id': cloud_node_params_region.name,
@@ -131,7 +136,7 @@
   vars:
     cloud_node_inner_title: "{{ cloud_node_title }} - {{ cloud_node_cloud.type }}"
     cloud_node_inner_hosts_file: "{{ cloud_node_hosts_file }}"
-    cloud_node_inner_instance_type: "{{ cloud_node_node_id }}"
+    cloud_node_inner_instance_type: "{{ cloud_node_node_name }}"
     cloud_node_inner_api_token: "{{ cloud_node_cloud_credentials.api_token }}"
     cloud_node_inner_host_user: "{{ cloud_node_node_credentials.host_user }}"
     cloud_node_inner_host_pass: "{{ cloud_node_node_credentials.host_pass }}"
@@ -190,7 +195,8 @@
       cloud_node_aux.ssh_key_path | 
       ternary('ansible_ssh_private_key_file=' + cloud_node_aux.ssh_key_path, '') 
       }}
-      instance_type={{ cloud_node_node_id }}
+      instance_type={{ cloud_node_node_name }}
+      instance_key={{ cloud_node_node_key }}
       instance_index={{ cloud_node_index + 1 }}
       ansible_host_public_ipv4={{ cloud_node_item.public_ipv4 | default('') }}
       ansible_host_public_ipv6={{ cloud_node_item.public_ipv6 | default('') }}
@@ -205,8 +211,8 @@
 - name: "{{ cloud_node_title }} - update the hosts file with the generated hosts"
   blockinfile:
     path: "{{ cloud_node_hosts_file }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_id }}"
-    insertafter: "\\[{{ cloud_node_node_id }}\\]"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_name }}"
+    insertafter: "\\[{{ cloud_node_node_name }}\\]"
     block: "{{ cloud_node_hosts_info }}"
 
 - name: '{{ cloud_node_title }} - refresh inventory'
