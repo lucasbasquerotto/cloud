@@ -575,6 +575,7 @@
 - name: Play 03.<< loop.index >> - Run (<< var_run_stage_name >>)
   hosts: main,host
   strategy: free
+  any_errors_fatal: true
   tags:
   - init
   - run
