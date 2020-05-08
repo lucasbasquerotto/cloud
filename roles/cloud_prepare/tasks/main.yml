@@ -47,7 +47,8 @@
     cloud_prepare_pod_key: "{{ cloud_prepare_item.key | default(cloud_prepare_item.name) | default(cloud_prepare_item) }}"
     cloud_prepare_pod_main: >-
       {{ ((cloud_prepare_item.main | default(false) | bool) or ((cloud_prepare_node.pods | default([]) | length) == 1)) }}
-    cloud_prepare_pod: "{{ cloud_prepare_pods_dict[cloud_prepare_pod_key] }}"    
+    cloud_prepare_pod: "{{ cloud_prepare_pods_dict[cloud_prepare_pod_key] }}"
+    cloud_prepare_node_info_pod_params: "{{ cloud_prepare_node_info[cloud_prepare_pod_name] | default({}) }}"
     cloud_prepare_pod_title: "{{ cloud_prepare_title }} - pod[{{ cloud_prepare_pod_name }}]"
     cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_pod_name }}"
     cloud_prepare_pod_identifier: >-

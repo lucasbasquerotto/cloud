@@ -29,6 +29,7 @@
 
   - include_tasks: "{{ env_hooks.before_cloud_main }}"
     when: (env_hooks.before_cloud_main | default('')) != ''
+    tags: ["no_print"]
       
   - include_role: 
       name: "cloud_main"
@@ -49,6 +50,7 @@
 
   - include_tasks: "{{ env_hooks.after_cloud_main }}"
     when: (env_hooks.after_cloud_main | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -66,6 +68,7 @@
 
   - include_tasks: "{{ env_hooks.before_dns }}"
     when: (env_hooks.before_dns | default('')) != ''
+    tags: ["no_print"]
 
   - include_role: 
       name: "cloud_dns"
@@ -89,6 +92,7 @@
 
   - include_tasks: "{{ env_hooks.after_dns }}"
     when: (env_hooks.after_dns | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -106,6 +110,7 @@
 
   - include_tasks: "{{ env_hooks.before_buckets }}"
     when: (env_hooks.before_buckets | default('')) != ''
+    tags: ["no_print"]
 
   - name: "{{ env_title }} - create the buckets"
     aws_s3:
@@ -124,6 +129,7 @@
 
   - include_tasks: "{{ env_hooks.after_buckets }}"
     when: (env_hooks.after_buckets | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -142,13 +148,20 @@
 
   - include_tasks: "{{ env_hooks.before_nodes }}"
     when: (env_hooks.before_nodes | default('')) != ''
+    tags: ["no_print"]
 
   - include_role: 
       name: "cloud_node"
     vars: 
       cloud_node_env_name: "{{ env.name }}"
-      cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
+      cloud_node_node_info: "{{ main_item }}"
+      cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+      cloud_node_node_key: >-
+        {{ 
+        cloud_node_node_info.key | 
+        default(cloud_node_node_info.name) | 
+        default(cloud_node_node_info) 
+        }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_title: >-
         {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] - 
@@ -179,6 +192,7 @@
 
   - include_tasks: "{{ env_hooks.after_nodes }}"
     when: (env_hooks.after_nodes | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -199,11 +213,51 @@
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.before_wait_nodes | default('')) != '')
+    tags: ["no_print"]
+
+  - set_fact: 
+      host_test_node_info_aux: ""
+      host_test_node_name: ""
+      host_test_node_key: ""
     
+  - set_fact: 
+      host_test_node_info_aux: "{{ host_test_node_info_aux }}"
+      host_test_node_name: "{{ host_test_node_info.name | default(host_test_node_info) }}"
+      host_test_node_key: >-
+        {{ 
+        host_test_node_info.key | 
+        default(host_test_node_info.name) | 
+        default(host_test_node_info) 
+        }}
+    vars: 
+      host_test_node_info: "{{ main_item }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: host_test_node_name == instance_type
+    tags: ["no_print"]
+
+  - fail:
+      msg: "instance_type is not defined in the host"
+    when: (instance_type | default('')) == ''
+
+  - fail:
+      msg: "there is no node with the name {{ instance_type }} declared in the main context"
+    when: host_test_node_name == ''
+
+  - fail:
+      msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
+    when: host_test_node_name != instance_type
+
+  - fail:
+      msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
+    when: host_test_node_key != instance_key
+
   - include_role: 
       name: "host_test"
     vars: 
-      host_test_title: "{{ env_title }} - {{ inventory_hostname }}"
+      host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
+      host_test_node_info: "{{ host_test_node_info_aux }}"
       host_test_node: "{{ env.nodes[instance_key] }}"
       host_test_node_params_dict: "{{ env.node_params | default({}) }}"
       host_test_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
@@ -215,6 +269,7 @@
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.after_wait_nodes | default('')) != '')
+    tags: ["no_print"]
 
 ###############################################################################
 ######################        PREPARE THE PODS         ########################
@@ -235,6 +290,7 @@
 
   - include_tasks: "{{ env_hooks.before_local_prepare }}"
     when: (env_hooks.before_local_prepare | default('')) != ''
+    tags: ["no_print"]
 
   - include_role: 
       name: "cloud_repos"
@@ -254,6 +310,7 @@
 
   - include_tasks: "{{ env_hooks.after_local_prepare }}"
     when: (env_hooks.after_local_prepare | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -275,6 +332,7 @@
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.before_remote_prepare | default('')) != '')
+    tags: ["no_print"]
 
   - include_role: 
       name: "cloud_prepare"
@@ -282,8 +340,14 @@
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_ctx_name: "{{ env.ctx }}"
       cloud_prepare_env_local_repo: "{{ env_local_repo }}"
-      cloud_prepare_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_prepare_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
+      cloud_prepare_node_info: "{{ main_item }}"
+      cloud_prepare_node_name: "{{ cloud_prepare_node_info.name | default(cloud_prepare_node_info) }}"
+      cloud_prepare_node_key: >-
+        {{ 
+        cloud_prepare_node_info.key | 
+        default(cloud_prepare_node_info.name) | 
+        default(cloud_prepare_node_info) 
+        }}
       cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
       cloud_prepare_title: "{{ env_title }} - prepare - node[{{ cloud_prepare_node_name }}]"
       cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
@@ -335,6 +399,7 @@
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.after_remote_prepare | default('')) != '')
+    tags: ["no_print"]
 
 ###############################################################################
 ###########        RUN - MIGRATE THE DATA & START THE PODS         ############
@@ -672,12 +737,14 @@
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.before_cron | default('')) != '')
+    tags: ["no_print"]
 
   - include_role: 
       name: "cron"
     vars:
-      cron_node_name: "{{ main_item.name | default(main_item) }}"
-      cron_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
+      cron_node_info: "{{ main_item }}"
+      cron_node_name: "{{ cron_node_info.name | default(cron_node_info) }}"
+      cron_node_key: "{{ cron_node_info.key | default(cron_node_info.name) | default(cron_node_info) }}"
       cron_node: "{{ env.nodes[cron_node_key] }}"
       cron_title: "{{ env_title }} - cron - {{ cron_node_name }}"
       cron_node_params_dict: "{{ env.node_params | default({}) }}"
@@ -706,6 +773,7 @@
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.after_cron | default('')) != '')
+    tags: ["no_print"]
 
 ###############################################################################
 ##################            DESTROY THE CLOUD            ####################
@@ -725,6 +793,7 @@
 
   - include_tasks: "{{ env_hooks.before_delete_tmp }}"
     when: (env_hooks.before_delete_tmp | default('')) != ''
+    tags: ["no_print"]
 
   - include_role: 
       name: "cloud_node"
@@ -763,6 +832,7 @@
 
   - include_tasks: "{{ env_hooks.after_delete_tmp }}"
     when: (env_hooks.after_delete_tmp | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################
 
@@ -779,6 +849,7 @@
 
   - include_tasks: "{{ env_hooks.before_delete_main }}"
     when: (env_hooks.before_delete_main | default('')) != ''
+    tags: ["no_print"]
    
   - include_role: 
       name: "cloud_node"
@@ -867,5 +938,6 @@
 
   - include_tasks: "{{ env_hooks.after_delete_main }}"
     when: (env_hooks.after_delete_main | default('')) != ''
+    tags: ["no_print"]
 
 ###############################################################################

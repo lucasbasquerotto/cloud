@@ -6,14 +6,38 @@
     params_mixer_main_params: "{{ host_test_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ host_test_node.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ host_test_node.shared_params | default([]) }}"
-    params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_name: "{{ host_test_node.shared_group_params | default('') }}"
+    params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
 
+- set_fact:
+    host_test_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_title }} - generate node ctx params"
+  include_role:
+    name: "params_mixer"
+  vars:
+    params_mixer_main_params: "{{ host_test_node_info.params | default({}) }}"
+    params_mixer_group_params_names: "{{ host_test_node_info.group_params | default({}) }}"
+    params_mixer_shared_params_names: "{{ host_test_node_info.shared_params | default([]) }}"
+    params_mixer_shared_group_params_name: "{{ host_test_node_info.shared_group_params | default('') }}"
+    params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
+    params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
+    params_mixer_params_dict: "{{ host_test_node_params_dict }}"
+
+- set_fact:
+    host_test_ctx_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
+- set_fact:
+    host_test_params: "{{ host_test_params | combine(host_test_ctx_params) }}"
+  tags: ["no_print"]
+
 - name: "{{ host_test_title }}"
   set_fact:
-    host_test_vars: "{{ params_mixer_params.host_test_dict[params_mixer_params.host_test_type] }}"
+    host_test_vars: "{{ host_test_params.host_test_dict[host_test_params.host_test_type] }}"
   tags: ["no_print"]
 
 - name: "{{ host_test_title }}"
