@@ -12,28 +12,6 @@
     loop_var: cloud_repos_item
   tags: ["no_print"]
 
-- set_fact:
-    cloud_repos_pods_names: []
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_repos_pods_names: "{{ cloud_repos_pods_names + [cloud_repos_pod_name] }}"
-  vars:
-    cloud_repos_pod_name: "{{ cloud_repos_item.name | default(cloud_repos_item) }}"
-  loop: "{{ cloud_repos_pods_list }}"
-  loop_control:
-    loop_var: cloud_repos_item
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_repos_pods_names_unique: "{{ cloud_repos_pods_names | unique }}"
-  tags: ["no_print"]
-
-- fail:
-    msg: "there are pods with duplicated names"
-  when: (cloud_repos_pods_names | length) != (cloud_repos_pods_names_unique | length)
-  tags: ["no_print"]
-
 - include_tasks: "layer.yml"
   vars:
     cloud_repos_layer_type: "pod"
