@@ -183,6 +183,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
+      label: "{{ cloud_node_node_name }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
       and
@@ -390,6 +391,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
+      label: "{{ cloud_prepare_node_name }}"
     when: >-
       ((ansible_connection == 'local') or (cloud_prepare_node_name == instance_type))
       and
@@ -764,6 +766,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
+      label: "{{ cron_node_name }}"
     when: >-
       ((ansible_connection == 'local') or (cron_node_name == instance_type))
       and
@@ -830,6 +833,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
+      label: "{{ cloud_node_node_name }}"
     when: >-
       (cloud_node_node.tmp | default(false) | bool)
       and
@@ -885,6 +889,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
+      label: "{{ cloud_node_node_name }}"
     when: >-
       (cloud_node_node_name in (env.destroy[env.ctx].nodes | default([])))
       and 
