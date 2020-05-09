@@ -222,7 +222,7 @@
     
   - set_fact: 
       host_test_node_info_aux: "{{ host_test_node_info_aux }}"
-      host_test_node_name: "{{ host_test_node_info.name | default(host_test_node_info) }}"
+      host_test_node_name: "{{ host_test_node_name_aux }}"
       host_test_node_key: >-
         {{ 
         host_test_node_info.key | 
@@ -231,27 +231,34 @@
         }}
     vars: 
       host_test_node_info: "{{ main_item }}"
+      host_test_node_name_aux: >-
+        {{ host_test_node_info.name | default(host_test_node_info) }}
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-    when: host_test_node_name == instance_type
+      label: "{{ host_test_node_name_aux }}"
+    when: host_test_node_name_aux == instance_type
     tags: ["no_print"]
 
   - fail:
       msg: "instance_type is not defined in the host"
     when: (instance_type | default('')) == ''
+    tags: ["no_print"]
 
   - fail:
       msg: "there is no node with the name {{ instance_type }} declared in the main context"
     when: host_test_node_name == ''
+    tags: ["no_print"]
 
   - fail:
       msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
     when: host_test_node_name != instance_type
+    tags: ["no_print"]
 
   - fail:
       msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
     when: host_test_node_key != instance_key
+    tags: ["no_print"]
 
   - include_role: 
       name: "host_test"
