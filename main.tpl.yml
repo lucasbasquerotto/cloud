@@ -189,7 +189,7 @@
       and
       (cloud_node_cloud.type != 'local')
       and 
-      (not (cloud_node_node.external | default(false) | bool))
+      (not (cloud_node_node_info.external | default(false) | bool))
 
   - include_tasks: "{{ env_hooks.after_nodes }}"
     when: (env_hooks.after_nodes | default('')) != ''
@@ -837,11 +837,11 @@
       loop_var: main_item
       label: "{{ cloud_node_node_name }}"
     when: >-
-      (cloud_node_node.tmp | default(false) | bool)
+      (cloud_node_node_info.tmp | default(false) | bool)
       and
       (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
       and 
-      (not (cloud_node_node.external | default(false) | bool))
+      (not (cloud_node_node_info.external | default(false) | bool))
 
   - include_tasks: "{{ env_hooks.after_delete_tmp }}"
     when: (env_hooks.after_delete_tmp | default('')) != ''
@@ -895,7 +895,7 @@
     when: >-
       (cloud_node_node_name in (env.destroy[env.ctx].nodes | default([])))
       and 
-      (not (cloud_node_node.external | default(false) | bool))
+      (not (cloud_node_node_info.external | default(false) | bool))
 
   - name: "[destroy] delete the buckets and all their contents"
     aws_s3:
