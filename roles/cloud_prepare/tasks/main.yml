@@ -22,7 +22,7 @@
       groups[cloud_prepare_dependency_node] | 
       map('extract', hostvars, [cloud_prepare_dependency_field]) | list
       }}
-  loop: "{{ cloud_prepare_node.dependencies | default([]) | list }}"
+  loop: "{{ cloud_prepare_node_info.dependencies | default([]) | list }}"
   loop_control:
     loop_var: cloud_prepare_item
   when: cloud_prepare_cloud.type != 'local'

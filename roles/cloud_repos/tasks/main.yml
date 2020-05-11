@@ -31,6 +31,7 @@
   loop_control:
     loop_var: cloud_repos_item
   when: not (cloud_repos_layer_key in (cloud_repos_local_pods | default([])))
+  tags: ["no_print"]
 
 - fail: 
     msg: "local pod {{ cloud_repos_item }} is not defined"
@@ -40,6 +41,7 @@
   loop_control:
     loop_var: cloud_repos_item
   when: cloud_repos_local_pod is not defined
+  tags: ["no_print"]
 
 - fail: 
     msg: "local pod {{ cloud_repos_item }} has no repository defined"
@@ -50,6 +52,7 @@
   loop_control:
     loop_var: cloud_repos_item
   when: cloud_repos_repo is not defined
+  tags: ["no_print"]
     
 - include_tasks: "layer.yml"
   vars:
@@ -69,6 +72,7 @@
   loop: "{{ cloud_repos_local_pods | default([]) }}"
   loop_control:
     loop_var: cloud_repos_item
+  tags: ["no_print"]
 
 - fail: 
     msg: "local app {{ cloud_repos_item }} is not defined"
@@ -78,6 +82,7 @@
   loop_control:
     loop_var: cloud_repos_item
   when: cloud_repos_local_app is not defined
+  tags: ["no_print"]
 
 - fail: 
     msg: "local app {{ cloud_repos_item }} has no repository defined"
@@ -88,6 +93,7 @@
   loop_control:
     loop_var: cloud_repos_item
   when: cloud_repos_repo is not defined
+  tags: ["no_print"]
 
 - include_tasks: "layer.yml"
   vars:
@@ -106,3 +112,4 @@
   loop: "{{ cloud_repos_local_apps | default([]) }}"
   loop_control:
     loop_var: cloud_repos_item
+  tags: ["no_print"]
