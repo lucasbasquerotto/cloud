@@ -486,6 +486,8 @@
     <% endif %>
 
     <% for var_node_aux in var_node_list | unique %>
+      <% set ns_run.all_pod_names = [] %>
+
       <% if not var_partial_pods %>
         <% set var_node_name = var_node_aux.name | default(var_node_aux) %>
       <% else %>
