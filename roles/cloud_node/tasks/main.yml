@@ -116,7 +116,7 @@
     cloud_node_cloud_instances: []
     cloud_node_instance_count: "{{ tmp_amount }}"
     cloud_node_instance_max: "{{ cloud_node_node_info.max_amount | default(tmp_amount) }}"
-  var:
+  vars:
     tmp_amount: "{{ cloud_node_node_info.amount | default(1) }}"
   tags: ["no_print"]
 
