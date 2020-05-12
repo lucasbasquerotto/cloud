@@ -272,8 +272,8 @@
         env_files is defined in the pod as well as in the node
         (it should be in 1 only)
     when: >-
-      (cloud_prepare_pod.env_files | default([]) | length) > 0) and
-      ((cloud_prepare_pod_info.env_files | default([]) | length) > 0)
+      (cloud_prepare_pod.env_files is defined) and
+      (cloud_prepare_pod_info.env_files is defined)
     tags: ["no_print"]
 
   - name: "{{ cloud_prepare_inner_title }}"
@@ -282,8 +282,8 @@
         env_files is defined in the pod as well as in the context
         (it should be in 1 only)
     when: >-
-      (cloud_prepare_pod.env_files | default([]) | length) > 0) and
-      ((cloud_prepare_node_info_pod_params.env_files | default([]) | length) > 0)
+      (cloud_prepare_pod.env_files is defined) and
+      (cloud_prepare_node_info_pod_params.env_files is defined)
     tags: ["no_print"]
 
   - name: "{{ cloud_prepare_inner_title }}"
@@ -292,8 +292,8 @@
         env_files is defined in the node as well as in the context
         (it should be in 1 only)
     when: >-
-      (cloud_prepare_pod_info.env_files | default([]) | length) > 0) and
-      ((cloud_prepare_node_info_pod_params.env_files | default([]) | length) > 0)
+      (cloud_prepare_pod_info.env_files is defined) and
+      (cloud_prepare_node_info_pod_params.env_files is defined)
     tags: ["no_print"]
 
   - name: "{{ cloud_prepare_inner_title }}"
