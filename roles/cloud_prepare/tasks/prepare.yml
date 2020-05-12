@@ -234,7 +234,9 @@
       ctx_name: "{{ cloud_prepare_ctx_name }}"
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
+      pod_info: "{{ cloud_prepare_pod_info }}"
       node: "{{ cloud_prepare_inner_node_pod_params }}"
+      node_info_pod_params: "{{ cloud_prepare_node_info_pod_params }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
       dirs: "{{ cloud_prepare_inner_dirs }}"
       dependencies: "{{ cloud_prepare_dependencies }}"
@@ -265,11 +267,83 @@
   ### Copy the specified pod env files and templates ###
 
   - name: "{{ cloud_prepare_inner_title }}"
+    fail:
+      msg: >-
+        env_files is defined in the pod as well as in the node
+        (it should be in 1 only)
+    when: >-
+      (cloud_prepare_pod.env_files | default([]) | length) > 0) and
+      ((cloud_prepare_pod_info.env_files | default([]) | length) > 0)
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }}"
+    fail:
+      msg: >-
+        env_files is defined in the pod as well as in the context
+        (it should be in 1 only)
+    when: >-
+      (cloud_prepare_pod.env_files | default([]) | length) > 0) and
+      ((cloud_prepare_node_info_pod_params.env_files | default([]) | length) > 0)
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }}"
+    fail:
+      msg: >-
+        env_files is defined in the node as well as in the context
+        (it should be in 1 only)
+    when: >-
+      (cloud_prepare_pod_info.env_files | default([]) | length) > 0) and
+      ((cloud_prepare_node_info_pod_params.env_files | default([]) | length) > 0)
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }}"
+    fail:
+      msg: >-
+        env_templates is defined in the pod as well as in the node
+        (it should be in 1 only)
+    when: >-
+      (cloud_prepare_pod.env_templates is defined) and
+      (cloud_prepare_pod_info.env_templates is defined)
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }}"
+    fail:
+      msg: >-
+        env_templates is defined in the pod as well as in the context
+        (it should be in 1 only)
+    when: >-
+      (cloud_prepare_pod.env_templates is defined) and
+      (cloud_prepare_node_info_pod_params.env_templates is defined)
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }}"
+    fail:
+      msg: >-
+        env_templates is defined in the node as well as in the context
+        (it should be in 1 only)
+    when: >-
+      (cloud_prepare_pod_info.env_templates is defined) and
+      (cloud_prepare_node_info_pod_params.env_templates is defined)
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }}"
     include_tasks: "transfer.yml"
     vars:
       cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - pod env"
-      cloud_prepare_transfer_src_env_files: "{{ cloud_prepare_pod.env_files | default([]) }}"
-      cloud_prepare_transfer_src_env_templates: "{{ cloud_prepare_pod.env_templates | default([]) }}"
+      cloud_prepare_transfer_src_env_files: >-
+        {{ 
+        cloud_prepare_node_info_pod_params.env_files 
+        | default(cloud_prepare_pod_info.env_files) 
+        | default(cloud_prepare_pod.env_files) 
+        | default([]) 
+        }}
+      cloud_prepare_transfer_src_env_templates: >-
+        {{ 
+        cloud_prepare_node_info_pod_params.env_templates 
+        | default(cloud_prepare_pod_info.env_templates) 
+        | default(cloud_prepare_pod.env_templates) 
+        | default([]) 
+        }}
 
   ### Generate the environment pod expanded variables ###
 
