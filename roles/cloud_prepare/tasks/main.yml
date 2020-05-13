@@ -50,7 +50,8 @@
     cloud_prepare_pod: "{{ cloud_prepare_pods_dict[cloud_prepare_pod_key] }}"
     cloud_prepare_node_info_pod_params: "{{ cloud_prepare_node_info[cloud_prepare_pod_name] | default({}) }}"
     cloud_prepare_pod_title: "{{ cloud_prepare_title }} - pod[{{ cloud_prepare_pod_name }}]"
-    cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_pod_name }}"
+    cloud_prepare_pod_base_dir: >-
+      {{ cloud_prepare_base_dir }}/{{ cloud_prepare_pod.base_dir | default(cloud_prepare_pod_name, true) }}
     cloud_prepare_pod_identifier: >-
       {{ cloud_prepare_env_name }}/{{ cloud_prepare_ctx_name }}/{{ cloud_prepare_pod_name }}
     cloud_prepare_host_user: "{{ cloud_prepare_node_credentials.host_user }}"

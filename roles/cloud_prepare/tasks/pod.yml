@@ -20,8 +20,10 @@
 ### Set vars ###
 
 - set_fact:
-    cloud_prepare_main_repo_location: "{{ cloud_prepare_pod_base_dir }}/main"
-    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/main"
+    cloud_prepare_main_repo_location: >-
+      {{ cloud_prepare_pod_base_dir }}{{ 
+      cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
+    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/cloud/main"
   when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print"]
 
@@ -40,9 +42,9 @@
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
     cloud_prepare_backup_file: >-
-      {{ cloud_prepare_pod_base_dir }}/{{ cloud_prepare_env_vars_relative_file }}
+      {{ cloud_prepare_pod_base_dir }}/tmp/cloud/env/{{ cloud_prepare_env_vars_relative_file_name }}
     cloud_prepare_backup_file_tmp: >-
-      {{ cloud_prepare_pod_base_dir }}/{{ cloud_prepare_env_vars_relative_file }}.tmp
+      {{ cloud_prepare_pod_base_dir }}/tmp/cloud/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
   tags: ["no_print"]
     
 ### Prepare the directories ###

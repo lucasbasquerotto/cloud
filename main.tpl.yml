@@ -163,22 +163,23 @@
         default(cloud_node_node_info) 
         }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+      cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
       cloud_node_title: >-
         {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] - 
-        cloud[{{ cloud_node_node.cloud }}]
+        cloud[{{ cloud_node_cloud_name }}]
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
       cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
       cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
       cloud_node_credentials_dict: "{{ env.credentials }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
@@ -357,6 +358,7 @@
         default(cloud_prepare_node_info) 
         }}
       cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
+      cloud_prepare_cloud_name: "{{ cloud_prepare_node_info.cloud | default(cloud_prepare_node.cloud) }}"
       cloud_prepare_title: "{{ env_title }} - prepare - node[{{ cloud_prepare_node_name }}]"
       cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
       cloud_prepare_node_credentials: >-
@@ -364,7 +366,7 @@
       cloud_prepare_node_params_dict: "{{ env.node_params | default({}) }}"
       cloud_prepare_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       cloud_prepare_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-      cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_node.cloud] }}"
+      cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_cloud_name] }}"
       cloud_prepare_pods_dict: "{{ env.pods }}"
       cloud_prepare_pod_params_dict: "{{ env.pod_params | default({}) }}"
       cloud_prepare_pod_shared_params_dict: "{{ env.pod_shared_params | default({}) }}"
@@ -376,8 +378,7 @@
       cloud_prepare_local_pod_repo_base: "{{ env_tmp_dir }}/repo/pod"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
-      cloud_prepare_env_vars_relative_file: >-
-        tmp/env/cloud.prepare.vars_full.yml
+      cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
       cloud_prepare_instance_index: "{{ instance_index }}"
       cloud_prepare_local_pod_dict: "{{ env_local_pod_dict }}"
       cloud_prepare_local_app_dict: "{{ env_local_app_dict }}"
@@ -512,7 +513,8 @@
       <% set var_node_item = ns_outer_run.node_map[var_node_name] %>
       <% set var_node_key = var_node_item.key | default(var_node_item.name) | default(var_node_item) %>
       <% set var_node = params.nodes[var_node_key] | default({}) %>
-      <% set var_cloud = params.clouds[var_node.cloud] | default({}) %>
+      <% set var_cloud_name = var_node_item.cloud | default(var_node.cloud) %>
+      <% set var_cloud = params.clouds[var_cloud_name] | default({}) %>
       <% set var_tasks_group_name = var_node.tasks_group | default('') %>
       <% set var_node_all_pods = var_node.pods | default([]) %>
 
@@ -702,9 +704,10 @@
         default(cloud_run_node_item) | default('') 
         }}
       cloud_run_node: "{{ env.nodes[cloud_run_node_key] | default({}) }}"
+      cloud_run_cloud_name: "{{ cloud_run_node_item.cloud | default(cloud_run_node.cloud) }}"
       cloud_run_pod_name: "{{ main_item.pod_name | default('') }}"
       cloud_run_pod: "{{ env.pods[cloud_run_pod_name] | default({}) }}"
-      cloud_run_cloud: "{{ env.clouds[cloud_run_node.cloud | default('')] | default({}) }}"
+      cloud_run_cloud: "{{ env.clouds[cloud_run_cloud_name | default('')] | default({}) }}"
     loop: <% if (ns_run.list | length) == 0 %>[]<% else %>
       <% for main_run_item in ns_run.list %>     
       << '\n' >>
@@ -757,13 +760,14 @@
       cron_node_name: "{{ cron_node_info.name | default(cron_node_info) }}"
       cron_node_key: "{{ cron_node_info.key | default(cron_node_info.name) | default(cron_node_info) }}"
       cron_node: "{{ env.nodes[cron_node_key] }}"
+      cron_cloud_name: "{{ cron_node_info.cloud | default(cron_node.cloud) }}"
       cron_title: "{{ env_title }} - cron - {{ cron_node_name }}"
       cron_node_params_dict: "{{ env.node_params | default({}) }}"
       cron_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       cron_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
       cron_env_dir: "{{ env_dir }}"
       cron_start: "true"
-      cron_cloud: "{{ env.clouds[cron_node.cloud] }}"
+      cron_cloud: "{{ env.clouds[cron_cloud_name] }}"
       cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes/{{ cron_node_name }}/cron"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
@@ -814,21 +818,23 @@
       cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
       cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+      cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
       cloud_node_title: >-
         {{ env_title }} - cloud - destroy temporary instances - {{ cloud_node_node_name }}
+        ({{ cloud_node_cloud_name }})
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
       cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
       cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
       cloud_node_credentials_dict: "{{ env.credentials }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
       cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | default(false) | bool }}"
@@ -871,20 +877,23 @@
       cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
       cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
-      cloud_node_title: "{{ env_title }} - [destroy] cloud - destroy instances - {{ cloud_node_node_name }}"
+      cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+      cloud_node_title: >-
+        {{ env_title }} - [destroy] cloud - destroy instances - {{ cloud_node_node_name }}
+        ({{ cloud_node_cloud_name }})
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
       cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
       cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-      cloud_node_cloud: "{{ env.clouds[cloud_node_node.cloud] }}"
+      cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
       cloud_node_cloud_credentials: >-
         {{ env.credentials[cloud_node_cloud.credentials] }}
       cloud_node_credentials_dict: "{{ env.credentials }}"
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_node.cloud }}
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
       cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | default(false) | bool }}"

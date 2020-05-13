@@ -15,7 +15,7 @@
       {{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_env_repo.key_file_encrypted }}
     cloud_git_dest: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dir }}"
     cloud_git_tmp_dir: >-
-      {{ cloud_prepare_pod_base_dir }}/tmp/repo/{{ cloud_prepare_pod_inner_item.repo }}
+      {{ cloud_prepare_pod_base_dir }}/tmp/cloud/repo/{{ cloud_prepare_pod_inner_item.repo }}
     cloud_git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
     cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
     cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
