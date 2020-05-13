@@ -43,9 +43,9 @@
 - name: "{{ cloud_prepare_inner_vars_title }} - populate vars from templates (recursive)"
   include_tasks: "vars.yml"
   vars:
-    cloud_prepare_vars_ctx: "{{ cloud_prepare_inner_item }}"
+    cloud_prepare_vars_ctx: "{{ cloud_prepare_inner_vars_item }}"
   loop: "{{ cloud_prepare_inner_vars.children | default([]) }}"
   loop_control:
-    loop_var: cloud_prepare_inner_item
-    label: "{{ cloud_prepare_inner_item.name }}"
-  when: cloud_prepare_inner_item.when | default(true) | bool
+    loop_var: cloud_prepare_inner_vars_item
+    label: "{{ cloud_prepare_inner_vars_item.name }}"
+  when: cloud_prepare_inner_vars_item.when | default(true) | bool
