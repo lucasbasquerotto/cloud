@@ -561,7 +561,7 @@
             'output_path': var_node.base_dir + '/.node/data/log',
             'output_file': 'run.' + var_run_stage_task_name + '.' + var_task_tag + '.log',
             'tmp_path': var_node.base_dir + '/.node/data/tmp',
-            'tmp_file': 'run.' + var_run_stage_task_name + '.' + var_task_tag + '.log',
+            'tmp_file': 'run.' + var_run_stage_task_name + '.' + var_task_tag + '.sh',
             'chdir': var_node.base_dir,
             'node_item': var_node_item,
             'pod_name': ''
@@ -639,7 +639,7 @@
                 'output_path': var_pod_base_dir + '/data/log/run',
                 'output_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
                 'tmp_path': var_pod_base_dir + '/data/tmp/run',
-                'tmp_file': var_run_stage_task_name + '.' + var_task_tag + '.log',
+                'tmp_file': var_run_stage_task_name + '.' + var_task_tag + '.sh',
                 'chdir': var_pod_repo_location,
                 'node_item': var_node_item,
                 'pod_name': var_pod_name
