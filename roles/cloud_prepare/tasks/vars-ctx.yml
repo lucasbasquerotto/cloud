@@ -1,0 +1,38 @@
+- name: "{{ cloud_prepare_inner_title }} - vars-ctx"
+  set_fact:
+    cloud_prepare_inner_vars_ctxs: "{{ cloud_prepare_inner_vars_ctxs | default([cloud_prepare_vars_ctx]) }}"
+    cloud_prepare_inner_vars_idx: "{{ cloud_prepare_inner_vars_idx | default(0) }}"
+    cloud_prepare_inner_vars_ctxs_completed: "{{ cloud_prepare_inner_vars_ctxs_completed | default([]) }}"
+  tags: ["no_print"]
+  
+- name: "{{ cloud_prepare_inner_title }} - vars-ctx"
+  set_fact:
+    cloud_prepare_inner_vars_ctx: "{{ cloud_prepare_inner_vars_ctxs[cloud_prepare_inner_vars_idx | int] }}"
+    cloud_prepare_inner_vars_idx: "{{ (cloud_prepare_inner_vars_idx | int) + 1 }}"
+  tags: ["no_print"]
+  
+- name: "{{ cloud_prepare_inner_title }} - vars-ctx ({{ cloud_prepare_inner_vars_ctx.name | default('') }})"
+  set_fact:
+    cloud_prepare_inner_vars_title: >-
+      {{ cloud_prepare_inner_title }} - vars ({{ cloud_prepare_inner_vars_ctx.name }})
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_vars_title }} - include_tasks - vars.yml"
+  include_tasks: "vars.yml"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_vars_title }}"
+  set_fact:
+    cloud_prepare_inner_vars_ctxs_completed: "{{ cloud_prepare_inner_vars_ctxs_completed + [cloud_prepare_inner_vars_ctx] }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_vars_title }} - verify number of completed contexts"
+  fail: 
+    msg: "number of completed contexts is greater than the total amount of contexts"
+  when: (cloud_prepare_inner_vars_ctxs_completed | length) > (cloud_prepare_inner_vars_ctxs | length)
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_vars_title }} - include_tasks - recursive - vars-ctx.yml"
+  include_tasks: "vars-ctx.yml"
+  when: (cloud_prepare_inner_vars_ctxs_completed | length) < (cloud_prepare_inner_vars_ctxs | length)
+  tags: ["no_print"]

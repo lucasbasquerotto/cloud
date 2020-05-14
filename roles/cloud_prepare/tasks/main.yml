@@ -3,6 +3,7 @@
     cloud_prepare_dependencies: []
     cloud_prepare_dependencies_ip_dict: {}
     cloud_prepare_dependencies_ips_dict: {}
+  tags: ["no_print"]
 
 - name: "{{ cloud_prepare_title }}"
   include_tasks: "dependency.yml"
@@ -26,6 +27,7 @@
   loop_control:
     loop_var: cloud_prepare_item
   when: cloud_prepare_cloud.type != 'local'
+  tags: ["no_print"]
 
 - name: "{{ cloud_prepare_title }} - define the dependencies ips"
   become: true
@@ -77,3 +79,4 @@
   loop_control:
     loop_var: cloud_prepare_item
   when: cloud_prepare_env_pod in ['', cloud_prepare_pod_name]
+  tags: ["no_print"]

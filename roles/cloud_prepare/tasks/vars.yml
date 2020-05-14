@@ -1,13 +1,8 @@
-
-- set_fact:
-    cloud_prepare_inner_vars_title: >-
-      {{ cloud_prepare_inner_title }} - vars ({{ cloud_prepare_vars_ctx.name }})
-  tags: ["no_print"]
-
-- set_fact:
+- name: "{{ cloud_prepare_inner_vars_title }}"
+  set_fact:
     cloud_prepare_vars_tpl_src: >-
       {{ cloud_prepare_local_pod_repo }}/{{ ''
-      }}{{ cloud_prepare_vars_ctx.name }}
+      }}{{ cloud_prepare_inner_vars_ctx.name }}
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_vars_title }} - populate vars from the template"
@@ -15,10 +10,10 @@
     cloud_prepare_inner_vars: >-
       {{ lookup('template', cloud_prepare_vars_tpl_src) | from_yaml }}
   vars:
-    params: "{{ cloud_prepare_vars_ctx.params }}"
-  tags: ["no_print"]
+    params: "{{ cloud_prepare_inner_vars_ctx.params }}"
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_vars_title }}"
+  set_fact:
     cloud_prepare_inner_vars_volumes: []
     cloud_prepare_inner_vars_files: []
     cloud_prepare_inner_vars_templates: []
@@ -26,7 +21,8 @@
     cloud_prepare_inner_vars_env_templates: []
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_vars_title }}"
+  set_fact:
     cloud_prepare_vars_volumes: >-
       {{ cloud_prepare_vars_volumes + (cloud_prepare_inner_vars.volumes | default([])) }}
     cloud_prepare_vars_files: >-
@@ -39,13 +35,12 @@
       {{ cloud_prepare_vars_env_templates + (cloud_prepare_inner_vars.env_templates | default([])) }}
   tags: ["no_print"]
 
-# Call itself recursively for the children
-- name: "{{ cloud_prepare_inner_vars_title }} - populate vars from templates (recursive)"
-  include_tasks: "vars.yml"
-  vars:
-    cloud_prepare_vars_ctx: "{{ cloud_prepare_inner_vars_item }}"
+- name: "{{ cloud_prepare_inner_vars_title }}"
+  set_fact:
+    cloud_prepare_inner_vars_ctxs: "{{ cloud_prepare_inner_vars_ctxs + [cloud_prepare_inner_vars_item] }}"
   loop: "{{ cloud_prepare_inner_vars.children | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_inner_vars_item
     label: "{{ cloud_prepare_inner_vars_item.name }}"
   when: cloud_prepare_inner_vars_item.when | default(true) | bool
+  tags: ["no_print"]
