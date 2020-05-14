@@ -54,3 +54,4 @@
   loop: "{{ cron_node_params.cron | default([]) | list }}"
   loop_control:
     loop_var: cron_item
+  tags: ["no_print"]

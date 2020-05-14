@@ -22,3 +22,4 @@
     cloud_main_inner_params: "{{ cloud_main_params }}"
     cloud_main_inner_tmp_dir: "{{ cloud_main_tmp_dir }}"
   when: cloud_main_cloud.type != 'local'
+  tags: ["no_print"]

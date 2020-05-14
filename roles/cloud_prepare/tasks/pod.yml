@@ -128,6 +128,7 @@
     vars:
       cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - tmp"
       cloud_prepare_repo_location: "{{ cloud_prepare_tmp_repo_location }}"
+    tags: ["no_print"]
     
   - name: "{{ cloud_prepare_pod_title }} - get the difference of the 2 files (old and current)"
     become: "{{ cloud_prepare_pod.root }}"
@@ -152,6 +153,7 @@
     vars:
       cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - real"
       cloud_prepare_repo_location: "{{ cloud_prepare_main_repo_location }}"
+    tags: ["no_print"]
 
   - name: >-
       {{ cloud_prepare_pod_title }} -

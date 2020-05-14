@@ -18,6 +18,7 @@
       node_name: "{{ cloud_run_node_name }}"
       node_key: "{{ cloud_run_node_key }}"
   when: cloud_run_task.type == 'task'
+  tags: ["no_print"]
 
 - name: "{{ cloud_run_inner_title }}"
   include_role: 
@@ -33,3 +34,4 @@
     long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
     long_run_cmd: "{{ cloud_run_task.cmd }}"
   when: cloud_run_task.type == 'shell'
+  tags: ["no_print"]

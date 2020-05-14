@@ -187,6 +187,7 @@
     loop_var: cloud_node_item
     label: "{{ cloud_node_item.name }}"
   when: cloud_node_cloud.type != 'local'
+  tags: ["no_print"]
 
 - set_fact: 
     cloud_node_hosts_info: ""

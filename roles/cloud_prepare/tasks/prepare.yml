@@ -55,6 +55,7 @@
   loop_control:
     loop_var: cloud_prepare_pod_inner_item
     label: "{{ cloud_prepare_pod_inner_item.repo }}"
+  tags: ["no_print"]
 
 ### Generate the environment pod context variables ###
 
@@ -354,6 +355,7 @@
         | default(cloud_prepare_pod.env_templates) 
         | default([]) 
         }}
+    tags: ["no_print"]
 
   ### Generate the environment pod expanded variables ###
 
@@ -396,6 +398,7 @@
       cloud_prepare_transfer_src_env_files: "{{ cloud_prepare_vars_env_files | default([]) }}"
       cloud_prepare_transfer_src_repo_templates: "{{ cloud_prepare_vars_templates | default([]) }}"
       cloud_prepare_transfer_src_env_templates: "{{ (cloud_prepare_vars_env_templates | default([])) }}"
+    tags: ["no_print"]
     
   when: (cloud_prepare_diff.changed | default(true) | bool) or (cloud_prepare_cloud.type == 'local')
 

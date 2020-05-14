@@ -6,7 +6,9 @@
 
 - name: '[{{ watch_title }}] - checking {{ watch_job }} status until finished'
   include_tasks: 'recursive.yml'
+  tags: ["no_print"]
 
 - name: '[{{ watch_title }}] - watch_status is finished'
   assert:
     that: watch_status.finished
+  tags: ["no_print"]

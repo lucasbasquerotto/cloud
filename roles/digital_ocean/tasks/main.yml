@@ -139,6 +139,7 @@
     digital_ocean_droplets_tags: "{{ digital_ocean_tags }}"
     digital_ocean_droplets_host_data: "{{ digital_ocean_host_data }}"
     digital_ocean_droplets_list: "{{ digital_ocean_cloud_instances }}"
+  tags: ["no_print"]
 
 - name: "{{ digital_ocean_title }} - Init array digital_ocean_active_hosts"
   set_fact: 
