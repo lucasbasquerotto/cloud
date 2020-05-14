@@ -75,13 +75,6 @@
       }}
   tags: ["no_print"]
 
-- debug:
-    var: cloud_node_cloud.type
-- debug:
-    var: cloud_node_params.region
-- debug:
-    var: cloud_node_params_region
-
 ### Cloud Node Other Vars ###
 
 - set_fact: 
