@@ -1,5 +1,3 @@
----
-
 - name: "{{ cron_inner_title }} - create the temporary directory"
   become: "{{ cron_become }}"
   file:

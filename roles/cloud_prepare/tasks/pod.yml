@@ -164,6 +164,7 @@
       owner: "{{ cloud_prepare_owner }}"
       group: "{{ cloud_prepare_group }}"
       mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
+    when: cloud_prepare_cloud.type != 'local'
 
   when: >-
     (cloud_prepare_pod.fast_prepare | default(false) | bool) or

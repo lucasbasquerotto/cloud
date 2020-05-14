@@ -120,12 +120,13 @@
       bucket: "{{ main_bucket.name }}"
       mode: create
     vars:
-      main_bucket: "{{ env.buckets[main_item] }}"
+      main_bucket_name: "{{ main_item.name | default(main_item) }}"
+      main_bucket: "{{ env.buckets[main_bucket_name] }}"
       main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
     loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item }}"
+      label: "{{ main_bucket_name }}"
 
   - include_tasks: "{{ env_hooks.after_buckets }}"
     when: (env_hooks.after_buckets | default('')) != ''
@@ -447,7 +448,7 @@
       <% set var_run_stages = params.run_stages[var_run_stage_name] %>
     <% endif %>
 
-  <% set ns_run = namespace(list=[], pod_map={}, all_pod_names=[]) %>
+  <% set ns_run = namespace(list=[], pod_map={}, all_pod_names=[], all_hosts=false | bool, hosts=[]) %>
 
   <% for var_run_stage_task_item in var_run_stages %>
     <% if var_direct %>
@@ -482,7 +483,10 @@
         '].neither_all_nodes_nor_nodes_defined'] >>
     <% endif %>
 
-    <% if not var_all_nodes %>
+    <% if var_all_nodes %>
+      <% set ns_run.all_hosts = true | bool %>
+      <% set ns_run.hosts = ['host'] %>
+    <% else %>
       <% set var_node_list = var_run_stage_task.nodes | default([]) %>
     <% endif %>
 
@@ -508,6 +512,10 @@
           '].run_stage_task[' + var_run_stage_task_name + 
           '].node[' + var_node_name + 
           '].node_not_in_ctx'] >>
+      <% endif %>
+
+      <% if not ns_run.all_hosts %>
+        <% set ns_run.hosts = ns_run.hosts + [var_node_name] %>
       <% endif %>
 
       <% set var_node_item = ns_outer_run.node_map[var_node_name] %>
@@ -671,10 +679,11 @@
 <% endif %>
 
 <% set ns_outer_run.first = false %>
+<% set ns_run.hosts = ['main'] + ns_run.hosts %>
 
 - name: Play 03.<< loop.index >> - Run (<< var_run_stage_name >>)
-  hosts: main,host
-  any_errors_fatal: true
+  hosts: << ns_run.hosts | unique | join(',') >>
+  strategy: free
   tags:
   - init
   - run
@@ -726,6 +735,18 @@
       or
       ((ansible_connection != 'local') and ((cloud_run_cloud.type | default('')) != 'local'))
       )
+
+###############################################################################
+
+- name: Play 03.<< loop.index >> - Wait (<< var_run_stage_name >>)
+  hosts: main,host
+  strategy: linear
+  any_errors_fatal: true
+  tags:
+  - init
+  - run
+  gather_facts: no
+  tasks: []
 
 <% endif %>
 <% endfor %>
@@ -837,17 +858,75 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
-      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | default(false) | bool }}"
+      cloud_node_allow_destroy_dns: "{{ env.main[env.ctx].destroy.node_dns | default(false) | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ cloud_node_node_name }}"
     when: >-
-      (cloud_node_node_info.tmp | default(false) | bool)
+      (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
       and
       (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
       and 
       (not (cloud_node_node_info.external | default(false) | bool))
+
+  - name: "{{ env_title }} - delete the temporary buckets"
+    aws_s3:
+      s3_url: "{{ main_bucket.endpoint }}"
+      access_key: "{{ main_credentials.access_key }}"
+      secret_key: "{{ main_credentials.secret_key }}"
+      bucket: "{{ main_bucket.name }}"
+      mode: delete
+    vars:
+      main_bucket_name: "{{ main_item.name | default(main_item) }}"
+      main_bucket: "{{ env.buckets[main_bucket_name] }}"
+      main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_bucket_name }}"
+    when: main_item.tmp | default(false) | bool
+
+  - include_role: 
+      name: "cloud_dns"
+    vars: 
+      main_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns_title: >-
+        {{ env_title }} - delete the temporary static dns records - 
+        dns[{{ main_dns.type }}] - {{ main_item.record }}
+      cloud_dns_type: "{{ main_dns.type }}"
+      cloud_dns_credentials: >-
+        {{ env.credentials[main_dns.credentials] }}
+      cloud_dns_zone: "{{ main_dns.zone }}"
+      cloud_dns_record_type: "{{ main_item.dns_type }}"
+      cloud_dns_record: "{{ main_item.record }}"
+      cloud_dns_data_list: []
+      cloud_dns_state: "absent"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.name }}"
+    when: main_item.tmp | default(false) | bool
+
+  - include_role: 
+      name: "cloud_main"
+    vars: 
+      main_cloud_name: "{{ main_item.name | default(main_item) }}"
+      cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_cloud_name }}]"
+      cloud_main_env_name: "{{ env.name }}"
+      cloud_main_cloud: "{{ env.clouds[main_cloud_name] }}"
+      cloud_main_credentials: >-
+        {{ env.credentials[cloud_main_cloud.credentials] }}
+      cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+      cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+      cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_cloud_name }}"
+      cloud_main_state: "absent"
+    loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_cloud_name }}"
+    when: main_item.tmp | default(false) | bool
 
   - include_tasks: "{{ env_hooks.after_delete_tmp }}"
     when: (env_hooks.after_delete_tmp | default('')) != ''
@@ -896,17 +975,17 @@
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_shutdown: true
-      cloud_node_allow_destroy_dns: "{{ env.destroy[env.ctx].node_dns | default(false) | bool }}"
+      cloud_node_allow_destroy_dns: "{{ env.main[env.ctx].destroy.node_dns | default(false) | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ cloud_node_node_name }}"
     when: >-
-      (cloud_node_node_name in (env.destroy[env.ctx].nodes | default([])))
+      (env.main[env.ctx].destroy.nodes | default(false) | bool)
       and 
       (not (cloud_node_node_info.external | default(false) | bool))
 
-  - name: "[destroy] delete the buckets and all their contents"
+  - name: "{{ env_title }} - delete the buckets and all their contents"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
@@ -914,12 +993,14 @@
       bucket: "{{ main_bucket.name }}"
       mode: delete
     vars:
-      main_bucket: "{{ env.buckets[main_item] }}"
+      main_bucket_name: "{{ main_item.name | default(main_item) }}"
+      main_bucket: "{{ env.buckets[main_bucket_name] }}"
       main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-    loop: "{{ (env.destroy[env.ctx].buckets | default([])) }}"
+    loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
     loop_control:
       loop_var: main_item
-      label: "{{ main_item }}"
+      label: "{{ main_bucket_name }}"
+    when: env.main[env.ctx].destroy.buckets | default(false) | bool
 
   - include_role: 
       name: "cloud_dns"
@@ -936,10 +1017,11 @@
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_data_list: []
       cloud_dns_state: "absent"
-    loop: "{{ env.destroy[env.ctx].dns | default([]) | list }}"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
       loop_var: main_item
       label: "{{ main_item.name }}"
+    when: env.main[env.ctx].destroy.dns | default(false) | bool
 
   - include_role: 
       name: "cloud_main"
@@ -957,7 +1039,7 @@
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
       loop_var: main_item
-    when: main_item in (env.destroy[env.ctx].clouds | default([]))
+    when: env.main[env.ctx].destroy.clouds | default(false) | bool
 
   - include_tasks: "{{ env_hooks.after_delete_main }}"
     when: (env_hooks.after_delete_main | default('')) != ''
