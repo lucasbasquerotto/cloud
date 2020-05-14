@@ -12,7 +12,7 @@
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
 
 - set_fact:
-    host_test_params: "{{ params_mixer_params }}"
+    host_test_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate node ctx params"
@@ -28,16 +28,21 @@
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
 
 - set_fact:
-    host_test_ctx_params: "{{ params_mixer_params }}"
+    host_test_node_ctx_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
 - set_fact:
-    host_test_params: "{{ host_test_params | combine(host_test_ctx_params) }}"
+    host_test_node_params: "{{ host_test_node_params | combine(host_test_node_ctx_params) }}"
   tags: ["no_print"]
 
 - name: "{{ host_test_title }}"
   set_fact:
-    host_test_vars: "{{ host_test_params.host_test_dict[host_test_params.host_test_type] }}"
+    host_test_vars: >-
+      {{ 
+      (host_test_node_params.meta.use_dict | default(false) | bool) | ternary(
+      host_test_node_params.host_test_dict[host_test_node_params.host_test_type], 
+      host_test_node_params.host_test_type) 
+      }}
   tags: ["no_print"]
 
 - name: "{{ host_test_title }}"

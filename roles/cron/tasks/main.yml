@@ -40,7 +40,11 @@
 - name: "{{ cron_title }}"
   include_tasks: "cron.yml"
   vars:
-    cron_item_data: "{{ cron_node_params.cron_dict[cron_item] }}"
+    cron_item_data: >-
+      {{ 
+      (cron_node_params.meta.use_dict | default(false) | bool) | 
+      ternary(cron_node_params.cron_dict[cron_item], cron_item) 
+      }}
     cron_inner_title: "{{ cron_title }} - {{ cron_item_data.user }} - {{ cron_item_data.src_file }}"
     cron_src_file: "{{ cron_env_dir }}/{{ cron_item_data.src_file }}"
     cron_become: "{{ cron_item_data.user == 'root' }}"

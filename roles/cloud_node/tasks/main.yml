@@ -53,11 +53,23 @@
 
 - set_fact:
     cloud_node_params_instance: >-
-      {{ cloud_node_params.cloud_instance_dict[cloud_node_cloud.type][cloud_node_params.instance] }}
+      {{ 
+      (cloud_node_params.meta.use_dict | default(false) | bool) | ternary(
+      cloud_node_params.cloud_instance_dict[cloud_node_cloud.type][cloud_node_params.instance], 
+      cloud_node_params.instance) 
+      }}
     cloud_node_params_region: >-
-      {{ cloud_node_params.cloud_region_dict[cloud_node_cloud.type][cloud_node_params.region] }}
+      {{ 
+      (cloud_node_params.meta.use_dict | default(false) | bool) | ternary(
+      cloud_node_params.cloud_region_dict[cloud_node_cloud.type][cloud_node_params.region], 
+      cloud_node_params.region) 
+      }}
     cloud_node_params_size: >-
-      {{ cloud_node_params.cloud_size_dict[cloud_node_cloud.type][cloud_node_params.size] }}
+      {{ 
+      (cloud_node_params.meta.use_dict | default(false) | bool) | ternary(
+      cloud_node_params.cloud_size_dict[cloud_node_cloud.type][cloud_node_params.size], 
+      cloud_node_params.size) 
+      }}
   tags: ["no_print"]
 
 ### Cloud Node Other Vars ###
@@ -268,7 +280,11 @@
   include_role: 
     name: "cloud_dns"
   vars: 
-    cloud_node_item_dns: "{{ cloud_node_params.dns_dict[cloud_node_item.0] }}"
+    cloud_node_item_dns: >-
+      {{ 
+      (cloud_node_params.meta.use_dict | default(false) | bool) | 
+      ternary(cloud_node_params.dns_dict[cloud_node_item.0], cloud_node_item.0) 
+      }}
     cloud_dns_item_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
     cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
     cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].type }}"
@@ -287,7 +303,7 @@
   loop_control:
     loop_var: cloud_node_item
     label: >-
-      {{ cloud_node_item.0 }} ({{ cloud_node_item_dns.name }}) - 
+      {{ cloud_node_item.0.name | default(cloud_node_item.0 + ' (' + cloud_node_item_dns.name + ')') }} - 
       {{ cloud_node_item.1.name }} ({{ cloud_dns_state }})"
   when: >-
     (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
