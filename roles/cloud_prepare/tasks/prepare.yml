@@ -357,7 +357,8 @@
 
   ### Generate the environment pod expanded variables ###
 
-  - set_fact:
+  - name: "{{ cloud_prepare_inner_title }}"
+    set_fact:
       cloud_prepare_vars_volumes: []
       cloud_prepare_vars_files: []
       cloud_prepare_vars_templates: []
@@ -366,14 +367,24 @@
       cloud_prepare_dir_list: ["{{ cloud_prepare_dest_dir_base_full }}"]
     tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars-ctx.yml"
-    include_tasks: "vars-ctx.yml"
-    vars:
-      cloud_prepare_vars_ctx: 
-        name: "{{ cloud_prepare_pod.ctx | default('') }}"
-        params: "{{ cloud_prepare_vars_full }}"
+  - block:
+    
+    - name: "{{ cloud_prepare_inner_title }}"
+      set_fact:
+        cloud_prepare_inner_vars_ctxs: "{{ [cloud_prepare_vars_ctx] }}"
+        cloud_prepare_inner_vars_idx: 0
+        cloud_prepare_inner_vars_ctxs_completed: []
+      vars:
+        cloud_prepare_vars_ctx: 
+          name: "{{ cloud_prepare_pod.ctx | default('') }}"
+          params: "{{ cloud_prepare_vars_full }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars-ctx.yml"
+      include_tasks: "vars-ctx.yml"
+      tags: ["no_print"]
+
     when: (cloud_prepare_pod.ctx | default('')) != ''
-    tags: ["no_print"]
 
   - name: "{{ cloud_prepare_inner_title }}"
     include_tasks: "transfer.yml"

@@ -1,10 +1,8 @@
-- name: "{{ cloud_prepare_inner_title }} - vars-ctx"
-  set_fact:
-    cloud_prepare_inner_vars_ctxs: "{{ cloud_prepare_inner_vars_ctxs | default([cloud_prepare_vars_ctx]) }}"
-    cloud_prepare_inner_vars_idx: "{{ cloud_prepare_inner_vars_idx | default(0) }}"
-    cloud_prepare_inner_vars_ctxs_completed: "{{ cloud_prepare_inner_vars_ctxs_completed | default([]) }}"
-  tags: ["no_print"]
-  
+- debug:
+    var: cloud_prepare_inner_vars_ctxs | length
+- debug:
+    var: cloud_prepare_inner_vars_idx
+
 - name: "{{ cloud_prepare_inner_title }} - vars-ctx"
   set_fact:
     cloud_prepare_inner_vars_ctx: "{{ cloud_prepare_inner_vars_ctxs[cloud_prepare_inner_vars_idx | int] }}"
