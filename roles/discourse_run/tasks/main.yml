@@ -165,6 +165,7 @@
       long_run_tmp_file: "env-run-setup"
       long_run_path: "{{ discourse_run_path }}"
       long_run_cmd: "./launcher {{ discourse_run_action }} {{ discourse_run_name }}"
+    tags: ["no_print"]
 
   when: >-
     discourse_run_diff.changed and 

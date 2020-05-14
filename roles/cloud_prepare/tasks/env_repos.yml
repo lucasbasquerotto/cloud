@@ -19,6 +19,7 @@
     cloud_git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
     cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
     cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
+  tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_git_result: "{{ cloud_git_result }}"

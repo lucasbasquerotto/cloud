@@ -54,6 +54,7 @@
     watch_job: 'long_run_register'
     watch_timeout: "{{ long_run_timeout | int }}"
     watch_poll: "{{ long_run_poll | int }}"
+  tags: ["no_print"]
 
 - name: '[{{ long_run_title }}]'
   debug: 

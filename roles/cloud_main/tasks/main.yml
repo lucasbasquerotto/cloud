@@ -9,6 +9,7 @@
     params_mixer_shared_params_names_dict: "{{ cloud_main_cloud_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ cloud_main_cloud_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cloud_main_cloud_params_dict | default({}) }}"
+  tags: ["no_print"]
 
 - set_fact:
     cloud_main_params: "{{ params_mixer_params }}"

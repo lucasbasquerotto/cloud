@@ -16,3 +16,4 @@
   - "docker-compose build --pull"
   loop_control:
     loop_var: params_compose_item
+  tags: ["no_print"]

@@ -104,6 +104,7 @@
     long_run_path: "{{ discourse_location }}"
     long_run_cmd: "{{ discourse_setup_cmd }}"
   when: "discourse_diff.changed" 
+  tags: ["no_print"]
    
 - name: "{{ discourse_title }} - backup the discourse setup file"
   become: yes

@@ -10,12 +10,14 @@
     params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
+  tags: ["no_print"]
 
-- set_fact:
+- name: "{{ host_test_title }}"
+  set_fact:
     host_test_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate node ctx params"
+- name: "{{ host_test_title }} - generate node ctx params"
   include_role:
     name: "params_mixer"
   vars:
@@ -26,6 +28,7 @@
     params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ host_test_node_params_dict }}"
+  tags: ["no_print"]
 
 - set_fact:
     host_test_node_ctx_params: "{{ params_mixer_params }}"
@@ -40,8 +43,8 @@
     host_test_vars: >-
       {{ 
       (host_test_node_params.meta.use_dict | default(false) | bool) | ternary(
-      host_test_node_params.host_test_dict[host_test_node_params.host_test_type], 
-      host_test_node_params.host_test_type) 
+      host_test_node_params.host_test_dict[host_test_node_params.host_test], 
+      host_test_node_params.host_test) 
       }}
   tags: ["no_print"]
 

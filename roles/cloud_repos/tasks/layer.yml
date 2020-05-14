@@ -15,6 +15,7 @@
     cloud_git_force: "{{ cloud_repos_layer_git_force }}"
     cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
     cloud_git_become: "{{ cloud_repos_layer_become }}"
+  tags: ["no_print"]
 
 - include_role: 
     name: "cloud_git"
@@ -37,3 +38,4 @@
   loop_control:
     loop_var: cloud_repos_layer_item
     label: "{{ cloud_repos_layer_item.repo }}"
+  tags: ["no_print"]

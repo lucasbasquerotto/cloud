@@ -10,13 +10,14 @@
     params_mixer_shared_params_names_dict: "{{ cron_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ cron_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cron_node_params_dict }}"
+  tags: ["no_print"]
 
 - name: "{{ cron_title }}"
   set_fact:
     cron_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate node ctx params"
+- name: "{{ cron_title }} - generate node ctx params"
   include_role:
     name: "params_mixer"
   vars:
@@ -27,6 +28,7 @@
     params_mixer_shared_params_names_dict: "{{ cron_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ cron_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cron_node_params_dict }}"
+  tags: ["no_print"]
 
 - set_fact:
     cron_node_ctx_params: "{{ params_mixer_params }}"

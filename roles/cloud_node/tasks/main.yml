@@ -25,8 +25,10 @@
     params_mixer_shared_params_names_dict: "{{ cloud_node_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ cloud_node_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cloud_node_node_params_dict | default({}) }}"
+  tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_node_title }}"
+  set_fact:
     cloud_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
@@ -41,6 +43,7 @@
     params_mixer_shared_params_names_dict: "{{ cloud_node_node_shared_params_dict | default({}) }}"
     params_mixer_shared_group_params_names_dict: "{{ cloud_node_node_shared_group_params_dict | default({}) }}"
     params_mixer_params_dict: "{{ cloud_node_node_params_dict | default({}) }}"
+  tags: ["no_print"]
 
 - set_fact:
     cloud_node_ctx_params: "{{ params_mixer_params }}"
@@ -106,7 +109,8 @@
       {{ 
       ((cloud_node_params_instance.user_data_file | default('')) != '' )
       | ternary(
-      cloud_node_env_dir + '/' + cloud_node_params_instance.user_data_file,
+      cloud_node_env_dir + '/' + 
+      (cloud_node_params_instance.user_data_file | default('')),
       ''
       )
       }}
@@ -313,3 +317,4 @@
     (cloud_dns_item_dns_value != '') or
     (cloud_node_allow_destroy_dns | default(false) | bool)
     )
+  tags: ["no_print"]
