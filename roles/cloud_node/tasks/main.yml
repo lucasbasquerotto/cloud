@@ -8,11 +8,13 @@
   check_mode: yes
   register: cloud_node_conf
   failed_when: cloud_node_conf is failed
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_title }} - ensure the inventory contains {{ '[' + cloud_node_node_name + ']' }}"
   fail:
     msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_node_name + ']' }}"
   when: cloud_node_conf is changed
+  tags: ["no_print"]
 
 - name: "{{ cloud_node_title }} - generate node params"
   include_role:
@@ -211,6 +213,7 @@
     state: directory
     mode: 0755
   when: (cloud_node_unencrypt_key | bool)
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_title }} - generate unencrypted key file - {{ cloud_node_aux.ssh_key_path }}"
   copy:
@@ -219,6 +222,7 @@
     decrypt: yes
     mode: 0600
   when: cloud_node_unencrypt_key | bool
+  tags: ["no_print_skipped"]
 
 - set_fact: 
     cloud_node_hosts_info: >-
@@ -254,9 +258,11 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_name }}"
     insertafter: "\\[{{ cloud_node_node_name }}\\]"
     block: "{{ cloud_node_hosts_info }}"
+  tags: ["no_print_skipped"]
 
 - name: '{{ cloud_node_title }} - refresh inventory'
   meta: refresh_inventory
+  tags: ["no_print_skipped"]
 
 - set_fact:
     cloud_node_ips: []

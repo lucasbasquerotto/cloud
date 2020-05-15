@@ -54,6 +54,7 @@
       loop_var: cloud_main_inner_item
 
   when: (cloud_main_inner_tags | default([])) | length > 0
+  tags: ["no_print_skipped"]
 
 - block:
 
@@ -85,5 +86,7 @@
     loop_control:
       loop_var: cloud_main_inner_item
       label: "{{ cloud_main_inner_item.name }}"
+    tags: ["no_print_skipped"]
 
   when: (cloud_main_inner_firewalls | default([])) | length > 0
+  tags: ["no_print_skipped"]

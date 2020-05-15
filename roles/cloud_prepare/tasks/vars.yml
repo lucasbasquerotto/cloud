@@ -11,6 +11,7 @@
       {{ lookup('template', cloud_prepare_vars_tpl_src) | from_yaml }}
   vars:
     params: "{{ cloud_prepare_inner_vars_ctx.params }}"
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_prepare_inner_vars_title }}"
   set_fact:

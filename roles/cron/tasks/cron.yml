@@ -70,6 +70,7 @@
     when: cron_result is changed
 
   when: cron_diff.changed
+  tags: ["no_print_skipped"]
 
 - name: "{{ cron_inner_title }} - ensure cron is running"
   become: "{{ cron_become }}"

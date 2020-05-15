@@ -6,6 +6,7 @@
     name: docker
     state: started
   when: params.task.params.start_service | default(false) | bool
+  tags: ["no_print_skipped"]
 
 - name: "{{ params.title }} - copy the docker compose executable file"
   become: "{{ params.task.root | default(false) }}"
@@ -20,6 +21,7 @@
     ((params.task.compose_params.version | default('')) != '')
     and
     (params.task.compose_params.container | default(false) | bool)
+  tags: ["no_print_skipped"]
 
 - name: "{{ params.title }} - copy the docker compose executable file"
   become: "{{ params.task.root | default(false) }}"
@@ -40,3 +42,4 @@
     )
     and
     (params.task.compose_params.remote | default(false) | bool)
+  tags: ["no_print_skipped"]

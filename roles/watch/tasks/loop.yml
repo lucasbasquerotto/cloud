@@ -38,3 +38,4 @@
       var: watch_output
     
   when: (watch_output_lines | int) > 0
+  tags: ["no_print_skipped"]

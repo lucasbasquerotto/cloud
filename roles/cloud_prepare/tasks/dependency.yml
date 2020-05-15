@@ -8,10 +8,12 @@
         (cloud_prepare_instance_index | int) / 
         (cloud_prepare_dependency_total_src_nodes | int)
         }}
+    tags: ["no_print"]
 
   - name: "{{ cloud_prepare_dependency_title }}"
     set_fact:
       cloud_prepare_dependency_index: "{{ (cloud_prepare_dependency_index_aux | int) - 1}}"
+    tags: ["no_print"]
 
   - name: "{{ cloud_prepare_dependency_title }}"
     set_fact:
@@ -23,6 +25,7 @@
         'ip': cloud_prepare_dependency_ips[cloud_prepare_dependency_index | int] 
         }]
         }}
+    tags: ["no_print"]
 
   - name: "{{ cloud_prepare_dependency_title }}"
     set_fact:
@@ -33,8 +36,10 @@
         cloud_prepare_dependency_ips[cloud_prepare_dependency_index | int] 
         })
         }}
+    tags: ["no_print"]
 
   when: (not (cloud_prepare_dependency_all | bool)) and ((cloud_prepare_dependency_ips | length) > 0)
+  tags: ["no_print_skipped"]
 
 - block:
 
@@ -52,8 +57,10 @@
     loop_control:
       index_var: cloud_prepare_dependency_index
       loop_var: cloud_prepare_dependency_item
+    tags: ["no_print"]
 
   when: cloud_prepare_dependency_all | bool
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_prepare_dependency_title }}"
   set_fact:
@@ -64,3 +71,4 @@
       cloud_prepare_dependency_ips 
       })
       }}
+  tags: ["no_print"]

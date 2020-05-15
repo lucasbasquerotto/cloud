@@ -1,5 +1,6 @@
 - name: Gathering facts
   setup:
+  tags: ["no_print_skipped"]
 
 - include_tasks: "env.yml"
   tags: ["no_print"]

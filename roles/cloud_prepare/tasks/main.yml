@@ -40,6 +40,7 @@
   loop_control:
     label: "{{ cloud_prepare_item.host }}"
     loop_var: cloud_prepare_item
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_prepare_title }}"
   include_tasks: "pod.yml"

@@ -26,6 +26,7 @@
       mode: 0600
 
   when: (cloud_git_private | default(false) | bool)
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_git_title }} - git task ({{ cloud_git_dest }})"
   become: "{{ cloud_git_become | default(false) }}"

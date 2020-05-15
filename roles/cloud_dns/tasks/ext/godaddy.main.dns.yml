@@ -88,8 +88,10 @@
     debug:
       var: cloud_dns_godaddy_records
       verbosity:  3
+    tags: ["no_print_skipped"]
 
   when: cloud_dns_final_state == 'present'
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_dns_inner_title }} - verify if api should be called to delete the record"
   set_fact:
@@ -115,4 +117,5 @@
       Accept: "application/json"
   changed_when: cloud_dns_godaddy_execute | bool
   when: cloud_dns_godaddy_execute | bool
+  tags: ["no_print_skipped"]
 
