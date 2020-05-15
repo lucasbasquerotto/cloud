@@ -826,7 +826,7 @@
   hosts: main
   tags:
   - init
-  - temp
+  - tmp
   - cloud
   gather_facts: no  
   tasks:
