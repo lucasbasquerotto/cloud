@@ -1,9 +1,9 @@
 - set_fact:
-    cloud_main_inner_tags: "{{ cloud_main_params.digital_ocean_tags | default([]) }}"
+    cloud_main_inner_tags: "{{ cloud_main_params.x_digital_ocean_tags | default([]) }}"
     cloud_main_inner_firewalls_list: >-
-      {{ cloud_main_params.digital_ocean_firewalls | default([]) }}
+      {{ cloud_main_params.x_digital_ocean_firewalls | default([]) }}
     cloud_main_inner_firewalls_dict: >-
-      {{ cloud_main_params.digital_ocean_firewalls_dict | default({}) }}
+      {{ cloud_main_params.x_digital_ocean_firewalls_dict | default({}) }}
     cloud_main_inner_firewalls: []
   tags: ["no_print"]
 
@@ -11,7 +11,14 @@
     cloud_main_inner_firewalls: >-
       {{ 
       cloud_main_inner_firewalls + 
-      [cloud_main_inner_firewalls_dict[cloud_main_inner_item]] 
+      [cloud_main_inner_firewall] 
+      }}
+  vars:
+    cloud_main_inner_firewall: >-
+      {{
+      cloud_main_params.meta.use_dict | default(false) | bool | ternary(
+      cloud_main_inner_firewalls_dict[cloud_main_inner_item],
+      cloud_main_inner_item)
       }}
   loop: "{{ cloud_main_inner_firewalls_list }}"
   loop_control:
