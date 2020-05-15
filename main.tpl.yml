@@ -868,7 +868,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ cloud_node_node_name }}"
+      label: "{{ cloud_node_node_name }} - {{ cloud_node_node_info.tmp | default('') }} - {{ cloud_node_node.tmp | default('') }} - {{ cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) }} - [{{ cloud_node_node_info.external | default(false) }}]"
     when: >-
       (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
       and
