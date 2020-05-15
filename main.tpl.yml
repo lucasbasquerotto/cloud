@@ -27,11 +27,13 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_cloud_main }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_cloud_main }}"
     when: (env_hooks.before_cloud_main | default('')) != ''
     tags: ["no_print"]
       
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_main"
     vars: 
       cloud_main_title: "{{ env_title }} - [prepare] cloud[{{ main_item }}]"
@@ -47,8 +49,10 @@
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
       loop_var: main_item
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_cloud_main }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_cloud_main }}"
     when: (env_hooks.after_cloud_main | default('')) != ''
     tags: ["no_print"]
 
@@ -66,11 +70,13 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_dns }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_dns }}"
     when: (env_hooks.before_dns | default('')) != ''
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_dns"
     vars: 
       main_dns: "{{ env.dns[main_item.name] }}"
@@ -89,8 +95,10 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_item.name }}"
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_dns }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_dns }}"
     when: (env_hooks.after_dns | default('')) != ''
     tags: ["no_print"]
 
@@ -108,7 +116,8 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_buckets }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_buckets }}"
     when: (env_hooks.before_buckets | default('')) != ''
     tags: ["no_print"]
 
@@ -127,8 +136,10 @@
     loop_control:
       loop_var: main_item
       label: "{{ main_bucket_name }}"
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_buckets }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_buckets }}"
     when: (env_hooks.after_buckets | default('')) != ''
     tags: ["no_print"]
 
@@ -147,11 +158,13 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_nodes }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_nodes }}"
     when: (env_hooks.before_nodes | default('')) != ''
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_node"
     vars: 
       cloud_node_env_name: "{{ env.name }}"
@@ -192,8 +205,10 @@
       (cloud_node_cloud.type != 'local')
       and 
       (not (cloud_node_node_info.external | default(false) | bool))
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_nodes }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_nodes }}"
     when: (env_hooks.after_nodes | default('')) != ''
     tags: ["no_print"]
 
@@ -211,19 +226,23 @@
   - include_tasks: "tasks/env.yml"
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_wait_nodes }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_wait_nodes }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.before_wait_nodes | default('')) != '')
     tags: ["no_print"]
 
-  - set_fact: 
+  - name: "{{ env_title }}"
+    set_fact: 
       host_test_node_info_aux: ""
       host_test_node_name: ""
       host_test_node_key: ""
+    tags: ["no_print"]
     
-  - set_fact: 
+  - name: "{{ env_title }}"
+    set_fact: 
       host_test_node_info_aux: "{{ host_test_node_info_aux }}"
       host_test_node_name: "{{ host_test_node_name_aux }}"
       host_test_node_key: >-
@@ -243,27 +262,32 @@
     when: host_test_node_name_aux == instance_type
     tags: ["no_print"]
 
-  - fail:
+  - name: "{{ env_title }}"
+    fail:
       msg: "instance_type is not defined in the host"
     when: (instance_type | default('')) == ''
     tags: ["no_print"]
 
-  - fail:
+  - name: "{{ env_title }}"
+    fail:
       msg: "there is no node with the name {{ instance_type }} declared in the main context"
     when: host_test_node_name == ''
     tags: ["no_print"]
 
-  - fail:
+  - name: "{{ env_title }}"
+    fail:
       msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
     when: host_test_node_name != instance_type
     tags: ["no_print"]
 
-  - fail:
+  - name: "{{ env_title }}"
+    fail:
       msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
     when: host_test_node_key != instance_key
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "host_test"
     vars: 
       host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
@@ -273,8 +297,10 @@
       host_test_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
       host_test_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
     when: (((env_node | default('')) == '') or (env_node == instance_type))
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_wait_nodes }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_wait_nodes }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
@@ -298,11 +324,13 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_local_prepare }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_local_prepare }}"
     when: (env_hooks.before_local_prepare | default('')) != ''
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_repos"
     vars:
       cloud_repos_title: "{{ env_title }} - cloud repositories (local)"
@@ -318,7 +346,8 @@
       cloud_repos_env_dir: "{{ env_dir }}"
       cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}"
 
-  - include_tasks: "{{ env_hooks.after_local_prepare }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_local_prepare }}"
     when: (env_hooks.after_local_prepare | default('')) != ''
     tags: ["no_print"]
 
@@ -337,14 +366,35 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_remote_prepare }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_remote_prepare }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.before_remote_prepare | default('')) != '')
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params"
+    include_role:
+      name: "params_mixer"
+    vars:
+      main_ctx: "{{ env.main[env.ctx] }}"
+      params_mixer_main_params: "{{ main_ctx.params | default({}) }}"
+      params_mixer_group_params_names: "{{ main_ctx.group_params | default({}) }}"
+      params_mixer_shared_params_names: "{{ main_ctx.shared_params | default([]) }}"
+      params_mixer_shared_group_params_name: "{{ main_ctx.shared_group_params | default('') }}"
+      params_mixer_shared_params_names_dict: "{{ env.main_shared_params | default({}) }}"
+      params_mixer_shared_group_params_names_dict: "{{ env.main_shared_group_params | default({}) }}"
+      params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    set_fact:
+      main_ctx_params: "{{ params_mixer_params }}"
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_prepare"
     vars:
       cloud_prepare_env_name: "{{ env.name }}"
@@ -388,7 +438,7 @@
         (ansible_connection == 'local') | 
         ternary(env_local_data_dir | default(''), '') 
         }}
-      cloud_prepare_meta: "{{ env.meta_params[env.main[env.ctx].meta] | default({}) }}"
+      cloud_prepare_meta: "{{ main_ctx_params.meta | default({}) }}"
       cloud_prepare_base_dir_rel: "../.."
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
@@ -404,8 +454,10 @@
       or
       ((ansible_connection != 'local') and (cloud_prepare_cloud.type != 'local'))
       )
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_remote_prepare }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_remote_prepare }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
@@ -699,7 +751,8 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_run"
     vars:
       cloud_run_title: "{{ env_title }} - run - {{ main_item.title }}"
@@ -741,6 +794,7 @@
       or
       ((ansible_connection != 'local') and ((cloud_run_cloud.type | default('')) != 'local'))
       )
+    tags: ["no_print_skipped"]
 
 ###############################################################################
 
@@ -773,14 +827,16 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_cron }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_cron }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
       ((env_hooks.before_cron | default('')) != '')
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cron"
     vars:
       cron_node_info: "{{ main_item }}"
@@ -810,8 +866,10 @@
       or
       ((ansible_connection != 'local') and (cron_cloud.type != 'local'))
       )
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_cron }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_cron }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
@@ -834,11 +892,13 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_delete_tmp }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_delete_tmp }}"
     when: (env_hooks.before_delete_tmp | default('')) != ''
     tags: ["no_print"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_node"
     vars: 
       cloud_node_env_name: "{{ env.name }}"
@@ -881,6 +941,7 @@
       (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
       and 
       (not (cloud_node_node_info.external | default(false) | bool))
+    tags: ["no_print_skipped"]
 
   - name: "{{ env_title }} - delete the temporary buckets"
     aws_s3:
@@ -898,8 +959,10 @@
       loop_var: main_item
       label: "{{ main_bucket_name }}"
     when: main_item.tmp | default(false) | bool
+    tags: ["no_print_skipped"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_dns"
     vars: 
       main_dns: "{{ env.dns[main_item.name] }}"
@@ -919,8 +982,10 @@
       loop_var: main_item
       label: "{{ main_item.name }}"
     when: main_item.tmp | default(false) | bool
+    tags: ["no_print_skipped"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_main"
     vars: 
       main_cloud_name: "{{ main_item.name | default(main_item) }}"
@@ -939,8 +1004,10 @@
       loop_var: main_item
       label: "{{ main_cloud_name }}"
     when: main_item.tmp | default(false) | bool
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_delete_tmp }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_delete_tmp }}"
     when: (env_hooks.after_delete_tmp | default('')) != ''
     tags: ["no_print"]
 
@@ -957,11 +1024,13 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - include_tasks: "{{ env_hooks.before_delete_main }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.before_delete_main }}"
     when: (env_hooks.before_delete_main | default('')) != ''
     tags: ["no_print"]
    
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_node"
     vars: 
       cloud_node_env_name: "{{ env.name }}"
@@ -1002,6 +1071,7 @@
       (env.main[env.ctx].destroy.nodes | default(false) | bool)
       and 
       (not (cloud_node_node_info.external | default(false) | bool))
+    tags: ["no_print_skipped"]
 
   - name: "{{ env_title }} - delete the buckets and all their contents"
     aws_s3:
@@ -1019,8 +1089,10 @@
       loop_var: main_item
       label: "{{ main_bucket_name }}"
     when: env.main[env.ctx].destroy.buckets | default(false) | bool
+    tags: ["no_print_skipped"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_dns"
     vars: 
       main_dns: "{{ env.dns[main_item.name] }}"
@@ -1040,8 +1112,10 @@
       loop_var: main_item
       label: "{{ main_item.name }}"
     when: env.main[env.ctx].destroy.dns | default(false) | bool
+    tags: ["no_print_skipped"]
 
-  - include_role: 
+  - name: "{{ env_title }}"
+    include_role: 
       name: "cloud_main"
     vars: 
       cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_item }}]"
@@ -1058,8 +1132,10 @@
     loop_control:
       loop_var: main_item
     when: env.main[env.ctx].destroy.clouds | default(false) | bool
+    tags: ["no_print_skipped"]
 
-  - include_tasks: "{{ env_hooks.after_delete_main }}"
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_hooks.after_delete_main }}"
     when: (env_hooks.after_delete_main | default('')) != ''
     tags: ["no_print"]
 

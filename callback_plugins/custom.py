@@ -185,6 +185,9 @@ class CallbackModule(CallbackBase):
         if 'no_print' in self._task.tags:
             return
 
+        if 'no_print_skipped' in self._task.tags:
+            return
+
         if self.display_skipped_hosts or ('print_skipped_action' in result._task.tags):
 
             self._clean_results(result._result, result._task.action)
@@ -238,6 +241,9 @@ class CallbackModule(CallbackBase):
             self._last_task_name = task.get_name().strip()
 
             if 'no_print' in self._task.tags:
+                return
+
+            if 'no_print_skipped' in self._task.tags:
                 return
 
             # Display the task banner immediately if we're not doing any filtering based on task result
@@ -366,6 +372,9 @@ class CallbackModule(CallbackBase):
         if 'no_print' in self._task.tags:
             return
 
+        if 'no_print_skipped' in self._task.tags:
+            return
+
         if self.display_skipped_hosts or ('print_skipped_action' in result._task.tags):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
@@ -378,6 +387,9 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_include(self, included_file):
         if 'no_print' in self._task.tags:
+            return
+
+        if 'no_print_skipped' in self._task.tags:
             return
 
         if self.display_ok_hosts:
