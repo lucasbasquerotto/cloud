@@ -842,8 +842,14 @@
       name: "cloud_node"
     vars: 
       cloud_node_env_name: "{{ env.name }}"
-      cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
+      cloud_node_node_info: "{{ main_item }}"
+      cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+      cloud_node_node_key: >-
+        {{ 
+        cloud_node_node_info.key | 
+        default(cloud_node_node_info.name) | 
+        default(cloud_node_node_info) 
+        }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
       cloud_node_title: >-
@@ -868,7 +874,7 @@
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
-      label: "{{ cloud_node_node_name }} - {{ cloud_node_node_info.tmp | default('') }} - {{ cloud_node_node.tmp | default('') }} - {{ cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) }} - [{{ cloud_node_node_info.external | default(false) }}]"
+      label: "{{ cloud_node_node_name }}"
     when: >-
       (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
       and
@@ -959,8 +965,14 @@
       name: "cloud_node"
     vars: 
       cloud_node_env_name: "{{ env.name }}"
-      cloud_node_node_name: "{{ main_item.name | default(main_item) }}"
-      cloud_node_node_key: "{{ main_item.key | default(main_item.name) | default(main_item) }}"
+      cloud_node_node_info: "{{ main_item }}"
+      cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+      cloud_node_node_key: >-
+        {{ 
+        cloud_node_node_info.key | 
+        default(cloud_node_node_info.name) | 
+        default(cloud_node_node_info) 
+        }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
       cloud_node_title: >-
