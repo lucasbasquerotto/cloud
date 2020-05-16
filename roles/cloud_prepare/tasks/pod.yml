@@ -8,7 +8,6 @@
   when: ((cloud_prepare_pod[cloud_prepare_pod_item] | default('')) == '')
   loop:
   - "repo"
-  - "ctx"
   loop_control:
     loop_var: cloud_prepare_pod_item
   tags: ["no_print"]
