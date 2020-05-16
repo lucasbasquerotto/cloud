@@ -314,7 +314,7 @@
   loop_control:
     loop_var: cloud_node_item
     label: >-
-      {{ cloud_node_item.0.name | default(cloud_node_item.0 + ' (' + cloud_node_item_dns.name + ')') }} - 
+      {{ cloud_node_item_dns.record }} ({{ cloud_node_item_dns.name }}) -
       {{ cloud_node_item.1.name }} ({{ cloud_dns_state }})"
   when: >-
     (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
