@@ -22,9 +22,23 @@
 
 - set_fact:
     cloud_prepare_main_repo_location: >-
-      {{ cloud_prepare_pod_base_dir }}{{ 
-      cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
-    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_pod_base_dir }}/tmp/cloud/main"
+      {{ cloud_prepare_pod_base_dir 
+      }}{{ cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
+    cloud_prepare_tmp_location: >-
+      {{ 
+      cloud_prepare_pod.flat | default(false) | bool | ternary(
+      cloud_prepare_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname, 
+      cloud_prepare_pod_base_dir + '/tmp/cloud') 
+      }}
+    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_tmp_location + '/main' }}"
+    cloud_prepare_pod_data_dir: >-
+      {{ 
+      (cloud_prepare_cloud.type != 'local') | ternary(
+      cloud_prepare_pod.flat | default(false) | bool | ternary(
+      cloud_prepare_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname', 
+      cloud_prepare_pod_base_dir + '/data'),
+      cloud_prepare_pod_local_data_dir_rel) 
+      }}
   when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print"]
 
@@ -35,17 +49,12 @@
   tags: ["no_print"]
 
 - set_fact:
-    cloud_prepare_pod_data_dir: >-
-      {{ (cloud_prepare_cloud.type != 'local') | ternary(
-      cloud_prepare_pod_base_dir + '/data',
-      cloud_prepare_pod_local_data_dir_rel) 
-      }}
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
     cloud_prepare_backup_file: >-
-      {{ cloud_prepare_pod_base_dir }}/tmp/cloud/env/{{ cloud_prepare_env_vars_relative_file_name }}
+      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
     cloud_prepare_backup_file_tmp: >-
-      {{ cloud_prepare_pod_base_dir }}/tmp/cloud/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
+      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
   tags: ["no_print"]
     
 ### Prepare the directories ###
@@ -82,9 +91,13 @@
 
   - set_fact:
       cloud_prepare_env_vars: 
-      - { name: "BASE_DIR", value: "{{ cloud_prepare_pod_base_dir }}" }
-      - { name: "MAIN_DIR", value: "{{ cloud_prepare_main_repo_location }}" }
-      - { name: "DATA_DIR", value: "{{ cloud_prepare_pod_base_dir }}/data" }
+      - name: "BASE_DIR"
+        value: "{{ cloud_prepare_pod_base_dir }}"
+        when: "{{ cloud_prepare_pod.flat | default(false) | bool | ternary(false, true) }}"
+      - name: "MAIN_DIR"
+        value: "{{ cloud_prepare_main_repo_location }}" 
+      - name: "DATA_DIR"
+        value: "{{ cloud_prepare_pod_data_dir }}"
     tags: ["no_print"]
 
   - name: >-
@@ -94,14 +107,16 @@
     lineinfile:
       dest: "/home/{{ cloud_prepare_host_user }}/.profile"
       state: present
-      regexp: "^{{ local_item.name }}="
-      line: "{{ local_item.name }}={{ local_item.value }}"
+      regexp: "^{{ cloud_prepare_pod_item.name }}="
+      line: "{{ cloud_prepare_pod_item.name }}={{ cloud_prepare_pod_item.value }}"
     loop: "{{ cloud_prepare_env_vars }}"
     loop_control:
-      loop_var: local_item
-      label: "{{ local_item.name }}"
+      loop_var: cloud_prepare_pod_item
+      label: "{{ cloud_prepare_pod_item.name }}"
     ignore_errors: "{{ cloud_prepare_cloud.type == 'local' }}"
-    when: cloud_prepare_host_user != 'root'
+    when: 
+      (cloud_prepare_pod_item.when | default(true) | bool) and 
+      (cloud_prepare_host_user != 'root')
     tags: ["no_print_skipped"]
     
   - name: >-
@@ -112,14 +127,16 @@
     lineinfile:
       dest: "/root/.profile"
       state: present
-      regexp: "^{{ local_item.name }}="
-      line: "{{ local_item.name }}={{ local_item.value }}"
+      regexp: "^{{ cloud_prepare_pod_item.name }}="
+      line: "{{ cloud_prepare_pod_item.name }}={{ cloud_prepare_pod_item.value }}"
     loop: "{{ cloud_prepare_env_vars }}"
     loop_control:
-      loop_var: local_item
-      label: "{{ local_item.name }}"
+      loop_var: cloud_prepare_pod_item
+      label: "{{ cloud_prepare_pod_item.name }}"
     ignore_errors: "{{ cloud_prepare_cloud.type == 'local' }}"
-    when: cloud_prepare_pod.root in ['yes', 'true']
+    when: 
+      (cloud_prepare_pod_item.when | default(true) | bool) and 
+      (cloud_prepare_pod.root | default(false) | bool)
     tags: ["no_print_skipped"]
 
   when: cloud_prepare_pod_main | bool
