@@ -682,9 +682,16 @@
                 '].task[' + var_task_name + 
                 '].type.empty' + ''] >>
             <% elif var_task_type in ['task', 'shell'] %>
-              <% set var_pod_base_dir = var_node.base_dir + '/' + var_pod_name %>
+              <% set var_pod_dirname = var_pod.base_dir | default(var_pod_name, true) %>
+              <% set var_pod_base_dir =  var_node.base_dir + '/' + var_pod_dirname %>
 
-              <% set var_pod_repo_location = var_pod_base_dir + '/main' %>
+              <% set var_pod_repo_location = var_pod.flat | default (false) 
+                | ternary(var_pod_base_dir, var_pod_base_dir + '/main') 
+              %>
+              <% set var_pod_data_dir = var_pod.flat | default (false) | ternary(
+                var_node.base_dir + '/cloud/data/' + var_pod_dirname, 
+                var_pod_base_dir + '/data') 
+              %>
               
               <% if (var_cloud.type == 'local') and 
                 ((var_local_pod_dir_dict[var_pod_name] | default('')) != '') 
@@ -699,11 +706,11 @@
                   '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
                   '] - task[' + var_task_tag + ']',
                 'task': var_task,
-                'output_path': var_pod_base_dir + '/data/log/run',
+                'output_path': var_pod_data_dir + '/log/run',
                 'output_file': 'run.stage.' + var_run_stage_name + '.' +
                   var_run_stage_task_name + '.' + var_task_tag + '.' +
                   ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
-                'tmp_path': var_pod_base_dir + '/data/tmp/run',
+                'tmp_path': var_pod_data_dir + '/tmp/run',
                 'tmp_file': 'run.stage.' + var_run_stage_name + '.' + 
                   var_run_stage_task_name + '.' + var_task_tag + '.sh',
                 'chdir': var_pod_repo_location,
