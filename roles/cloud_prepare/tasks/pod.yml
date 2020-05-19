@@ -21,9 +21,6 @@
 ### Set vars ###
 
 - set_fact:
-    cloud_prepare_main_repo_location: >-
-      {{ cloud_prepare_pod_base_dir 
-      }}{{ cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
     cloud_prepare_tmp_location: >-
       {{ 
       cloud_prepare_pod.flat | default(false) | bool | ternary(
@@ -42,7 +39,14 @@
   tags: ["no_print"]
 
 - set_fact:
+    cloud_prepare_main_repo_location: >-
+      {{ cloud_prepare_pod_base_dir 
+      }}{{ cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_tmp_location + '/main' }}"
+  when: cloud_prepare_cloud.type != 'local'
+  tags: ["no_print"]
+
+- set_fact:
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
     cloud_prepare_backup_file: >-
