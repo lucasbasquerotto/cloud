@@ -218,9 +218,12 @@
 - set_fact:
     cloud_prepare_node_size: >-
       {{ 
-      (cloud_prepare_inner_node_params.meta.use_dict | default(false) | bool) | ternary(
-      cloud_prepare_inner_node_params.cloud_size_dict[cloud_prepare_cloud.type][cloud_prepare_inner_node_params.size], 
-      cloud_prepare_inner_node_params.size) 
+        (cloud_prepare_inner_node_params.meta.use_dict | default(false) | bool) | ternary(
+          cloud_prepare_inner_node_params.cloud_size_dict[
+              cloud_prepare_cloud.type][cloud_prepare_inner_node_params.size
+            ], 
+          cloud_prepare_inner_node_params.size
+        ) 
       }}
   tags: ["no_print"]
 

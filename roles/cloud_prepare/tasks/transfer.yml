@@ -74,24 +74,25 @@
   set_fact:
     cloud_prepare_transfer_files_list: >-
       {{ 
-      cloud_prepare_transfer_files_list
-      + [{ 
-      'remote_src': 'true',
-      'src': cloud_prepare_transfer_item_src_full, 
-      'dest': cloud_prepare_transfer_item_dest_full, 
-      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
-      'mode': cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
-      }] 
+        cloud_prepare_transfer_files_list + [{ 
+          'remote_src': 'true',
+          'src': cloud_prepare_transfer_item_src_full, 
+          'dest': cloud_prepare_transfer_item_dest_full, 
+          'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+          'mode': cloud_prepare_transfer_item.mode | default(
+          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+        }] 
       }}
   vars: 
     cloud_prepare_transfer_item_src_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item.src }}
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
-      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_dest_dir_base + '/')) 
-      + cloud_prepare_transfer_item.dest
+        (
+          (cloud_prepare_transfer_item.root | default(false) | bool) | 
+          ternary('', cloud_prepare_dest_dir_base + '/')
+        ) 
+        + cloud_prepare_transfer_item.dest
       }}
     cloud_prepare_transfer_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
@@ -106,23 +107,24 @@
   set_fact:
     cloud_prepare_transfer_files_list: >-
       {{ 
-      cloud_prepare_transfer_files_list
-      + [{ 
-      'remote_src': 'false',
-      'src': cloud_prepare_transfer_item_src_full, 
-      'dest': cloud_prepare_transfer_item_dest_full, 
-      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
-      'mode': cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
-      }] 
+        cloud_prepare_transfer_files_list + [{ 
+          'remote_src': 'false',
+          'src': cloud_prepare_transfer_item_src_full, 
+          'dest': cloud_prepare_transfer_item_dest_full, 
+          'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+          'mode': cloud_prepare_transfer_item.mode | default(
+          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+        }] 
       }}
   vars: 
     cloud_prepare_transfer_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_transfer_item.src }}"
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
-      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_dest_dir_base + '/')) 
-      + cloud_prepare_transfer_item.dest
+        (
+          (cloud_prepare_transfer_item.root | default(false) | bool) | 
+          ternary('', cloud_prepare_dest_dir_base + '/')
+        ) 
+        + cloud_prepare_transfer_item.dest
       }}
     cloud_prepare_transfer_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
@@ -137,24 +139,25 @@
   set_fact:
     cloud_prepare_transfer_tpl_list: >-
       {{ 
-      cloud_prepare_transfer_tpl_list
-      + [{ 
-      'src': cloud_prepare_transfer_item_src_local_full,
-      'dest': cloud_prepare_transfer_item_dest_full, 
-      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
-      'mode': cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
-      'params': cloud_prepare_transfer_item_params
-      }] 
+        cloud_prepare_transfer_tpl_list + [{ 
+          'src': cloud_prepare_transfer_item_src_local_full,
+          'dest': cloud_prepare_transfer_item_dest_full, 
+          'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+          'mode': cloud_prepare_transfer_item.mode | default(
+          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+          'params': cloud_prepare_transfer_item_params
+        }] 
       }}
   vars: 
     cloud_prepare_transfer_item_src_local_full: >-
       {{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_transfer_item.src }}
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
-      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_dest_dir_base + '/')) 
-      + (cloud_prepare_transfer_item.dest | default(cloud_prepare_transfer_item.src)) 
+        (
+          (cloud_prepare_transfer_item.root | default(false) | bool) | 
+          ternary('', cloud_prepare_dest_dir_base + '/')
+        ) 
+        + (cloud_prepare_transfer_item.dest | default(cloud_prepare_transfer_item.src)) 
       }}
     cloud_prepare_transfer_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
@@ -169,23 +172,24 @@
   set_fact:
     cloud_prepare_transfer_tpl_list: >-
       {{ 
-      cloud_prepare_transfer_tpl_list
-      + [{ 
-      'src': cloud_prepare_transfer_item_src_full, 
-      'dest': cloud_prepare_transfer_item_dest_full, 
-      'dest_rel': cloud_prepare_transfer_item_dest_rel, 
-      'mode': cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
-      'params': cloud_prepare_transfer_item_params
-      }] 
+        cloud_prepare_transfer_tpl_list + [{ 
+          'src': cloud_prepare_transfer_item_src_full, 
+          'dest': cloud_prepare_transfer_item_dest_full, 
+          'dest_rel': cloud_prepare_transfer_item_dest_rel, 
+          'mode': cloud_prepare_transfer_item.mode | default(
+          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true), 
+          'params': cloud_prepare_transfer_item_params
+        }] 
       }}
   vars: 
     cloud_prepare_transfer_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_transfer_item.src }}"
     cloud_prepare_transfer_item_dest_rel: >-
       {{ 
-      ((cloud_prepare_transfer_item.root | default(false) | bool) | 
-      ternary('', cloud_prepare_dest_dir_base + '/')) 
-      + cloud_prepare_transfer_item.dest
+        (
+          (cloud_prepare_transfer_item.root | default(false) | bool) | 
+          ternary('', cloud_prepare_dest_dir_base + '/')
+        ) 
+        + cloud_prepare_transfer_item.dest
       }}
     cloud_prepare_transfer_item_dest_full: >-
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_transfer_item_dest_rel }}
@@ -202,9 +206,9 @@
       {{ cloud_prepare_transfer_dir_list + [cloud_prepare_transfer_item.dest | dirname] }}
   loop: >-
     {{ 
-    (cloud_prepare_transfer_files_list | default([])) 
-    + 
-    (cloud_prepare_transfer_tpl_list | default([])) 
+      (cloud_prepare_transfer_files_list | default([])) 
+      + 
+      (cloud_prepare_transfer_tpl_list | default([])) 
     }}
   loop_control:
     loop_var: cloud_prepare_transfer_item
@@ -215,11 +219,14 @@
   set_fact:
     cloud_prepare_transfer_dir_list: >-
       {{ 
-      cloud_prepare_transfer_dir_list + [
-      (cloud_prepare_repo_location + 
-      '/tmp/tpl/' + 
-      cloud_prepare_transfer_item.dest_rel) | dirname
-      ] }}
+        cloud_prepare_transfer_dir_list + [
+          (
+            cloud_prepare_repo_location + 
+            '/tmp/tpl/' + 
+            cloud_prepare_transfer_item.dest_rel
+          ) | dirname
+        ] 
+      }}
   loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_transfer_item

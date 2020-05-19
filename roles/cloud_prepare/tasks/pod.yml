@@ -23,17 +23,10 @@
 - set_fact:
     cloud_prepare_tmp_location: >-
       {{ 
-      cloud_prepare_pod.flat | default(false) | bool | ternary(
-      cloud_prepare_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname, 
-      cloud_prepare_pod_base_dir + '/tmp/cloud') 
-      }}
-    cloud_prepare_pod_data_dir: >-
-      {{ 
-      (cloud_prepare_cloud.type != 'local') | ternary(
-      cloud_prepare_pod.flat | default(false) | bool | ternary(
-      cloud_prepare_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname, 
-      cloud_prepare_pod_base_dir + '/data'),
-      cloud_prepare_pod_local_data_dir_rel) 
+        cloud_prepare_pod.flat | default(false) | bool | ternary(
+          cloud_prepare_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname, 
+          cloud_prepare_pod_base_dir + '/tmp/cloud'
+        ) 
       }}
   when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print"]
@@ -43,16 +36,26 @@
       {{ cloud_prepare_pod_base_dir 
       }}{{ cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_tmp_location + '/main' }}"
+    cloud_prepare_backup_file: >-
+      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
+    cloud_prepare_backup_file_tmp: >-
+      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
   when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
-    cloud_prepare_backup_file: >-
-      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
-    cloud_prepare_backup_file_tmp: >-
-      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
+    cloud_prepare_pod_data_dir: >-
+      {{ 
+        (cloud_prepare_cloud.type != 'local') | ternary(
+          cloud_prepare_pod.flat | default(false) | bool | ternary(
+            cloud_prepare_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname, 
+            cloud_prepare_pod_base_dir + '/data'
+          ),
+          cloud_prepare_pod_local_data_dir_rel
+        ) 
+      }}
   tags: ["no_print"]
 
 - set_fact:
@@ -75,6 +78,7 @@
   loop_control:
     loop_var: cloud_prepare_pod_item
     label: "{{ cloud_prepare_pod_item | dirname }}"
+  when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -88,6 +92,7 @@
     owner: "{{ cloud_prepare_owner }}"
     group: "{{ cloud_prepare_group }}"
     mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
+  when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print_skipped"]
 
 ### Define the environment variables ###
@@ -163,6 +168,7 @@
     register: cloud_prepare_diff
     failed_when: cloud_prepare_diff.rc > 1
     changed_when: cloud_prepare_diff.rc == 1
+    when: cloud_prepare_cloud.type != 'local'
     tags: ["no_print_skipped"]
 
   - name: "{{ cloud_prepare_pod_title }} - debug - outer"
