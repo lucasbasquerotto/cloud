@@ -6,7 +6,7 @@
   hosts: main
   tags:
   - always
-  gather_facts: no  
+  gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
     tags: ["no_print"]
@@ -15,13 +15,13 @@
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 01.01 - Cloud - Main 
+- name: Play 01.01 - Cloud - Main
   hosts: main
   tags:
   - init
   - cloud
   - cloud_main
-  gather_facts: no  
+  gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
     when: ansible_connection != 'local'
@@ -31,11 +31,11 @@
     include_tasks: "{{ env_hooks.before_cloud_main }}"
     when: (env_hooks.before_cloud_main | default('')) != ''
     tags: ["no_print"]
-      
+
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_main"
-    vars: 
+    vars:
       cloud_main_title: "{{ env_title }} - [prepare] cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
@@ -64,8 +64,8 @@
   - init
   - cloud
   - dns
-  gather_facts: no  
-  tasks:  
+  gather_facts: no
+  tasks:
   - include_tasks: "tasks/init.yml"
     when: ansible_connection != 'local'
     tags: ["no_print"]
@@ -76,12 +76,12 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_dns"
-    vars: 
+    vars:
       main_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
-        {{ env_title }} - create the static dns records - 
+        {{ env_title }} - create the static dns records -
         dns[{{ main_dns.type }}] - {{ main_item.record }}
       cloud_dns_type: "{{ main_dns.type }}"
       cloud_dns_credentials: >-
@@ -110,8 +110,8 @@
   - init
   - cloud
   - buckets
-  gather_facts: no  
-  tasks:  
+  gather_facts: no
+  tasks:
   - include_tasks: "tasks/init.yml"
     when: ansible_connection != 'local'
     tags: ["no_print"]
@@ -124,6 +124,7 @@
   - name: "{{ env_title }} - create the buckets"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
+      region: "{{ main_bucket.region }}"
       access_key: "{{ main_credentials.access_key }}"
       secret_key: "{{ main_credentials.secret_key }}"
       bucket: "{{ main_bucket.name }}"
@@ -152,7 +153,7 @@
   - cloud
   - nodes
   - create
-  gather_facts: no  
+  gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
     when: ansible_connection != 'local'
@@ -164,22 +165,22 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_node"
-    vars: 
+    vars:
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_info: "{{ main_item }}"
       cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
       cloud_node_node_key: >-
-        {{ 
-        cloud_node_node_info.key | 
-        default(cloud_node_node_info.name) | 
-        default(cloud_node_node_info) 
+        {{
+        cloud_node_node_info.key |
+        default(cloud_node_node_info.name) |
+        default(cloud_node_node_info)
         }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
       cloud_node_title: >-
-        {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] - 
+        {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] -
         cloud[{{ cloud_node_cloud_name }}]
       cloud_node_node_credentials: >-
         {{ env.credentials[cloud_node_node.credentials] }}
@@ -203,7 +204,7 @@
       (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
       and
       (cloud_node_cloud.type != 'local')
-      and 
+      and
       (not (cloud_node_node_info.external | default(false) | bool))
     tags: ["no_print_skipped"]
 
@@ -235,23 +236,23 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    set_fact: 
+    set_fact:
       host_test_node_info_aux: ""
       host_test_node_name: ""
       host_test_node_key: ""
     tags: ["no_print"]
-    
+
   - name: "{{ env_title }}"
-    set_fact: 
+    set_fact:
       host_test_node_info_aux: "{{ host_test_node_info_aux }}"
       host_test_node_name: "{{ host_test_node_name_aux }}"
       host_test_node_key: >-
-        {{ 
-        host_test_node_info.key | 
-        default(host_test_node_info.name) | 
-        default(host_test_node_info) 
+        {{
+        host_test_node_info.key |
+        default(host_test_node_info.name) |
+        default(host_test_node_info)
         }}
-    vars: 
+    vars:
       host_test_node_info: "{{ main_item }}"
       host_test_node_name_aux: >-
         {{ host_test_node_info.name | default(host_test_node_info) }}
@@ -287,9 +288,9 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "host_test"
-    vars: 
+    vars:
       host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
       host_test_node_info: "{{ host_test_node_info_aux }}"
       host_test_node: "{{ env.nodes[instance_key] }}"
@@ -330,7 +331,7 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_repos"
     vars:
       cloud_repos_title: "{{ env_title }} - cloud repositories (local)"
@@ -394,7 +395,7 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_prepare"
     vars:
       cloud_prepare_env_name: "{{ env.name }}"
@@ -403,10 +404,10 @@
       cloud_prepare_node_info: "{{ main_item }}"
       cloud_prepare_node_name: "{{ cloud_prepare_node_info.name | default(cloud_prepare_node_info) }}"
       cloud_prepare_node_key: >-
-        {{ 
-        cloud_prepare_node_info.key | 
-        default(cloud_prepare_node_info.name) | 
-        default(cloud_prepare_node_info) 
+        {{
+        cloud_prepare_node_info.key |
+        default(cloud_prepare_node_info.name) |
+        default(cloud_prepare_node_info)
         }}
       cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
       cloud_prepare_cloud_name: "{{ cloud_prepare_node_info.cloud | default(cloud_prepare_node.cloud) }}"
@@ -434,9 +435,9 @@
       cloud_prepare_local_pod_dict: "{{ env_local_pod_dict }}"
       cloud_prepare_local_app_dict: "{{ env_local_app_dict }}"
       cloud_prepare_local_data_dir_inside: >-
-        {{ 
-        (ansible_connection == 'local') | 
-        ternary(env_local_data_dir | default(''), '') 
+        {{
+        (ansible_connection == 'local') |
+        ternary(env_local_data_dir | default(''), '')
         }}
       cloud_prepare_meta: "{{ main_ctx_params.meta | default({}) }}"
       cloud_prepare_base_dir_rel: "../.."
@@ -448,7 +449,7 @@
       ((ansible_connection == 'local') or (cloud_prepare_node_name == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == cloud_prepare_node_name))
-      and 
+      and
       (
       ((ansible_connection == 'local') and (cloud_prepare_cloud.type == 'local'))
       or
@@ -483,8 +484,8 @@
 
 <% for var_node_item in var_main_all_nodes %>
   <% set var_node_name = var_node_item.name | default(var_node_item) %>
-  <% set ns_outer_run.node_map = ns_outer_run.node_map | combine({ 
-    var_node_name: var_node_item 
+  <% set ns_outer_run.node_map = ns_outer_run.node_map | combine({
+    var_node_name: var_node_item
   }) %>
   <% set ns_outer_run.all_node_names = ns_outer_run.all_node_names + [var_node_name] %>
 <% endfor %>
@@ -512,7 +513,7 @@
       <% set var_run_stage_task = params.run_stage_tasks[var_run_stage_task_name] %>
       <% set var_task_tag = var_run_stage_task.task_tag | default('') %>
     <% endif %>
-    
+
     <% set var_nodes_tasks = var_run_stage_task.nodes_tasks | default(false, true) | bool %>
     <% set var_pods_tasks = var_run_stage_task.pods_tasks | default(false, true) | bool %>
     <% set var_partial_pods = var_run_stage_task.partial_pods | default(false, true) | bool %>
@@ -522,16 +523,16 @@
     <% if not var_direct %>
       <% if var_all_nodes and var_partial_pods %>
         <% set error = {} %>
-        << error['error.run_stage[' + var_run_stage_name + 
-          '].run_stage_task[' + var_run_stage_task_name + 
+        << error['error.run_stage[' + var_run_stage_name +
+          '].run_stage_task[' + var_run_stage_task_name +
           '].both_all_nodes_and_partial_pods_defined'] >>
       <% endif %>
     <% endif %>
-    
+
     <% if (not var_all_nodes) and ((var_run_stage_task.nodes | default([]) | length) == 0) %>
       <% set error = {} %>
-      << error['error.run_stage[' + var_run_stage_name + 
-        '].run_stage_task[' + var_run_stage_task_name + 
+      << error['error.run_stage[' + var_run_stage_name +
+        '].run_stage_task[' + var_run_stage_task_name +
         '].neither_all_nodes_nor_nodes_defined'] >>
     <% endif %>
 
@@ -560,9 +561,9 @@
 
       <% if var_node_name not in ns_outer_run.all_node_names %>
         <% set error = {} %>
-        << error['error.run_stage[' + var_run_stage_name + 
-          '].run_stage_task[' + var_run_stage_task_name + 
-          '].node[' + var_node_name + 
+        << error['error.run_stage[' + var_run_stage_name +
+          '].run_stage_task[' + var_run_stage_task_name +
+          '].node[' + var_node_name +
           '].node_not_in_ctx'] >>
       <% endif %>
 
@@ -580,8 +581,8 @@
 
       <% for var_pod_item in var_node_all_pods %>
         <% set var_pod_name = var_pod_item.name | default(var_pod_item) %>
-        <% set ns_run.pod_map = ns_run.pod_map | combine({ 
-          var_pod_name: var_pod_item 
+        <% set ns_run.pod_map = ns_run.pod_map | combine({
+          var_pod_name: var_pod_item
         }) %>
         <% set ns_run.all_pod_names = ns_run.all_pod_names + [var_pod_name] %>
       <% endfor %>
@@ -598,24 +599,24 @@
           <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
           <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
         <% endif %>
-        
+
         <% set var_task = var_task_dict[var_task_name] | default({}) %>
         <% set var_task_type = var_task.type | default('') %>
 
         <% if var_task_type == '' %>
           <% set error = {} %>
-          << error['error.run_stage[' + var_run_stage_name + 
-            '].run_stage_task[' + var_run_stage_task_name + 
-            '].node[' + var_node_name + 
-            '].task_tag[' + var_task_tag + 
-            '].tasks_group[' + var_tasks_group_name + 
-            '].task[' + var_task_name + 
+          << error['error.run_stage[' + var_run_stage_name +
+            '].run_stage_task[' + var_run_stage_task_name +
+            '].node[' + var_node_name +
+            '].task_tag[' + var_task_tag +
+            '].tasks_group[' + var_tasks_group_name +
+            '].task[' + var_task_name +
             '].type.empty' + ''] >>
         <% elif var_task_type in ['task', 'shell'] %>
 
           <% set var_run_task_params = {
-            'title': 'node[' + var_node_name + 
-              '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
+            'title': 'node[' + var_node_name +
+              '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name +
               '] - task[' + var_task_tag + ']',
             'task': var_task,
             'output_path': var_node.base_dir + '/.node/data/log',
@@ -628,17 +629,17 @@
             'chdir': var_node.base_dir,
             'node_item': var_node_item,
             'pod_name': ''
-          } %>  
+          } %>
 
-          <% set ns_run.list = ns_run.list + [var_run_task_params] %> 
+          <% set ns_run.list = ns_run.list + [var_run_task_params] %>
         <% elif var_task_type != 'skip' %>
           <% set error = {} %>
-          << error['error.run_stage[' + var_run_stage_name + 
-            '].run_stage_task[' + var_run_stage_task_name + 
-            '].node[' + var_node_name + 
-            '].task_tag[' + var_task_tag + 
-            '].tasks_group[' + var_tasks_group_name + 
-            '].task[' + var_task_name + 
+          << error['error.run_stage[' + var_run_stage_name +
+            '].run_stage_task[' + var_run_stage_task_name +
+            '].node[' + var_node_name +
+            '].task_tag[' + var_task_tag +
+            '].tasks_group[' + var_tasks_group_name +
+            '].task[' + var_task_name +
             '].type.invalid[' + var_task_type + ']'] >>
         <% endif %>
       <% endif %>
@@ -647,12 +648,12 @@
         <% for var_pod_name in var_pod_names | unique %>
           <% if var_pod_name not in ns_run.all_pod_names %>
             <% set error = {} %>
-            << error['error.run_stage[' + var_run_stage_name + 
-              '].run_stage_task[' + var_run_stage_task_name + 
-              '].node[' + var_node_name + 
-              '].pod[' + var_pod_name + 
+            << error['error.run_stage[' + var_run_stage_name +
+              '].run_stage_task[' + var_run_stage_task_name +
+              '].node[' + var_node_name +
+              '].pod[' + var_pod_name +
               '].pod_not_in_node'] >>
-          <% endif %>      
+          <% endif %>
 
           <% set var_pod_item = ns_run.pod_map[var_pod_name] %>
           <% set var_pod_key = var_pod_item.key | default(var_pod_item.name) | default(var_pod_item) %>
@@ -667,43 +668,43 @@
               <% set var_tasks_group = var_tasks_group_dict[var_tasks_group_name] | default({}) %>
               <% set var_task_name = var_tasks_group[var_task_tag] | default('') %>
             <% endif %>
-            
+
             <% set var_task = var_task_dict[var_task_name] | default({}) %>
             <% set var_task_type = var_task.type | default('') %>
 
             <% if var_task_type == '' %>
               <% set error = {} %>
-              << error['error.run_stage[' + var_run_stage_name + 
-                '].run_stage_task[' + var_run_stage_task_name + 
-                '].node[' + var_node_name + 
-                '].pod[' + var_pod_name + 
-                '].task_tag[' + var_task_tag + 
-                '].tasks_group[' + var_tasks_group_name + 
-                '].task[' + var_task_name + 
+              << error['error.run_stage[' + var_run_stage_name +
+                '].run_stage_task[' + var_run_stage_task_name +
+                '].node[' + var_node_name +
+                '].pod[' + var_pod_name +
+                '].task_tag[' + var_task_tag +
+                '].tasks_group[' + var_tasks_group_name +
+                '].task[' + var_task_name +
                 '].type.empty' + ''] >>
             <% elif var_task_type in ['task', 'shell'] %>
               <% set var_pod_dirname = var_pod.base_dir | default(var_pod_name, true) %>
               <% set var_pod_base_dir =  var_node.base_dir + '/' + var_pod_dirname %>
 
-              <% set var_pod_repo_location = var_pod.flat | default (false) 
-                | ternary(var_pod_base_dir, var_pod_base_dir + '/main') 
+              <% set var_pod_repo_location = var_pod.flat | default (false)
+                | ternary(var_pod_base_dir, var_pod_base_dir + '/main')
               %>
               <% set var_pod_data_dir = var_pod.flat | default (false) | ternary(
-                var_node.base_dir + '/cloud/data/' + var_pod_dirname, 
-                var_pod_base_dir + '/data') 
+                var_node.base_dir + '/cloud/data/' + var_pod_dirname,
+                var_pod_base_dir + '/data')
               %>
-              
-              <% if (var_cloud.type == 'local') and 
-                ((var_local_pod_dir_dict[var_pod_name] | default('')) != '') 
+
+              <% if (var_cloud.type == 'local') and
+                ((var_local_pod_dir_dict[var_pod_name] | default('')) != '')
               %>
-                <% set var_pod_repo_location = var_local_base_dir_pod + '/' + 
-                  var_local_pod_dir_dict[var_pod_name] 
+                <% set var_pod_repo_location = var_local_base_dir_pod + '/' +
+                  var_local_pod_dir_dict[var_pod_name]
                 %>
               <% endif %>
-              
+
               <% set var_run_task_params = {
-                'title': 'node[' + var_node_name + '] - pod[' + var_pod_name + 
-                  '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name + 
+                'title': 'node[' + var_node_name + '] - pod[' + var_pod_name +
+                  '] - stage[' + var_run_stage_name + '.' + var_run_stage_task_name +
                   '] - task[' + var_task_tag + ']',
                 'task': var_task,
                 'output_path': var_pod_data_dir + '/log/run',
@@ -711,24 +712,24 @@
                   var_run_stage_task_name + '.' + var_task_tag + '.' +
                   ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
                 'tmp_path': var_pod_data_dir + '/tmp/run',
-                'tmp_file': 'run.stage.' + var_run_stage_name + '.' + 
+                'tmp_file': 'run.stage.' + var_run_stage_name + '.' +
                   var_run_stage_task_name + '.' + var_task_tag + '.sh',
                 'chdir': var_pod_repo_location,
                 'node_item': var_node_item,
                 'pod_name': var_pod_name
-              } %>  
+              } %>
 
-              <% set ns_run.list = ns_run.list + [var_run_task_params] %>  
+              <% set ns_run.list = ns_run.list + [var_run_task_params] %>
 
             <% elif var_task_type != 'skip' %>
               <% set error = {} %>
-              << error['error.run_stage[' + var_run_stage_name + 
-                '].run_stage_task[' + var_run_stage_task_name + 
-                '].node[' + var_node_name + 
-                '].pod[' + var_pod_name + 
-                '].task_tag[' + var_task_tag + 
-                '].tasks_group[' + var_tasks_group_name + 
-                '].task[' + var_task_name + 
+              << error['error.run_stage[' + var_run_stage_name +
+                '].run_stage_task[' + var_run_stage_task_name +
+                '].node[' + var_node_name +
+                '].pod[' + var_pod_name +
+                '].task_tag[' + var_task_tag +
+                '].tasks_group[' + var_tasks_group_name +
+                '].task[' + var_task_name +
                 '].type.invalid.' + var_task_type] >>
             <% endif %>
           <% endif %>
@@ -759,7 +760,7 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_run"
     vars:
       cloud_run_title: "{{ env_title }} - run - {{ main_item.title }}"
@@ -774,9 +775,9 @@
       cloud_run_node_name: >-
         {{ cloud_run_node_item.name | default(cloud_run_node_item) | default('') }}
       cloud_run_node_key: >-
-        {{ 
-        cloud_run_node_item.key | default(cloud_run_node_item.name) | 
-        default(cloud_run_node_item) | default('') 
+        {{
+        cloud_run_node_item.key | default(cloud_run_node_item.name) |
+        default(cloud_run_node_item) | default('')
         }}
       cloud_run_node: "{{ env.nodes[cloud_run_node_key] | default({}) }}"
       cloud_run_cloud_name: "{{ cloud_run_node_item.cloud | default(cloud_run_node.cloud) }}"
@@ -784,10 +785,10 @@
       cloud_run_pod: "{{ env.pods[cloud_run_pod_name] | default({}) }}"
       cloud_run_cloud: "{{ env.clouds[cloud_run_cloud_name | default('')] | default({}) }}"
     loop: <% if (ns_run.list | length) == 0 %>[]<% else %>
-      <% for main_run_item in ns_run.list %>     
+      <% for main_run_item in ns_run.list %>
       << '\n' >>
       - << main_run_item | to_nice_yaml(indent=2) | replace('\n', '\n        ') >>
-      <% endfor %><% endif %>  
+      <% endfor %><% endif %>
     loop_control:
       loop_var: main_item
       label: "{{ main_item.title }}"
@@ -795,7 +796,7 @@
       ((ansible_connection == 'local') or (cloud_run_node_name == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == cloud_run_node_name))
-      and 
+      and
       (
       ((ansible_connection == 'local') and ((cloud_run_cloud.type | default('')) == 'local'))
       or
@@ -843,7 +844,7 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cron"
     vars:
       cron_node_info: "{{ main_item }}"
@@ -867,7 +868,7 @@
       ((ansible_connection == 'local') or (cron_node_name == instance_type))
       and
       (((env_node | default('')) == '') or (env_node == cron_node_name))
-      and 
+      and
       (
       ((ansible_connection == 'local') and (cron_cloud.type == 'local'))
       or
@@ -893,7 +894,7 @@
   - init
   - tmp
   - cloud
-  gather_facts: no  
+  gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
     when: ansible_connection != 'local'
@@ -905,17 +906,17 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_node"
-    vars: 
+    vars:
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_info: "{{ main_item }}"
       cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
       cloud_node_node_key: >-
-        {{ 
-        cloud_node_node_info.key | 
-        default(cloud_node_node_info.name) | 
-        default(cloud_node_node_info) 
+        {{
+        cloud_node_node_info.key |
+        default(cloud_node_node_info.name) |
+        default(cloud_node_node_info)
         }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
@@ -946,13 +947,14 @@
       (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
       and
       (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
-      and 
+      and
       (not (cloud_node_node_info.external | default(false) | bool))
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }} - delete the temporary buckets"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
+      region: "{{ main_bucket.region }}"
       access_key: "{{ main_credentials.access_key }}"
       secret_key: "{{ main_credentials.secret_key }}"
       bucket: "{{ main_bucket.name }}"
@@ -969,12 +971,12 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_dns"
-    vars: 
+    vars:
       main_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
-        {{ env_title }} - delete the temporary static dns records - 
+        {{ env_title }} - delete the temporary static dns records -
         dns[{{ main_dns.type }}] - {{ main_item.record }}
       cloud_dns_type: "{{ main_dns.type }}"
       cloud_dns_credentials: >-
@@ -992,9 +994,9 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_main"
-    vars: 
+    vars:
       main_cloud_name: "{{ main_item.name | default(main_item) }}"
       cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_cloud_name }}]"
       cloud_main_env_name: "{{ env.name }}"
@@ -1025,7 +1027,7 @@
   tags:
   - never
   - destroy
-  gather_facts: no  
+  gather_facts: no
   tasks:
   - include_tasks: "tasks/init.yml"
     when: ansible_connection != 'local'
@@ -1035,19 +1037,19 @@
     include_tasks: "{{ env_hooks.before_delete_main }}"
     when: (env_hooks.before_delete_main | default('')) != ''
     tags: ["no_print"]
-   
+
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_node"
-    vars: 
+    vars:
       cloud_node_env_name: "{{ env.name }}"
       cloud_node_node_info: "{{ main_item }}"
       cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
       cloud_node_node_key: >-
-        {{ 
-        cloud_node_node_info.key | 
-        default(cloud_node_node_info.name) | 
-        default(cloud_node_node_info) 
+        {{
+        cloud_node_node_info.key |
+        default(cloud_node_node_info.name) |
+        default(cloud_node_node_info)
         }}
       cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
       cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
@@ -1076,13 +1078,14 @@
       label: "{{ cloud_node_node_name }}"
     when: >-
       (env.main[env.ctx].destroy.nodes | default(false) | bool)
-      and 
+      and
       (not (cloud_node_node_info.external | default(false) | bool))
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }} - delete the buckets and all their contents"
     aws_s3:
       s3_url: "{{ main_bucket.endpoint }}"
+      region: "{{ main_bucket.region }}"
       access_key: "{{ main_credentials.access_key }}"
       secret_key: "{{ main_credentials.secret_key }}"
       bucket: "{{ main_bucket.name }}"
@@ -1099,12 +1102,12 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_dns"
-    vars: 
+    vars:
       main_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
-        {{ env_title }} - delete the static dns records - 
+        {{ env_title }} - delete the static dns records -
         dns[{{ main_dns.type }}] - {{ main_item.record }}
       cloud_dns_type: "{{ main_dns.type }}"
       cloud_dns_credentials: >-
@@ -1122,9 +1125,9 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_role: 
+    include_role:
       name: "cloud_main"
-    vars: 
+    vars:
       cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_item }}]"
       cloud_main_env_name: "{{ env.name }}"
       cloud_main_cloud: "{{ env.clouds[main_item] }}"
