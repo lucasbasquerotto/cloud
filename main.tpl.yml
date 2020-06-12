@@ -789,6 +789,7 @@
       << '\n' >>
       - << main_run_item | to_nice_yaml(indent=2) | replace('\n', '\n        ') >>
       <% endfor %><% endif %>
+
     loop_control:
       loop_var: main_item
       label: "{{ main_item.title }}"
