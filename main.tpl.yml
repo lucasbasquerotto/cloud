@@ -123,7 +123,7 @@
 
   - name: "{{ env_title }} - create the buckets"
     aws_s3:
-      s3_url: "{{ main_bucket.endpoint }}"
+      s3_url: "{{ main_credentials.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
       secret_key: "{{ main_credentials.secret_key }}"
       bucket: "{{ main_bucket.name }}"
@@ -953,7 +953,7 @@
 
   - name: "{{ env_title }} - delete the temporary buckets"
     aws_s3:
-      s3_url: "{{ main_bucket.endpoint }}"
+      s3_url: "{{ main_credentials.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
       secret_key: "{{ main_credentials.secret_key }}"
       bucket: "{{ main_bucket.name }}"
@@ -1083,7 +1083,7 @@
 
   - name: "{{ env_title }} - delete the buckets and all their contents"
     aws_s3:
-      s3_url: "{{ main_bucket.endpoint }}"
+      s3_url: "{{ main_credentials.endpoint }}"
       access_key: "{{ main_credentials.access_key }}"
       secret_key: "{{ main_credentials.secret_key }}"
       bucket: "{{ main_bucket.name }}"
