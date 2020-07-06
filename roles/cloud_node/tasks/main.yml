@@ -58,30 +58,30 @@
 
 - set_fact:
     cloud_node_params_instance: >-
-      {{ 
+      {{
       (cloud_node_params.meta.use_dict | default(false) | bool) | ternary(
-      cloud_node_params.cloud_instance_dict[cloud_node_cloud.type][cloud_node_params.instance], 
-      cloud_node_params.instance) 
+      cloud_node_params.cloud_instance_dict[cloud_node_cloud.type][cloud_node_params.instance],
+      cloud_node_params.instance)
       }}
     cloud_node_params_region: >-
-      {{ 
+      {{
       (cloud_node_params.meta.use_dict | default(false) | bool) | ternary(
-      cloud_node_params.cloud_region_dict[cloud_node_cloud.type][cloud_node_params.region], 
-      cloud_node_params.region) 
+      cloud_node_params.cloud_region_dict[cloud_node_cloud.type][cloud_node_params.region],
+      cloud_node_params.region)
       }}
     cloud_node_params_size: >-
-      {{ 
+      {{
       (cloud_node_params.meta.use_dict | default(false) | bool) | ternary(
-      cloud_node_params.cloud_size_dict[cloud_node_cloud.type][cloud_node_params.size], 
-      cloud_node_params.size) 
+      cloud_node_params.cloud_size_dict[cloud_node_cloud.type][cloud_node_params.size],
+      cloud_node_params.size)
       }}
   tags: ["no_print"]
 
 ### Cloud Node Other Vars ###
 
-- set_fact: 
+- set_fact:
     cloud_node_host_ssh_public_keys_path: >-
-      {{ 
+      {{
       ((cloud_node_node_credentials.host_ssh_public_keys_path | default('')) != '' )
       | ternary(
       cloud_node_env_dir + '/' + cloud_node_node_credentials.host_ssh_public_keys_path,
@@ -90,9 +90,9 @@
       }}
   tags: ["no_print"]
 
-- set_fact: 
+- set_fact:
     cloud_node_host_ssh_public_keys: >-
-      {{ 
+      {{
       ((cloud_node_host_ssh_public_keys_path | default('')) != '' )
       | ternary(
       lookup('file', cloud_node_host_ssh_public_keys_path).splitlines() | list ,
@@ -102,30 +102,30 @@
     cloud_node_ssh_key_filename: "{{ cloud_node_node_name + '.key' }}"
   tags: ["no_print"]
 
-- set_fact: 
-    cloud_node_host_vars: 
+- set_fact:
+    cloud_node_host_vars:
       host_user: "{{ cloud_node_node_credentials.host_user }}"
       host_pass: "{{ cloud_node_node_credentials.host_pass }}"
       host_ssh_public_keys: "{{ cloud_node_host_ssh_public_keys }}"
     cloud_node_user_data_file: >-
-      {{ 
+      {{
       ((cloud_node_params_instance.user_data_file | default('')) != '' )
       | ternary(
-      cloud_node_env_dir + '/' + 
+      cloud_node_env_dir + '/' +
       (cloud_node_params_instance.user_data_file | default('')),
       ''
       )
       }}
     cloud_node_aux:
       ssh_encrypted_key_path: >-
-        {{ 
-        cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('') | 
-        ternary(env_dir + '/' + 
-        (cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('')), '') 
+        {{
+        cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('') |
+        ternary(env_dir + '/' +
+        (cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('')), '')
         }}
       ssh_key_path: >-
-        {{ 
-        cloud_node_node_credentials.ssh_encrypted_key_path_rel | 
+        {{
+        cloud_node_node_credentials.ssh_encrypted_key_path_rel |
         ternary(cloud_node_tmp_dir + '/' + cloud_node_ssh_key_filename, '')
         }}
   tags: ["no_print"]
@@ -149,7 +149,7 @@
       'region_id': cloud_node_params_region.name,
       'create':
       (((cloud_node_item | int) <= (cloud_node_instance_count | int))
-      and not (cloud_node_shutdown | default(false) | bool)) | 
+      and not (cloud_node_shutdown | default(false) | bool)) |
       ternary('true', 'false') }] }}
   loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
   loop_control:
@@ -159,16 +159,16 @@
 - set_fact:
     cloud_node_user_data: >-
       {{ lookup(
-      'template', 
-      cloud_node_user_data_file, 
+      'template',
+      cloud_node_user_data_file,
       template_vars=dict(cloud_node_host_vars)
-      ) | trim 
+      ) | trim
       }}
-  when: cloud_node_user_data_file != '' 
+  when: cloud_node_user_data_file != ''
   tags: ["no_print"]
 
 # Will be populeted from the inner task
-- set_fact: 
+- set_fact:
     cloud_node_active_hosts: []
   tags: ["no_print"]
 
@@ -195,18 +195,18 @@
   when: cloud_node_cloud.type != 'local'
   tags: ["no_print"]
 
-- set_fact: 
+- set_fact:
     cloud_node_hosts_info: ""
     cloud_node_unencrypt_key: >-
       {{
-      ((cloud_node_aux.ssh_encrypted_key_path | default('', true)) != '') 
-      and 
+      ((cloud_node_aux.ssh_encrypted_key_path | default('', true)) != '')
+      and
       ((cloud_node_aux.ssh_key_path | default('', true)) != '')
       }}
   tags: ["no_print"]
 
 - name: >-
-    {{ cloud_node_title }} - create unencrypted key file dir - 
+    {{ cloud_node_title }} - create unencrypted key file dir -
     {{ cloud_node_aux.ssh_key_path | dirname }}
   file:
     path: "{{ cloud_node_aux.ssh_key_path | dirname }}"
@@ -224,20 +224,20 @@
   when: cloud_node_unencrypt_key | bool
   tags: ["no_print_skipped"]
 
-- set_fact: 
+- set_fact:
     cloud_node_hosts_info: >-
       {{ cloud_node_hosts_info | default('') }}
 
       {{ cloud_node_item.name }}
       ansible_host={{ cloud_node_item.public_ipv4 }}
       ansible_user={{ cloud_node_node_credentials.host_user }}
-      {{ 
-      cloud_node_node_credentials.host_pass | 
-      ternary('ansible_become_pass=' + cloud_node_node_credentials.host_pass, '') 
+      {{
+      cloud_node_node_credentials.host_pass |
+      ternary('ansible_become_pass=' + cloud_node_node_credentials.host_pass, '')
       }}
-      {{ 
-      cloud_node_aux.ssh_key_path | 
-      ternary('ansible_ssh_private_key_file=' + cloud_node_aux.ssh_key_path, '') 
+      {{
+      cloud_node_aux.ssh_key_path |
+      ternary('ansible_ssh_private_key_file=' + cloud_node_aux.ssh_key_path, '')
       }}
       instance_type={{ cloud_node_node_name }}
       instance_key={{ cloud_node_node_key }}
@@ -267,10 +267,10 @@
 - set_fact:
     cloud_node_ips: []
   tags: ["no_print"]
-  
+
 - set_fact:
     cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
-  loop: 
+  loop:
   - name: "ipv4"
     record_type: "A"
     dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
@@ -280,21 +280,21 @@
   loop_control:
     loop_var: cloud_node_item
   when: >-
-    (not (cloud_node_shutdown | default(false) | bool)) and 
-    (cloud_node_active_hosts | default([]) | length <= 1) and 
+    (not (cloud_node_shutdown | default(false) | bool)) and
+    (cloud_node_active_hosts | default([]) | length <= 1) and
     (cloud_node_item.dns_value != '')
   tags: ["no_print"]
 
 - name: >-
     {{ cloud_node_title }} - create or destroy the main dns records
     that points to the instance
-  include_role: 
+  include_role:
     name: "cloud_dns"
-  vars: 
+  vars:
     cloud_node_item_dns: >-
-      {{ 
-      (cloud_node_params.meta.use_dict | default(false) | bool) | 
-      ternary(cloud_node_params.dns_dict[cloud_node_item.0], cloud_node_item.0) 
+      {{
+      (cloud_node_params.meta.use_dict | default(false) | bool) |
+      ternary(cloud_node_params.dns_dict[cloud_node_item.0], cloud_node_item.0)
       }}
     cloud_dns_item_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
     cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
@@ -305,9 +305,9 @@
     cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
     cloud_dns_record: "{{ cloud_node_item_dns.record }}"
     cloud_dns_data_list: >-
-      {{ 
-      (cloud_dns_item_dns_value != '') | 
-      ternary([{ 'value': cloud_dns_item_dns_value }], []) 
+      {{
+      (cloud_dns_item_dns_value != '') |
+      ternary([{ 'value': cloud_dns_item_dns_value }], [])
       }}
     cloud_dns_state: "{{ (cloud_dns_item_dns_value != '') | ternary('present', 'absent') }}"
   loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
@@ -317,8 +317,9 @@
       {{ cloud_node_item_dns.record }} ({{ cloud_node_item_dns.name }}) -
       {{ cloud_node_item.1.name }} ({{ cloud_dns_state }})"
   when: >-
+    (cloud_node_item_dns.when | default(true, true) | bool) and
     (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
-    ((cloud_node_dns_dict[cloud_node_item_dns.name].type | default('')) != '') and 
+    ((cloud_node_dns_dict[cloud_node_item_dns.name].type | default('')) != '') and
     (
     (cloud_dns_item_dns_value != '') or
     (cloud_node_allow_destroy_dns | default(false) | bool)
