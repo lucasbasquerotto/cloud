@@ -334,6 +334,21 @@ class DOFirewall(object):
     def data_to_compare(self, obj):
         return self.ordered(self.fill_data_defaults(obj))
 
+    def update(self, obj, id):
+      if id is None:
+        status_code_success = 202
+        resp = self.rest.post(path=self.baseurl, data=obj)
+      else:
+        status_code_success = 200
+        resp = self.rest.put(path=self.baseurl + '/' + id, data=obj)
+      status_code = resp.status_code
+      if status_code != status_code_success:
+          error = resp.json
+          error.update({ 'status_code': status_code })
+          error.update({ 'status_code_success': status_code_success })
+          self.module.fail_json(msg=error)
+      self.module.exit_json(changed=True, data=resp.json['firewall'])
+
     def create(self):
         rule = self.get_firewall_by_name()
         data = {
@@ -344,11 +359,7 @@ class DOFirewall(object):
             "tags": self.module.params.get('tags')
         }
         if rule is None:
-            resp = self.rest.post(path=self.baseurl, data=data)
-            status_code = resp.status_code
-            if status_code != 202:
-                self.module.fail_json(msg=resp.json)
-            self.module.exit_json(changed=True, data=resp.json['firewall'])
+          self.update(data, None)
         else:
             rule_data = {
                 "name": rule.get('name'),
@@ -358,19 +369,18 @@ class DOFirewall(object):
                 "tags": rule.get('tags')
             }
 
-            obj1 = self.data_to_compare(data)
-            obj2 = self.data_to_compare(rule_data)
-
-            test = {
-                'ordered': obj1 == obj2,
-                'obj1': obj1,
-                'obj2': obj2
+            user_data = {
+                "name": data.get('name'),
+                "inbound_rules": data.get('inbound_rules'),
+                "outbound_rules": data.get('outbound_rules'),
+                "droplet_ids": data.get('droplet_ids'),
+                "tags": data.get('tags')
             }
 
-            self.module.fail_json(msg=test)
-
-            # #TODO: Check existing rule against user input
-            self.module.exit_json(changed=False, data=rule)
+            if self.data_to_compare(user_data) == self.data_to_compare(rule_data):
+              self.module.exit_json(changed=False, data=rule)
+            else:
+              self.update(data, rule.get('id'))
 
     def destroy(self):
         rule = self.get_firewall_by_name()
