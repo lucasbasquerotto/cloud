@@ -238,6 +238,102 @@ class DOFirewall(object):
                 return rule
         return None
 
+    def ordered(self, obj):
+        if isinstance(obj, dict):
+            return sorted((k, self.ordered(v)) for k, v in obj.items())
+        if isinstance(obj, list):
+            return sorted(self.ordered(x) for x in obj)
+        else:
+            return obj
+
+    def fill_protocol_defaults(self, obj):
+        if obj.get('protocol') is None:
+            obj['protocol'] = 'tcp'
+
+        return obj
+
+    def fill_source_and_destination_defaults_inner(self, obj):
+        addresses = obj.get('addresses')
+
+        if addresses is None:
+            addresses = []
+
+        droplet_ids = obj.get('droplet_ids')
+
+        if droplet_ids is None:
+            droplet_ids = []
+
+        load_balancer_uids = obj.get('load_balancer_uids')
+
+        if load_balancer_uids is None:
+            load_balancer_uids = []
+
+        tags = obj.get('tags')
+
+        if tags is None:
+            tags = []
+
+        data = {
+            "addresses": addresses,
+            "droplet_ids": droplet_ids,
+            "load_balancer_uids": load_balancer_uids,
+            "tags": tags
+        }
+
+        return data
+
+    def fill_sources_and_destinations_defaults(self, obj, prop):
+        value = obj.get(prop)
+
+        if value is None:
+            value = {}
+        else:
+            value = self.fill_source_and_destination_defaults_inner(value)
+
+        obj[prop] = value
+
+        return obj
+
+    def fill_data_defaults(self, obj):
+        inbound_rules = obj.get('inbound_rules')
+
+        if inbound_rules is None:
+            inbound_rules = []
+        else:
+            inbound_rules = [self.fill_protocol_defaults(x) for x in inbound_rules]
+            inbound_rules = [self.fill_sources_and_destinations_defaults(x, 'sources') for x in inbound_rules]
+
+        outbound_rules = obj.get('outbound_rules')
+
+        if outbound_rules is None:
+            outbound_rules = []
+        else:
+            outbound_rules = [self.fill_protocol_defaults(x) for x in outbound_rules]
+            outbound_rules = [self.fill_sources_and_destinations_defaults(x, 'destinations') for x in outbound_rules]
+
+        droplet_ids = obj.get('droplet_ids')
+
+        if droplet_ids is None:
+            droplet_ids = []
+
+        tags = obj.get('tags')
+
+        if tags is None:
+            tags = []
+
+        data = {
+            "name": obj.get('name'),
+            "inbound_rules": inbound_rules,
+            "outbound_rules": outbound_rules,
+            "droplet_ids": droplet_ids,
+            "tags": tags
+        }
+
+        return data
+
+    def data_to_compare(self, obj):
+        return self.ordered(self.fill_data_defaults(obj))
+
     def create(self):
         rule = self.get_firewall_by_name()
         data = {
@@ -254,6 +350,25 @@ class DOFirewall(object):
                 self.module.fail_json(msg=resp.json)
             self.module.exit_json(changed=True, data=resp.json['firewall'])
         else:
+            rule_data = {
+                "name": rule.get('name'),
+                "inbound_rules": rule.get('inbound_rules'),
+                "outbound_rules": rule.get('outbound_rules'),
+                "droplet_ids": rule.get('droplet_ids'),
+                "tags": rule.get('tags')
+            }
+
+            obj1 = self.data_to_compare(data)
+            obj2 = self.data_to_compare(rule_data)
+
+            test = {
+                'ordered': obj1 == obj2,
+                'obj1': obj1,
+                'obj2': obj2
+            }
+
+            self.module.fail_json(msg=test)
+
             # #TODO: Check existing rule against user input
             self.module.exit_json(changed=False, data=rule)
 
