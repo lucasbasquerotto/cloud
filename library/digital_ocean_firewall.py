@@ -19,8 +19,8 @@ module: digital_ocean_firewall
 short_description: Manage cloud firewalls within Digital Ocean
 description:
     - This module can be used to add or remove firewalls on the Digital Ocean cloud platform.
-author: "Anthony Bond (@BondAnthony)"
-version_added: "2.8"
+author: "Anthony Bond (@BondAnthony) and Lucas Basquerotto (@lucasbasquerotto)"
+version_added: "2.9"
 options:
   name:
     description:
@@ -123,28 +123,45 @@ extends_documentation_fragment: digital_ocean.documentation
 '''
 
 EXAMPLES = '''
-- name: Create Firewall
+# Allows tcp connections to port 22 (SSH) from specific sources
+# Allows tcp connections to ports 80 and 443 from any source
+# Allows outbound access to any destination for protocols tcp, udp and icmp
+# The firewall rules will be applied to any droplets with the tag "sample"
+- name: Create a Firewall named my_firewall
   digital_ocean_firewall:
-    name: nginx
+    name: my_firewall
     state: present
     inbound_rules:
-      protocol:
-      ports:
-      sources:
-        addresses:
-        droplet_ids:
-        load_balancer_uids:
-        tags:
+      - protocol: "tcp"
+        ports: "22"
+        sources:
+          addresses: ["1.2.3.4"]
+          droplet_ids: ["my_droplet_id_1", "my_droplet_id_2"]
+          load_balancer_uids: ["my_lb_id_1", "my_lb_id_2"]
+          tags: ["tag_1", "tag_2"]
+      - protocol: "tcp"
+        ports: "80"
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
+      - protocol: "tcp"
+        ports: "443"
+        sources:
+          addresses: ["0.0.0.0/0", "::/0"]
     outbound_rules:
-      protocol:
-      ports:
-      sources:
-        addresses:
-        droplet_ids:
-        load_balancer_uids:
-        tags:
-    droplet_ids:
-    tags:
+      - protocol: "tcp"
+        ports: "1-65535"
+        destinations:
+          addresses: ["0.0.0.0/0", "::/0"]
+      - protocol: "udp"
+        ports: "1-65535"
+        destinations:
+          addresses: ["0.0.0.0/0", "::/0"]
+      - protocol: "icmp"
+        ports: "1-65535"
+        destinations:
+          addresses: ["0.0.0.0/0", "::/0"]
+    droplet_ids: []
+    tags: ["sample"]
 '''
 
 RETURN = '''
@@ -153,7 +170,7 @@ data:
     returned: success
     type: dict
     sample: {
-        "created_at": "2018-10-14T18:41:30Z",
+        "created_at": "2020-08-11T18:41:30Z",
         "droplet_ids": [],
         "id": "7acd6ee2-257b-434f-8909-709a5816d4f9",
         "inbound_rules": [
@@ -161,31 +178,80 @@ data:
                 "ports": "443",
                 "protocol": "tcp",
                 "sources": {
-                    "addresses": [
-                        "1.1.1.1",
-                        "2.2.2.2"
-                    ]
+                  "addresses": [
+                      "1.2.3.4"
+                  ],
+                  "droplet_ids": [
+                      "my_droplet_id_1",
+                      "my_droplet_id_2"
+                  ],
+                  "load_balancer_uids": [
+                      "my_lb_id_1",
+                      "my_lb_id_2"
+                  ],
+                  "tags": [
+                      "tag_1",
+                      "tag_2"
+                  ]
                 }
+            },
+            {
+                "sources": {
+                    "addresses": [
+                        "0.0.0.0/0",
+                        "::/0"
+                    ]
+                },
+                "ports": "80"
+                "protocol": "tcp"
+            },
+            {
+                "sources": {
+                    "addresses": [
+                        "0.0.0.0/0",
+                        "::/0"
+                    ]
+                },
+                "ports": "443"
+                "protocol": "tcp"
             }
         ],
-        "name": "web",
+        "name": "my_firewall",
         "outbound_rules": [
             {
                 "destinations": {
                     "addresses": [
-                        "1.1.1.1"
-                    ],
-                    "tags": [
-                        "proxies"
+                        "0.0.0.0/0",
+                        "::/0"
                     ]
                 },
-                "ports": "443",
+                "ports": "1-65535"
                 "protocol": "tcp"
+            },
+            {
+                "destinations": {
+                    "addresses": [
+                        "0.0.0.0/0",
+                        "::/0"
+                    ]
+                },
+                "ports": "1-65535"
+                "protocol": "udp"
+            },
+            {
+                "destinations": {
+                    "addresses": [
+                        "0.0.0.0/0",
+                        "::/0"
+                    ]
+                },
+                "ports": "1-65535"
+                "protocol": "icmp"
             }
         ],
         "pending_changes": [],
         "status": "succeeded",
-        "tags": []
+        "tags": ["sample"]
     }
 '''
 
@@ -212,7 +278,6 @@ outbound_spec = dict(
     ports=dict(type='str', required=True),
     destinations=dict(type='dict', required=True, options=address_spec),
 )
-
 
 class DOFirewall(object):
     def __init__(self, module):
