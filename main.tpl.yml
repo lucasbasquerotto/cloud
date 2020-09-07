@@ -385,7 +385,7 @@
       params_mixer_shared_group_params_name: "{{ main_ctx.shared_group_params | default('') }}"
       params_mixer_shared_params_names_dict: "{{ env.main_shared_params | default({}) }}"
       params_mixer_shared_group_params_names_dict: "{{ env.main_shared_group_params | default({}) }}"
-      params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict }}"
+      params_mixer_params_dict: "{{ env.main_params | default({}) }}"
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
