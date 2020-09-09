@@ -28,8 +28,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_cloud_main }}"
-    when: (env_hooks.before_cloud_main | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_cloud_main }}"
+    when: (env_ctx_params.hooks.before_cloud_main | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -52,8 +52,8 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_cloud_main }}"
-    when: (env_hooks.after_cloud_main | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_cloud_main }}"
+    when: (env_ctx_params.hooks.after_cloud_main | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
@@ -71,8 +71,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_dns }}"
-    when: (env_hooks.before_dns | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_dns }}"
+    when: (env_ctx_params.hooks.before_dns | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -98,8 +98,8 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_dns }}"
-    when: (env_hooks.after_dns | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_dns }}"
+    when: (env_ctx_params.hooks.after_dns | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
@@ -117,8 +117,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_buckets }}"
-    when: (env_hooks.before_buckets | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_buckets }}"
+    when: (env_ctx_params.hooks.before_buckets | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }} - create the buckets"
@@ -139,8 +139,8 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_buckets }}"
-    when: (env_hooks.after_buckets | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_buckets }}"
+    when: (env_ctx_params.hooks.after_buckets | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
@@ -159,8 +159,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_nodes }}"
-    when: (env_hooks.before_nodes | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_nodes }}"
+    when: (env_ctx_params.hooks.before_nodes | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -208,8 +208,8 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_nodes }}"
-    when: (env_hooks.after_nodes | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_nodes }}"
+    when: (env_ctx_params.hooks.after_nodes | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
@@ -227,11 +227,11 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_wait_nodes }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_wait_nodes }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
-      ((env_hooks.before_wait_nodes | default('')) != '')
+      ((env_ctx_params.hooks.before_wait_nodes | default('')) != '')
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -300,11 +300,11 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_wait_nodes }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_wait_nodes }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
-      ((env_hooks.after_wait_nodes | default('')) != '')
+      ((env_ctx_params.hooks.after_wait_nodes | default('')) != '')
     tags: ["no_print"]
 
 ###############################################################################
@@ -325,8 +325,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_local_prepare }}"
-    when: (env_hooks.before_local_prepare | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_local_prepare }}"
+    when: (env_ctx_params.hooks.before_local_prepare | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -347,8 +347,8 @@
       cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}"
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_local_prepare }}"
-    when: (env_hooks.after_local_prepare | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_local_prepare }}"
+    when: (env_ctx_params.hooks.after_local_prepare | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
@@ -367,30 +367,11 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_remote_prepare }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_remote_prepare }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
-      ((env_hooks.before_remote_prepare | default('')) != '')
-    tags: ["no_print"]
-
-  - name: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params"
-    include_role:
-      name: "params_mixer"
-    vars:
-      main_ctx: "{{ env.main[env.ctx] }}"
-      params_mixer_main_params: "{{ main_ctx.params | default({}) }}"
-      params_mixer_group_params_names: "{{ main_ctx.group_params | default({}) }}"
-      params_mixer_shared_params_names: "{{ main_ctx.shared_params | default([]) }}"
-      params_mixer_shared_group_params_name: "{{ main_ctx.shared_group_params | default('') }}"
-      params_mixer_shared_params_names_dict: "{{ env.main_shared_params | default({}) }}"
-      params_mixer_shared_group_params_names_dict: "{{ env.main_shared_group_params | default({}) }}"
-      params_mixer_params_dict: "{{ env.main_params | default({}) }}"
-    tags: ["no_print"]
-
-  - name: "{{ env_title }}"
-    set_fact:
-      main_ctx_params: "{{ params_mixer_params }}"
+      ((env_ctx_params.hooks.before_remote_prepare | default('')) != '')
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -438,7 +419,7 @@
         (ansible_connection == 'local') |
         ternary(env_local_data_dir | default(''), '')
         }}
-      cloud_prepare_meta: "{{ main_ctx_params.meta | default({}) }}"
+      cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
       cloud_prepare_base_dir_rel: "../.."
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
@@ -457,11 +438,11 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_remote_prepare }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_remote_prepare }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
-      ((env_hooks.after_remote_prepare | default('')) != '')
+      ((env_ctx_params.hooks.after_remote_prepare | default('')) != '')
     tags: ["no_print"]
 
 ###############################################################################
@@ -836,11 +817,11 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_cron }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_cron }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
-      ((env_hooks.before_cron | default('')) != '')
+      ((env_ctx_params.hooks.before_cron | default('')) != '')
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -877,11 +858,11 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_cron }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_cron }}"
     when: >-
       (((env_node | default('')) == '') or (env_node == instance_type))
       and
-      ((env_hooks.after_cron | default('')) != '')
+      ((env_ctx_params.hooks.after_cron | default('')) != '')
     tags: ["no_print"]
 
 ###############################################################################
@@ -901,8 +882,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_delete_tmp }}"
-    when: (env_hooks.before_delete_tmp | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_delete_tmp }}"
+    when: (env_ctx_params.hooks.before_delete_tmp | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -1015,8 +996,8 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_delete_tmp }}"
-    when: (env_hooks.after_delete_tmp | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_delete_tmp }}"
+    when: (env_ctx_params.hooks.after_delete_tmp | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
@@ -1033,8 +1014,8 @@
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.before_delete_main }}"
-    when: (env_hooks.before_delete_main | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.before_delete_main }}"
+    when: (env_ctx_params.hooks.before_delete_main | default('')) != ''
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -1143,8 +1124,8 @@
     tags: ["no_print_skipped"]
 
   - name: "{{ env_title }}"
-    include_tasks: "{{ env_hooks.after_delete_main }}"
-    when: (env_hooks.after_delete_main | default('')) != ''
+    include_tasks: "{{ env_ctx_params.hooks.after_delete_main }}"
+    when: (env_ctx_params.hooks.after_delete_main | default('')) != ''
     tags: ["no_print"]
 
 ###############################################################################
