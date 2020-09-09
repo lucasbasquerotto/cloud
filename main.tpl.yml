@@ -45,6 +45,7 @@
       cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
       cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_env_ctx_params: "{{ env_ctx_params }}"
       cloud_main_state: "present"
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
@@ -79,17 +80,17 @@
     include_role:
       name: "cloud_dns"
     vars:
-      main_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
         {{ env_title }} - create the static dns records -
-        dns[{{ main_dns.type }}] - {{ main_item.record }}
-      cloud_dns_type: "{{ main_dns.type }}"
+        dns[{{ cloud_dns.type }}] - {{ main_item.record }}
       cloud_dns_credentials: >-
-        {{ env.credentials[main_dns.credentials] }}
-      cloud_dns_zone: "{{ main_dns.zone }}"
+        {{ env.credentials[cloud_dns.credentials] }}
+      cloud_dns_zone: "{{ cloud_dns.zone }}"
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_data_list: "{{ main_item.data_list }}"
+      cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
       cloud_dns_state: "present"
     loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
@@ -195,6 +196,7 @@
       cloud_node_tmp_dir: >-
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_env_ctx_params: "{{ env_ctx_params }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
     loop_control:
       loop_var: main_item
@@ -764,6 +766,7 @@
       cloud_run_pod_name: "{{ main_item.pod_name | default('') }}"
       cloud_run_pod: "{{ env.pods[cloud_run_pod_name] | default({}) }}"
       cloud_run_cloud: "{{ env.clouds[cloud_run_cloud_name | default('')] | default({}) }}"
+      cloud_run_env_ctx_params: "{{ env_ctx_params }}"
     loop: <% if (ns_run.list | length) == 0 %>[]<% else %>
       <% for main_run_item in ns_run.list %>
       << '\n' >>
@@ -918,6 +921,7 @@
       cloud_node_tmp_dir: >-
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_env_ctx_params: "{{ env_ctx_params }}"
       cloud_node_shutdown: true
       cloud_node_allow_destroy_dns: "{{ env.main[env.ctx].destroy.node_dns | default(false) | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
@@ -954,17 +958,17 @@
     include_role:
       name: "cloud_dns"
     vars:
-      main_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
         {{ env_title }} - delete the temporary static dns records -
-        dns[{{ main_dns.type }}] - {{ main_item.record }}
-      cloud_dns_type: "{{ main_dns.type }}"
+        dns[{{ cloud_dns.type }}] - {{ main_item.record }}
       cloud_dns_credentials: >-
-        {{ env.credentials[main_dns.credentials] }}
-      cloud_dns_zone: "{{ main_dns.zone }}"
+        {{ env.credentials[cloud_dns.credentials] }}
+      cloud_dns_zone: "{{ cloud_dns.zone }}"
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_data_list: []
+      cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
       cloud_dns_state: "absent"
     loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
@@ -987,6 +991,7 @@
       cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
       cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_cloud_name }}"
+      cloud_main_env_ctx_params: "{{ env_ctx_params }}"
       cloud_main_state: "absent"
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:
@@ -1050,6 +1055,7 @@
       cloud_node_tmp_dir: >-
         {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_env_ctx_params: "{{ env_ctx_params }}"
       cloud_node_shutdown: true
       cloud_node_allow_destroy_dns: "{{ env.main[env.ctx].destroy.node_dns | default(false) | bool }}"
     loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
@@ -1084,17 +1090,17 @@
     include_role:
       name: "cloud_dns"
     vars:
-      main_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns: "{{ env.dns[main_item.name] }}"
       cloud_dns_title: >-
         {{ env_title }} - delete the static dns records -
-        dns[{{ main_dns.type }}] - {{ main_item.record }}
-      cloud_dns_type: "{{ main_dns.type }}"
+        dns[{{ cloud_dns.type }}] - {{ main_item.record }}
       cloud_dns_credentials: >-
-        {{ env.credentials[main_dns.credentials] }}
-      cloud_dns_zone: "{{ main_dns.zone }}"
+        {{ env.credentials[cloud_dns.credentials] }}
+      cloud_dns_zone: "{{ cloud_dns.zone }}"
       cloud_dns_record_type: "{{ main_item.dns_type }}"
       cloud_dns_record: "{{ main_item.record }}"
       cloud_dns_data_list: []
+      cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
       cloud_dns_state: "absent"
     loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
     loop_control:
@@ -1116,6 +1122,7 @@
       cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
       cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
       cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_env_ctx_params: "{{ env_ctx_params }}"
       cloud_main_state: "absent"
     loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
     loop_control:

@@ -170,10 +170,16 @@
 # Will be populeted from the inner task
 - set_fact:
     cloud_node_active_hosts: []
+    cloud_node_task: "ext/{{ cloud_node_cloud.type }}.node.yml"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_node_task: "{{ cloud_node_env_ctx_params.custom_tasks[cloud_node_cloud.type] }}"
+  when: cloud_node_cloud.custom_task | default(false) | bool
   tags: ["no_print"]
 
 - name: "{{ cloud_node_title }} - create the nodes"
-  include_tasks: "ext/{{ cloud_node_cloud.type }}.node.yml"
+  include_tasks: "{{ cloud_node_task }}"
   vars:
     cloud_node_inner_title: "{{ cloud_node_title }} - {{ cloud_node_cloud.type }}"
     cloud_node_inner_hosts_file: "{{ cloud_node_hosts_file }}"
@@ -291,6 +297,7 @@
   include_role:
     name: "cloud_dns"
   vars:
+    cloud_dns: "{{ cloud_node_dns_dict[cloud_node_item_dns.name] }}"
     cloud_node_item_dns: >-
       {{
       (cloud_node_params.meta.use_dict | default(false) | bool) |
@@ -298,7 +305,6 @@
       }}
     cloud_dns_item_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
     cloud_dns_title: "{{ cloud_node_title }} - main dns - {{ cloud_node_item.1.name }}"
-    cloud_dns_type: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].type }}"
     cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].credentials }}"
     cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
     cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].zone }}"
@@ -309,6 +315,7 @@
       (cloud_dns_item_dns_value != '') |
       ternary([{ 'value': cloud_dns_item_dns_value }], [])
       }}
+    cloud_dns_env_ctx_params: "{{ cloud_node_env_ctx_params }}"
     cloud_dns_state: "{{ (cloud_dns_item_dns_value != '') | ternary('present', 'absent') }}"
   loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
   loop_control:

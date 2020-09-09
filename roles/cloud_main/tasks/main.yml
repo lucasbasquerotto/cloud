@@ -15,8 +15,17 @@
     cloud_main_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
+- set_fact:
+    cloud_main_task: "ext/{{ cloud_main_cloud.type }}.main.yml"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_main_task: "{{ cloud_main_env_ctx_params.custom_tasks[cloud_main_cloud.type] }}"
+  when: cloud_main_cloud.custom_task | default(false) | bool
+  tags: ["no_print"]
+
 - name: "{{ cloud_main_title }} - prepare the cloud"
-  include_tasks: "ext/{{ cloud_main_cloud.type }}.main.yml"
+  include_tasks: "{{ cloud_main_task }}"
   vars:
     cloud_main_inner_title: "{{ cloud_main_title }} - {{ cloud_main_cloud.type }}"
     cloud_main_inner_api_token: "{{ cloud_main_credentials.api_token }}"

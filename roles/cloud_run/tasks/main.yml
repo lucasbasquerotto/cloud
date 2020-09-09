@@ -2,26 +2,39 @@
   set_fact:
     cloud_run_inner_title: "{{ cloud_run_title }} - {{ cloud_run_task.type }}"
   tags: ["no_print"]
-  
-- name: "{{ cloud_run_inner_title }}"
-  include_tasks: "ext/{{ cloud_run_task.file }}"
-  vars:
-    params:
-      title: "{{ cloud_run_title }} - {{ cloud_run_task.file }}"
-      task: "{{ cloud_run_task }}"
-      default_output_path: "{{ cloud_run_default_output_path }}"
-      default_output_file: "{{ cloud_run_default_output_file }}"
-      default_tmp_path: "{{ cloud_run_default_tmp_path }}"
-      default_tmp_file: "{{ cloud_run_default_tmp_file }}"
-      default_chdir: "{{ cloud_run_default_chdir }}"
-      env: "{{ cloud_run_env }}"
-      node_name: "{{ cloud_run_node_name }}"
-      node_key: "{{ cloud_run_node_key }}"
+
+- block:
+
+  - set_fact:
+      cloud_run_task: "ext/{{ cloud_run_task.file }}"
+    tags: ["no_print"]
+
+  - set_fact:
+      cloud_run_task: "{{ cloud_run_env_ctx_params.custom_tasks[cloud_run_task.file] }}"
+    when: cloud_run_task.custom_task | default(false) | bool
+    tags: ["no_print"]
+
+  - name: "{{ cloud_run_inner_title }}"
+    include_tasks: "{{ cloud_run_task }}"
+    vars:
+      params:
+        title: "{{ cloud_run_title }} - {{ cloud_run_task.file }}"
+        task: "{{ cloud_run_task }}"
+        default_output_path: "{{ cloud_run_default_output_path }}"
+        default_output_file: "{{ cloud_run_default_output_file }}"
+        default_tmp_path: "{{ cloud_run_default_tmp_path }}"
+        default_tmp_file: "{{ cloud_run_default_tmp_file }}"
+        default_chdir: "{{ cloud_run_default_chdir }}"
+        env: "{{ cloud_run_env }}"
+        node_name: "{{ cloud_run_node_name }}"
+        node_key: "{{ cloud_run_node_key }}"
+    tags: ["no_print"]
+
   when: cloud_run_task.type == 'task'
-  tags: ["no_print"]
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_inner_title }}"
-  include_role: 
+  include_role:
     name: "long_run"
   vars:
     long_run_title: "{{ cloud_run_inner_title }}"
