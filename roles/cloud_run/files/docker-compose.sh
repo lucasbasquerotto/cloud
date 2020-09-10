@@ -36,7 +36,7 @@ if [ "$(pwd)" != '/' ]; then
 fi
 if [ -n "$COMPOSE_FILE" ]; then
     COMPOSE_OPTIONS="$COMPOSE_OPTIONS -e COMPOSE_FILE=$COMPOSE_FILE"
-    compose_dir=$(realpath $(dirname $COMPOSE_FILE))
+    compose_dir=$(realpath "$(dirname "$COMPOSE_FILE")")
 fi
 # TODO: also check --file argument
 if [ -n "$compose_dir" ]; then
@@ -47,7 +47,7 @@ if [ -n "$HOME" ]; then
 fi
 
 # Only allocate tty if we detect one
-if [ -t 0 -a -t 1 ]; then
+if [ -t 0 ] && [ -t 1 ]; then
         DOCKER_RUN_OPTIONS="$DOCKER_RUN_OPTIONS -t"
 fi
 

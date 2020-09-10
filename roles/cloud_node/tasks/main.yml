@@ -170,7 +170,7 @@
 # Will be populeted from the inner task
 - set_fact:
     cloud_node_active_hosts: []
-    cloud_node_task: "ext/{{ cloud_node_cloud.type }}.node.yml"
+    cloud_node_task: "ext/{{ cloud_node_cloud.type }}.main.node.yml"
   tags: ["no_print"]
 
 - set_fact:
