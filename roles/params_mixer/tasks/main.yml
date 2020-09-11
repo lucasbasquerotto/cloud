@@ -14,11 +14,11 @@
 
 - set_fact:
     params_mixer_shared_group_params: >-
-      {{ 
-      params_mixer_shared_group_params | 
-      combine({ 
-      params_mixer_item.key: 
-      params_mixer_params_dict[params_mixer_item.value] }) 
+      {{
+      params_mixer_shared_group_params |
+      combine({
+      params_mixer_item.key:
+      params_mixer_params_dict[params_mixer_item.value] })
       }}
   loop: "{{ params_mixer_shared_group_params_names | default({}) | dict2items }}"
   loop_control:
@@ -29,10 +29,13 @@
 - set_fact:
     params_mixer_mixed_shared_params: {}
   tags: ["no_print"]
-    
+
 - set_fact:
     params_mixer_mixed_shared_params: >-
-      {{ params_mixer_mixed_shared_params | combine(params_mixer_shared_params_names_dict[params_mixer_item]) }}
+      {{
+        params_mixer_mixed_shared_params
+        | combine(params_mixer_shared_params_names_dict[params_mixer_item])
+      }}
   loop: "{{ params_mixer_shared_params_names | default([]) }}"
   loop_control:
     loop_var: params_mixer_item
@@ -42,14 +45,14 @@
 - set_fact:
     params_mixer_group_params: {}
   tags: ["no_print"]
-    
+
 - set_fact:
     params_mixer_group_params: >-
-      {{ 
-      params_mixer_group_params | 
-      combine({ 
-      params_mixer_item.key: 
-      params_mixer_params_dict[params_mixer_item.value] }) 
+      {{
+      params_mixer_group_params |
+      combine({
+      params_mixer_item.key:
+      params_mixer_params_dict[params_mixer_item.value] })
       }}
   loop: "{{ params_mixer_group_params_names | default({}) | dict2items }}"
   loop_control:
@@ -59,10 +62,10 @@
 
 - set_fact:
     params_mixer_params: >-
-      {{ 
-      params_mixer_shared_group_params | default({}) | 
-      combine(params_mixer_mixed_shared_params | default({}), recursive=True) | 
-      combine(params_mixer_group_params | default({}), recursive=True) | 
-      combine(params_mixer_main_params | default({}), recursive=True) 
+      {{
+      params_mixer_shared_group_params | default({}) |
+      combine(params_mixer_mixed_shared_params | default({}), recursive=True) |
+      combine(params_mixer_group_params | default({}), recursive=True) |
+      combine(params_mixer_main_params | default({}), recursive=True)
       }}
   tags: ["no_print"]
