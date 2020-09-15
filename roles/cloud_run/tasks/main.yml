@@ -6,16 +6,16 @@
 - block:
 
   - set_fact:
-      cloud_run_task: "ext/{{ cloud_run_task.file }}"
+      cloud_run_task_file: "ext/{{ cloud_run_task.file }}"
     tags: ["no_print"]
 
   - set_fact:
-      cloud_run_task: "{{ cloud_run_env_ctx_params.custom_tasks[cloud_run_task.file] }}"
+      cloud_run_task_file: "{{ cloud_run_env_ctx_params.custom_tasks[cloud_run_task.file] }}"
     when: cloud_run_task.custom_task | default(false) | bool
     tags: ["no_print"]
 
   - name: "{{ cloud_run_inner_title }}"
-    include_tasks: "{{ cloud_run_task }}"
+    include_tasks: "{{ cloud_run_task_file }}"
     vars:
       params:
         title: "{{ cloud_run_title }} - {{ cloud_run_task.file }}"

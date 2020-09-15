@@ -82,24 +82,24 @@
 - set_fact:
     cloud_node_host_ssh_public_keys_path: >-
       {{
-      ((cloud_node_node_credentials.host_ssh_public_keys_path | default('')) != '' )
-      | ternary(
-      cloud_node_env_dir + '/' + cloud_node_node_credentials.host_ssh_public_keys_path,
-      ''
-      )
+        ((cloud_node_node_credentials.host_ssh_public_keys_path | default('')) != '' )
+        | ternary(
+          cloud_node_env_dir + '/' +
+          cloud_node_node_credentials.host_ssh_public_keys_path | default(''),
+          ''
+        )
       }}
   tags: ["no_print"]
 
 - set_fact:
-    cloud_node_host_ssh_public_keys: >-
-      {{
-      ((cloud_node_host_ssh_public_keys_path | default('')) != '' )
-      | ternary(
-      lookup('file', cloud_node_host_ssh_public_keys_path).splitlines() | list ,
-      []
-      )
-      }}
+    cloud_node_host_ssh_public_keys: []
     cloud_node_ssh_key_filename: "{{ cloud_node_node_name + '.key' }}"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_node_host_ssh_public_keys: >-
+      {{ lookup('file', cloud_node_host_ssh_public_keys_path).splitlines() | list }}
+  when: (cloud_node_host_ssh_public_keys_path | default('')) != ''
   tags: ["no_print"]
 
 - set_fact:
@@ -125,7 +125,7 @@
         }}
       ssh_key_path: >-
         {{
-        cloud_node_node_credentials.ssh_encrypted_key_path_rel |
+        ((cloud_node_node_credentials.ssh_encrypted_key_path_rel | default('')) != '') |
         ternary(cloud_node_tmp_dir + '/' + cloud_node_ssh_key_filename, '')
         }}
   tags: ["no_print"]
@@ -141,16 +141,17 @@
 - set_fact:
     cloud_node_cloud_instances: >-
       {{ cloud_node_cloud_instances +
-      [{ 'name':
-      cloud_node_env_name + '-' +
-      cloud_node_node_name + '-' +
-      cloud_node_params_region.name + '-' +
-      ('%04d' | format(cloud_node_item)),
-      'region_id': cloud_node_params_region.name,
-      'create':
-      (((cloud_node_item | int) <= (cloud_node_instance_count | int))
-      and not (cloud_node_shutdown | default(false) | bool)) |
-      ternary('true', 'false') }] }}
+        [{
+          'name':
+            (cloud_node_node_info.hostname | default(cloud_node_node_name)) +
+            ((cloud_node_item == 1) | ternary('', '-' + ('%04d' | format(cloud_node_item)))),
+          'region_id': cloud_node_params_region.name | default(''),
+          'create':
+            (((cloud_node_item | int) <= (cloud_node_instance_count | int))
+            and not (cloud_node_shutdown | default(false) | bool)) |
+            ternary('true', 'false')
+        }]
+      }}
   loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
   loop_control:
     loop_var: cloud_node_item
@@ -174,7 +175,7 @@
   tags: ["no_print"]
 
 - set_fact:
-    cloud_node_task: "{{ cloud_node_env_ctx_params.custom_tasks[cloud_node_cloud.type] }}"
+    cloud_node_task: "{{ cloud_node_env_ctx_params.custom_tasks[cloud_node_cloud.node_type] }}"
   when: cloud_node_cloud.custom_task | default(false) | bool
   tags: ["no_print"]
 
@@ -184,13 +185,13 @@
     cloud_node_inner_title: "{{ cloud_node_title }} - {{ cloud_node_cloud.type }}"
     cloud_node_inner_hosts_file: "{{ cloud_node_hosts_file }}"
     cloud_node_inner_instance_type: "{{ cloud_node_node_name }}"
-    cloud_node_inner_api_token: "{{ cloud_node_cloud_credentials.api_token }}"
+    cloud_node_inner_api_token: "{{ cloud_node_cloud_credentials.api_token | default('') }}"
     cloud_node_inner_host_user: "{{ cloud_node_node_credentials.host_user }}"
     cloud_node_inner_host_pass: "{{ cloud_node_node_credentials.host_pass }}"
     cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
-    cloud_node_inner_size_id: "{{ cloud_node_params_size.name }}"
-    cloud_node_inner_image_id: "{{ cloud_node_params_instance.image }}"
-    cloud_node_inner_ipv6: "{{ cloud_node_params_instance.ipv6 }}"
+    cloud_node_inner_size_id: "{{ cloud_node_params_size.name | default('') }}"
+    cloud_node_inner_image_id: "{{ cloud_node_params_instance.image | default('') }}"
+    cloud_node_inner_ipv6: "{{ cloud_node_params_instance.ipv6 | default(false) }}"
     cloud_node_inner_wait_timeout: "{{ cloud_node_wait_timeout | default(500) }}"
     cloud_node_inner_create: "{{ cloud_node_item.create }}"
     cloud_node_inner_params: "{{ cloud_node_params }}"
