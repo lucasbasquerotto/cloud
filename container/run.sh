@@ -1,5 +1,14 @@
 #!/bin/bash
 set -eou pipefail
 
-# TODO
-cat /main/init/vars.yml
+vault=()
+
+vault_file="/main/secrets/vault"
+
+if [ -f "$vault_file" ]; then
+    vault=( '--vault-id' "$vault_file" )
+fi
+
+cd /usr/main/ansible
+
+ansible-playbook ${vault[@]+"${vault[@]}"} init.yml

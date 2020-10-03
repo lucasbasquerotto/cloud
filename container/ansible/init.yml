@@ -1,0 +1,92 @@
+- name: Play 01 - Init (Cloud)
+  hosts: main
+  gather_facts: no
+  tasks:
+
+  - name: "[cloud - init] - project_base_title"
+    set_fact:
+      project_base_title: "[cloud - init]"
+    tags: ["no_print"]
+
+  - name: "{{ project_base_title }} - load the init environment vars"
+    include_vars:
+      file: "/main/init/vars.yml"
+      name: project_env_init
+
+  - name: "{{ project_title }} - validate the key init parameter"
+    fail:
+      msg: "project key not specified at init/vars.yml"
+    when: (project_env_init.key | default('')) == ''
+
+  - name: "{{ project_base_title }} - project_title"
+    set_fact:
+      project_title: "{{ project_base_title }} [{{ project_env_init.key }}]"
+      env_dev: "{{ project_env_init.dev | default(false) }}"
+    tags: ["no_print"]
+
+  - name: "{{ project_title }} - validate the repo init parameters"
+    fail:
+      msg: "repo.{{ project_item }} not specified at init/vars.yml"
+    when: (project_env_init.repo[project_item] | default('')) == ''
+    loop:
+    - "env_dir"
+    - "src"
+    - "version"
+    loop_control:
+      loop_var: project_item
+
+  - name: "{{ project_base_title }} - project_env_dir"
+    set_fact:
+      project_env_dir: "/main/envs/{{ project_env_init.repo.env_dir }}"
+      project_ssh_file: >-
+        {{
+          (project_env_init.repo.ssh_file | default('') != '')
+          | ternary(
+            '/main/secrets/' + (project_env_init.repo.ssh_file | default('')),
+            ''
+          )
+        }}
+    tags: ["no_print"]
+
+  - name: "{{ project_title }} - create the env dir"
+    file:
+      path: "{{ project_env_dir }}"
+      state: directory
+      mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+
+  # env repository (and base env)
+
+  - name: "{{ project_title }} - git env"
+    git:
+      repo: "{{ project_env_init.repo.src }}"
+      version: "{{ project_env_init.repo.version }}"
+      key_file: "{{ project_ssh_file | default(omit, true) }}"
+      accept_hostkey: yes
+      dest: "{{ project_env_dir }}"
+      update: "{{ env_dev | bool }}"
+      force: no
+
+
+  # - name: "{{ project_title }} - env (main)"
+  #   include_tasks: "tasks/env.yml"
+  #   vars:
+  #     repo_env_title: "{{ project_title }} - env"
+  #     repo_env_file: "{{ project_env_dir }}/{{ project_env_init.repo.env_file }}"
+  #     repo_env_ctx: ""
+  #     repo_env_ctxs: "{{ project_env_init.repo.ctxs | default([]) }}"
+  #     repo_env_dir: "{{ project_env_dir }}"
+  #     repo_env_ctl: true
+  #     repo_env_main_dev: "{{ env_dev }}"
+  #     repo_env_repo: "{{ project_env_init.repo }}"
+  #     repo_env_repo_dest: "{{ repo_dest }}"
+  #   tags: ["other"]
+
+
+# repo:
+#     env_dir: env
+#     src: ssh://git@bitbucket.org/lucasbasquerotto/ansible-env-demo.git
+#     ssh_file: ssh.key
+#     version: master
+# repo_vault:
+#     file: vault
+#     force: true

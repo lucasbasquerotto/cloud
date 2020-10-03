@@ -1,0 +1,34 @@
+- name: "[ctl] [repo - {{ repo.local_repo }}] (vars)"
+  set_fact: 
+    repo_dest: "{{ env.repo_base_dest_workspace }}/{{ repo.local_repo }}"
+    repo_env_repo: >-
+      {{ 
+      ((repo.global_env_repo | default('')) != '') | 
+      ternary(env.env_repo[repo.global_env_repo | default('')], repo.env_repo) 
+      }}
+    repo_env_repo_vault: >-
+      {{ 
+      ((repo.global_env_repo_vault | default('')) != '') | 
+      ternary(env.env_repo_vault[repo.global_env_repo_vault | default('')], repo.env_repo_vault) 
+      }}
+    repo_base_dir_pod: "/main/pods"
+    repo_base_dir_app: "/main/apps"
+  tags: ["other", "no_print"]
+
+- name: "[ctl] [repo - {{ repo.local_repo }}] (vars)"
+  set_fact:
+    repo_env_dest: >-
+      {{ (repo.env_repo is defined) | ternary(repo_env_repo_dir, repo_global_env_repo_dir) }}
+  vars:
+    repo_env_repo_dev_dir_aux: >-
+      {{ main_env_repo_dest_base + '/' + (repo.env_repo.local_dir | default('')) }}
+    repo_env_repo_dev_dir: >-
+      {{ repo.env_repo.local_dir | default('') | ternary(repo_env_repo_dev_dir_aux, '') }}
+    repo_env_repo_dir: >-
+      {{ (main_dev | bool) | ternary(repo_env_repo_dev_dir, repo_dest + '/env') }}
+    repo_global_env_repo_dir: >-
+      {{ 
+      main_env_repo_dest_base + '/' + 
+      (env.env_repo[repo.global_env_repo | default('')].local_dir | default('')) 
+      }}
+  tags: ["other", "no_print"]

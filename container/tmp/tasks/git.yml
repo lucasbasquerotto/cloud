@@ -1,0 +1,28 @@
+- name: "{{ git_title }}"
+  set_fact: 
+    git_repo_key_file_aux: >-
+      {{ 
+      (git_repo_private | bool) | 
+      ternary(git_repo_key_file, '')
+      }}
+  tags: "{{ (git_task_tags | default([])) + ['no_print'] }}"
+
+- name: "{{ git_title }} - decrypt key file ({{ git_repo_key_file_encrypted }})"
+  copy:
+    src: "{{ git_repo_key_file_encrypted }}"
+    dest: "{{ git_repo_key_file_aux }}"
+    decrypt: yes
+    mode: 0600
+  when: (git_repo_private | bool)
+  tags: "{{ git_task_tags | default([]) }}"
+      
+- name: "{{ git_title }} - update repo ({{ git_repo_dest }})"
+  git:
+    repo: "{{ git_repo_src }}"
+    version: "{{ git_repo_version }}"
+    key_file: "{{ git_repo_key_file_aux | default(omit, true) }}"
+    accept_hostkey: yes
+    dest: "{{ git_repo_dest }}"
+    update: "{{ git_repo_update }}"
+    force: "{{ git_repo_force }}"
+  tags: "{{ git_task_tags | default([]) }}"
