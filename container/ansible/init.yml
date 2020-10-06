@@ -11,7 +11,7 @@
 
   - name: "{{ project_base_title }} - load the init environment vars"
     include_vars:
-      file: "/main/{{ project_keys_file_rel }}"
+      file: "{{ project_prepare_base_dir }}/{{ project_keys_file_rel }}"
       name: project_env_init
 
   - name: "{{ project_title }} - validate the key init parameter"
@@ -45,7 +45,7 @@
 
   - name: "{{ project_env_title }} - set_fact - project_env_dir"
     set_fact:
-      project_env_dir: "/main/envs/{{ project_env_init.repo.env_dir }}"
+      project_env_dir: "{{ project_prepare_base_dir }}/envs/{{ project_env_init.repo.env_dir }}"
     tags: ["no_print"]
 
   - name: "{{ project_env_title }} - set_fact - project_env_file"
@@ -55,7 +55,8 @@
         {{
           (project_env_init.repo.ssh_file | default('') != '')
           | ternary(
-            '/main/secrets/' + (project_env_init.repo.ssh_file | default('')),
+            project_prepare_base_dir + '/secrets/'
+              + (project_env_init.repo.ssh_file | default('')),
             ''
           )
         }}
@@ -134,7 +135,8 @@
           {{
             (project_env_base_ssh_filename | default('') != '')
             | ternary(
-              '/main/secrets/' + (project_env_base_ssh_filename | default('')),
+              project_prepare_base_dir + '/secrets/'
+                + (project_env_base_ssh_filename | default('')),
               ''
             )
           }}
@@ -211,7 +213,7 @@
   - name: "{{ project_title }} - project_ssh_title"
     set_fact:
       project_ssh_title: "{{ project_title }} - ssh"
-      project_ssh_cloud_dir: "/main/init/cloud"
+      project_ssh_cloud_dir: "{{ project_prepare_base_dir }}/init/cloud"
     tags: ["no_print"]
 
   - name: "{{ project_ssh_title }} - define node names"
