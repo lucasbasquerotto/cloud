@@ -6,12 +6,21 @@
   - name: "[cloud - init] - project_base_title"
     set_fact:
       project_base_title: "[cloud - init]"
-      project_keys_file_rel: "init/ctl/vars.yml"
+      project_base_dir: "/main"
+      project_keys_file_rel: "files/ctl/vars.yml"
+    tags: ["no_print"]
+
+  - name: "{{ project_base_title }} - project directories"
+    set_fact:
+      project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
+      project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
+      project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
+      project_shared_repos_dir: "{{ project_base_dir }}/shared"
     tags: ["no_print"]
 
   - name: "{{ project_base_title }} - load the init environment vars"
     include_vars:
-      file: "{{ project_prepare_base_dir }}/{{ project_keys_file_rel }}"
+      file: "{{ project_base_dir }}/{{ project_keys_file_rel }}"
       name: project_env_init
 
   - name: "{{ project_title }} - validate the key init parameter"
@@ -30,7 +39,6 @@
       msg: "{{ project_item }} not specified at {{ project_keys_file_rel }} under repo"
     when: (project_env_init.repo[project_item] | default('')) == ''
     loop:
-    - "env_dir"
     - "src"
     - "version"
     loop_control:
@@ -43,21 +51,15 @@
       project_env_title: "{{ project_title }} - environment"
     tags: ["no_print"]
 
-  - name: "{{ project_env_title }} - set_fact - project_env_dir"
+  - name: "{{ project_base_title }} - project_env_dir"
     set_fact:
-      project_env_dir: "{{ project_prepare_base_dir }}/envs/{{ project_env_init.repo.env_dir }}"
-    tags: ["no_print"]
-
-  - name: "{{ project_env_title }} - set_fact - project_env_file"
-    set_fact:
-      project_env_file: "{{ project_env_dir }}/{{ project_env_init.repo.env_file }}"
-      project_ssh_file: >-
+      project_env_dir: >-
         {{
-          (project_env_init.repo.ssh_file | default('') != '')
+          (env_dev and ((project_env_init.params.path_env | default('')) != ''))
           | ternary(
-            project_prepare_base_dir + '/secrets/'
-              + (project_env_init.repo.ssh_file | default('')),
-            ''
+            project_shared_repos_dir + '/envs/'
+              + (project_env_init.params.path_env | default('')),
+            project_base_dir + '/env'
           )
         }}
     tags: ["no_print"]
@@ -67,6 +69,20 @@
       path: "{{ project_env_dir }}"
       state: directory
       mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+
+  - name: "{{ project_env_title }} - set_fact - project_env_file"
+    set_fact:
+      project_env_file: "{{ project_env_dir }}/{{ project_env_init.repo.env_file }}"
+      project_ssh_file: >-
+        {{
+          (project_env_init.repo.ssh_file | default('') != '')
+          | ternary(
+            project_secrets_ctl_dir + '/'
+              + (project_env_init.repo.ssh_file | default('')),
+            ''
+          )
+        }}
+    tags: ["no_print"]
 
   - name: "{{ project_env_title }} - git env"
     git:
@@ -135,7 +151,7 @@
           {{
             (project_env_base_ssh_filename | default('') != '')
             | ternary(
-              project_prepare_base_dir + '/secrets/'
+              project_base_dir + '/secrets/'
                 + (project_env_base_ssh_filename | default('')),
               ''
             )
@@ -213,13 +229,12 @@
   - name: "{{ project_title }} - project_ssh_title"
     set_fact:
       project_ssh_title: "{{ project_title }} - ssh"
-      project_ssh_cloud_dir: "{{ project_prepare_base_dir }}/init/cloud"
     tags: ["no_print"]
 
   - name: "{{ project_ssh_title }} - define node names"
     set_fact:
       project_ssh_nodes_list: []
-      project_ssh_file: "{{ project_ssh_cloud_dir }}/ssh"
+      project_ssh_run_file: "{{ project_files_cloud_dir }}/ssh"
     tags: ["no_print"]
 
   - name: "{{ project_ssh_title }} - define nodes"
@@ -265,16 +280,26 @@
       state: directory
       mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 
-  - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_ssh_file }}"
+  - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_ssh_run_file }}"
     template:
       src: "templates/ssh.tpl.sh"
-      dest: "{{ project_ssh_file }}"
+      dest: "{{ project_ssh_run_file }}"
       mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
     vars:
       project_ssh_ctxs: "{{ project_env.ctxs }}"
       project_ssh_default_ctx: "{{ project_env_init.params.default_ctx | default('') }}"
       project_ssh_default_node: "{{ project_env_init.params.default_node | default('') }}"
 
+  # ctxs
+
+  - name: "{{ project_title }} - ctxs (main)"
+    include_tasks: "tasks/ctx.yml"
+    vars:
+      project_ctx_title: "{{ project_title }} - ctx [{{ project_ctx_key }}]"
+    loop: "{{ project_env.ctxs }}"
+    loop_control:
+      loop_var: project_ctx_key
+    tags: ["no_print"]
 
   # - name: "{{ project_title }} - env (main)"
   #   include_tasks: "tasks/env.yml"

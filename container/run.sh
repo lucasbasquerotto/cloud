@@ -11,4 +11,4 @@ fi
 
 cd /usr/main/ansible
 
-ansible-playbook ${vault[@]+"${vault[@]}"} init.yml
+ansible-playbook ${vault[@]+"${vault[@]}"} prepare.yml

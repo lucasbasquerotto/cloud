@@ -1,13 +1,14 @@
 - name: "{{ project_ctx_title }}"
   set_fact:
     project_ctx_base_dir: >-
-      {{ project_prepare_base_dir }}/init/cloud/ctx/{{ project_ctx_key }}
+      {{ project_files_cloud_dir }}/ctxs/{{ project_ctx_key }}
+    project_ctx_secrets_dir: >-
+      {{ project_secrets_cloud_dir }}/ctxs/{{ project_ctx_key }}
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - project_ctx_var_dir"
   set_fact:
     project_ctx_var_dir: "{{ project_ctx_base_dir }}/var"
-    project_ctx_cloud_dir_aux: "{{ project_prepare_base_dir }}/cloud"
     project_ctx_map_path_cloud: "{{ project_env_init.params.map_path_cloud | default({}) }}"
   tags: ["no_print"]
 
@@ -21,7 +22,13 @@
 
 - name: "{{ project_ctx_title }} - project_ctx_path_cloud"
   set_fact:
-    project_ctx_cloud_repo_key: "{{ project_env.main[project_ctx_key].repo }}"
+    project_ctx_main: "{{ project_env.main[project_ctx_key] }}"
+  tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - project_ctx_path_cloud"
+  set_fact:
+    project_ctx_cloud_repo_key: "{{ project_ctx_main.repo }}"
+    project_ctx_cloud_env_repos: "{{ project_ctx_main.env_repos | default([]) }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - project_ctx_path_cloud"
@@ -33,41 +40,69 @@
       }}
   tags: ["no_print"]
 
-- name: "{{ project_ctx_title }} - project_ctx_cloud_dest"
-  set_fact:
-    project_ctx_cloud_dir: >-
-      {{
-        ((env_dev | bool) and (project_ctx_path_cloud != ''))
-        | ternary(
-          project_prepare_base_dir + '/clouds/' + project_ctx_path_cloud,
-          project_ctx_cloud_dir_aux
-        )
-      }}
-  tags: ["no_print"]
-
 - name: "{{ project_ctx_title }}"
   set_fact:
     project_ctx_cloud_repo: "{{ project_env.repos[project_ctx_cloud_repo_key] }}"
   tags: ["no_print"]
 
-# TODO git + map path pod & app (local)
+- name: "{{ project_ctx_title }} - set_fact - project_ctx_ssh_file"
+  set_fact:
+    project_ctx_ssh_file: >-
+      {{
+        (project_ctx_cloud_repo.ssh_file | default('') != '')
+        | ternary(project_ctx_secrets_dir + '/ssh.key', '')
+      }}
+  tags: ["no_print"]
 
-- name: "{{ project_ctx_title }}"
-  include_tasks: "tasks/git.yml"
+- name: "{{ project_ctx_title }} - copy the cloud repo ssh file"
+  copy:
+    src: "{{ project_env_dir }}/{{ project_ctx_cloud_repo.ssh_file }}"
+    dest: "{{ project_ctx_ssh_file }}"
+    decrypt: "{{ project_ctx_cloud_repo.ssh_file_encrypted | default(false) | bool }}"
+    mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
+  when: project_ctx_ssh_file != ''
+
+- name: "{{ project_ctx_title }} - project_ctx_cloud_repo_dir"
+  set_fact:
+    project_ctx_cloud_repo_dir: >-
+      {{
+        ((env_dev | bool) and (project_ctx_path_cloud != ''))
+        | ternary(
+          project_shared_repos_dir + '/clouds/' + project_ctx_path_cloud,
+          project_ctx_base_dir + '/cloud'
+        )
+      }}
+  tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - git cloud"
+  git:
+    repo: "{{ project_ctx_cloud_repo.src }}"
+    version: "{{ project_ctx_cloud_repo.version }}"
+    key_file: "{{ project_ctx_ssh_file | default(omit, true) }}"
+    accept_hostkey: yes
+    dest: "{{ project_ctx_cloud_repo_dir }}"
+    update: "{{ env_dev | bool | ternary('no', 'yes') }}"
+    force: no
+
+- name: "{{ project_ctx_title }} - git cloud env repos"
+  git:
+    repo: "{{ project_ctx_cloud_env_repo.src }}"
+    version: "{{ project_ctx_cloud_env_repo.version }}"
+    key_file: "{{ project_ctx_ssh_file | default(omit, true) }}"
+    accept_hostkey: yes
+    dest: "{{ project_ctx_cloud_repo_dir }}"
+    update: "{{ env_dev | bool | ternary('no', 'yes') }}"
+    force: no
   vars:
-    git_title: "{{ project_ctx_title }} - git cloud repo ({{ repo_env_main_params.repo }})"
-    git_repo_private: "{{ repo_cloud.private | default(false) }}"
-    git_repo_key_file_encrypted: >-
-      {{ repo_env_dest }}/{{ repo_cloud.key_file_encrypted | default('') }}
-    git_repo_src: "{{ repo_cloud.src }}"
-    git_repo_version: "{{ repo_cloud.version }}"
-    git_repo_key_file: "{{ project_ctx_var_dir }}/repo/cloud.key_file"
-    git_repo_accept_hostkey: yes
-    git_repo_dest: "{{ repo_cloud_dest }}"
-    git_repo_update: "{{ (main_dev | bool) | ternary('no', 'yes') }}"
-    git_repo_force: no
-    git_task_tags: ["other"]
-  tags: ["other"]
+    project_ctx_cloud_env_repo: "{{ project_env.repos[project_ctx_item.repo] }}"
+  loop: "{{ project_ctx_cloud_env_repos }}"
+  loop_control:
+    loop_var: project_ctx_item
+    label: >-
+      {{ project_ctx_item.dir | default('') }}
+      ({{ project_ctx_item.repo | default('') }})
+
+# TODO git + map path pod & app (local)
 
 - name: "{{ project_ctx_title }}"
   include_tasks: "tasks/git.yml"
