@@ -32,7 +32,7 @@
 
 - name: "{{ git_title }} - create the directories"
   file:
-    path: "{{ git_item }}"
+    path: "{{ git_item.dir }}"
     state: directory
     mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
   when: git_item.when | default(true) | bool
