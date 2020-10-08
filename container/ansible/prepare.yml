@@ -23,7 +23,7 @@
       file: "{{ project_base_dir }}/{{ project_keys_file_rel }}"
       name: project_env_init
 
-  - name: "{{ project_title }} - validate the key init parameter"
+  - name: "{{ project_base_title }} - validate the key init parameter"
     fail:
       msg: "project key not specified at {{ project_keys_file_rel }}"
     when: (project_env_init.key | default('')) == ''
@@ -138,55 +138,28 @@
               | ternary('/' + project_env.env.repo_dir, '')
             )
           }}
-        project_env_base_ssh_filename: >-
-          {{
-            ((project_env.env.ssh_file | default('')) != '')
-            | ternary('ssh-base.key', '')
-          }}
       tags: ["no_print"]
 
-    - name: "{{ project_env_title }} - project_ssh_file"
-      set_fact:
-        project_ssh_file: >-
-          {{
-            (project_env_base_ssh_filename | default('') != '')
-            | ternary(
-              project_base_dir + '/secrets/'
-                + (project_env_base_ssh_filename | default('')),
-              ''
-            )
-          }}
+    - name: "{{ project_env_title }} - git env base (main)"
+      include_tasks: "tasks/git.yml"
+      vars:
+        git_title: "{{ project_env_title }} - git env base"
+        git_repo: "{{ project_env.env.repo }}"
+        git_ssh_src_dir: "{{ project_env_dir }}"
+        git_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
+        git_repo_dir: "{{ project_env_base_dest }}"
+      tags: ["no_print"]
 
-    - name: "{{ project_env_title }} - copy env base ssh file"
-      copy:
-        src: "{{ project_env_dir }}/{{ project_env.env.repo.ssh_file }}"
-        dest: "{{ project_ssh_file }}"
-        decrypt: "{{ project_env.env.repo.ssh_file_encrypted | default(false) | bool }}"
-        mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
-      when: project_ssh_file != ''
-
-    - name: "{{ project_env_title }} - git env base"
-      git:
-        repo: "{{ project_env.env.repo.src }}"
-        version: "{{ project_env.env.repo.version }}"
-        key_file: "{{ project_ssh_file | default(omit, true) }}"
-        accept_hostkey: yes
-        dest: "{{ project_env_base_dest }}"
-        update: "{{ env_dev | bool | ternary('no', 'yes') }}"
-        force: no
-
-    - name: "{{ project_env_title }} - load base environment vars"
+    - name: "{{ project_env_title }} - load the base environment vars"
       include_vars:
         file: "{{ project_env_base_dest }}/{{ project_env.env.file }}"
         name: project_env_base
-      tags: ["no_print"]
 
     - name: "{{ project_env_title }} - project_env (from base)"
       set_fact:
         project_env: "{{ project_env_base }}"
       vars:
         params: "{{ project_env }}"
-      tags: ["no_print"]
 
     when: project_env.env is defined
     tags: ["no_print"]
@@ -276,7 +249,7 @@
 
   - name: "{{ project_ssh_title }} - create the cloud dir"
     file:
-      path: "{{ project_ssh_cloud_dir }}"
+      path: "{{ project_files_cloud_dir }}"
       state: directory
       mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 

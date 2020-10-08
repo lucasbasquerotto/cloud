@@ -55,7 +55,7 @@ shift $((OPTIND-1))
     {% endif %}
 {% endif %}
 
-project_ssh_cloud_dir={{ project_ssh_cloud_dir | quote }}
+project_files_cloud_dir={{ project_files_cloud_dir | quote }}
 ssh_default_ctx={{ ssh_default_ctx | default('') | quote }}
 ssh_default_node={{ ssh_default_node | default('') | quote }}
 
@@ -71,7 +71,7 @@ if [ -z "$node_name" ]; then
     error "node not defined for ssh (use parameter --node or define a default node)"
 fi
 
-hosts_file="$project_ssh_cloud_dir/hosts"
+hosts_file="$project_files_cloud_dir/hosts"
 
 hosts_file_content="$(cat "$hosts_file" || error "error when accessing the file $hosts_file")"
 
