@@ -1,5 +1,44 @@
 #!/bin/bash
 set -eou pipefail
 
-vars="$(cat "$1/vars.yml")"
-echo "$vars"
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+function error {
+	msg="$(date '+%F %T') - ${BASH_SOURCE[0]}: line ${BASH_LINENO[0]}: ${*}"
+	>&2 echo -e "${RED}${msg}${NC}"
+	exit 2
+}
+
+vars_file_shell="$1/vars.sh"
+vars_file_yaml="$1/vars.yml"
+
+#shellcheck disable=SC1090
+. "$vars_file_shell"
+
+vault=()
+
+#shellcheck disable=SC2154
+var_vault_file="$vault_file"
+
+if [ -f "$var_vault_file" ]; then
+    vault=( '--vault-id' "$var_vault_file" )
+elif [ "${FORCE_VAULT:-}" = 'true' ]; then
+    vault=( '--vault-id' 'cloud@prompt')
+fi
+
+#shellcheck disable=SC2154
+var_repo_dir="$repo_dir"
+cd "$var_repo_dir"
+
+if [ "${arg_fast:-}" = 'true' ]; then
+	echo "[cloud] skipping prepare project context (fast)..."
+else
+	# Prepare the cloud context
+	ansible-playbook ${vault[@]+"${vault[@]}"} -e env_vars_file="$vars_file_yaml" \
+        prepare.ctx.yml || error "[error] prepare ctx"
+fi
+
+# Execute the cloud context
+ansible-playbook ${vault[@]+"${vault[@]}"} -e env_vars_file="$vars_file_yaml" \
+    main.yml || error "[error] run ctx"

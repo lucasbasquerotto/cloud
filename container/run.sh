@@ -29,7 +29,6 @@ while getopts ':-:' OPT; do
 done
 shift $((OPTIND-1))
 
-
 if [ "${arg_fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project (fast)..."
 else

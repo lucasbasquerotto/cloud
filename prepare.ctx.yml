@@ -1,0 +1,110 @@
+
+- name: Cloud - Prepare Context
+  hosts: main
+  tasks:
+
+  - name: "[cloud - ctx - prepare] - project_title"
+    set_fact:
+      project_title: "[cloud - ctx - prepare]"
+    tags: ["no_print"]
+
+  - name: "{{ project_title }} - load the ctx environment vars"
+    include_vars:
+      file: "{{ env_vars_file }}"
+      name: env_vars
+
+  - name: "{{ project_title }} - project_ctx_title"
+    set_fact:
+      project_ctx_title: >-
+        {{ project_title }}
+        [{{ env_vars.project | default('') }} - {{ env_vars.ctx | default('') }}]
+    tags: ["no_print"]
+
+  - name: "{{ project_ctx_title }} - debug"
+    debug:
+      var: project_ctx_title
+
+  # # project cloud entrypoint
+
+  # - name: "{{ repo_inner_title }}"
+  #   fail:
+  #     msg: >-
+  #       {{ repo_inner_title }} - the environment file init parameter doesn't contain
+  #       the entrypoint property defined
+  #   when: (repo_env_main_params.entrypoint | default('')) == ''
+  #   tags: ["other"]
+
+  # - name: "{{ repo_inner_title }}"
+  #   include_tasks: "tasks/template.yml"
+  #   vars:
+  #     template_title: "{{ repo_inner_title }} - entrypoint ({{ repo_env_main_params.entrypoint_template_src }})"
+  #     template_src: "{{ repo_cloud_dest }}/{{ repo_env_main_params.entrypoint_template_src }}"
+  #     template_tmp_dest: "{{ repo_inner_var_dir }}/cloud-entrypoint/{{ repo_env_main_params.entrypoint }}"
+  #     template_dest: "{{ repo_cloud_dest }}/{{ repo_env_main_params.entrypoint }}"
+  #     template_remote_src: false
+  #     template_local: true
+  #     template_params: "{{ repo_env_inner }}"
+  #     template_ctl_params: "{{ repo }}"
+  #     template_local_params:
+  #       base_dir_pod: "{{ repo_base_dir_pod }}"
+  #       base_dir_app: "{{ repo_base_dir_app }}"
+  #     template_meta: "{{ repo_env_inner.meta_params[repo_env_main_params.meta | default('')] | default({}) }}"
+  #     template_task_tags: ["other"]
+  #   when: (repo_env_main_params.entrypoint_template_src | default('')) != ''
+  #   tags: ["other"]
+
+  # # repo hosts file (inventory)
+
+  # - name: "{{ repo_inner_title }}"
+  #   set_fact:
+  #     repo_hosts_file_src: >-
+  #       {{
+  #       repo_env_main_params.hosts_file | default('')
+  #       | ternary(repo_env_dest + '/' + (repo_env_main_params.hosts_file | default('')), '')
+  #       }}
+  #     repo_hosts_content: "{{ repo_env_main_params.hosts_content | default('') }}"
+  #   tags: ["other", "no_print"]
+
+  # - name: "{{ repo_inner_title }} - ensure that there is a hosts file or content"
+  #   fail:
+  #     msg: "Enter a value for hosts_file or hosts_content"
+  #   when: >-
+  #     ((repo_hosts_file_src | default('')) == '')
+  #     and
+  #     ((repo_hosts_content | default('')) == '')
+  #   tags: ["other"]
+
+  # - name: "{{ repo_inner_title }} - ensure that there isn't a hosts file and a hosts content at once"
+  #   fail:
+  #     msg: "Enter a value for only one of hosts_file or hosts_content"
+  #   when: >-
+  #     ((repo_hosts_file_src | default('')) != '')
+  #     and
+  #     ((repo_hosts_content | default('')) != '')
+  #   tags: ["other"]
+
+  # - name: "{{ repo_inner_title }} - copy the hosts file temporarily to verify changes"
+  #   copy:
+  #     src: "{{ repo_hosts_file_src }}"
+  #     dest: "{{ repo_inner_var_dir }}/hosts.tmp"
+  #     mode: 0600
+  #   register: diff_hosts_file
+  #   when: (repo_hosts_file_src | default('')) != ''
+  #   tags: ["other"]
+
+  # - name: "{{ repo_inner_title }} - copy the hosts content temporarily to verify changes"
+  #   copy:
+  #     content: "{{ repo_hosts_content }}"
+  #     dest: "{{ repo_inner_var_dir }}/hosts.tmp"
+  #     mode: 0600
+  #   register: diff_hosts_content
+  #   when: (repo_hosts_content | default('')) != ''
+  #   tags: ["other"]
+
+  # - name: "{{ repo_inner_title }} - copy the hosts file when changed"
+  #   copy:
+  #     src: "{{ repo_inner_var_dir }}/hosts.tmp"
+  #     dest: "{{ repo_inner_var_dir }}/hosts"
+  #     mode: 0600
+  #     force: "{{ diff_hosts_file.changed or diff_hosts_content.changed }}"
+  #   tags: ["other"]
