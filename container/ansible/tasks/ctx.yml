@@ -9,7 +9,7 @@
 - name: "{{ project_ctx_title }} - project_ctx_var_dir"
   set_fact:
     project_ctx_var_dir: "{{ project_ctx_base_dir }}/var"
-    project_ctx_map_path_repos: "{{ project_env_init.params.map_path_repos | default({}) }}"
+    project_ctx_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
   tags: ["no_print"]
 
 # ctx - cloud repository
@@ -35,7 +35,7 @@
   set_fact:
     project_ctx_path_cloud: >-
       {{
-        project_ctx_map_path_repos[project_ctx_cloud_repo_key]
+        project_ctx_path_map_repos[project_ctx_cloud_repo_key]
         | default('')
       }}
   tags: ["no_print"]
@@ -78,3 +78,47 @@
     loop_var: project_ctx_item
     label: "{{ project_ctx_item_label }}"
   tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - project_ctx_params"
+  set_fact:
+    project_ctx_params:
+      ctx: "{{ project_ctx_key }}"
+      env_dev: "{{ env_dev | bool | ternary('true', 'false') }}"
+      ctx_dir: "{{ project_ctx_base_dir }}"
+      env_file: "{{ project_env_dir }}/{{ project_env_file_rel }}"
+      repo_run_file: >-
+        {{ project_ctx_cloud_repo_dir }}/{{ project_ctx_main.run_file | default('run') }}
+      vault_file: "{{ project_secrets_ctl_dir }}/vault"
+      ssh_file: "{{ project_ssh_file }}"
+      path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
+  tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"
+  copy:
+    content: "{{ project_ctx_params | to_nice_yaml }}"
+    dest: "{{ project_ctx_base_dir }}/vars.yml"
+    mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
+
+- name: "{{ project_ctx_title }} - project_ctx_params"
+  set_fact:
+    project_ctx_params_list: []
+  tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - project_ctx_params"
+  set_fact:
+    project_ctx_params_list: >-
+      {{
+        project_ctx_params_list
+        + [project_ctx_item.key + '=' + (project_ctx_item.value | quote)]
+      }}
+  loop: "{{ project_ctx_params | dict2items }}"
+  loop_control:
+    loop_var: project_ctx_item
+    label: "{{ project_ctx_item.key }}"
+  tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.sh)"
+  copy:
+    content: "{{ project_ctx_params_list | join('\n') }}"
+    dest: "{{ project_ctx_base_dir }}/vars.sh"
+    mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"

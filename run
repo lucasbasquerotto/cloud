@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eou pipefail
+
+vars="$(cat "$1/vars.yml")"
+echo "$vars"

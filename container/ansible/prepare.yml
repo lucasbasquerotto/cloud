@@ -70,9 +70,14 @@
       state: directory
       mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 
+  - name: "{{ project_env_title }} - set_fact - project_env_file_rel"
+    set_fact:
+      project_env_file_rel: "{{ project_env_init.repo.env_file }}"
+    tags: ["no_print"]
+
   - name: "{{ project_env_title }} - set_fact - project_env_file"
     set_fact:
-      project_env_file: "{{ project_env_dir }}/{{ project_env_init.repo.env_file }}"
+      project_env_file: "{{ project_env_dir }}/{{ project_env_file_rel }}"
       project_ssh_file: >-
         {{
           (project_env_init.repo.ssh_file | default('') != '')
@@ -207,7 +212,6 @@
   - name: "{{ project_ssh_title }} - define node names"
     set_fact:
       project_ssh_nodes_list: []
-      project_ssh_run_file: "{{ project_files_cloud_dir }}/ssh"
     tags: ["no_print"]
 
   - name: "{{ project_ssh_title }} - define nodes"
@@ -253,10 +257,10 @@
       state: directory
       mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 
-  - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_ssh_run_file }}"
+  - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_files_cloud_dir }}/"
     template:
       src: "templates/ssh.tpl.sh"
-      dest: "{{ project_ssh_run_file }}"
+      dest: "{{ project_files_cloud_dir }}/ssh"
       mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
     vars:
       project_ssh_ctxs: "{{ project_env.ctxs }}"
@@ -265,35 +269,34 @@
 
   # ctxs
 
-  - name: "{{ project_title }} - ctxs (main)"
+  - name: "{{ project_title }} - project_ctxs_title"
+    set_fact:
+      project_ctxs_title: "{{ project_title }} - ctxs"
+      project_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
+      project_path_map_file_rel: "path-map.yml"
+    tags: ["no_print"]
+
+  - name: "{{ project_ctxs_title }} - create the config file with the repo path maps"
+    copy:
+      content: "{{ project_path_map_repos | to_nice_yaml }}"
+      dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
+      mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
+
+  - name: "{{ project_ctxs_title }} (main)"
     include_tasks: "tasks/ctx.yml"
     vars:
-      project_ctx_title: "{{ project_title }} - ctx [{{ project_ctx_key }}]"
+      project_ctx_title: "{{ project_ctxs_title }} [{{ project_ctx_key }}]"
     loop: "{{ project_env.ctxs }}"
     loop_control:
       loop_var: project_ctx_key
     tags: ["no_print"]
 
-  # - name: "{{ project_title }} - env (main)"
-  #   include_tasks: "tasks/env.yml"
-  #   vars:
-  #     repo_env_title: "{{ project_title }} - env"
-  #     repo_env_file: "{{ project_env_dir }}/{{ project_env_init.repo.env_file }}"
-  #     repo_env_ctx: ""
-  #     repo_env_ctxs: "{{ project_env_init.repo.ctxs | default([]) }}"
-  #     repo_env_dir: "{{ project_env_dir }}"
-  #     repo_env_ctl: true
-  #     repo_env_main_dev: "{{ env_dev }}"
-  #     repo_env_repo: "{{ project_env_init.repo }}"
-  #     repo_env_repo_dest: "{{ repo_dest }}"
-  #   tags: ["other"]
-
-
-# repo:
-#     env_dir: env
-#     src: ssh://git@bitbucket.org/lucasbasquerotto/ansible-env-demo.git
-#     ssh_file: ssh.key
-#     version: master
-# repo_vault:
-#     file: vault
-#     force: true
+  - name: "{{ project_ctxs_title }} - copy the ctxs executable file to {{ project_files_cloud_dir }}/"
+    template:
+      src: "templates/run-ctxs.tpl.sh"
+      dest: "{{ project_files_cloud_dir }}/run-ctxs"
+      mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
+    vars:
+      project_run_ctxs_title: "{{ project_ctxs_title }}"
+      project_run_ctxs_list: "{{ project_env.ctxs }}"
+      project_run_ctx_cloud_dir: "{{ project_files_cloud_dir }}"
