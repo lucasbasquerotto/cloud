@@ -34,7 +34,7 @@
   file:
     path: "{{ git_item.dir }}"
     state: directory
-    mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ env_dev | bool | ternary(0775, 0755) }}"
   when: git_item.when | default(true) | bool
   loop:
   - { dir: "{{ git_ssh_src_dir }}", when: "{{ git_ssh_file != '' }}" }

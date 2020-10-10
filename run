@@ -35,10 +35,16 @@ if [ "${arg_fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project context (fast)..."
 else
 	# Prepare the cloud context
-	ansible-playbook ${vault[@]+"${vault[@]}"} -e env_vars_file="$vars_file_yaml" \
+	ansible-playbook ${vault[@]+"${vault[@]}"} \
+		-i hosts \
+		-e env_vars_file="$vars_file_yaml" \
         prepare.ctx.yml || error "[error] prepare ctx"
 fi
 
+echo "test error"
+exit 1
+
 # Execute the cloud context
-ansible-playbook ${vault[@]+"${vault[@]}"} -e env_vars_file="$vars_file_yaml" \
+ansible-playbook ${vault[@]+"${vault[@]}"} \
+	-e env_vars_file="$vars_file_yaml" \
     main.yml || error "[error] run ctx"
