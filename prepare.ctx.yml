@@ -3,47 +3,108 @@
   hosts: main
   tasks:
 
-  - name: "[cloud - ctx - prepare] - project_title"
+  - name: "[cloud - ctx] - env_title"
     set_fact:
-      project_title: "[cloud - ctx - prepare]"
+      env_title: "[cloud - ctx - prepare]"
     tags: ["no_print"]
 
-  - name: "{{ project_title }} - load the ctx environment vars"
+  - name: "{{ env_title }} - load the ctx environment vars"
     include_vars:
       file: "{{ env_vars_file }}"
       name: env_vars
 
-  - name: "{{ project_title }} - project_ctx_title"
+  - name: "{{ env_title }} - env_title"
     set_fact:
-      project_ctx_title: >-
-        {{ project_title }}
+      env_title: >-
+        {{ env_title }}
         [{{ env_vars.project | default('') }} - {{ env_vars.ctx | default('') }}]
+      env_dev: "{{ env_vars.env_dev | default(false) }}"
+      env_shared_pods_dir: "{{ env_vars.shared_repos_dir }}/pods"
+      env_shared_apps_dir: "{{ env_vars.shared_repos_dir }}/apps"
+    tags: ["no_print"]
+
+  - name: "{{ env_title }} - path map"
+    include_vars:
+      file: "{{ env_vars.path_map_file }}"
+      name: env_path_map
+
+  - name: "{{ env_title }} - load the environment vars"
+    include_vars:
+      file: "{{ env_vars.env_file }}"
+      name: env
+    tags: ["no_print"]
+
+  # env base repository
+
+  - block:
+
+    - name: "{{ env_title }} - env_base_dest"
+      set_fact:
+        env_base_dest: >-
+          {{
+            env_vars.env_dir +
+            (
+              ((env.env.repo_dir | default('')) != '')
+              | ternary('/' + env.env.repo_dir, '')
+            )
+          }}
+      tags: ["no_print"]
+
+    - name: "{{ env_title }} - load the base environment vars"
+      include_vars:
+        file: "{{ env_base_dest }}/{{ env.env.file }}"
+        name: env_base
+
+    - name: "{{ env_title }} - env (from base)"
+      set_fact:
+        env: "{{ env_base }}"
+      vars:
+        params: "{{ env }}"
+
+    when: env.env is defined
+    tags: ["no_print"]
+
+  - name: "{{ cloud_prepare_inner_title }} - generate the context main params"
+    include_tasks: "tasks/params_mixer.yml"
+    vars:
+      project_ctx_main: "{{ env.main[env_vars.ctx] }}"
+      params_mixer_main_params: "{{ project_ctx_main.params | default({}) }}"
+      params_mixer_group_params_names: "{{ project_ctx_main.group_params | default({}) }}"
+      params_mixer_shared_params_names: "{{ project_ctx_main.shared_params | default([]) }}"
+      params_mixer_shared_group_params_name: "{{ project_ctx_main.shared_group_params | default('') }}"
+      params_mixer_shared_params_names_dict: "{{ env.shared_params | default({}) }}"
+      params_mixer_shared_group_params_names_dict: "{{ env.shared_group_params | default({}) }}"
+      params_mixer_params_dict: "{{ env.main_params | default({}) }}"
+    tags: ["no_print"]
+
+  - set_fact:
+      env_main_params: "{{ params_mixer_params }}"
     tags: ["no_print"]
 
   # project hosts file (inventory)
 
-  - name: "{{ project_ctx_title }} - project_hosts"
+  - name: "{{ env_title }} - project_hosts"
     set_fact:
       project_hosts_file_src: >-
         {{
-          project_env_main_params.hosts_file | default('')
+          env_main_params.hosts_file | default('')
           | ternary(env_vars.env_dir + '/'
-          + (project_env_main_params.hosts_file | default('')), '')
+          + (env_main_params.hosts_file | default('')), '')
         }}
       project_hosts_template_src: >-
         {{
-          project_env_main_params.hosts_template | default('')
+          env_main_params.hosts_template | default('')
           | ternary(env_vars.env_dir + '/'
-          + (project_env_main_params.hosts_template | default('')), '')
+          + (env_main_params.hosts_template | default('')), '')
         }}
-      project_hosts_content: "{{ project_env_main_params.hosts_content | default('') }}"
+      project_hosts_content: "{{ env_main_params.hosts_content | default('') }}"
       project_hosts_src_count: 0
     tags: ["no_print"]
 
-  - name: "{{ project_ctx_title }} - ensure that there is a hosts file, template or content"
+  - name: "{{ env_title }} - ensure that there is a hosts file, template or content"
     set_fact:
       project_hosts_src_count: >-
-        {{ project_hosts_src_count + ((project_item.value == '') | ternary(0, 1)) }}
+        {{ (project_hosts_src_count | int) + ((project_item.value == '') | ternary(0, 1) | int) }}
     loop:
     - { name: "project_hosts_file_src", value: "{{ project_hosts_file_src }}" }
     - { name: "project_hosts_template_src", value: "{{ project_hosts_template_src }}" }
@@ -54,20 +115,22 @@
     tags: ["no_print"]
 
   - name: >-
-      {{ project_ctx_title }} -
+      {{ env_title }} -
       ensure that there is a hosts file, template or content
     fail:
       msg: "Enter a value for hosts_file, hosts_template or hosts_content"
-    when: project_hosts_src_count == 0
+    when: (project_hosts_src_count | int) == 0
 
   - name: >-
-      {{ project_ctx_title }} -
+      {{ env_title }} -
       ensure that there isn't a hosts file, template and content at once
     fail:
-      msg: "Enter a value for only one of hosts_file, hosts_template or hosts_content"
-    when: project_hosts_src_count > 1
+      msg: >-
+        Enter a value for only one of hosts_file, hosts_template or hosts_content
+        (expected: 1, found: {{ project_hosts_src_count }})
+    when: (project_hosts_src_count | int) > 1
 
-  - name: "{{ project_ctx_title }} - copy the hosts file temporarily to verify changes"
+  - name: "{{ env_title }} - copy the hosts file temporarily to verify changes"
     copy:
       src: "{{ project_hosts_file_src }}"
       dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
@@ -76,7 +139,7 @@
     when: project_hosts_file_src != ''
     tags: ["no_print_skipped"]
 
-  - name: "{{ project_ctx_title }} - copy the hosts template temporarily to verify changes"
+  - name: "{{ env_title }} - copy the hosts template temporarily to verify changes"
     template:
       src: "{{ project_hosts_template_src }}"
       dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
@@ -89,7 +152,7 @@
     when: project_hosts_template_src != ''
     tags: ["no_print_skipped"]
 
-  - name: "{{ project_ctx_title }} - copy the hosts content temporarily to verify changes"
+  - name: "{{ env_title }} - copy the hosts content temporarily to verify changes"
     copy:
       content: "{{ project_hosts_content }}"
       dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
@@ -98,7 +161,7 @@
     when: project_hosts_content != ''
     tags: ["no_print_skipped"]
 
-  - name: "{{ project_ctx_title }} - copy the hosts file when changed"
+  - name: "{{ env_title }} - copy the hosts file when changed"
     copy:
       src: "{{ env_vars.ctx_dir }}/hosts.tmp"
       dest: "{{ env_vars.ctx_dir }}/hosts"
@@ -108,33 +171,12 @@
 
   # project cloud - playbook run file
 
-  - name: "{{ project_ctx_title }}"
-    include_tasks: "tasks/template.yml"
-    vars:
-      template_title: "{{ project_ctx_title }} - entrypoint ({{ project_env_main_params.entrypoint_template_src }})"
-      template_src: "{{ project_cloud_dest }}/{{ project_env_main_params.entrypoint_template_src }}"
-      template_tmp_dest: "{{ project_inner_var_dir }}/cloud-entrypoint/{{ project_env_main_params.entrypoint }}"
-      template_dest: "{{ project_cloud_dest }}/{{ project_env_main_params.entrypoint }}"
-      template_remote_src: false
-      template_local: true
-      template_params: "{{ project_env_inner }}"
-      template_ctl_params: "{{ project }}"
-      template_local_params:
-        base_dir_pod: "{{ project_base_dir_pod }}"
-        base_dir_app: "{{ project_base_dir_app }}"
-      template_meta: "{{ project_env_inner.meta_params[project_env_main_params.meta | default('')] | default({}) }}"
-      template_task_tags: ["other"]
-    when: (project_env_main_params.entrypoint_template_src | default('')) != ''
-    tags: ["other"]
-
-
-
-  - name: "{{ project_ctx_title }} - project_ctx_run_title"
+  - name: "{{ env_title }} - project_ctx_run_title"
     set_fact:
-      project_ctx_run_title: "{{ project_ctx_title }} - playbook run file"
+      project_ctx_run_title: "{{ env_title }} - playbook run file"
       project_ctx_run_src: "{{ env_vars.repo_dir }}/templates/run.tpl.yml"
       project_ctx_run_tmp_dest: "{{ env_vars.ctx_dir }}/run.yml"
-      project_ctx_run_dest: "{{ env_vars.repo_dir }}/run.yml"
+      project_ctx_run_dest: "{{ env_vars.repo_dir }}/plays/run.yml"
       project_ctx_run_params_final: "{{ project_env | default({}) | combine({}) }}"
     tags: ["no_print"]
 
@@ -164,8 +206,10 @@
       variable_start_string: "<<"
     vars:
       params: "<< project_ctx_run_params_final >>"
-      env_params: "<< template_ctl_params_final >>"
-      local_params: "<< template_local_params_final >>"
+      local_params:
+        pods_dir: "<< env_shared_pods_dir >>"
+        apps_dir: "<< env_shared_apps_dir >>"
+        path_map: "<< env_path_map >>"
     changed_when: false
 
   - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (keep empty lines)"
@@ -176,7 +220,7 @@
   - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (remove empty lines)"
     set_fact:
       project_ctx_run_regex: "\\n\\s*$"
-    when: project_env_main_params.meta.template_no_empty_lines | default(false) | bool
+    when: env_main_params.meta.template_no_empty_lines | default(false) | bool
     tags: ["no_print"]
 
   - name: >-

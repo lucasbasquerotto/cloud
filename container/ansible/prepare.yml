@@ -99,7 +99,7 @@
       update: "{{ env_dev | bool | ternary('no', 'yes') }}"
       force: no
 
-  - name: "{{ project_env_title }} - load environment vars"
+  - name: "{{ project_env_title }} - load the environment vars"
     include_vars:
       file: "{{ project_env_file }}"
       name: project_env

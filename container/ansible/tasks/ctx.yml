@@ -86,6 +86,7 @@
       ctx: "{{ project_ctx_key }}"
       env_dev: "{{ env_dev | bool | ternary('true', 'false') }}"
       ctx_dir: "{{ project_ctx_base_dir }}"
+      env_dir: "{{ project_env_dir }}"
       env_file: "{{ project_env_dir }}/{{ project_env_file_rel }}"
       repo_dir: "{{ project_ctx_cloud_repo_dir }}"
       repo_run_file: >-
@@ -93,6 +94,7 @@
       vault_file: "{{ project_secrets_ctl_dir }}/vault"
       ssh_file: "{{ project_ssh_file }}"
       path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
+      shared_repos_dir: "{{ project_shared_repos_dir }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"

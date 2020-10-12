@@ -1,4 +1,3 @@
-/main.yml
 **/*.pyc
 
 /env/
@@ -6,3 +5,5 @@
 
 /custom/
 /custom-*/
+
+/plays/

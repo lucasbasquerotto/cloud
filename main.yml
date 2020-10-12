@@ -1,0 +1,788 @@
+###############################################################################
+##################            PREPARE THE CLOUD            ####################
+###############################################################################
+
+- name: Play 0 - Main - Load Environment
+  hosts: main
+  tags:
+  - always
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    tags: ["no_print"]
+
+###############################################################################
+##################            PREPARE THE CLOUD            ####################
+###############################################################################
+
+- name: Play 01.01 - Cloud - Main
+  hosts: main
+  tags:
+  - init
+  - cloud
+  - cloud_main
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_cloud_main }}"
+    when: (env_ctx_params.hooks.before_cloud_main | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_main"
+    vars:
+      cloud_main_title: "{{ env_title }} - [prepare] cloud[{{ main_item }}]"
+      cloud_main_env_name: "{{ env.name }}"
+      cloud_main_cloud: "{{ env.clouds[main_item] }}"
+      cloud_main_credentials: >-
+        {{ env.credentials[cloud_main_cloud.credentials] }}
+      cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+      cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+      cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_main_state: "present"
+    loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_cloud_main }}"
+    when: (env_ctx_params.hooks.after_cloud_main | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 01.01 - Cloud - DNS
+  hosts: main
+  tags:
+  - init
+  - cloud
+  - dns
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_dns }}"
+    when: (env_ctx_params.hooks.before_dns | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_dns"
+    vars:
+      cloud_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns_title: >-
+        {{ env_title }} - create the static dns records -
+        dns[{{ cloud_dns.type }}] - {{ main_item.record }}
+      cloud_dns_credentials: >-
+        {{ env.credentials[cloud_dns.credentials] }}
+      cloud_dns_zone: "{{ cloud_dns.zone }}"
+      cloud_dns_record_type: "{{ main_item.dns_type }}"
+      cloud_dns_record: "{{ main_item.record }}"
+      cloud_dns_data_list: "{{ main_item.data_list }}"
+      cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_dns_state: "present"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.name }}"
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_dns }}"
+    when: (env_ctx_params.hooks.after_dns | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 01.02 - Cloud - Buckets
+  hosts: main
+  tags:
+  - init
+  - cloud
+  - buckets
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_buckets }}"
+    when: (env_ctx_params.hooks.before_buckets | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }} - create the buckets"
+    aws_s3:
+      s3_url: "{{ main_credentials.endpoint }}"
+      access_key: "{{ main_credentials.access_key }}"
+      secret_key: "{{ main_credentials.secret_key }}"
+      bucket: "{{ main_bucket.name }}"
+      mode: create
+    vars:
+      main_bucket_name: "{{ main_item.name | default(main_item) }}"
+      main_bucket: "{{ env.buckets[main_bucket_name] }}"
+      main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_bucket_name }}"
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_buckets }}"
+    when: (env_ctx_params.hooks.after_buckets | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 01.04 - Cloud - Nodes
+  hosts: main
+  tags:
+  - init
+  - cloud
+  - nodes
+  - create
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_nodes }}"
+    when: (env_ctx_params.hooks.before_nodes | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_node"
+    vars:
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_info: "{{ main_item }}"
+      cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+      cloud_node_node_key: >-
+        {{
+        cloud_node_node_info.key |
+        default(cloud_node_node_info.name) |
+        default(cloud_node_node_info)
+        }}
+      cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+      cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+      cloud_node_title: >-
+        {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] -
+        cloud[{{ cloud_node_cloud_name }}]
+      cloud_node_node_credentials: >-
+        {{ env.credentials[cloud_node_node.credentials] }}
+      cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
+      cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+      cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+      cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
+      cloud_node_cloud_credentials: >-
+        {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_credentials_dict: "{{ env.credentials }}"
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_env_ctx_params: "{{ env_ctx_params }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ cloud_node_node_name }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
+      and
+      (cloud_node_cloud.type != 'local')
+      and
+      (not (cloud_node_node_info.external | default(false) | bool))
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_nodes }}"
+    when: (env_ctx_params.hooks.after_nodes | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 01.05 - Wait for the hosts to be ready
+  hosts: host
+  tags:
+  - init
+  - cloud
+  - nodes
+  - wait
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/env.yml"
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_wait_nodes }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_ctx_params.hooks.before_wait_nodes | default('')) != '')
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    set_fact:
+      host_test_node_info_aux: ""
+      host_test_node_name: ""
+      host_test_node_key: ""
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    set_fact:
+      host_test_node_info_aux: "{{ host_test_node_info_aux }}"
+      host_test_node_name: "{{ host_test_node_name_aux }}"
+      host_test_node_key: >-
+        {{
+        host_test_node_info.key |
+        default(host_test_node_info.name) |
+        default(host_test_node_info)
+        }}
+    vars:
+      host_test_node_info: "{{ main_item }}"
+      host_test_node_name_aux: >-
+        {{ host_test_node_info.name | default(host_test_node_info) }}
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ host_test_node_name_aux }}"
+    when: host_test_node_name_aux == instance_type
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    fail:
+      msg: "instance_type is not defined in the host"
+    when: (instance_type | default('')) == ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    fail:
+      msg: "there is no node with the name {{ instance_type }} declared in the main context"
+    when: host_test_node_name == ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    fail:
+      msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
+    when: host_test_node_name != instance_type
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    fail:
+      msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
+    when: host_test_node_key != instance_key
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "host_test"
+    vars:
+      host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
+      host_test_node_info: "{{ host_test_node_info_aux }}"
+      host_test_node: "{{ env.nodes[instance_key] }}"
+      host_test_node_params_dict: "{{ env.node_params | default({}) }}"
+      host_test_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+      host_test_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+    when: (((env_node | default('')) == '') or (env_node == instance_type))
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_wait_nodes }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_ctx_params.hooks.after_wait_nodes | default('')) != '')
+    tags: ["no_print"]
+
+###############################################################################
+######################        PREPARE THE PODS         ########################
+###############################################################################
+
+- name: Play 02.01 - Prepare the Pods Repositories (Local)
+  hosts: main
+  tags:
+  - init
+  - pod
+  - prepare
+  - prepare-local
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_local_prepare }}"
+    when: (env_ctx_params.hooks.before_local_prepare | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_repos"
+    vars:
+      cloud_repos_title: "{{ env_title }} - cloud repositories (local)"
+      cloud_repos_nodes: "{{ env.main[env.ctx].nodes | default([]) }}"
+      cloud_repos_nodes_dict: "{{ env.nodes | default({}) }}"
+      cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
+      cloud_repos_apps_dict: "{{ env.apps | default({}) }}"
+      cloud_repos_repos_dict: "{{ env.repos | default({}) }}"
+      cloud_repos_local_pods: "{{ env.main[env.ctx].local.pods | default([]) }}"
+      cloud_repos_local_apps: "{{ env.main[env.ctx].local.apps | default([]) }}"
+      cloud_repos_env_local_pod_dict: "{{ env_local_pod_dict }}"
+      cloud_repos_env_local_app_dict: "{{ env_local_app_dict }}"
+      cloud_repos_env_dir: "{{ env_dir }}"
+      cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}"
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_local_prepare }}"
+    when: (env_ctx_params.hooks.after_local_prepare | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 02.02 - Prepare the Pods - Remote
+  hosts: main,host
+  tags:
+  - init
+  - pod
+  - prepare
+  - prepare-remote
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_remote_prepare }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_ctx_params.hooks.before_remote_prepare | default('')) != '')
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_prepare"
+    vars:
+      cloud_prepare_env_name: "{{ env.name }}"
+      cloud_prepare_ctx_name: "{{ env.ctx }}"
+      cloud_prepare_env_local_repo: "{{ env_local_repo }}"
+      cloud_prepare_node_info: "{{ main_item }}"
+      cloud_prepare_node_name: "{{ cloud_prepare_node_info.name | default(cloud_prepare_node_info) }}"
+      cloud_prepare_node_key: >-
+        {{
+        cloud_prepare_node_info.key |
+        default(cloud_prepare_node_info.name) |
+        default(cloud_prepare_node_info)
+        }}
+      cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
+      cloud_prepare_cloud_name: "{{ cloud_prepare_node_info.cloud | default(cloud_prepare_node.cloud) }}"
+      cloud_prepare_title: "{{ env_title }} - prepare - node[{{ cloud_prepare_node_name }}]"
+      cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
+      cloud_prepare_node_credentials: >-
+        {{ env.credentials[cloud_prepare_node.credentials] }}
+      cloud_prepare_node_params_dict: "{{ env.node_params | default({}) }}"
+      cloud_prepare_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+      cloud_prepare_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+      cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_cloud_name] }}"
+      cloud_prepare_pods_dict: "{{ env.pods }}"
+      cloud_prepare_pod_params_dict: "{{ env.pod_params | default({}) }}"
+      cloud_prepare_pod_shared_params_dict: "{{ env.pod_shared_params | default({}) }}"
+      cloud_prepare_pod_shared_group_params_dict: "{{ env.pod_shared_group_params | default({}) }}"
+      cloud_prepare_credentials_dict: "{{ env.credentials }}"
+      cloud_prepare_repos_dict: "{{ env.repos }}"
+      cloud_prepare_env_dir: "{{ env_dir }}"
+      cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/node/{{ cloud_prepare_node_name }}"
+      cloud_prepare_local_pod_repo_base: "{{ env_tmp_dir }}/repo/pod"
+      cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
+      cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
+      cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
+      cloud_prepare_instance_index: "{{ instance_index }}"
+      cloud_prepare_local_pod_dict: "{{ env_local_pod_dict }}"
+      cloud_prepare_local_app_dict: "{{ env_local_app_dict }}"
+      cloud_prepare_local_data_dir_inside: >-
+        {{
+        (ansible_connection == 'local') |
+        ternary(env_local_data_dir | default(''), '')
+        }}
+      cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
+      cloud_prepare_base_dir_rel: "../.."
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ cloud_prepare_node_name }}"
+    when: >-
+      ((ansible_connection == 'local') or (cloud_prepare_node_name == instance_type))
+      and
+      (((env_node | default('')) == '') or (env_node == cloud_prepare_node_name))
+      and
+      (
+      ((ansible_connection == 'local') and (cloud_prepare_cloud.type == 'local'))
+      or
+      ((ansible_connection != 'local') and (cloud_prepare_cloud.type != 'local'))
+      )
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_remote_prepare }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_ctx_params.hooks.after_remote_prepare | default('')) != '')
+    tags: ["no_print"]
+
+###############################################################################
+###########        RUN - MIGRATE THE DATA & START THE PODS         ############
+###############################################################################
+
+- import_playbook: plays/run.yml
+
+###############################################################################
+##################          DEFINE THE CRON JOBS           ####################
+###############################################################################
+
+- name: Play 04 - Define the cron jobs
+  hosts: main,host
+  tags:
+  - init
+  - cron
+  - cron_local
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_cron }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_ctx_params.hooks.before_cron | default('')) != '')
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cron"
+    vars:
+      cron_node_info: "{{ main_item }}"
+      cron_node_name: "{{ cron_node_info.name | default(cron_node_info) }}"
+      cron_node_key: "{{ cron_node_info.key | default(cron_node_info.name) | default(cron_node_info) }}"
+      cron_node: "{{ env.nodes[cron_node_key] }}"
+      cron_cloud_name: "{{ cron_node_info.cloud | default(cron_node.cloud) }}"
+      cron_title: "{{ env_title }} - cron - {{ cron_node_name }}"
+      cron_node_params_dict: "{{ env.node_params | default({}) }}"
+      cron_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+      cron_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+      cron_env_dir: "{{ env_dir }}"
+      cron_start: "true"
+      cron_cloud: "{{ env.clouds[cron_cloud_name] }}"
+      cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes/{{ cron_node_name }}/cron"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ cron_node_name }}"
+    when: >-
+      ((ansible_connection == 'local') or (cron_node_name == instance_type))
+      and
+      (((env_node | default('')) == '') or (env_node == cron_node_name))
+      and
+      (
+      ((ansible_connection == 'local') and (cron_cloud.type == 'local'))
+      or
+      ((ansible_connection != 'local') and (cron_cloud.type != 'local'))
+      )
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_cron }}"
+    when: >-
+      (((env_node | default('')) == '') or (env_node == instance_type))
+      and
+      ((env_ctx_params.hooks.after_cron | default('')) != '')
+    tags: ["no_print"]
+
+###############################################################################
+##################            DESTROY THE CLOUD            ####################
+###############################################################################
+
+- name: Play 05.01 - Delete Temporary Cloud Instances
+  hosts: main
+  tags:
+  - init
+  - tmp
+  - cloud
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_delete_tmp }}"
+    when: (env_ctx_params.hooks.before_delete_tmp | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_node"
+    vars:
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_info: "{{ main_item }}"
+      cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+      cloud_node_node_key: >-
+        {{
+        cloud_node_node_info.key |
+        default(cloud_node_node_info.name) |
+        default(cloud_node_node_info)
+        }}
+      cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+      cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+      cloud_node_title: >-
+        {{ env_title }} - cloud - destroy temporary instances - {{ cloud_node_node_name }}
+        ({{ cloud_node_cloud_name }})
+      cloud_node_node_credentials: >-
+        {{ env.credentials[cloud_node_node.credentials] }}
+      cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
+      cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+      cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+      cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
+      cloud_node_cloud_credentials: >-
+        {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_credentials_dict: "{{ env.credentials }}"
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_node_shutdown: true
+      cloud_node_allow_destroy_dns: "{{ env.main[env.ctx].destroy.node_dns | default(false) | bool }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ cloud_node_node_name }}"
+    when: >-
+      (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
+      and
+      (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
+      and
+      (not (cloud_node_node_info.external | default(false) | bool))
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }} - delete the temporary buckets"
+    aws_s3:
+      s3_url: "{{ main_credentials.endpoint }}"
+      access_key: "{{ main_credentials.access_key }}"
+      secret_key: "{{ main_credentials.secret_key }}"
+      bucket: "{{ main_bucket.name }}"
+      mode: delete
+    vars:
+      main_bucket_name: "{{ main_item.name | default(main_item) }}"
+      main_bucket: "{{ env.buckets[main_bucket_name] }}"
+      main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_bucket_name }}"
+    when: main_item.tmp | default(false) | bool
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_dns"
+    vars:
+      cloud_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns_title: >-
+        {{ env_title }} - delete the temporary static dns records -
+        dns[{{ cloud_dns.type }}] - {{ main_item.record }}
+      cloud_dns_credentials: >-
+        {{ env.credentials[cloud_dns.credentials] }}
+      cloud_dns_zone: "{{ cloud_dns.zone }}"
+      cloud_dns_record_type: "{{ main_item.dns_type }}"
+      cloud_dns_record: "{{ main_item.record }}"
+      cloud_dns_data_list: []
+      cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_dns_state: "absent"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.name }}"
+    when: main_item.tmp | default(false) | bool
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_main"
+    vars:
+      main_cloud_name: "{{ main_item.name | default(main_item) }}"
+      cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_cloud_name }}]"
+      cloud_main_env_name: "{{ env.name }}"
+      cloud_main_cloud: "{{ env.clouds[main_cloud_name] }}"
+      cloud_main_credentials: >-
+        {{ env.credentials[cloud_main_cloud.credentials] }}
+      cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+      cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+      cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_cloud_name }}"
+      cloud_main_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_main_state: "absent"
+    loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_cloud_name }}"
+    when: main_item.tmp | default(false) | bool
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_delete_tmp }}"
+    when: (env_ctx_params.hooks.after_delete_tmp | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 05.02 - Delete everything that was created previously
+  hosts: main
+  tags:
+  - never
+  - destroy
+  gather_facts: no
+  tasks:
+  - include_tasks: "tasks/init.yml"
+    when: ansible_connection != 'local'
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.before_delete_main }}"
+    when: (env_ctx_params.hooks.before_delete_main | default('')) != ''
+    tags: ["no_print"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_node"
+    vars:
+      cloud_node_env_name: "{{ env.name }}"
+      cloud_node_node_info: "{{ main_item }}"
+      cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+      cloud_node_node_key: >-
+        {{
+        cloud_node_node_info.key |
+        default(cloud_node_node_info.name) |
+        default(cloud_node_node_info)
+        }}
+      cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+      cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+      cloud_node_title: >-
+        {{ env_title }} - [destroy] cloud - destroy instances - {{ cloud_node_node_name }}
+        ({{ cloud_node_cloud_name }})
+      cloud_node_node_credentials: >-
+        {{ env.credentials[cloud_node_node.credentials] }}
+      cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
+      cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+      cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+      cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
+      cloud_node_cloud_credentials: >-
+        {{ env.credentials[cloud_node_cloud.credentials] }}
+      cloud_node_credentials_dict: "{{ env.credentials }}"
+      cloud_node_dns_dict: "{{ env.dns }}"
+      cloud_node_env_dir: "{{ env_dir }}"
+      cloud_node_tmp_dir: >-
+        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+      cloud_node_hosts_file: "{{ inventory_file }}"
+      cloud_node_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_node_shutdown: true
+      cloud_node_allow_destroy_dns: "{{ env.main[env.ctx].destroy.node_dns | default(false) | bool }}"
+    loop: "{{ env.main[env.ctx].nodes | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ cloud_node_node_name }}"
+    when: >-
+      (env.main[env.ctx].destroy.nodes | default(false) | bool)
+      and
+      (not (cloud_node_node_info.external | default(false) | bool))
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }} - delete the buckets and all their contents"
+    aws_s3:
+      s3_url: "{{ main_credentials.endpoint }}"
+      access_key: "{{ main_credentials.access_key }}"
+      secret_key: "{{ main_credentials.secret_key }}"
+      bucket: "{{ main_bucket.name }}"
+      mode: delete
+    vars:
+      main_bucket_name: "{{ main_item.name | default(main_item) }}"
+      main_bucket: "{{ env.buckets[main_bucket_name] }}"
+      main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    loop: "{{ (env.main[env.ctx].buckets | default([])) }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_bucket_name }}"
+    when: env.main[env.ctx].destroy.buckets | default(false) | bool
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_dns"
+    vars:
+      cloud_dns: "{{ env.dns[main_item.name] }}"
+      cloud_dns_title: >-
+        {{ env_title }} - delete the static dns records -
+        dns[{{ cloud_dns.type }}] - {{ main_item.record }}
+      cloud_dns_credentials: >-
+        {{ env.credentials[cloud_dns.credentials] }}
+      cloud_dns_zone: "{{ cloud_dns.zone }}"
+      cloud_dns_record_type: "{{ main_item.dns_type }}"
+      cloud_dns_record: "{{ main_item.record }}"
+      cloud_dns_data_list: []
+      cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_dns_state: "absent"
+    loop: "{{ env.main[env.ctx].dns | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+      label: "{{ main_item.name }}"
+    when: env.main[env.ctx].destroy.dns | default(false) | bool
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_role:
+      name: "cloud_main"
+    vars:
+      cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_item }}]"
+      cloud_main_env_name: "{{ env.name }}"
+      cloud_main_cloud: "{{ env.clouds[main_item] }}"
+      cloud_main_credentials: >-
+        {{ env.credentials[cloud_main_cloud.credentials] }}
+      cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+      cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+      cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_main_state: "absent"
+    loop: "{{ env.main[env.ctx].clouds | default([]) | list }}"
+    loop_control:
+      loop_var: main_item
+    when: env.main[env.ctx].destroy.clouds | default(false) | bool
+    tags: ["no_print_skipped"]
+
+  - name: "{{ env_title }}"
+    include_tasks: "{{ env_ctx_params.hooks.after_delete_main }}"
+    when: (env_ctx_params.hooks.after_delete_main | default('')) != ''
+    tags: ["no_print"]
+
+###############################################################################

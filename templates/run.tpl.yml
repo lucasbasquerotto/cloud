@@ -5,9 +5,8 @@
 <% set var_run_stage_node_pods_dict = params.run_stage_node_pods | default({}) %>
 <% set var_tasks_group_dict = params.tasks_groups | default({}) %>
 <% set var_task_dict = params.tasks | default({}) %>
-#TODO local_params env_params
-<% set var_local_base_dir_pod = local_params.base_dir_pod | default({}) %>
-<% set var_local_pod_dir_dict = env_params.local_pod_dir | default({}) %>
+<% set var_local_base_dir_pod = local_params.pods_dir | default({}) %>
+<% set var_path_map = local_params.path_map | default({}) %>
 <% set var_main_all_nodes = var_main_params.nodes | default([]) %>
 
 <% set ns_outer_run = namespace(first=true, node_map={}, all_node_names=[]) %>
@@ -188,6 +187,7 @@
           <% set var_pod_item = ns_run.pod_map[var_pod_name] %>
           <% set var_pod_key = var_pod_item.key | default(var_pod_item.name) | default(var_pod_item) %>
           <% set var_pod = params.pods[var_pod_key] | default({}) %>
+          <% set var_pod_repo = var_pod.repo | default('') %>
           <% set var_tasks_group_name = var_pod.tasks_group | default('') %>
 
           <% if var_direct or ((var_tasks_group_name | default('')) != '') %>
@@ -225,10 +225,10 @@
               %>
 
               <% if (var_cloud.type == 'local') and
-                ((var_local_pod_dir_dict[var_pod_name] | default('')) != '')
+                ((var_path_map[var_pod_repo] | default('')) != '')
               %>
                 <% set var_pod_repo_location = var_local_base_dir_pod + '/' +
-                  var_local_pod_dir_dict[var_pod_name]
+                  var_path_map[var_pod_repo]
                 %>
               <% endif %>
 
