@@ -44,7 +44,7 @@
       cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
       cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
       cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
-      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
       cloud_main_env_ctx_params: "{{ env_ctx_params }}"
       cloud_main_state: "present"
     loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
@@ -194,7 +194,7 @@
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+        {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_env_ctx_params: "{{ env_ctx_params }}"
     loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
@@ -226,6 +226,8 @@
   gather_facts: no
   tasks:
   - include_tasks: "tasks/env.yml"
+    vars:
+      env_stage_title: "main"
     tags: ["no_print"]
 
   - name: "{{ env_title }}"
@@ -343,9 +345,10 @@
       cloud_repos_repos_dict: "{{ env.repos | default({}) }}"
       cloud_repos_env_path_map: "{{ env_path_map }}"
       cloud_repos_env_dir: "{{ env_dir }}"
-      cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}"
+      cloud_repos_pods_dir: "{{ env_ctx_dir }}/pods"
       cloud_repos_env_shared_apps_dir: "{{ env_shared_apps_dir }}"
       cloud_repos_env_shared_pods_dir: "{{ env_shared_pods_dir }}"
+      cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}/cloud/repos"
 
   - name: "{{ env_title }}"
     include_tasks: "{{ env_ctx_params.hooks.after_local_prepare }}"
@@ -379,6 +382,7 @@
     include_role:
       name: "cloud_prepare"
     vars:
+      cloud_prepare_env_project: "{{ env_project }}"
       cloud_prepare_env_name: "{{ env.name }}"
       cloud_prepare_ctx_name: "{{ env_ctx }}"
       cloud_prepare_node_info: "{{ main_item }}"
@@ -406,8 +410,8 @@
       cloud_prepare_credentials_dict: "{{ env.credentials }}"
       cloud_prepare_repos_dict: "{{ env.repos }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
-      cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/node/{{ cloud_prepare_node_name }}"
-      cloud_prepare_local_pod_repo_base: "{{ env_tmp_dir }}/repo/pod"
+      cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
+      cloud_prepare_local_pod_repo_base: "{{ env_ctx_dir }}/pod/repo"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
@@ -567,7 +571,7 @@
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+        {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_env_ctx_params: "{{ env_ctx_params }}"
       cloud_node_shutdown: true
@@ -638,7 +642,7 @@
       cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
       cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
       cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
-      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_cloud_name }}"
+      cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_cloud_name }}"
       cloud_main_env_ctx_params: "{{ env_ctx_params }}"
       cloud_main_state: "absent"
     loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
@@ -701,7 +705,7 @@
       cloud_node_dns_dict: "{{ env.dns }}"
       cloud_node_env_dir: "{{ env_dir }}"
       cloud_node_tmp_dir: >-
-        {{ env_tmp_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+        {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
       cloud_node_hosts_file: "{{ inventory_file }}"
       cloud_node_env_ctx_params: "{{ env_ctx_params }}"
       cloud_node_shutdown: true
@@ -769,7 +773,7 @@
       cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
       cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
       cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
-      cloud_main_tmp_dir: "{{ env_tmp_dir }}/cloud/main/{{ main_item }}"
+      cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
       cloud_main_env_ctx_params: "{{ env_ctx_params }}"
       cloud_main_state: "absent"
     loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"

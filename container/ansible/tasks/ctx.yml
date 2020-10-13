@@ -6,9 +6,8 @@
       {{ project_secrets_cloud_dir }}/ctxs/{{ project_ctx_key }}
   tags: ["no_print"]
 
-- name: "{{ project_ctx_title }} - project_ctx_var_dir"
+- name: "{{ project_ctx_title }} - project_ctx_path_map_repos"
   set_fact:
-    project_ctx_var_dir: "{{ project_ctx_base_dir }}/var"
     project_ctx_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
   tags: ["no_print"]
 
@@ -78,6 +77,12 @@
     loop_var: project_ctx_item
     label: "{{ project_ctx_item_label }}"
   tags: ["no_print"]
+
+- name: "{{ project_ctx_title }} - create the ctx directory"
+  file:
+    path: "{{ project_ctx_base_dir }}"
+    state: directory
+    mode: "{{ env_dev | bool | ternary(0775, 0755) }}"
 
 - name: "{{ project_ctx_title }} - project_ctx_params"
   set_fact:

@@ -72,23 +72,6 @@
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_dest_dir_base }}
   tags: ["no_print"]
 
-- set_fact:
-    cloud_prepare_params_pod:
-      identifier: "{{ cloud_prepare_pod_identifier }}"
-      name: "{{ cloud_prepare_pod_name }}"
-      pod: "{{ cloud_prepare_pod }}"
-      git_commit: "{{ cloud_prepare_git_commit }}"
-      repo_name: "{{ cloud_prepare_env_name }}"
-      env_path_map: "{{ cloud_prepare_env_path_map }}"
-      repo: "{{ cloud_prepare_pod_inner_repo }}"
-      env_dir: "{{ cloud_prepare_pod_env_dir }}"
-      repo_location: "{{ cloud_prepare_repo_location }}"
-      data_dir: "{{ cloud_prepare_pod_data_dir }}"
-      local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
-      env_cmd: "{{ cloud_prepare_env_cmd }}"
-      env_repos_commits: "{{ cloud_prepare_env_repos_commits }}"
-  tags: ["no_print"]
-
 - name: "{{ cloud_prepare_inner_title }} - generate credentials params"
   include_role:
     name: "params_mixer"
@@ -240,10 +223,28 @@
       dest_dir_base_full: "{{ cloud_prepare_dest_dir_base_full }}"
   tags: ["no_print"]
 
+- set_fact:
+    cloud_prepare_params_pod:
+      identifier: "{{ cloud_prepare_pod_identifier }}"
+      name: "{{ cloud_prepare_pod_name }}"
+      pod: "{{ cloud_prepare_pod }}"
+      git_commit: "{{ cloud_prepare_git_commit }}"
+      repo_name: "{{ cloud_prepare_env_name }}"
+      env_path_map: "{{ cloud_prepare_env_path_map }}"
+      repo: "{{ cloud_prepare_pod_inner_repo }}"
+      env_dir: "{{ cloud_prepare_pod_env_dir }}"
+      repo_location: "{{ cloud_prepare_repo_location }}"
+      data_dir: "{{ cloud_prepare_pod_data_dir }}"
+      local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
+      env_cmd: "{{ cloud_prepare_env_cmd }}"
+      env_repos_commits: "{{ cloud_prepare_env_repos_commits }}"
+  tags: ["no_print"]
+
 ### Generate a file with the environment variables and state (for idempotence) ###
 
 - set_fact:
     cloud_prepare_vars_full:
+      env_project: "{{ cloud_prepare_env_project }}"
       env_name: "{{ cloud_prepare_env_name }}"
       ctx_name: "{{ cloud_prepare_ctx_name }}"
       main: "{{ cloud_prepare_inner_params }}"

@@ -4,6 +4,8 @@
   tasks:
 
   - include_tasks: "tasks/env.yml"
+    vars:
+      env_stage_title: "prepare"
 
   # project hosts file (inventory)
 

@@ -22,7 +22,7 @@
       {{ cloud_repos_title }} - pods - repositories - local (for remote) -
       {{ cloud_repos_layer.repo }}
     cloud_repos_layer_dest: >-
-      {{ cloud_repos_env_tmp_dir + '/repo/pod/' + cloud_repos_layer_name }}
+      {{ cloud_repos_pods_dir + '/' + cloud_repos_layer_name }}
     cloud_repos_layer_git_update: yes
     cloud_repos_layer_git_force: yes
     cloud_repos_layer_dir_mode: "0755"

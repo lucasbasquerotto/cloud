@@ -3,5 +3,6 @@
   tags: ["no_print_skipped"]
 
 - include_tasks: "env.yml"
+  vars:
+    env_stage_title: "main"
   tags: ["no_print"]
-  

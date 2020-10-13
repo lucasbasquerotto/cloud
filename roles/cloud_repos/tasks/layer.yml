@@ -1,4 +1,4 @@
-- include_role: 
+- include_role:
     name: "cloud_git"
   vars:
     cloud_repos_layer_repo: "{{ cloud_repos_repos_dict[cloud_repos_layer.repo] }}"
@@ -10,14 +10,14 @@
     cloud_git_key_file_encrypted: >-
       {{ cloud_repos_env_dir }}/{{ cloud_repos_layer_repo.key_file_encrypted }}
     cloud_git_dest: "{{ cloud_repos_layer_dest }}"
-    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_layer.repo }}"
+    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/{{ cloud_repos_layer.repo }}"
     cloud_git_update: "{{ cloud_repos_layer_git_update }}"
     cloud_git_force: "{{ cloud_repos_layer_git_force }}"
     cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
     cloud_git_become: "{{ cloud_repos_layer_become }}"
   tags: ["no_print"]
 
-- include_role: 
+- include_role:
     name: "cloud_git"
   vars:
     cloud_repos_layer_repo: "{{ cloud_repos_repos_dict[cloud_repos_layer_item.repo] }}"
@@ -29,7 +29,7 @@
     cloud_git_key_file_encrypted: >-
       {{ cloud_repos_env_dir }}/{{ cloud_repos_layer_repo.key_file_encrypted }}
     cloud_git_dest: "{{ cloud_repos_layer_dest }}/{{ cloud_repos_layer_item.dir }}"
-    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/repo/tmp/{{ cloud_repos_layer.repo }}"
+    cloud_git_tmp_dir: "{{ cloud_repos_env_tmp_dir }}/{{ cloud_repos_layer.repo }}"
     cloud_git_update: "{{ cloud_repos_layer_git_update }}"
     cloud_git_force: "{{ cloud_repos_layer_git_force }}"
     cloud_git_dir_mode: "{{ cloud_repos_layer_dir_mode }}"
