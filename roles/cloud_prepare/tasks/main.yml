@@ -59,11 +59,16 @@
       {{ cloud_prepare_env_name }}/{{ cloud_prepare_ctx_name }}/{{ cloud_prepare_pod_name }}
     cloud_prepare_host_user: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_host_group: "{{ cloud_prepare_node_credentials.host_user }}"
+    cloud_prepare_local_pod_repo_rel: >-
+      {{ cloud_prepare_env_path_map[cloud_prepare_pod.repo] | default('') }}
     cloud_prepare_local_pod_repo: >-
       {{
         (cloud_prepare_cloud.type == 'local') | ternary(
-          cloud_prepare_local_pod_dict[cloud_prepare_pod_key].dir
-            | default(cloud_prepare_local_pod_repo_base + '/' + cloud_prepare_pod_name),
+          (cloud_prepare_local_pod_repo_rel != '')
+            | ternary(
+              cloud_prepare_env_shared_pods_dir + '/' + cloud_prepare_local_pod_repo_rel,
+              cloud_prepare_local_pod_repo_base + '/' + cloud_prepare_pod_name
+            ),
           cloud_prepare_local_pod_repo_base + '/' + cloud_prepare_pod_name
         )
       }}

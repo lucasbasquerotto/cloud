@@ -350,3 +350,13 @@
 
 <% endif %>
 <% endfor %>
+
+- name: Play 03.end - End of run steps
+  hosts: main,host
+  strategy: linear
+  any_errors_fatal: true
+  tags:
+  - init
+  - run
+  gather_facts: no
+  tasks: []

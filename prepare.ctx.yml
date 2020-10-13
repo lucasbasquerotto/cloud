@@ -3,83 +3,7 @@
   hosts: main
   tasks:
 
-  - name: "[cloud - ctx] - env_title"
-    set_fact:
-      env_title: "[cloud - ctx - prepare]"
-    tags: ["no_print"]
-
-  - name: "{{ env_title }} - load the ctx environment vars"
-    include_vars:
-      file: "{{ env_vars_file }}"
-      name: env_vars
-
-  - name: "{{ env_title }} - env_title"
-    set_fact:
-      env_title: >-
-        {{ env_title }}
-        [{{ env_vars.project | default('') }} - {{ env_vars.ctx | default('') }}]
-      env_dev: "{{ env_vars.env_dev | default(false) }}"
-      env_shared_pods_dir: "{{ env_vars.shared_repos_dir }}/pods"
-      env_shared_apps_dir: "{{ env_vars.shared_repos_dir }}/apps"
-    tags: ["no_print"]
-
-  - name: "{{ env_title }} - path map"
-    include_vars:
-      file: "{{ env_vars.path_map_file }}"
-      name: env_path_map
-
-  - name: "{{ env_title }} - load the environment vars"
-    include_vars:
-      file: "{{ env_vars.env_file }}"
-      name: env
-    tags: ["no_print"]
-
-  # env base repository
-
-  - block:
-
-    - name: "{{ env_title }} - env_base_dest"
-      set_fact:
-        env_base_dest: >-
-          {{
-            env_vars.env_dir +
-            (
-              ((env.env.repo_dir | default('')) != '')
-              | ternary('/' + env.env.repo_dir, '')
-            )
-          }}
-      tags: ["no_print"]
-
-    - name: "{{ env_title }} - load the base environment vars"
-      include_vars:
-        file: "{{ env_base_dest }}/{{ env.env.file }}"
-        name: env_base
-
-    - name: "{{ env_title }} - env (from base)"
-      set_fact:
-        env: "{{ env_base }}"
-      vars:
-        params: "{{ env }}"
-
-    when: env.env is defined
-    tags: ["no_print"]
-
-  - name: "{{ cloud_prepare_inner_title }} - generate the context main params"
-    include_tasks: "tasks/params_mixer.yml"
-    vars:
-      project_ctx_main: "{{ env.main[env_vars.ctx] }}"
-      params_mixer_main_params: "{{ project_ctx_main.params | default({}) }}"
-      params_mixer_group_params_names: "{{ project_ctx_main.group_params | default({}) }}"
-      params_mixer_shared_params_names: "{{ project_ctx_main.shared_params | default([]) }}"
-      params_mixer_shared_group_params_name: "{{ project_ctx_main.shared_group_params | default('') }}"
-      params_mixer_shared_params_names_dict: "{{ env.shared_params | default({}) }}"
-      params_mixer_shared_group_params_names_dict: "{{ env.shared_group_params | default({}) }}"
-      params_mixer_params_dict: "{{ env.main_params | default({}) }}"
-    tags: ["no_print"]
-
-  - set_fact:
-      env_main_params: "{{ params_mixer_params }}"
-    tags: ["no_print"]
+  - include_tasks: "tasks/env.yml"
 
   # project hosts file (inventory)
 
@@ -87,17 +11,17 @@
     set_fact:
       project_hosts_file_src: >-
         {{
-          env_main_params.hosts_file | default('')
+          env_ctx_params.hosts_file | default('')
           | ternary(env_vars.env_dir + '/'
-          + (env_main_params.hosts_file | default('')), '')
+          + (env_ctx_params.hosts_file | default('')), '')
         }}
       project_hosts_template_src: >-
         {{
-          env_main_params.hosts_template | default('')
+          env_ctx_params.hosts_template | default('')
           | ternary(env_vars.env_dir + '/'
-          + (env_main_params.hosts_template | default('')), '')
+          + (env_ctx_params.hosts_template | default('')), '')
         }}
-      project_hosts_content: "{{ env_main_params.hosts_content | default('') }}"
+      project_hosts_content: "{{ env_ctx_params.hosts_content | default('') }}"
       project_hosts_src_count: 0
     tags: ["no_print"]
 
@@ -166,7 +90,7 @@
       src: "{{ env_vars.ctx_dir }}/hosts.tmp"
       dest: "{{ env_vars.ctx_dir }}/hosts"
       mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
-      force: "{{ project_diff_hosts.changed or diff_hosts_content.changed }}"
+      force: "{{ project_diff_hosts.changed or project_diff_hosts.changed }}"
     tags: ["no_print_skipped"]
 
   # project cloud - playbook run file
@@ -220,7 +144,7 @@
   - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (remove empty lines)"
     set_fact:
       project_ctx_run_regex: "\\n\\s*$"
-    when: env_main_params.meta.template_no_empty_lines | default(false) | bool
+    when: env_ctx_params.meta.template_no_empty_lines | default(false) | bool
     tags: ["no_print"]
 
   - name: >-
