@@ -411,7 +411,7 @@
       cloud_prepare_repos_dict: "{{ env.repos }}"
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
-      cloud_prepare_local_pod_repo_base: "{{ env_ctx_dir }}/pod/repo"
+      cloud_prepare_local_pod_repo_base: "{{ env_ctx_dir }}/pods"
       cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
