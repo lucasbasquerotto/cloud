@@ -17,8 +17,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_node_title }} - generate node params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_node_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_node_node.group_params | default({}) }}"
@@ -35,8 +34,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_node_title }} - generate node ctx params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_node_node_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_node_node_info.group_params | default({}) }}"

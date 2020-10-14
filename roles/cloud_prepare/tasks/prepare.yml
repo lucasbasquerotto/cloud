@@ -73,8 +73,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate credentials params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: {}
     params_mixer_group_params_names: "{{ cloud_prepare_pod.credentials | default({}) }}"
@@ -90,8 +89,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate pod params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_prepare_pod.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_pod.group_params | default({}) }}"
@@ -107,8 +105,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate node params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_prepare_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_node.group_params | default({}) }}"
@@ -125,8 +122,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate node ctx params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_prepare_node_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_node_info.group_params | default({}) }}"
@@ -147,8 +143,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_prepare_pod_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_pod_info.group_params | default({}) }}"
@@ -172,8 +167,7 @@
 - block:
 
   - name: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params"
-    include_role:
-      name: "params_mixer"
+    include_tasks: "tasks/params_mixer.yml"
     vars:
       params_mixer_main_params: "{{ cloud_prepare_node_info_pod_params.params | default({}) }}"
       params_mixer_group_params_names: "{{ cloud_prepare_node_info_pod_params.group_params | default({}) }}"

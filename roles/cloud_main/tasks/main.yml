@@ -1,6 +1,5 @@
 - name: "{{ cloud_main_title }} - generate cloud params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cloud_main_cloud.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_main_cloud.group_params | default({}) }}"

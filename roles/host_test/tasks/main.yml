@@ -1,7 +1,6 @@
 
 - name: "{{ host_test_title }} - generate node params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ host_test_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ host_test_node.group_params | default({}) }}"
@@ -18,8 +17,7 @@
   tags: ["no_print"]
 
 - name: "{{ host_test_title }} - generate node ctx params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ host_test_node_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ host_test_node_info.group_params | default({}) }}"
@@ -41,10 +39,10 @@
 - name: "{{ host_test_title }}"
   set_fact:
     host_test_vars: >-
-      {{ 
+      {{
       (host_test_node_params.meta.use_dict | default(false) | bool) | ternary(
-      host_test_node_params.host_test_dict[host_test_node_params.host_test], 
-      host_test_node_params.host_test) 
+      host_test_node_params.host_test_dict[host_test_node_params.host_test],
+      host_test_node_params.host_test)
       }}
   tags: ["no_print"]
 
@@ -80,7 +78,7 @@
     path: "{{ host_test_log_file }}"
     search_regex: "{{ host_test_setup_last_line }}"
     msg: >
-      Timeout to find "{{ host_test_setup_last_line }}" 
+      Timeout to find "{{ host_test_setup_last_line }}"
       inside file "{{ host_test_log_file }}"
 
 - name: '{{ host_test_title }} - retrieve last line of "{{ host_test_log_file }}"'
@@ -93,10 +91,10 @@
   tags: ["no_print"]
 
 - debug: msg="last_line='{{ host_test_last_line }}'"
-  
+
 - name: '{{ host_test_title }} - verify if the setup was finished successfully'
-  fail: 
+  fail:
     msg: >
-      Variable '{{ host_test_last_line }}' should be equal to 
+      Variable '{{ host_test_last_line }}' should be equal to
       '{{ host_test_setup_last_line }}'
   when: host_test_last_line != host_test_setup_last_line

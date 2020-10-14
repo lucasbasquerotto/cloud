@@ -1,7 +1,6 @@
 
 - name: "{{ cron_title }} - generate node params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cron_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ cron_node.group_params | default({}) }}"
@@ -18,8 +17,7 @@
   tags: ["no_print"]
 
 - name: "{{ cron_title }} - generate node ctx params"
-  include_role:
-    name: "params_mixer"
+  include_tasks: "tasks/params_mixer.yml"
   vars:
     params_mixer_main_params: "{{ cron_node_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cron_node_info.group_params | default({}) }}"
@@ -43,9 +41,9 @@
   include_tasks: "cron.yml"
   vars:
     cron_item_data: >-
-      {{ 
-      (cron_node_params.meta.use_dict | default(false) | bool) | 
-      ternary(cron_node_params.cron_dict[cron_item], cron_item) 
+      {{
+      (cron_node_params.meta.use_dict | default(false) | bool) |
+      ternary(cron_node_params.cron_dict[cron_item], cron_item)
       }}
     cron_inner_title: "{{ cron_title }} - {{ cron_item_data.user }} - {{ cron_item_data.src_file }}"
     cron_src_file: "{{ cron_env_dir }}/{{ cron_item_data.src_file }}"
