@@ -11,25 +11,25 @@ function error {
 }
 
 args=()
+debug=()
 
 # shellcheck disable=SC2214
-while getopts ':-:' OPT; do
+while getopts ':f-:' OPT; do
 	if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
 		OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		fast ) arg_fast="true"; args+=( "$OPT" );;
-		??* ) [ -z "$OPTARG" ] \
-			&& args+=( "$OPT" ) \
-			|| args+=( "$OPT=$OPTARG" ) ;;  # bad long option
-		\? )  exit 2 ;;  # bad short option (error reported via getopts)
+		f|fast ) fast="true"; args+=( "--fast" );;
+		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
+		??* ) break;;  # long option
+		\? )  break;;  # short option
 	esac
 done
 shift $((OPTIND-1))
 
-if [ "${arg_fast:-}" = 'true' ]; then
+if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project (fast)..."
 else
 	vault=()
@@ -45,8 +45,13 @@ else
 	cd /usr/main/ansible
 
 	# Prepare the cloud contexts
-	ansible-playbook ${vault[@]+"${vault[@]}"} prepare.yml || error "[error] prepare"
+	ansible-playbook \
+		${vault[@]+"${vault[@]}"} \
+		${debug[@]+"${debug[@]}"} \
+		prepare.yml || error "[error] prepare ctxs"
 fi
 
 # Execute the cloud contexts
-/main/files/cloud/run-ctxs || error "[error] run-ctxs"
+/main/files/cloud/run-ctxs \
+	${args[@]+"${args[@]}"} "${@}" \
+	|| error "[error] run-ctxs"
