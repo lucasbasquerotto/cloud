@@ -18,14 +18,15 @@ shift;
 debug=()
 
 # shellcheck disable=SC2214
-while getopts ':f-:' OPT; do
+while getopts ':fp-:' OPT; do
 	if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
 		OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		f|fast ) fast="true"; args+=( "--fast" );;
+		f|fast ) fast="true";;
+		p|prepare ) prepare="true";;
 		debug ) debug=( "-vvvvv" );;
 		??* ) break;;  # long option
 		\? )  break;;  # short option
@@ -54,8 +55,15 @@ cd "$var_repo_dir"
 if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project context (fast)..."
 else
+    prepare_args=()
+
+    if [ "${prepare:-}" = 'true' ]; then
+        prepare_args=( "${@}" )
+    fi
+
 	# Prepare the cloud context
 	ansible-playbook \
+		${prepare_args[@]+"${prepare_args[@]}"} \
 		${vault[@]+"${vault[@]}"} \
 		${debug[@]+"${debug[@]}"} \
 		-i hosts \
@@ -63,13 +71,17 @@ else
         prepare.ctx.yml || error "[error] prepare ctx"
 fi
 
-#shellcheck disable=SC2154
-var_ctx_dir="$ctx_dir"
+if [ "${prepare:-}" = 'true' ]; then
+	echo "[cloud] skipping execute project context (prepare)..."
+else
+    #shellcheck disable=SC2154
+    var_ctx_dir="$ctx_dir"
 
-# Execute the cloud context
-ansible-playbook \
-	${vault[@]+"${vault[@]}"} \
-	${debug[@]+"${debug[@]}"} \
-	-i "$var_ctx_dir/hosts" \
-	-e env_vars_file="$vars_file_yaml" \
-    main.yml "${@}" || error "[error] run ctx"
+    # Execute the cloud context
+    ansible-playbook \
+        ${vault[@]+"${vault[@]}"} \
+        ${debug[@]+"${debug[@]}"} \
+        -i "$var_ctx_dir/hosts" \
+        -e env_vars_file="$vars_file_yaml" \
+        main.yml "${@}" || error "[error] run ctx"
+fi

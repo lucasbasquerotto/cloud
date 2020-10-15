@@ -14,7 +14,7 @@ args=()
 debug=()
 
 # shellcheck disable=SC2214
-while getopts ':f-:' OPT; do
+while getopts ':fp-:' OPT; do
 	if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
 		OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -22,6 +22,7 @@ while getopts ':f-:' OPT; do
 	fi
 	case "$OPT" in
 		f|fast ) fast="true"; args+=( "--fast" );;
+		p|prepare ) prepare="true"; args+=( "--prepare" );;
 		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
 		??* ) break;;  # long option
 		\? )  break;;  # short option
@@ -44,8 +45,15 @@ else
 
 	cd /usr/main/ansible
 
+    prepare_args=()
+
+    if [ "${prepare:-}" = 'true' ]; then
+        prepare_args=( "${@}" )
+    fi
+
 	# Prepare the cloud contexts
 	ansible-playbook \
+		${prepare_args[@]+"${prepare_args[@]}"} \
 		${vault[@]+"${vault[@]}"} \
 		${debug[@]+"${debug[@]}"} \
 		prepare.yml || error "[error] prepare ctxs"
