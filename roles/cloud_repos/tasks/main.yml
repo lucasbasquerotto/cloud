@@ -46,7 +46,7 @@
     cloud_repos_layer_local_dest_rel: >-
       {{ cloud_repos_env_path_map[cloud_repos_layer.repo] | default('') }}
     cloud_repos_layer_dest: >-
-      {{ cloud_repos_env_shared_pods_dir + '/' + cloud_repos_layer_local_dest_rel }}
+      {{ cloud_repos_env_dev_pods_dir + '/' + cloud_repos_layer_local_dest_rel }}
     cloud_repos_layer_git_update: no
     cloud_repos_layer_dir_mode: "0777"
     cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
@@ -67,7 +67,7 @@
     cloud_repos_layer_local_dest_rel: >-
       {{ cloud_repos_env_local_app_dict[cloud_repos_layer.repo] | default('') }}
     cloud_repos_layer_dest: >-
-      {{ cloud_repos_env_shared_apps_dir + '/' + cloud_repos_layer_local_dest_rel }}
+      {{ cloud_repos_env_dev_apps_dir + '/' + cloud_repos_layer_local_dest_rel }}
     cloud_repos_layer_git_update: no
     cloud_repos_layer_dir_mode: "0777"
     cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"

@@ -33,7 +33,7 @@
   become: true
   lineinfile:
     dest: "/etc/hosts"
-    regexp: '.*{{ cloud_prepare_item.host }}$'
+    regexp: ".*{{ cloud_prepare_item.host }}$"
     line: "{{ cloud_prepare_item.ip }} {{ cloud_prepare_item.host }}"
     state: present
   loop: "{{ cloud_prepare_dependencies }}"
@@ -66,7 +66,7 @@
         (cloud_prepare_cloud.type == 'local') | ternary(
           (cloud_prepare_local_pod_repo_rel != '')
             | ternary(
-              cloud_prepare_env_shared_pods_dir + '/' + cloud_prepare_local_pod_repo_rel,
+              cloud_prepare_env_dev_pods_dir + '/' + cloud_prepare_local_pod_repo_rel,
               cloud_prepare_local_pod_repo_base + '/' + cloud_prepare_pod_name
             ),
           cloud_prepare_local_pod_repo_base + '/' + cloud_prepare_pod_name

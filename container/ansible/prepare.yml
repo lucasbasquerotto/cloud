@@ -2,303 +2,310 @@
   hosts: main
   gather_facts: no
   tasks:
-
-  - name: "[cloud - init] - project_base_title"
-    set_fact:
-      project_base_title: "[cloud - init]"
-      project_base_dir: "/main"
-      project_keys_file_rel: "files/ctl/vars.yml"
-    tags: ["no_print"]
-
-  - name: "{{ project_base_title }} - project directories"
-    set_fact:
-      project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
-      project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
-      project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
-      project_shared_repos_dir: "{{ project_base_dir }}/shared"
-    tags: ["no_print"]
-
-  - name: "{{ project_base_title }} - load the init environment vars"
-    include_vars:
-      file: "{{ project_base_dir }}/{{ project_keys_file_rel }}"
-      name: project_env_init
-
-  - name: "{{ project_base_title }} - validate the key init parameter"
-    fail:
-      msg: "project key not specified at {{ project_keys_file_rel }}"
-    when: (project_env_init.key | default('')) == ''
-
-  - name: "{{ project_base_title }} - project_title"
-    set_fact:
-      project_title: "{{ project_base_title }} [{{ project_env_init.key }}]"
-      env_dev: "{{ project_env_init.dev | default(false) }}"
-    tags: ["no_print"]
-
-  - name: "{{ project_title }} - validate the repo init parameters"
-    fail:
-      msg: "{{ project_item }} not specified at {{ project_keys_file_rel }} under repo"
-    when: (project_env_init.repo[project_item] | default('')) == ''
-    loop:
-    - "src"
-    - "version"
-    loop_control:
-      loop_var: project_item
-
-  # env repository
-
-  - name: "{{ project_title }} - project_env_title"
-    set_fact:
-      project_env_title: "{{ project_title }} - environment"
-    tags: ["no_print"]
-
-  - name: "{{ project_base_title }} - project_env_dir"
-    set_fact:
-      project_env_dir: >-
-        {{
-          (env_dev and ((project_env_init.params.path_env | default('')) != ''))
-          | ternary(
-            project_shared_repos_dir + '/envs/'
-              + (project_env_init.params.path_env | default('')),
-            project_base_dir + '/env'
-          )
-        }}
-    tags: ["no_print"]
-
-  - name: "{{ project_env_title }} - create the env dir"
-    file:
-      path: "{{ project_env_dir }}"
-      state: directory
-      mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
-
-  - name: "{{ project_env_title }} - set_fact - project_env_file_rel"
-    set_fact:
-      project_env_file_rel: "{{ project_env_init.repo.env_file }}"
-    tags: ["no_print"]
-
-  - name: "{{ project_env_title }} - set_fact - project_env_file"
-    set_fact:
-      project_env_file: "{{ project_env_dir }}/{{ project_env_file_rel }}"
-      project_ssh_file: >-
-        {{
-          (project_env_init.repo.ssh_file | default('') != '')
-          | ternary(
-            project_secrets_ctl_dir + '/'
-              + (project_env_init.repo.ssh_file | default('')),
-            ''
-          )
-        }}
-    tags: ["no_print"]
-
-  - name: "{{ project_env_title }} - git env"
-    git:
-      repo: "{{ project_env_init.repo.src }}"
-      version: "{{ project_env_init.repo.version }}"
-      key_file: "{{ project_ssh_file | default(omit, true) }}"
-      accept_hostkey: yes
-      dest: "{{ project_env_dir }}"
-      update: "{{ env_dev | bool | ternary('no', 'yes') }}"
-      force: no
-
-  - name: "{{ project_env_title }} - load the environment vars"
-    include_vars:
-      file: "{{ project_env_file }}"
-      name: project_env
-    tags: ["no_print"]
-
-  - name: "{{ project_env_title }} - validate ctxs"
-    fail:
-      msg: >-
-        {{ project_env_title }} - the contexts list (ctxs) parameter is defined in both
-        the main environment file ({{ project_env_init.ctxs | default([]) }})
-        as well as in the repo environment file ({{ project_env.ctxs | default([]) }})
-        - it should be in only 1 of them, or none
-    when: >-
-      ((project_env.ctxs | default([]) | length) > 0)
-      and
-      ((project_env_init.ctxs | default([]) | length) > 0)
-    tags: ["no_print"]
-
-  # env base repository
-
-  - block:
-
-    - name: "{{ project_env_title }} - validate env base destination"
-      fail:
-        msg: "{{ project_env_title }} - git env base destination not defined"
-      when: >-
-        (not (env_dev | default(false) | bool))
-        and
-        (not (project_env_init.local | default(false) | bool))
-        and
-        ((project_env.env.repo_dir | default('')) == '')
+    - name: "[cloud - init] - project_base_title"
+      set_fact:
+        project_base_title: "[cloud - init]"
+        project_base_dir: "/main"
+        project_keys_file_rel: "files/ctl/vars.yml"
       tags: ["no_print"]
 
-    - name: "{{ project_env_title }} - project_env_base_dest"
+    - name: "{{ project_base_title }} - project directories"
       set_fact:
-        project_env_base_dest: >-
+        project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
+        project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
+        project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
+        project_dev_repos_dir: "{{ project_base_dir }}/dev"
+      tags: ["no_print"]
+
+    - name: "{{ project_base_title }} - load the init environment vars"
+      include_vars:
+        file: "{{ project_base_dir }}/{{ project_keys_file_rel }}"
+        name: project_env_init
+
+    - name: "{{ project_base_title }} - validate the key init parameter"
+      fail:
+        msg: "project key not specified at {{ project_keys_file_rel }}"
+      when: (project_env_init.key | default('')) == ''
+
+    - name: "{{ project_base_title }} - project_title"
+      set_fact:
+        project_title: "{{ project_base_title }} [{{ project_env_init.key }}]"
+        env_dev: "{{ project_env_init.dev | default(false) }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_title }} - validate the repo init parameters"
+      fail:
+        msg: "{{ project_item }} not specified at {{ project_keys_file_rel }} under repo"
+      when: (project_env_init.repo[project_item] | default('')) == ''
+      loop:
+        - "src"
+        - "version"
+      loop_control:
+        loop_var: project_item
+
+    # env repository
+
+    - name: "{{ project_title }} - project_env_title"
+      set_fact:
+        project_env_title: "{{ project_title }} - environment"
+      tags: ["no_print"]
+
+    - name: "{{ project_base_title }} - project_env_dir"
+      set_fact:
+        project_env_dir: >-
           {{
-            project_env_dir +
-            (
-              ((project_env.env.repo_dir | default('')) != '')
-              | ternary('/' + project_env.env.repo_dir, '')
+            (env_dev and ((project_env_init.params.path_env | default('')) != ''))
+            | ternary(
+              project_dev_repos_dir + '/'
+                + (project_env_init.params.path_env | default('')),
+              project_base_dir + '/env'
             )
           }}
       tags: ["no_print"]
 
-    - name: "{{ project_env_title }} - git env base (main)"
-      include_tasks: "tasks/git.yml"
-      vars:
-        git_title: "{{ project_env_title }} - git env base"
-        git_repo: "{{ project_env.env.repo }}"
-        git_ssh_src_dir: "{{ project_env_dir }}"
-        git_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
-        git_repo_dir: "{{ project_env_base_dest }}"
-        git_update: "{{ not (env_dev | bool) }}"
-        git_dev: "{{ env_dev }}"
+    - name: "{{ project_env_title }} - create the env dir"
+      file:
+        path: "{{ project_env_dir }}"
+        state: directory
+        mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+
+    - name: "{{ project_env_title }} - set_fact - project_env_file_rel"
+      set_fact:
+        project_env_file_rel: "{{ project_env_init.repo.env_file }}"
       tags: ["no_print"]
 
-    - name: "{{ project_env_title }} - load the base environment vars"
-      include_vars:
-        file: "{{ project_env_base_dest }}/{{ project_env.env.file }}"
-        name: project_env_base
-
-    - name: "{{ project_env_title }} - project_env (from base)"
+    - name: "{{ project_env_title }} - set_fact - project_env_file"
       set_fact:
-        project_env: "{{ project_env_base }}"
+        project_env_file: "{{ project_env_dir }}/{{ project_env_file_rel }}"
+        project_ssh_file: >-
+          {{
+            (project_env_init.repo.ssh_file | default('') != '')
+            | ternary(
+              project_secrets_ctl_dir + '/'
+                + (project_env_init.repo.ssh_file | default('')),
+              ''
+            )
+          }}
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - git env"
+      git:
+        repo: "{{ project_env_init.repo.src }}"
+        version: "{{ project_env_init.repo.version }}"
+        key_file: "{{ project_ssh_file | default(omit, true) }}"
+        accept_hostkey: yes
+        dest: "{{ project_env_dir }}"
+        update: "{{ env_dev | bool | ternary('no', 'yes') }}"
+        force: no
+
+    - name: "{{ project_env_title }} - load the environment vars"
+      include_vars:
+        file: "{{ project_env_file }}"
+        name: project_env
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - validate ctxs"
+      fail:
+        msg: >-
+          {{ project_env_title }} - the contexts list (ctxs) parameter is defined in both
+          the main environment file ({{ project_env_init.ctxs | default([]) }})
+          as well as in the repo environment file ({{ project_env.ctxs | default([]) }})
+          - it should be in only 1 of them, or none
+      when: >-
+        ((project_env.ctxs | default([]) | length) > 0)
+        and
+        ((project_env_init.ctxs | default([]) | length) > 0)
+      tags: ["no_print"]
+
+    # env base repository
+
+    - block:
+        - name: "{{ project_env_title }} - validate env base destination"
+          fail:
+            msg: "{{ project_env_title }} - git env base destination not defined"
+          when: (project_env.env.repo_dir | default('')) == ''
+          tags: ["no_print"]
+
+        - name: "{{ project_env_title }} - project_env_base_dir"
+          set_fact:
+            project_env_base_dir_dev: "{{ env_dev and ((project_env_init.params.path_env_base | default('')) != '') }}"
+            project_env_base_dir_link: "{{ project_env_dir +'/' + project_env.env.repo_dir }}"
+          tags: ["no_print"]
+
+        - name: "{{ project_env_title }} - project_env_base_dir"
+          set_fact:
+            project_env_base_dir: >-
+              {{
+                project_env_base_dir_dev | bool
+                | ternary(
+                  project_dev_repos_dir + '/'
+                    + (project_env_init.params.path_env_base | default('')),
+                  project_env_dir +'/' + project_env.env.repo_dir
+                )
+              }}
+          tags: ["no_print"]
+
+        - name: "{{ project_env_title }} - git env base (main)"
+          include_tasks: "tasks/git.yml"
+          vars:
+            git_title: "{{ project_env_title }} - git env base"
+            git_repo: "{{ project_env.env.repo }}"
+            git_ssh_src_dir: "{{ project_env_dir }}"
+            git_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
+            git_repo_dir: "{{ project_env_base_dir }}"
+            git_update: "{{ not (env_dev | bool) }}"
+            git_dev: "{{ env_dev }}"
+          tags: ["no_print"]
+
+        - name: "{{ project_env_title }} - create symbolic link (env base)"
+          file:
+            src: "{{ project_env_base_dir | relpath(project_env_base_dir_link | dirname) }}"
+            dest: "{{ project_env_base_dir_link }}"
+            state: link
+          when: project_env_base_dir != project_env_base_dir_link
+
+        - name: "{{ project_env_title }} - load the base environment vars"
+          include_vars:
+            file: "{{ project_env_base_dir }}/{{ project_env.env.file }}"
+            name: project_env_base
+
+        - name: "{{ project_env_title }} - project_env (from base)"
+          set_fact:
+            project_env: "{{ project_env_base }}"
+          vars:
+            params: "{{ project_env }}"
+
+      when: project_env.env is defined
+      tags: ["no_print"]
+
+    # environment contexts (ctxs)
+
+    - name: "{{ project_env_title }} - project_env_ctxs"
+      set_fact:
+        project_env_ctxs: "{{ project_env_init.ctxs | default([]) }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }}"
+      set_fact:
+        project_env: "{{ project_env | combine({ 'ctxs': project_env_ctxs | default([]) }) }}"
+      when: >-
+        ((project_env.ctxs | default([]) | length) == 0)
+        and
+        ((project_env_ctxs | default([]) | length) > 0)
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - validate ctx(s) - name"
+      fail:
+        msg: >-
+          {{ project_env_title }} -
+          ctx should not be defined directly in the env file (define ctxs instead)
+      when: (project_env.ctx | default('')) != ''
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - validate ctx(s) - required"
+      fail:
+        msg: >-
+          {{ project_env_title }} -
+          ctxs is not defined anywhere (neither in the main env file,
+          nor in the project env file (or base env file))
+      when: (project_env.ctxs | default([]) | length) == 0
+      tags: ["no_print"]
+
+    # ssh (to access the nodes)
+
+    - name: "{{ project_title }} - project_ssh_title"
+      set_fact:
+        project_ssh_title: "{{ project_title }} - ssh"
+      tags: ["no_print"]
+
+    - name: "{{ project_ssh_title }} - define node names"
+      set_fact:
+        project_ssh_nodes_list: []
+      tags: ["no_print"]
+
+    - name: "{{ project_ssh_title }} - define nodes"
+      set_fact:
+        project_ssh_nodes_list: "{{ project_ssh_nodes_list + tmp_nodes }}"
       vars:
-        params: "{{ project_env }}"
+        tmp_nodes: "{{ project_env.main[project_item].nodes | default([]) }}"
+      loop: "{{ project_env.ctxs | default([]) }}"
+      loop_control:
+        loop_var: project_item
+      tags: ["no_print"]
 
-    when: project_env.env is defined
-    tags: ["no_print"]
+    - name: "{{ project_ssh_title }} - define node names (create)"
+      set_fact:
+        project_ssh_nodes_all: []
+      tags: ["no_print"]
 
-  # environment contexts (ctxs)
+    - name: "{{ project_ssh_title }} - define node names"
+      set_fact:
+        project_ssh_nodes_all: "{{ project_ssh_nodes_all + [tmp_node] }}"
+      vars:
+        tmp_node: "{{ project_item.name | default(project_item) }}"
+      loop: "{{ project_ssh_nodes_list | default([]) }}"
+      loop_control:
+        loop_var: project_item
+        label: "{{ tmp_node }}"
+      tags: ["no_print"]
 
-  - name: "{{ project_env_title }} - project_env_ctxs"
-    set_fact:
-      project_env_ctxs: "{{ project_env_init.ctxs | default([]) }}"
-    tags: ["no_print"]
+    - name: "{{ project_ssh_title }} - define unique node names"
+      set_fact:
+        project_ssh_nodes: "{{ project_ssh_nodes_all | unique }}"
+      tags: ["no_print"]
 
-  - name: "{{ project_env_title }}"
-    set_fact:
-      project_env: "{{ project_env | combine({ 'ctxs': project_env_ctxs | default([]) }) }}"
-    when: >-
-      ((project_env.ctxs | default([]) | length) == 0)
-      and
-      ((project_env_ctxs | default([]) | length) > 0)
-    tags: ["no_print"]
+    - name: "{{ project_ssh_title }} - verify unique node names"
+      fail:
+        project_ssh_nodes: "There are duplicated node names in your settings"
+      when: (project_ssh_nodes | length) != (project_ssh_nodes_all | length)
+      tags: ["no_print"]
 
-  - name: "{{ project_env_title }} - validate ctx(s) - name"
-    fail:
-      msg: >-
-        {{ project_env_title }} -
-        ctx should not be defined directly in the env file (define ctxs instead)
-    when: (project_env.ctx | default('')) != ''
-    tags: ["no_print"]
+    - name: "{{ project_ssh_title }} - create the cloud dir"
+      file:
+        path: "{{ project_files_cloud_dir }}"
+        state: directory
+        mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 
-  - name: "{{ project_env_title }} - validate ctx(s) - required"
-    fail:
-      msg: >-
-        {{ project_env_title }} -
-        ctxs is not defined anywhere (neither in the main env file,
-        nor in the project env file (or base env file))
-    when: (project_env.ctxs | default([]) | length) == 0
-    tags: ["no_print"]
+    - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_files_cloud_dir }}/"
+      template:
+        src: "templates/ssh.tpl.sh"
+        dest: "{{ project_files_cloud_dir }}/ssh"
+        mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
+      vars:
+        project_ssh_ctxs: "{{ project_env.ctxs }}"
+        project_ssh_default_ctx: "{{ project_env_init.params.default_ctx | default('') }}"
+        project_ssh_default_node: "{{ project_env_init.params.default_node | default('') }}"
 
-  # ssh (to access the nodes)
+    # ctxs
 
-  - name: "{{ project_title }} - project_ssh_title"
-    set_fact:
-      project_ssh_title: "{{ project_title }} - ssh"
-    tags: ["no_print"]
+    - name: "{{ project_title }} - project_ctxs_title"
+      set_fact:
+        project_ctxs_title: "{{ project_title }} - ctxs"
+        project_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
+        project_path_map_file_rel: "path-map.yml"
+      tags: ["no_print"]
 
-  - name: "{{ project_ssh_title }} - define node names"
-    set_fact:
-      project_ssh_nodes_list: []
-    tags: ["no_print"]
+    - name: "{{ project_ctxs_title }} - create the config file with the repo path maps"
+      copy:
+        content: "{{ project_path_map_repos | to_nice_yaml }}"
+        dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
+        mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
 
-  - name: "{{ project_ssh_title }} - define nodes"
-    set_fact:
-      project_ssh_nodes_list: "{{ project_ssh_nodes_list + tmp_nodes }}"
-    vars:
-      tmp_nodes: "{{ project_env.main[project_item].nodes | default([]) }}"
-    loop: "{{ project_env.ctxs | default([]) }}"
-    loop_control:
-      loop_var: project_item
-    tags: ["no_print"]
+    - name: "{{ project_ctxs_title }} (main)"
+      include_tasks: "tasks/ctx.yml"
+      vars:
+        project_ctx_title: "{{ project_ctxs_title }} [{{ project_ctx_key }}]"
+      loop: "{{ project_env.ctxs }}"
+      loop_control:
+        loop_var: project_ctx_key
+      tags: ["no_print"]
 
-  - name: "{{ project_ssh_title }} - define node names (create)"
-    set_fact:
-      project_ssh_nodes_all: []
-    tags: ["no_print"]
-
-  - name: "{{ project_ssh_title }} - define node names"
-    set_fact:
-      project_ssh_nodes_all: "{{ project_ssh_nodes_all + [tmp_node] }}"
-    vars:
-      tmp_node: "{{ project_item.name | default(project_item) }}"
-    loop: "{{ project_ssh_nodes_list | default([]) }}"
-    loop_control:
-      loop_var: project_item
-      label: "{{ tmp_node }}"
-    tags: ["no_print"]
-
-  - name: "{{ project_ssh_title }} - define unique node names"
-    set_fact:
-      project_ssh_nodes: "{{ project_ssh_nodes_all | unique }}"
-    tags: ["no_print"]
-
-  - name: "{{ project_ssh_title }} - verify unique node names"
-    fail:
-      project_ssh_nodes: "There are duplicated node names in your settings"
-    when: (project_ssh_nodes | length) != (project_ssh_nodes_all | length)
-    tags: ["no_print"]
-
-  - name: "{{ project_ssh_title }} - create the cloud dir"
-    file:
-      path: "{{ project_files_cloud_dir }}"
-      state: directory
-      mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
-
-  - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_files_cloud_dir }}/"
-    template:
-      src: "templates/ssh.tpl.sh"
-      dest: "{{ project_files_cloud_dir }}/ssh"
-      mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
-    vars:
-      project_ssh_ctxs: "{{ project_env.ctxs }}"
-      project_ssh_default_ctx: "{{ project_env_init.params.default_ctx | default('') }}"
-      project_ssh_default_node: "{{ project_env_init.params.default_node | default('') }}"
-
-  # ctxs
-
-  - name: "{{ project_title }} - project_ctxs_title"
-    set_fact:
-      project_ctxs_title: "{{ project_title }} - ctxs"
-      project_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
-      project_path_map_file_rel: "path-map.yml"
-    tags: ["no_print"]
-
-  - name: "{{ project_ctxs_title }} - create the config file with the repo path maps"
-    copy:
-      content: "{{ project_path_map_repos | to_nice_yaml }}"
-      dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
-      mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
-
-  - name: "{{ project_ctxs_title }} (main)"
-    include_tasks: "tasks/ctx.yml"
-    vars:
-      project_ctx_title: "{{ project_ctxs_title }} [{{ project_ctx_key }}]"
-    loop: "{{ project_env.ctxs }}"
-    loop_control:
-      loop_var: project_ctx_key
-    tags: ["no_print"]
-
-  - name: "{{ project_ctxs_title }} - copy the ctxs executable file to {{ project_files_cloud_dir }}/"
-    template:
-      src: "templates/run-ctxs.tpl.sh"
-      dest: "{{ project_files_cloud_dir }}/run-ctxs"
-      mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
-    vars:
-      project_run_ctxs_title: "{{ project_ctxs_title }}"
-      project_run_ctxs_list: "{{ project_env.ctxs }}"
-      project_run_ctx_cloud_dir: "{{ project_files_cloud_dir }}"
+    - name: "{{ project_ctxs_title }} - copy the ctxs executable file to {{ project_files_cloud_dir }}/"
+      template:
+        src: "templates/run-ctxs.tpl.sh"
+        dest: "{{ project_files_cloud_dir }}/run-ctxs"
+        mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
+      vars:
+        project_run_ctxs_title: "{{ project_ctxs_title }}"
+        project_run_ctxs_list: "{{ project_env.ctxs }}"
+        project_run_ctx_cloud_dir: "{{ project_files_cloud_dir }}"

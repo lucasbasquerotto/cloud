@@ -49,7 +49,7 @@
     project_ctx_cloud_repo_dir: >-
       {{
         project_ctx_dev_repo | bool | ternary(
-          project_shared_repos_dir + '/clouds/' + project_ctx_path_cloud,
+          project_dev_repos_dir + '/clouds/' + project_ctx_path_cloud,
           project_ctx_base_dir + '/repo'
         )
       }}
@@ -107,7 +107,7 @@
       vault_file: "{{ project_secrets_ctl_dir }}/vault"
       ssh_file: "{{ project_ssh_file }}"
       path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
-      shared_repos_dir: "{{ project_shared_repos_dir }}"
+      dev_repos_dir: "{{ project_dev_repos_dir }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"

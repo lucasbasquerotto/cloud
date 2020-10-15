@@ -1,170 +1,177 @@
-
 - name: Cloud - Prepare Context
   hosts: main
   tasks:
+    - include_tasks: "tasks/env.yml"
+      vars:
+        env_stage_title: "prepare"
 
-  - include_tasks: "tasks/env.yml"
-    vars:
-      env_stage_title: "prepare"
+    # project hosts file (inventory)
 
-  # project hosts file (inventory)
+    - name: "{{ env_title }} - project_hosts"
+      set_fact:
+        project_hosts_file_src: >-
+          {{
+            env_ctx_params.hosts_file | default('')
+            | ternary(env_vars.env_dir + '/'
+            + (env_ctx_params.hosts_file | default('')), '')
+          }}
+        project_hosts_template_src: >-
+          {{
+            env_ctx_params.hosts_template | default('')
+            | ternary(env_vars.env_dir + '/'
+            + (env_ctx_params.hosts_template | default('')), '')
+          }}
+        project_hosts_content: "{{ env_ctx_params.hosts_content | default('') }}"
+        project_hosts_src_count: 0
+      tags: ["no_print"]
 
-  - name: "{{ env_title }} - project_hosts"
-    set_fact:
-      project_hosts_file_src: >-
-        {{
-          env_ctx_params.hosts_file | default('')
-          | ternary(env_vars.env_dir + '/'
-          + (env_ctx_params.hosts_file | default('')), '')
-        }}
-      project_hosts_template_src: >-
-        {{
-          env_ctx_params.hosts_template | default('')
-          | ternary(env_vars.env_dir + '/'
-          + (env_ctx_params.hosts_template | default('')), '')
-        }}
-      project_hosts_content: "{{ env_ctx_params.hosts_content | default('') }}"
-      project_hosts_src_count: 0
-    tags: ["no_print"]
+    - name: "{{ env_title }} - ensure that there is a hosts file, template or content"
+      set_fact:
+        project_hosts_src_count: >-
+          {{ (project_hosts_src_count | int) + ((project_item.value == '') | ternary(0, 1) | int) }}
+      loop:
+        - {
+            name: "project_hosts_file_src",
+            value: "{{ project_hosts_file_src }}",
+          }
+        - {
+            name: "project_hosts_template_src",
+            value: "{{ project_hosts_template_src }}",
+          }
+        - {
+            name: "project_hosts_content",
+            value: "{{ project_hosts_content }}",
+          }
+      loop_control:
+        loop_var: project_item
+        label: "{{ project_item.name }}"
+      tags: ["no_print"]
 
-  - name: "{{ env_title }} - ensure that there is a hosts file, template or content"
-    set_fact:
-      project_hosts_src_count: >-
-        {{ (project_hosts_src_count | int) + ((project_item.value == '') | ternary(0, 1) | int) }}
-    loop:
-    - { name: "project_hosts_file_src", value: "{{ project_hosts_file_src }}" }
-    - { name: "project_hosts_template_src", value: "{{ project_hosts_template_src }}" }
-    - { name: "project_hosts_content", value: "{{ project_hosts_content }}" }
-    loop_control:
-      loop_var: project_item
-      label: "{{ project_item.name }}"
-    tags: ["no_print"]
+    - name: >-
+        {{ env_title }} -
+        ensure that there is a hosts file, template or content
+      fail:
+        msg: "Enter a value for hosts_file, hosts_template or hosts_content"
+      when: (project_hosts_src_count | int) == 0
 
-  - name: >-
-      {{ env_title }} -
-      ensure that there is a hosts file, template or content
-    fail:
-      msg: "Enter a value for hosts_file, hosts_template or hosts_content"
-    when: (project_hosts_src_count | int) == 0
+    - name: >-
+        {{ env_title }} -
+        ensure that there isn't a hosts file, template and content at once
+      fail:
+        msg: >-
+          Enter a value for only one of hosts_file, hosts_template or hosts_content
+          (expected: 1, found: {{ project_hosts_src_count }})
+      when: (project_hosts_src_count | int) > 1
 
-  - name: >-
-      {{ env_title }} -
-      ensure that there isn't a hosts file, template and content at once
-    fail:
-      msg: >-
-        Enter a value for only one of hosts_file, hosts_template or hosts_content
-        (expected: 1, found: {{ project_hosts_src_count }})
-    when: (project_hosts_src_count | int) > 1
+    - name: "{{ env_title }} - copy the hosts file temporarily to verify changes"
+      copy:
+        src: "{{ project_hosts_file_src }}"
+        dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
+        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+      register: project_diff_hosts
+      when: project_hosts_file_src != ''
+      tags: ["no_print_skipped"]
 
-  - name: "{{ env_title }} - copy the hosts file temporarily to verify changes"
-    copy:
-      src: "{{ project_hosts_file_src }}"
-      dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-      mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
-    register: project_diff_hosts
-    when: project_hosts_file_src != ''
-    tags: ["no_print_skipped"]
+    - name: "{{ env_title }} - copy the hosts template temporarily to verify changes"
+      template:
+        src: "{{ project_hosts_template_src }}"
+        dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
+        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+      vars:
+        params:
+          ctx: "{{ env_vars.ctx }}"
+          env: "{{ project_env }}"
+      register: project_diff_hosts
+      when: project_hosts_template_src != ''
+      tags: ["no_print_skipped"]
 
-  - name: "{{ env_title }} - copy the hosts template temporarily to verify changes"
-    template:
-      src: "{{ project_hosts_template_src }}"
-      dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-      mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
-    vars:
-      params:
-        ctx: "{{ env_vars.ctx }}"
-        env: "{{ project_env }}"
-    register: project_diff_hosts
-    when: project_hosts_template_src != ''
-    tags: ["no_print_skipped"]
+    - name: "{{ env_title }} - copy the hosts content temporarily to verify changes"
+      copy:
+        content: "{{ project_hosts_content }}"
+        dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
+        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+      register: project_diff_hosts
+      when: project_hosts_content != ''
+      tags: ["no_print_skipped"]
 
-  - name: "{{ env_title }} - copy the hosts content temporarily to verify changes"
-    copy:
-      content: "{{ project_hosts_content }}"
-      dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-      mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
-    register: project_diff_hosts
-    when: project_hosts_content != ''
-    tags: ["no_print_skipped"]
+    - name: "{{ env_title }} - copy the hosts file when changed"
+      copy:
+        src: "{{ env_vars.ctx_dir }}/hosts.tmp"
+        dest: "{{ env_vars.ctx_dir }}/hosts"
+        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+        force: "{{ project_diff_hosts.changed or project_diff_hosts.changed }}"
+      tags: ["no_print_skipped"]
 
-  - name: "{{ env_title }} - copy the hosts file when changed"
-    copy:
-      src: "{{ env_vars.ctx_dir }}/hosts.tmp"
-      dest: "{{ env_vars.ctx_dir }}/hosts"
-      mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
-      force: "{{ project_diff_hosts.changed or project_diff_hosts.changed }}"
-    tags: ["no_print_skipped"]
+    # project cloud - playbook run file
 
-  # project cloud - playbook run file
+    - name: "{{ env_title }} - project_ctx_run_title"
+      set_fact:
+        project_ctx_run_title: "{{ env_title }} - playbook run file"
+        project_ctx_run_src: "{{ env_vars.repo_dir }}/templates/run.tpl.yml"
+        project_ctx_run_tmp_dest: "{{ env_vars.ctx_dir }}/run.yml"
+        project_ctx_run_dest: "{{ env_vars.repo_dir }}/plays/run.yml"
+        project_ctx_run_params_final: "{{ project_env | default({}) | combine({}) }}"
+      tags: ["no_print"]
 
-  - name: "{{ env_title }} - project_ctx_run_title"
-    set_fact:
-      project_ctx_run_title: "{{ env_title }} - playbook run file"
-      project_ctx_run_src: "{{ env_vars.repo_dir }}/templates/run.tpl.yml"
-      project_ctx_run_tmp_dest: "{{ env_vars.ctx_dir }}/run.yml"
-      project_ctx_run_dest: "{{ env_vars.repo_dir }}/plays/run.yml"
-      project_ctx_run_params_final: "{{ project_env | default({}) | combine({}) }}"
-    tags: ["no_print"]
+    - name: "{{ project_ctx_run_title }} - create the template directories (tmp and final)"
+      file:
+        path: "{{ project_ctx_run_item }}"
+        state: directory
+        mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+      loop:
+        - "{{ project_ctx_run_tmp_dest | dirname }}"
+        - "{{ project_ctx_run_dest | dirname }}"
+      loop_control:
+        loop_var: project_ctx_run_item
 
-  - name: "{{ project_ctx_run_title }} - create the template directories (tmp and final)"
-    file:
-      path: "{{ project_ctx_run_item }}"
-      state: directory
-      mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
-    loop:
-    - "{{ project_ctx_run_tmp_dest | dirname }}"
-    - "{{ project_ctx_run_dest | dirname }}"
-    loop_control:
-      loop_var: project_ctx_run_item
+    - name: >-
+        {{ project_ctx_run_title }} -
+        transfer the template to the specified tmp location
+        ({{ project_ctx_run_src }} to {{ project_ctx_run_tmp_dest }})
+      become: "{{ template_become | default('no') }}"
+      template:
+        src: "{{ project_ctx_run_src }}"
+        dest: "{{ project_ctx_run_tmp_dest }}"
+        mode: "{{ env_dev | ternary(0666, 0600) }}"
+        block_end_string: "%>"
+        block_start_string: "<%"
+        variable_end_string: ">>"
+        variable_start_string: "<<"
+      vars:
+        params: "<< project_ctx_run_params_final >>"
+        local_params:
+          pods_dir: "<< env_dev_pods_dir >>"
+          apps_dir: "<< env_dev_apps_dir >>"
+          path_map: "<< env_path_map >>"
+      changed_when: false
 
-  - name: >-
-      {{ project_ctx_run_title }} -
-      transfer the template to the specified tmp location
-      ({{ project_ctx_run_src }} to {{ project_ctx_run_tmp_dest }})
-    become: "{{ template_become | default('no') }}"
-    template:
-      src: "{{ project_ctx_run_src }}"
-      dest: "{{ project_ctx_run_tmp_dest }}"
-      mode: "{{ env_dev | ternary(0666, 0600) }}"
-      block_end_string: "%>"
-      block_start_string: "<%"
-      variable_end_string: ">>"
-      variable_start_string: "<<"
-    vars:
-      params: "<< project_ctx_run_params_final >>"
-      local_params:
-        pods_dir: "<< env_shared_pods_dir >>"
-        apps_dir: "<< env_shared_apps_dir >>"
-        path_map: "<< env_path_map >>"
-    changed_when: false
+    - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (keep empty lines)"
+      set_fact:
+        project_ctx_run_regex: "^\\s*$"
+      tags: ["no_print"]
 
-  - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (keep empty lines)"
-    set_fact:
-      project_ctx_run_regex: "^\\s*$"
-    tags: ["no_print"]
+    - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (remove empty lines)"
+      set_fact:
+        project_ctx_run_regex: "\\n\\s*$"
+      when: env_ctx_params.meta.template_no_empty_lines | default(false) | bool
+      tags: ["no_print"]
 
-  - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (remove empty lines)"
-    set_fact:
-      project_ctx_run_regex: "\\n\\s*$"
-    when: env_ctx_params.meta.template_no_empty_lines | default(false) | bool
-    tags: ["no_print"]
+    - name: >-
+        {{ project_ctx_run_title }} -
+        remove excess of blank lines of the file created from the template
+        ({{ project_ctx_run_tmp_dest }})
+      replace:
+        path: "{{ project_ctx_run_tmp_dest }}"
+        regexp: "{{ project_ctx_run_regex }}"
+        replace: ""
+      changed_when: false
 
-  - name: >-
-      {{ project_ctx_run_title }} -
-      remove excess of blank lines of the file created from the template
-      ({{ project_ctx_run_tmp_dest }})
-    replace:
-      path: "{{ project_ctx_run_tmp_dest }}"
-      regexp: "{{ project_ctx_run_regex }}"
-      replace: ""
-    changed_when: false
-
-  - name: >-
-      {{ project_ctx_run_title }} -
-      copy the normalized file created from the template to the specified location
-      ({{ project_ctx_run_dest }})
-    copy:
-      remote_src: false
-      src: "{{ project_ctx_run_tmp_dest }}"
-      dest: "{{ project_ctx_run_dest }}"
-      mode: "{{ env_dev | ternary(0666, 0600) }}"
+    - name: >-
+        {{ project_ctx_run_title }} -
+        copy the normalized file created from the template to the specified location
+        ({{ project_ctx_run_dest }})
+      copy:
+        remote_src: false
+        src: "{{ project_ctx_run_tmp_dest }}"
+        dest: "{{ project_ctx_run_dest }}"
+        mode: "{{ env_dev | ternary(0666, 0600) }}"
