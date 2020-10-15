@@ -13,29 +13,23 @@
       {{ cloud_prepare_repos_dict[cloud_prepare_pod.repo] }}
   tags: ["no_print"]
 
-- include_role:
-    name: "cloud_git"
+- name: "{{ cloud_prepare_inner_title }} - pod repository"
+  include_tasks: "git.yml"
   vars:
-    cloud_git_key: "{{ cloud_prepare_pod.repo }}"
-    cloud_git_title: >-
+    git_title: >-
       {{ cloud_prepare_inner_title }} - update the repo directory
       ({{ cloud_prepare_pod.repo }})
-    cloud_git_become: "{{ cloud_prepare_pod.root }}"
-    cloud_git_repo: "{{ cloud_prepare_pod_inner_repo.src }}"
-    cloud_git_version: "{{ cloud_prepare_pod_inner_repo.version }}"
-    cloud_git_private: "{{ cloud_prepare_pod_inner_repo.private | default(false) }}"
-    cloud_git_key_file_encrypted: >-
-      {{ cloud_prepare_env_dir }}/{{ cloud_prepare_pod_inner_repo.key_file_encrypted }}
-    cloud_git_dest: "{{ cloud_prepare_repo_location }}"
-    cloud_git_tmp_dir: >-
+    git_repo: "{{ cloud_prepare_pod_inner_repo }}"
+    git_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
+    git_secrets_dir: >-
       {{ cloud_prepare_pod_base_dir }}/tmp/repo/{{ cloud_prepare_pod.repo }}
-    cloud_git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
-    cloud_git_force: "{{ cloud_prepare_cloud.type != 'local' }}"
-    cloud_git_dir_mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
+    git_repo_dir: "{{ cloud_prepare_repo_location }}"
+    git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
+    git_dev: "{{ env_dev }}"
   tags: ["no_print"]
 
 - set_fact:
-    cloud_prepare_git_result: "{{ cloud_git_result }}"
+    cloud_prepare_git_result: "{{ git_result }}"
   tags: ["no_print"]
 
 - set_fact:

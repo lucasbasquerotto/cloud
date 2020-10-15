@@ -39,12 +39,16 @@
       }}
   tags: ["no_print"]
 
+- name: "{{ project_ctx_title }} - project_ctx_path_cloud"
+  set_fact:
+    project_ctx_dev_repo: "{{ (env_dev | bool) and (project_ctx_path_cloud != '') }}"
+  tags: ["no_print"]
+
 - name: "{{ project_ctx_title }} - project_ctx_cloud_repo_dir"
   set_fact:
     project_ctx_cloud_repo_dir: >-
       {{
-        ((env_dev | bool) and (project_ctx_path_cloud != ''))
-        | ternary(
+        project_ctx_dev_repo | bool | ternary(
           project_shared_repos_dir + '/clouds/' + project_ctx_path_cloud,
           project_ctx_base_dir + '/repo'
         )
@@ -59,6 +63,8 @@
     git_ssh_src_dir: "{{ project_env_dir }}"
     git_secrets_dir: "{{ project_ctx_secrets_dir }}"
     git_repo_dir: "{{ project_ctx_cloud_repo_dir }}"
+    git_update: "{{ not (project_ctx_dev_repo | bool) }}"
+    git_dev: "{{ env_dev }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - git cloud env repos (main)"
@@ -72,6 +78,8 @@
     git_ssh_src_dir: "{{ project_env_dir }}"
     git_secrets_dir: "{{ project_ctx_secrets_dir + '/' + project_ctx_item.dir }}"
     git_repo_dir: "{{ project_ctx_cloud_repo_dir + '/' + project_ctx_item.dir }}"
+    git_update: "{{ not (project_ctx_dev_repo | bool) }}"
+    git_dev: "{{ env_dev }}"
   loop: "{{ project_ctx_cloud_env_repos }}"
   loop_control:
     loop_var: project_ctx_item

@@ -153,6 +153,8 @@
         git_ssh_src_dir: "{{ project_env_dir }}"
         git_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
         git_repo_dir: "{{ project_env_base_dest }}"
+        git_update: "{{ not (env_dev | bool) }}"
+        git_dev: "{{ env_dev }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - load the base environment vars"
