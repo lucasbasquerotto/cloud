@@ -16,9 +16,10 @@
   when: cloud_node_conf is changed
   tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - generate node params"
+- name: "{{ cloud_node_title }} - generate node params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_node_title }} - generate node params"
     params_mixer_main_params: "{{ cloud_node_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_node_node.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_node_node.shared_params | default([]) }}"
@@ -33,9 +34,10 @@
     cloud_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - generate node ctx params"
+- name: "{{ cloud_node_title }} - generate node ctx params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_node_title }} - generate node ctx params"
     params_mixer_main_params: "{{ cloud_node_node_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_node_node_info.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_node_node_info.shared_params | default([]) }}"
@@ -265,7 +267,7 @@
     block: "{{ cloud_node_hosts_info }}"
   tags: ["no_print_skipped"]
 
-- name: '{{ cloud_node_title }} - refresh inventory'
+- name: "{{ cloud_node_title }} - refresh inventory"
   meta: refresh_inventory
   tags: ["no_print_skipped"]
 
@@ -276,12 +278,12 @@
 - set_fact:
     cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
   loop:
-  - name: "ipv4"
-    record_type: "A"
-    dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
-  - name: "ipv6"
-    record_type: "AAAA"
-    dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
+    - name: "ipv4"
+      record_type: "A"
+      dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
+    - name: "ipv6"
+      record_type: "AAAA"
+      dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
   loop_control:
     loop_var: cloud_node_item
   when: >-

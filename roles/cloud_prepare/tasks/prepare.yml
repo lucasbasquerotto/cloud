@@ -66,9 +66,10 @@
       {{ cloud_prepare_repo_location }}/{{ cloud_prepare_dest_dir_base }}
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate credentials params"
+- name: "{{ cloud_prepare_inner_title }} - generate credentials params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_prepare_inner_title }} - generate credentials params"
     params_mixer_main_params: {}
     params_mixer_group_params_names: "{{ cloud_prepare_pod.credentials | default({}) }}"
     params_mixer_shared_params_names: []
@@ -82,9 +83,10 @@
     cloud_prepare_inner_credentials: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate pod params"
+- name: "{{ cloud_prepare_inner_title }} - generate pod params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_prepare_inner_title }} - generate pod params"
     params_mixer_main_params: "{{ cloud_prepare_pod.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_pod.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_pod.shared_params | default([]) }}"
@@ -98,9 +100,10 @@
     cloud_prepare_inner_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate node params"
+- name: "{{ cloud_prepare_inner_title }} - generate node params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_prepare_inner_title }} - generate node params"
     params_mixer_main_params: "{{ cloud_prepare_node.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_node.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_node.shared_params | default([]) }}"
@@ -115,9 +118,10 @@
     cloud_prepare_inner_node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate node ctx params"
+- name: "{{ cloud_prepare_inner_title }} - generate node ctx params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_prepare_inner_title }} - generate node ctx params"
     params_mixer_main_params: "{{ cloud_prepare_node_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_node_info.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_node_info.shared_params | default([]) }}"
@@ -136,9 +140,10 @@
       {{ cloud_prepare_inner_node_params | combine(cloud_prepare_inner_node_ctx_params) }}
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params"
+- name: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params (outer)"
   include_tasks: "tasks/params_mixer.yml"
   vars:
+    params_mixer_title: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params"
     params_mixer_main_params: "{{ cloud_prepare_pod_info.params | default({}) }}"
     params_mixer_group_params_names: "{{ cloud_prepare_pod_info.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_pod_info.shared_params | default([]) }}"
@@ -159,28 +164,28 @@
   tags: ["no_print"]
 
 - block:
+    - name: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params"
+        params_mixer_main_params: "{{ cloud_prepare_node_info_pod_params.params | default({}) }}"
+        params_mixer_group_params_names: "{{ cloud_prepare_node_info_pod_params.group_params | default({}) }}"
+        params_mixer_shared_params_names: "{{ cloud_prepare_node_info_pod_params.shared_params | default([]) }}"
+        params_mixer_shared_group_params_name: "{{ cloud_prepare_node_info_pod_params.shared_group_params | default('') }}"
+        params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
+        params_mixer_shared_group_params_names_dict: >-
+          {{ cloud_prepare_pod_shared_group_params_dict | default({}) }}
+        params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params"
-    include_tasks: "tasks/params_mixer.yml"
-    vars:
-      params_mixer_main_params: "{{ cloud_prepare_node_info_pod_params.params | default({}) }}"
-      params_mixer_group_params_names: "{{ cloud_prepare_node_info_pod_params.group_params | default({}) }}"
-      params_mixer_shared_params_names: "{{ cloud_prepare_node_info_pod_params.shared_params | default([]) }}"
-      params_mixer_shared_group_params_name: "{{ cloud_prepare_node_info_pod_params.shared_group_params | default('') }}"
-      params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
-      params_mixer_shared_group_params_names_dict: >-
-        {{ cloud_prepare_pod_shared_group_params_dict | default({}) }}
-      params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
-    tags: ["no_print"]
+    - set_fact:
+        cloud_prepare_inner_ctx_params: "{{ params_mixer_params }}"
+      tags: ["no_print"]
 
-  - set_fact:
-      cloud_prepare_inner_ctx_params: "{{ params_mixer_params }}"
-    tags: ["no_print"]
-
-  - set_fact:
-      cloud_prepare_inner_params: >-
-        {{ cloud_prepare_inner_params | combine(cloud_prepare_inner_ctx_params) }}
-    tags: ["no_print"]
+    - set_fact:
+        cloud_prepare_inner_params: >-
+          {{ cloud_prepare_inner_params | combine(cloud_prepare_inner_ctx_params) }}
+      tags: ["no_print"]
 
   when: (cloud_prepare_node_info_pod_params | dict2items | length) > 0
   tags: ["no_print_skipped"]
@@ -248,24 +253,23 @@
   tags: ["no_print"]
 
 - block:
+    - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
+      become: "{{ cloud_prepare_pod.root }}"
+      copy:
+        content: "{{ cloud_prepare_vars_full | to_nice_yaml }}"
+        dest: "{{ cloud_prepare_backup_file_tmp }}"
+        owner: "{{ cloud_prepare_owner }}"
+        group: "{{ cloud_prepare_group }}"
+        mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
+      tags: ["no_print_skipped"]
 
-  - name: "{{ cloud_prepare_inner_title }} - create the temporary file to verify if there was a change"
-    become: "{{ cloud_prepare_pod.root }}"
-    copy:
-      content: "{{ cloud_prepare_vars_full | to_nice_yaml }}"
-      dest: "{{ cloud_prepare_backup_file_tmp }}"
-      owner: "{{ cloud_prepare_owner }}"
-      group: "{{ cloud_prepare_group }}"
-      mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
-    tags: ["no_print_skipped"]
-
-  - name: "{{ cloud_prepare_inner_title }} - get the difference of the 2 files (old and current)"
-    become: "{{ cloud_prepare_pod.root }}"
-    command: "diff {{ cloud_prepare_backup_file_tmp }} {{ cloud_prepare_backup_file }}"
-    register: cloud_prepare_diff
-    failed_when: cloud_prepare_diff.rc > 1
-    changed_when: cloud_prepare_diff.rc == 1
-    tags: ["no_print_skipped"]
+    - name: "{{ cloud_prepare_inner_title }} - get the difference of the 2 files (old and current)"
+      become: "{{ cloud_prepare_pod.root }}"
+      command: "diff {{ cloud_prepare_backup_file_tmp }} {{ cloud_prepare_backup_file }}"
+      register: cloud_prepare_diff
+      failed_when: cloud_prepare_diff.rc > 1
+      changed_when: cloud_prepare_diff.rc == 1
+      tags: ["no_print_skipped"]
 
   when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print_skipped"]
@@ -273,132 +277,130 @@
 ### Continue the preparation only when changed from the previous ###
 
 - block:
+    ### Copy the specified pod env files and templates ###
 
-  ### Copy the specified pod env files and templates ###
+    - name: "{{ cloud_prepare_inner_title }}"
+      fail:
+        msg: >-
+          env_files is defined in the pod as well as in the node
+          (it should be in 1 only)
+      when: >-
+        (cloud_prepare_pod.env_files is defined) and
+        (cloud_prepare_pod_info.env_files is defined)
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    fail:
-      msg: >-
-        env_files is defined in the pod as well as in the node
-        (it should be in 1 only)
-    when: >-
-      (cloud_prepare_pod.env_files is defined) and
-      (cloud_prepare_pod_info.env_files is defined)
-    tags: ["no_print"]
+    - name: "{{ cloud_prepare_inner_title }}"
+      fail:
+        msg: >-
+          env_files is defined in the pod as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (cloud_prepare_pod.env_files is defined) and
+        (cloud_prepare_node_info_pod_params.env_files is defined)
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    fail:
-      msg: >-
-        env_files is defined in the pod as well as in the context
-        (it should be in 1 only)
-    when: >-
-      (cloud_prepare_pod.env_files is defined) and
-      (cloud_prepare_node_info_pod_params.env_files is defined)
-    tags: ["no_print"]
+    - name: "{{ cloud_prepare_inner_title }}"
+      fail:
+        msg: >-
+          env_files is defined in the node as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (cloud_prepare_pod_info.env_files is defined) and
+        (cloud_prepare_node_info_pod_params.env_files is defined)
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    fail:
-      msg: >-
-        env_files is defined in the node as well as in the context
-        (it should be in 1 only)
-    when: >-
-      (cloud_prepare_pod_info.env_files is defined) and
-      (cloud_prepare_node_info_pod_params.env_files is defined)
-    tags: ["no_print"]
+    - name: "{{ cloud_prepare_inner_title }}"
+      fail:
+        msg: >-
+          env_templates is defined in the pod as well as in the node
+          (it should be in 1 only)
+      when: >-
+        (cloud_prepare_pod.env_templates is defined) and
+        (cloud_prepare_pod_info.env_templates is defined)
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    fail:
-      msg: >-
-        env_templates is defined in the pod as well as in the node
-        (it should be in 1 only)
-    when: >-
-      (cloud_prepare_pod.env_templates is defined) and
-      (cloud_prepare_pod_info.env_templates is defined)
-    tags: ["no_print"]
+    - name: "{{ cloud_prepare_inner_title }}"
+      fail:
+        msg: >-
+          env_templates is defined in the pod as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (cloud_prepare_pod.env_templates is defined) and
+        (cloud_prepare_node_info_pod_params.env_templates is defined)
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    fail:
-      msg: >-
-        env_templates is defined in the pod as well as in the context
-        (it should be in 1 only)
-    when: >-
-      (cloud_prepare_pod.env_templates is defined) and
-      (cloud_prepare_node_info_pod_params.env_templates is defined)
-    tags: ["no_print"]
+    - name: "{{ cloud_prepare_inner_title }}"
+      fail:
+        msg: >-
+          env_templates is defined in the node as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (cloud_prepare_pod_info.env_templates is defined) and
+        (cloud_prepare_node_info_pod_params.env_templates is defined)
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    fail:
-      msg: >-
-        env_templates is defined in the node as well as in the context
-        (it should be in 1 only)
-    when: >-
-      (cloud_prepare_pod_info.env_templates is defined) and
-      (cloud_prepare_node_info_pod_params.env_templates is defined)
-    tags: ["no_print"]
+    - name: "{{ cloud_prepare_inner_title }}"
+      include_tasks: "transfer.yml"
+      vars:
+        cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - pod env"
+        cloud_prepare_transfer_src_env_files: >-
+          {{
+          cloud_prepare_node_info_pod_params.env_files
+          | default(cloud_prepare_pod_info.env_files)
+          | default(cloud_prepare_pod.env_files)
+          | default([])
+          }}
+        cloud_prepare_transfer_src_env_templates: >-
+          {{
+          cloud_prepare_node_info_pod_params.env_templates
+          | default(cloud_prepare_pod_info.env_templates)
+          | default(cloud_prepare_pod.env_templates)
+          | default([])
+          }}
+      tags: ["no_print"]
 
-  - name: "{{ cloud_prepare_inner_title }}"
-    include_tasks: "transfer.yml"
-    vars:
-      cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - pod env"
-      cloud_prepare_transfer_src_env_files: >-
-        {{
-        cloud_prepare_node_info_pod_params.env_files
-        | default(cloud_prepare_pod_info.env_files)
-        | default(cloud_prepare_pod.env_files)
-        | default([])
-        }}
-      cloud_prepare_transfer_src_env_templates: >-
-        {{
-        cloud_prepare_node_info_pod_params.env_templates
-        | default(cloud_prepare_pod_info.env_templates)
-        | default(cloud_prepare_pod.env_templates)
-        | default([])
-        }}
-    tags: ["no_print"]
-
-  ### Generate the environment pod expanded variables ###
-
-  - name: "{{ cloud_prepare_inner_title }}"
-    set_fact:
-      cloud_prepare_vars_volumes: []
-      cloud_prepare_vars_files: []
-      cloud_prepare_vars_templates: []
-      cloud_prepare_vars_env_files: []
-      cloud_prepare_vars_env_templates: []
-      cloud_prepare_dir_list: ["{{ cloud_prepare_dest_dir_base_full }}"]
-    tags: ["no_print"]
-
-  - block:
+    ### Generate the environment pod expanded variables ###
 
     - name: "{{ cloud_prepare_inner_title }}"
       set_fact:
-        cloud_prepare_inner_vars_ctxs: "{{ [cloud_prepare_vars_ctx] }}"
-        cloud_prepare_inner_vars_idx: 0
-        cloud_prepare_inner_vars_ctxs_completed: []
+        cloud_prepare_vars_volumes: []
+        cloud_prepare_vars_files: []
+        cloud_prepare_vars_templates: []
+        cloud_prepare_vars_env_files: []
+        cloud_prepare_vars_env_templates: []
+        cloud_prepare_dir_list: ["{{ cloud_prepare_dest_dir_base_full }}"]
+      tags: ["no_print"]
+
+    - block:
+        - name: "{{ cloud_prepare_inner_title }}"
+          set_fact:
+            cloud_prepare_inner_vars_ctxs: "{{ [cloud_prepare_vars_ctx] }}"
+            cloud_prepare_inner_vars_idx: 0
+            cloud_prepare_inner_vars_ctxs_completed: []
+          vars:
+            cloud_prepare_vars_ctx:
+              name: "{{ cloud_prepare_pod.ctx | default('') }}"
+              params: "{{ cloud_prepare_vars_full }}"
+          tags: ["no_print"]
+
+        - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars-ctx.yml"
+          include_tasks: "vars-ctx.yml"
+          tags: ["no_print"]
+
+      when: (cloud_prepare_pod.ctx | default('')) != ''
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_prepare_inner_title }}"
+      include_tasks: "transfer.yml"
       vars:
-        cloud_prepare_vars_ctx:
-          name: "{{ cloud_prepare_pod.ctx | default('') }}"
-          params: "{{ cloud_prepare_vars_full }}"
+        cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - ctx"
+        cloud_prepare_transfer_src_volumes: "{{ cloud_prepare_vars_volumes | default([]) }}"
+        cloud_prepare_transfer_src_dir_list: "{{ cloud_prepare_dir_list | default([]) }}"
+        cloud_prepare_transfer_src_repo_files: "{{ cloud_prepare_vars_files | default([]) }}"
+        cloud_prepare_transfer_src_env_files: "{{ cloud_prepare_vars_env_files | default([]) }}"
+        cloud_prepare_transfer_src_repo_templates: "{{ cloud_prepare_vars_templates | default([]) }}"
+        cloud_prepare_transfer_src_env_templates: "{{ (cloud_prepare_vars_env_templates | default([])) }}"
       tags: ["no_print"]
-
-    - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars-ctx.yml"
-      include_tasks: "vars-ctx.yml"
-      tags: ["no_print"]
-
-    when: (cloud_prepare_pod.ctx | default('')) != ''
-    tags: ["no_print_skipped"]
-
-  - name: "{{ cloud_prepare_inner_title }}"
-    include_tasks: "transfer.yml"
-    vars:
-      cloud_prepare_transfer_title: "{{ cloud_prepare_inner_title }} - ctx"
-      cloud_prepare_transfer_src_volumes: "{{ cloud_prepare_vars_volumes | default([]) }}"
-      cloud_prepare_transfer_src_dir_list: "{{ cloud_prepare_dir_list | default([]) }}"
-      cloud_prepare_transfer_src_repo_files: "{{ cloud_prepare_vars_files | default([]) }}"
-      cloud_prepare_transfer_src_env_files: "{{ cloud_prepare_vars_env_files | default([]) }}"
-      cloud_prepare_transfer_src_repo_templates: "{{ cloud_prepare_vars_templates | default([]) }}"
-      cloud_prepare_transfer_src_env_templates: "{{ (cloud_prepare_vars_env_templates | default([])) }}"
-    tags: ["no_print"]
 
   when: (cloud_prepare_diff.changed | default(true) | bool) or (cloud_prepare_cloud.type == 'local')
   tags: ["no_print_skipped"]

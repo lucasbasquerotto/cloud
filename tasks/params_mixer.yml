@@ -1,18 +1,45 @@
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_shared_group_params_names - init"
+  set_fact:
     params_mixer_shared_group_params_names: {}
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_shared_group_params_names - validate"
+  fail:
+    msg: >-
+      The shared groups params dictionary doesn't have the following key:
+      {{ params_mixer_shared_group_params_name }}
+  when: >-
+    ((params_mixer_shared_group_params_name | default('')) != '')
+    and
+    (params_mixer_shared_group_params_names_dict[params_mixer_shared_group_params_name] is not defined)
+  tags: ["no_print"]
+
+- name: "{{ params_mixer_title }} - params_mixer_shared_group_params_names - fill"
+  set_fact:
     params_mixer_shared_group_params_names: >-
       {{ params_mixer_shared_group_params_names_dict[params_mixer_shared_group_params_name] }}
   when: (params_mixer_shared_group_params_name | default('')) != ''
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_shared_group_params - init"
+  set_fact:
     params_mixer_shared_group_params: {}
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_shared_group_params - validate"
+  fail:
+    msg: >-
+      The params dictionary doesn't have the following key from the shared group params:
+      {{ params_mixer_item.value }} ({{ params_mixer_item.key }})
+  when: params_mixer_params_dict[params_mixer_item.value] is not defined
+  loop: "{{ params_mixer_shared_group_params_names | default({}) | dict2items }}"
+  loop_control:
+    loop_var: params_mixer_item
+    label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
+  tags: ["no_print"]
+
+- name: "{{ params_mixer_title }} - params_mixer_shared_group_params - fill"
+  set_fact:
     params_mixer_shared_group_params: >-
       {{
       params_mixer_shared_group_params |
@@ -26,11 +53,23 @@
     label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_mixed_shared_params - init"
+  set_fact:
     params_mixer_mixed_shared_params: {}
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_mixed_shared_params - validate"
+  fail:
+    msg: "The shared params dictionary doesn't have the following key: {{ params_mixer_item }}"
+  when: params_mixer_shared_params_names_dict[params_mixer_item] is not defined
+  loop: "{{ params_mixer_shared_params_names | default([]) }}"
+  loop_control:
+    loop_var: params_mixer_item
+    label: "{{ params_mixer_item }})"
+  tags: ["no_print"]
+
+- name: "{{ params_mixer_title }} - params_mixer_mixed_shared_params - fill"
+  set_fact:
     params_mixer_mixed_shared_params: >-
       {{
         params_mixer_mixed_shared_params
@@ -42,11 +81,25 @@
     label: "{{ params_mixer_item }})"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_group_params - init"
+  set_fact:
     params_mixer_group_params: {}
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_group_params - validate"
+  fail:
+    msg: >-
+      The params dictionary doesn't have the following key from the group params:
+      {{ params_mixer_item.value }} ({{ params_mixer_item.key }})
+  when: params_mixer_params_dict[params_mixer_item.value] is not defined
+  loop: "{{ params_mixer_group_params_names | default({}) | dict2items }}"
+  loop_control:
+    loop_var: params_mixer_item
+    label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
+  tags: ["no_print"]
+
+- name: "{{ params_mixer_title }} - params_mixer_group_params - fill"
+  set_fact:
     params_mixer_group_params: >-
       {{
       params_mixer_group_params |
@@ -60,7 +113,8 @@
     label: "{{ params_mixer_item.key }} ({{ params_mixer_item.value }})"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ params_mixer_title }} - params_mixer_params"
+  set_fact:
     params_mixer_params: >-
       {{
       params_mixer_shared_group_params | default({}) |
