@@ -52,6 +52,6 @@ else
 fi
 
 # Execute the cloud contexts
-/main/files/cloud/run-ctxs \
+bash /main/files/cloud/run-ctxs \
 	${args[@]+"${args[@]}"} "${@}" \
 	|| error "[error] run-ctxs"
