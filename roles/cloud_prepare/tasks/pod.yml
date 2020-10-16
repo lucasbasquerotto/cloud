@@ -193,7 +193,7 @@
       include_tasks: "prepare.yml"
       vars:
         cloud_prepare_inner_title: "{{ cloud_prepare_pod_title }} - real"
-        cloud_prepare_repo_location: "{{ cloud_prepare_repo_location }}"
+        cloud_prepare_repo_location: "{{ cloud_prepare_main_repo_location }}"
       tags: ["no_print"]
 
     - name: >-
