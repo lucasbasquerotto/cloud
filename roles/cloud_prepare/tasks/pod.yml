@@ -39,11 +39,11 @@
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_tmp_location + '/main' }}"
   tags: ["no_print"]
 
-# - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location"
-#   set_fact:
-#     cloud_prepare_main_repo_location: "{{ cloud_prepare_local_pod_default_repo_dir }}"
-#   when: cloud_prepare_cloud.type == 'local'
-#   tags: ["no_print"]
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location"
+  set_fact:
+    cloud_prepare_main_repo_location: "{{ cloud_prepare_local_pod_default_repo_dir }}"
+  when: cloud_prepare_cloud.type == 'local'
+  tags: ["no_print"]
 
 - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_backup_file"
   set_fact:
