@@ -12,67 +12,32 @@
     loop_var: cloud_repos_item
   tags: ["no_print"]
 
-- include_tasks: "layer.yml"
+- name: "{{ cloud_repos_title }} - local repos - pods"
+  include_tasks: "layer.yml"
   vars:
-    cloud_repos_layer_type: "pod"
     cloud_repos_layer_name: "{{ cloud_repos_item.name | default(cloud_repos_item) }}"
     cloud_repos_layer_key: "{{ cloud_repos_item.key | default(cloud_repos_item.name) | default(cloud_repos_item) }}"
     cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_key] }}"
     cloud_repos_layer_title: >-
-      {{ cloud_repos_title }} - pods - repositories - local (for remote) -
-      {{ cloud_repos_layer.repo }}
+      {{ cloud_repos_title }} - local repos - pod
+      [{{ cloud_repos_layer_name }} ({{ cloud_repos_layer.repo }})]
     cloud_repos_layer_dest: >-
       {{ cloud_repos_pods_dir + '/' + cloud_repos_layer_name }}
-    cloud_repos_layer_git_update: yes
-    cloud_repos_layer_dir_mode: "0755"
-    cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
-    cloud_repos_layer_local_dest_rel: >-
-      {{ cloud_repos_env_path_map[cloud_repos_layer.repo] | default('') }}
   loop: "{{ cloud_repos_pods_list }}"
   loop_control:
     loop_var: cloud_repos_item
-  when: cloud_repos_layer_local_dest_rel == ''
   tags: ["no_print"]
 
-- include_tasks: "layer.yml"
+- name: "{{ cloud_repos_title }} - local repos - apps"
+  include_tasks: "layer.yml"
   vars:
-    cloud_repos_layer_type: "pod"
-    cloud_repos_layer_name: "{{ cloud_repos_item }}"
-    cloud_repos_layer_key: "{{ cloud_repos_item }}"
-    cloud_repos_layer: "{{ cloud_repos_pods_dict[cloud_repos_layer_key] }}"
+    cloud_repos_layer: "{{ cloud_repos_item }}"
     cloud_repos_layer_title: >-
-      {{ cloud_repos_title }} - pods - repositories - local (for remote) -
-      {{ cloud_repos_layer.repo }}
-    cloud_repos_layer_local_dest_rel: >-
-      {{ cloud_repos_env_path_map[cloud_repos_layer.repo] | default('') }}
+      {{ cloud_repos_title }} - local repos - extra
+      [{{ cloud_repos_item.dir }} ({{ cloud_repos_item.repo }})]
     cloud_repos_layer_dest: >-
-      {{ cloud_repos_env_dev_pods_dir + '/' + cloud_repos_layer_local_dest_rel }}
-    cloud_repos_layer_git_update: no
-    cloud_repos_layer_dir_mode: "0777"
-    cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
-  loop: "{{ cloud_repos_local_pods | default([]) }}"
+      {{ cloud_repos_extra_repos_dir + '/' + cloud_repos_item.dir }}
+  loop: "{{ cloud_repos_ctx_extra_repos }}"
   loop_control:
     loop_var: cloud_repos_item
-  when: cloud_repos_layer_local_dest_rel != ''
-  tags: ["no_print"]
-
-- include_tasks: "layer.yml"
-  vars:
-    cloud_repos_layer_type: "app"
-    cloud_repos_layer_name: "{{ cloud_repos_item }}"
-    cloud_repos_layer: "{{ cloud_repos_apps_dict[cloud_repos_layer_name] }}"
-    cloud_repos_layer_title: >-
-      {{ cloud_repos_title }} - apps - repositories - local (for remote) -
-      {{ cloud_repos_layer.repo }}
-    cloud_repos_layer_local_dest_rel: >-
-      {{ cloud_repos_env_local_app_dict[cloud_repos_layer.repo] | default('') }}
-    cloud_repos_layer_dest: >-
-      {{ cloud_repos_env_dev_apps_dir + '/' + cloud_repos_layer_local_dest_rel }}
-    cloud_repos_layer_git_update: no
-    cloud_repos_layer_dir_mode: "0777"
-    cloud_repos_layer_become: "{{ cloud_repos_layer.root | default(false) }}"
-  loop: "{{ cloud_repos_local_apps | default([]) }}"
-  loop_control:
-    loop_var: cloud_repos_item
-  when: cloud_repos_layer_local_dest_rel != ''
   tags: ["no_print"]

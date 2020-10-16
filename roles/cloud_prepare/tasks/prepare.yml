@@ -12,17 +12,28 @@
     repo_title: "{{ cloud_prepare_inner_title }} - pod - repo"
     repo_main: "{{ cloud_prepare_pod_inner_repo }}"
     repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
-    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/repos/{{ cloud_prepare_pod.repo }}"
+    repo_secrets_dir: "{{ cloud_prepare_secrets_repos_dir }}/{{ cloud_prepare_pod.repo }}"
     repo_default_dir: "{{ cloud_prepare_repo_location }}"
-    repo_dev_base_dir: "{{ cloud_prepare_dev_pods_dir }}"
+    repo_dev_base_dir: "{{ cloud_prepare_dev_repos_dir }}"
     repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod.repo] | default('') }}"
-    repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
+    repo_dev: "{{ cloud_prepare_env_dev and (cloud_prepare_cloud.type == 'local') }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_repo_location"
   set_fact:
     cloud_prepare_repo_dir: "{{ repo_dir }}"
     cloud_prepare_git_result: "{{ repo_git_result }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_local_repo_dir"
+  set_fact:
+    cloud_prepare_local_repo_dir: "{{ cloud_prepare_local_pod_default_repo_dir }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_local_repo_dir (local)"
+  set_fact:
+    cloud_prepare_local_repo_dir: "{{ cloud_prepare_repo_dir }}"
+  when: cloud_prepare_cloud.type == 'local'
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_git_commit"
@@ -205,7 +216,7 @@
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_base_dir_rel"
   set_fact:
-    cloud_prepare_base_dir_rel: "{{ cloud_prepare_dev_pods_dir | relpath(cloud_prepare_repo_dir) }}"
+    cloud_prepare_base_dir_rel: "{{ cloud_prepare_dev_repos_dir | relpath(cloud_prepare_repo_dir) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_data_dir"

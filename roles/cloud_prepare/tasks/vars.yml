@@ -1,7 +1,7 @@
 - name: "{{ cloud_prepare_inner_vars_title }} - cloud_prepare_vars_tpl_src"
   set_fact:
     cloud_prepare_vars_tpl_src: >-
-      {{ cloud_prepare_local_pod_repo }}/{{ ''
+      {{ cloud_prepare_local_repo_dir }}/{{ ''
       }}{{ cloud_prepare_inner_vars_ctx.name }}
   tags: ["no_print"]
 

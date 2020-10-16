@@ -136,7 +136,7 @@
       }}
   vars:
     cloud_prepare_transfer_item_src_local_full: >-
-      {{ cloud_prepare_local_pod_repo }}/{{ cloud_prepare_transfer_item.src }}
+      {{ cloud_prepare_local_repo_dir }}/{{ cloud_prepare_transfer_item.src }}
     cloud_prepare_transfer_item_dest_rel: >-
       {{ cloud_prepare_transfer_item.dest | default(cloud_prepare_transfer_item.src) }}
     cloud_prepare_transfer_item_dest_full: >-

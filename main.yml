@@ -341,14 +341,15 @@
         cloud_repos_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
         cloud_repos_nodes_dict: "{{ env.nodes | default({}) }}"
         cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
-        cloud_repos_apps_dict: "{{ env.apps | default({}) }}"
+        cloud_repos_ctx_extra_repos: "{{ env.main[env_ctx].extra_repos | default([]) }}"
         cloud_repos_repos_dict: "{{ env.repos | default({}) }}"
         cloud_repos_env_path_map: "{{ env_path_map }}"
         cloud_repos_env_dir: "{{ env_dir }}"
         cloud_repos_pods_dir: "{{ env_ctx_dir }}/pods"
-        cloud_repos_env_dev_pods_dir: "{{ env_dev_repos_dir }}"
-        cloud_repos_env_dev_apps_dir: "{{ env_dev_repos_dir }}"
-        cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}/cloud/repos"
+        cloud_repos_extra_repos_dir: "{{ env_ctx_dir }}/extra-repos"
+        cloud_repos_dev_repos_dir: "{{ env_dev_repos_dir }}"
+        cloud_repos_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+        cloud_repos_env_dev: "{{ env_dev }}"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_local_prepare }}"
@@ -411,7 +412,7 @@
         cloud_prepare_repos_dict: "{{ env.repos }}"
         cloud_prepare_env_dir: "{{ env_dir }}"
         cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
-        cloud_prepare_local_pod_repo_base: "{{ env_ctx_dir }}/pods"
+        cloud_prepare_local_pods_base_dir: "{{ env_ctx_dir }}/pods"
         cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
         cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
         cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
@@ -422,8 +423,9 @@
           (ansible_connection == 'local') |
           ternary(env_local_data_dir | default(''), '')
           }}
-        cloud_prepare_dev_pods_dir: "{{ env_dev_repos_dir }}"
-        cloud_prepare_secrets_pod_dir: "{{ env_secrets_ctx_dir }}/pods"
+        cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
+        cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+        cloud_prepare_env_dev: "{{ env_dev }}"
         cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
       loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
       loop_control:
