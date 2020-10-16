@@ -1,6 +1,6 @@
 - name: >-
     {{ cloud_prepare_inner_title }} -
-    environment pod ({{ cloud_prepare_pod_inner_env_repo_name }}) - repo (outer)"
+    environment pod ({{ cloud_prepare_pod_inner_env_repo_name }}) - repo (outer)
   include_tasks: "tasks/repo.yml"
   vars:
     repo_title: >-
@@ -9,17 +9,19 @@
     repo_main: "{{ cloud_prepare_pod_inner_env_repo }}"
     repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
     repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/repos/{{ cloud_prepare_pod_inner_item.repo }}"
-    repo_default_dir: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dir }}"
+    repo_default_dir: "{{ cloud_prepare_repo_dir }}/{{ cloud_prepare_pod_inner_item.dir }}"
     repo_dev_base_dir: "{{ cloud_prepare_dev_pods_dir }}"
     repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod_inner_item.repo] | default('') }}"
     repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_git_result"
+  set_fact:
     cloud_prepare_git_result: "{{ repo_git_result }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_env_repos_commits"
+  set_fact:
     cloud_prepare_env_repos_commits: >-
       {{
         cloud_prepare_env_repos_commits +

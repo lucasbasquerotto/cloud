@@ -20,7 +20,8 @@
 
 ### Set vars ###
 
-- set_fact:
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_tmp_location"
+  set_fact:
     cloud_prepare_tmp_location: >-
       {{
         cloud_prepare_pod.flat | default(false) | bool | ternary(
@@ -28,14 +29,18 @@
           cloud_prepare_pod_base_dir + '/tmp/cloud'
         )
       }}
-  when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location"
+  set_fact:
     cloud_prepare_main_repo_location: >-
       {{ cloud_prepare_pod_base_dir
       }}{{ cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
     cloud_prepare_tmp_repo_location: "{{ cloud_prepare_tmp_location + '/main' }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_backup_file"
+  set_fact:
     cloud_prepare_backup_file: >-
       {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
     cloud_prepare_backup_file_tmp: >-
@@ -43,17 +48,15 @@
   when: cloud_prepare_cloud.type != 'local'
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_owner"
+  set_fact:
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
     cloud_prepare_pod_data_dir: >-
       {{
-        (cloud_prepare_cloud.type != 'local') | ternary(
-          cloud_prepare_pod.flat | default(false) | bool | ternary(
-            cloud_prepare_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname,
-            cloud_prepare_pod_base_dir + '/data'
-          ),
-          cloud_prepare_pod_local_data_dir_rel
+        cloud_prepare_pod.flat | default(false) | bool | ternary(
+          cloud_prepare_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname,
+          cloud_prepare_pod_base_dir + '/data'
         )
       }}
   tags: ["no_print"]
@@ -91,11 +94,13 @@
 
 ### Define the environment variables ###
 - block:
-    - set_fact:
+    - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_env_vars"
+      set_fact:
         cloud_prepare_env_vars: []
       tags: ["no_print"]
 
-    - set_fact:
+    - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_env_vars - remote"
+      set_fact:
         cloud_prepare_env_vars:
           - name: "BASE_DIR"
             value: "{{ cloud_prepare_pod_base_dir }}"

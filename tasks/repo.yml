@@ -47,3 +47,12 @@
     dest: "{{ repo_default_dir }}"
     state: link
   when: repo_dir != repo_default_dir
+
+- debug:
+    var: repo_default_dir
+
+- debug:
+    var: repo_dir
+
+- debug:
+    var: repo_dir | relpath(repo_default_dir | dirname)

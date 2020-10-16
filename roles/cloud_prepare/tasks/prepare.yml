@@ -1,6 +1,7 @@
 ### Create / Update the repository ###
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_inner_repo"
+  set_fact:
     cloud_prepare_pod_inner_repo: >-
       {{ cloud_prepare_repos_dict[cloud_prepare_pod.repo] }}
   tags: ["no_print"]
@@ -18,19 +19,21 @@
     repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
   tags: ["no_print"]
 
-- set_fact:
-    cloud_prepare_repo_location: "{{ repo_dir }}"
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_repo_location"
+  set_fact:
+    cloud_prepare_repo_dir: "{{ repo_dir }}"
     cloud_prepare_git_result: "{{ repo_git_result }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_git_commit"
+  set_fact:
     cloud_prepare_git_commit: "{{ cloud_prepare_git_result.after }}"
-    cloud_prepare_pod_env_dir: "{{ cloud_prepare_pod.env_dir | default('env') }}"
   tags: ["no_print"]
 
 ### Create the environment pod repositories in the env folders (when defined) ###
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_env_repos_commits"
+  set_fact:
     cloud_prepare_env_repos_commits: []
   tags: ["no_print"]
 
@@ -61,7 +64,8 @@
     params_mixer_params_dict: "{{ cloud_prepare_credentials_dict }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_credentials"
+  set_fact:
     cloud_prepare_inner_credentials: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
@@ -78,7 +82,8 @@
     params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_params"
+  set_fact:
     cloud_prepare_inner_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
@@ -113,11 +118,13 @@
     params_mixer_params_dict: "{{ cloud_prepare_node_params_dict }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_ctx_params"
+  set_fact:
     cloud_prepare_inner_node_ctx_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_params"
+  set_fact:
     cloud_prepare_inner_node_params: >-
       {{ cloud_prepare_inner_node_params | combine(cloud_prepare_inner_node_ctx_params) }}
   tags: ["no_print"]
@@ -136,11 +143,13 @@
     params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_pod_params"
+  set_fact:
     cloud_prepare_inner_node_pod_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_params"
+  set_fact:
     cloud_prepare_inner_params: >-
       {{ cloud_prepare_inner_params | combine(cloud_prepare_inner_node_pod_params) }}
   tags: ["no_print"]
@@ -160,11 +169,13 @@
         params_mixer_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
       tags: ["no_print"]
 
-    - set_fact:
+    - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_ctx_params"
+      set_fact:
         cloud_prepare_inner_ctx_params: "{{ params_mixer_params }}"
       tags: ["no_print"]
 
-    - set_fact:
+    - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_ctx_params"
+      set_fact:
         cloud_prepare_inner_params: >-
           {{ cloud_prepare_inner_params | combine(cloud_prepare_inner_ctx_params) }}
       tags: ["no_print"]
@@ -172,7 +183,8 @@
   when: (cloud_prepare_node_info_pod_params | dict2items | length) > 0
   tags: ["no_print_skipped"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_node_size"
+  set_fact:
     cloud_prepare_node_size: >-
       {{
         (cloud_prepare_inner_node_params.meta.use_dict | default(false) | bool) | ternary(
@@ -184,18 +196,26 @@
       }}
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_pod_params"
+  set_fact:
     cloud_prepare_inner_node_pod_params:
       size: "{{ cloud_prepare_node_size }}"
       node_pod_params: "{{ cloud_prepare_inner_node_params | default({}) }}"
   tags: ["no_print"]
 
-- set_fact:
-    cloud_prepare_inner_dirs:
-      base_dir_rel: "{{ cloud_prepare_base_dir_rel }}"
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_base_dir_rel"
+  set_fact:
+    cloud_prepare_base_dir_rel: "{{ cloud_prepare_dev_pods_dir | relpath(cloud_prepare_repo_dir) }}"
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_data_dir"
+  set_fact:
+    cloud_prepare_pod_data_dir: "{{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}"
+  when: cloud_prepare_cloud.type == 'local'
+  tags: ["no_print"]
+
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_params_pod"
+  set_fact:
     cloud_prepare_params_pod:
       identifier: "{{ cloud_prepare_pod_identifier }}"
       name: "{{ cloud_prepare_pod_name }}"
@@ -203,9 +223,8 @@
       git_commit: "{{ cloud_prepare_git_commit }}"
       repo_name: "{{ cloud_prepare_env_name }}"
       env_path_map: "{{ cloud_prepare_env_path_map }}"
-      repo: "{{ cloud_prepare_pod_inner_repo }}"
-      env_dir: "{{ cloud_prepare_pod_env_dir }}"
-      repo_location: "{{ cloud_prepare_repo_location }}"
+      repo_location: "{{ cloud_prepare_repo_dir }}"
+      base_dir_rel: "{{ cloud_prepare_base_dir_rel }}"
       data_dir: "{{ cloud_prepare_pod_data_dir }}"
       local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
       env_cmd: "{{ cloud_prepare_env_cmd }}"
@@ -214,18 +233,15 @@
 
 ### Generate a file with the environment variables and state (for idempotence) ###
 
-- set_fact:
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_vars_full"
+  set_fact:
     cloud_prepare_vars_full:
       env_project: "{{ cloud_prepare_env_project }}"
       env_name: "{{ cloud_prepare_env_name }}"
       ctx_name: "{{ cloud_prepare_ctx_name }}"
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
-      pod_info: "{{ cloud_prepare_pod_info }}"
-      node: "{{ cloud_prepare_inner_node_pod_params }}"
-      node_info_pod_params: "{{ cloud_prepare_node_info_pod_params }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
-      dirs: "{{ cloud_prepare_inner_dirs }}"
       dependencies: "{{ cloud_prepare_dependencies }}"
       dependencies_node_ip_dict: "{{ cloud_prepare_dependencies_ip_dict }}"
       dependencies_node_ips_dict: "{{ cloud_prepare_dependencies_ips_dict }}"

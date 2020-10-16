@@ -135,7 +135,7 @@
 
         - name: "{{ project_env_title }} - set_fact - project_env_base_dir"
           set_fact:
-            project_env_base_dir: "{{ project_env_dir +'/' + project_env.env.repo_dir }}"
+            project_env_base_dir: "{{ project_env_dir + '/' + project_env.env.repo_dir }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - env base - repo (outer)"
