@@ -1,31 +1,31 @@
-- name: "{{ cloud_prepare_inner_title }} - environment pod repository"
-  include_tasks: "git.yml"
+- name: >-
+    {{ cloud_prepare_inner_title }} -
+    environment pod ({{ cloud_prepare_pod_inner_env_repo_name }}) - repo (outer)"
+  include_tasks: "tasks/repo.yml"
   vars:
-    git_title: >-
+    repo_title: >-
       {{ cloud_prepare_inner_title }} -
-      environment pod repository
-      ({{ cloud_prepare_repo_location }}/{{
-      cloud_prepare_pod_inner_item.dir | default('') }})
-    git_repo: "{{ cloud_prepare_pod_inner_env_repo }}"
-    git_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
-    git_secrets_dir: >-
-      {{ cloud_prepare_pod_base_dir }}/tmp/cloud/repo/{{ cloud_prepare_pod_inner_item.repo }}
-    git_repo_dir: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dir }}"
-    git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
-    git_dev: "{{ env_dev }}"
+      environment pod ({{ cloud_prepare_pod_inner_env_repo_name }}) - repo
+    repo_main: "{{ cloud_prepare_pod_inner_env_repo }}"
+    repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
+    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/{{ cloud_prepare_pod_inner_item.repo }}"
+    repo_default_dir: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dir }}"
+    repo_dev_base_dir: "{{ cloud_prepare_dev_pods_dir }}"
+    repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod_inner_item.repo] | default('') }}"
+    repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
   tags: ["no_print"]
 
 - set_fact:
-    cloud_prepare_git_result: "{{ git_result }}"
+    cloud_prepare_git_result: "{{ repo_git_result }}"
   tags: ["no_print"]
 
 - set_fact:
     cloud_prepare_env_repos_commits: >-
       {{
-      cloud_prepare_env_repos_commits +
-      [{
-      'repo': cloud_prepare_pod_inner_item.repo,
-      'commit': cloud_prepare_git_result.after
-      }]
+        cloud_prepare_env_repos_commits +
+        [{
+          'repo': cloud_prepare_pod_inner_item.repo,
+          'commit': cloud_prepare_git_result.after
+        }]
       }}
   tags: ["no_print"]

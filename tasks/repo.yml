@@ -36,6 +36,11 @@
     git_dev: "{{ repo_dev }}"
   tags: ["no_print"]
 
+- name: "{{ repo_title }} - git_result"
+  set_fact:
+    repo_git_result: "{{ git_result }}"
+  tags: ["no_print"]
+
 - name: "{{ repo_title }} - create symbolic link"
   file:
     src: "{{ repo_dir | relpath(repo_default_dir | dirname) }}"

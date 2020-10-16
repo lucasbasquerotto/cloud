@@ -346,8 +346,8 @@
         cloud_repos_env_path_map: "{{ env_path_map }}"
         cloud_repos_env_dir: "{{ env_dir }}"
         cloud_repos_pods_dir: "{{ env_ctx_dir }}/pods"
-        cloud_repos_env_dev_apps_dir: "{{ env_dev_apps_dir }}"
-        cloud_repos_env_dev_pods_dir: "{{ env_dev_pods_dir }}"
+        cloud_repos_env_dev_pods_dir: "{{ env_dev_repos_dir }}"
+        cloud_repos_env_dev_apps_dir: "{{ env_dev_repos_dir }}"
         cloud_repos_env_tmp_dir: "{{ env_tmp_dir }}/cloud/repos"
 
     - name: "{{ env_title }}"
@@ -422,9 +422,9 @@
           (ansible_connection == 'local') |
           ternary(env_local_data_dir | default(''), '')
           }}
-        cloud_prepare_env_dev_pods_dir: "{{ env_dev_pods_dir }}"
+        cloud_prepare_dev_pods_dir: "{{ env_dev_repos_dir }}"
+        cloud_prepare_secrets_pod_dir: "{{ env_secrets_pod_dir }}"
         cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
-        cloud_prepare_base_dir_rel: "../.."
       loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
       loop_control:
         loop_var: main_item

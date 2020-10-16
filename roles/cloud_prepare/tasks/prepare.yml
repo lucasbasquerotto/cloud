@@ -1,35 +1,26 @@
 ### Create / Update the repository ###
 
-- name: "{{ cloud_prepare_inner_title }} - create the repo directory"
-  become: "{{ cloud_prepare_pod.root }}"
-  file:
-    path: "{{ cloud_prepare_repo_location }}"
-    state: directory
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
-  tags: ["no_print_skipped"]
-
 - set_fact:
     cloud_prepare_pod_inner_repo: >-
       {{ cloud_prepare_repos_dict[cloud_prepare_pod.repo] }}
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - pod repository"
-  include_tasks: "git.yml"
+- name: "{{ cloud_prepare_inner_title }} - pod - repo (outer)"
+  include_tasks: "tasks/repo.yml"
   vars:
-    git_title: >-
-      {{ cloud_prepare_inner_title }} - update the repo directory
-      ({{ cloud_prepare_pod.repo }})
-    git_repo: "{{ cloud_prepare_pod_inner_repo }}"
-    git_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
-    git_secrets_dir: >-
-      {{ cloud_prepare_pod_base_dir }}/tmp/repo/{{ cloud_prepare_pod.repo }}
-    git_repo_dir: "{{ cloud_prepare_repo_location }}"
-    git_update: "{{ cloud_prepare_cloud.type != 'local' }}"
-    git_dev: "{{ env_dev }}"
+    repo_title: "{{ cloud_prepare_inner_title }} - pod - repo"
+    repo_main: "{{ cloud_prepare_pod_inner_repo }}"
+    repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
+    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/{{ cloud_prepare_pod.repo }}"
+    repo_default_dir: "{{ cloud_prepare_repo_location }}"
+    repo_dev_base_dir: "{{ cloud_prepare_dev_pods_dir }}"
+    repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod.repo] | default('') }}"
+    repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
   tags: ["no_print"]
 
 - set_fact:
-    cloud_prepare_git_result: "{{ git_result }}"
+    cloud_prepare_repo_location: "{{ repo_dir }}"
+    cloud_prepare_git_result: "{{ repo_git_result }}"
   tags: ["no_print"]
 
 - set_fact:
@@ -46,6 +37,7 @@
 - name: "{{ cloud_prepare_inner_title }}"
   include_tasks: "env_repos.yml"
   vars:
+    cloud_prepare_pod_inner_env_repo_name: "{{ cloud_prepare_pod_inner_item.repo }}"
     cloud_prepare_pod_inner_env_repo: >-
       {{ cloud_prepare_repos_dict[cloud_prepare_pod_inner_item.repo] }}
   loop: "{{ cloud_prepare_pod.env_repos | default([]) }}"
@@ -55,16 +47,6 @@
   tags: ["no_print"]
 
 ### Generate the environment pod context variables ###
-
-- set_fact:
-    cloud_prepare_dest_dir_base: >-
-      {{ cloud_prepare_pod_env_dir }}/{{ cloud_prepare_pod_identifier }}
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_prepare_dest_dir_base_full: >-
-      {{ cloud_prepare_repo_location }}/{{ cloud_prepare_dest_dir_base }}
-  tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate credentials params (outer)"
   include_tasks: "tasks/params_mixer.yml"
@@ -211,9 +193,6 @@
 - set_fact:
     cloud_prepare_inner_dirs:
       base_dir_rel: "{{ cloud_prepare_base_dir_rel }}"
-      apps_dir_base: "{{ cloud_prepare_base_dir_rel }}/apps"
-      dest_dir_base: "{{ cloud_prepare_dest_dir_base }}"
-      dest_dir_base_full: "{{ cloud_prepare_dest_dir_base_full }}"
   tags: ["no_print"]
 
 - set_fact:
@@ -368,7 +347,7 @@
         cloud_prepare_vars_templates: []
         cloud_prepare_vars_env_files: []
         cloud_prepare_vars_env_templates: []
-        cloud_prepare_dir_list: ["{{ cloud_prepare_dest_dir_base_full }}"]
+        cloud_prepare_dir_list: []
       tags: ["no_print"]
 
     - block:
