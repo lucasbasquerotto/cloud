@@ -16,7 +16,7 @@
   tags: ["no_print"]
 
 - name: >-
-    {{ git_title }} - create the default base directory
+    {{ repo_title }} - create the default base directory
     ({{ repo_default_dir | dirname }})
   file:
     path: "{{ repo_default_dir | dirname }}"

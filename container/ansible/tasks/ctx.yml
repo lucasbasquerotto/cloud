@@ -8,7 +8,7 @@
 
 - name: "{{ project_ctx_title }} - project_ctx_path_map_repos"
   set_fact:
-    project_ctx_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
+    project_ctx_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
   tags: ["no_print"]
 
 # ctx - cloud repository
@@ -93,7 +93,7 @@
   file:
     path: "{{ project_ctx_base_dir }}"
     state: directory
-    mode: "{{ env_dev | bool | ternary(0775, 0755) }}"
+    mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 
 - name: "{{ project_ctx_title }} - project_ctx_params"
   set_fact:
@@ -120,7 +120,7 @@
     content: >-
       {{
         project_ctx_params
-        | combine( 'env_params': project_env_init.env_params | default({}) )
+        | combine({ 'env_params': project_env_init.env_params | default({}) })
         | to_nice_yaml
       }}
     dest: "{{ project_ctx_base_dir }}/vars.yml"
