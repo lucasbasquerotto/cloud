@@ -54,10 +54,10 @@
       set_fact:
         project_env_dir: >-
           {{
-            (env_dev and ((project_env_init.params.path_env | default('')) != ''))
+            (env_dev and ((project_env_init.path_params.path_env | default('')) != ''))
             | ternary(
               project_dev_repos_dir + '/'
-                + (project_env_init.params.path_env | default('')),
+                + (project_env_init.path_params.path_env | default('')),
               project_base_dir + '/env'
             )
           }}
@@ -101,7 +101,14 @@
     - name: "{{ project_env_title }} - load the environment vars"
       include_vars:
         file: "{{ project_env_file }}"
-        name: project_env
+        name: project_env_aux
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - project_env"
+      set_fact:
+        project_env: "{{ project_env_aux }}"
+      vars:
+        params: "{{ project_env_init.env_params | default({}) }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - validate ctxs"
@@ -140,7 +147,7 @@
             repo_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
             repo_default_dir: "{{ project_env_base_dir }}"
             repo_dev_base_dir: "{{ project_dev_repos_dir }}"
-            repo_dev_path: "{{ project_env_init.params.path_env_base | default('') }}"
+            repo_dev_path: "{{ project_env_init.path_params.path_env_base | default('') }}"
             repo_dev: "{{ env_dev }}"
           tags: ["no_print"]
 
@@ -253,15 +260,15 @@
         mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
       vars:
         project_ssh_ctxs: "{{ project_env.ctxs }}"
-        project_ssh_default_ctx: "{{ project_env_init.params.default_ctx | default('') }}"
-        project_ssh_default_node: "{{ project_env_init.params.default_node | default('') }}"
+        project_ssh_default_ctx: "{{ project_env_init.env_params.default_ctx | default('') }}"
+        project_ssh_default_node: "{{ project_env_init.env_params.default_node | default('') }}"
 
     # ctxs
 
     - name: "{{ project_title }} - project_ctxs_title"
       set_fact:
         project_ctxs_title: "{{ project_title }} - ctxs"
-        project_path_map_repos: "{{ project_env_init.params.path_map_repos | default({}) }}"
+        project_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
         project_path_map_file_rel: "path-map.yml"
       tags: ["no_print"]
 

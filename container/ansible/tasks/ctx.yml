@@ -117,7 +117,12 @@
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"
   copy:
-    content: "{{ project_ctx_params | to_nice_yaml }}"
+    content: >-
+      {{
+        project_ctx_params
+        | combine( 'env_params': project_env_init.env_params | default({}) )
+        | to_nice_yaml
+      }}
     dest: "{{ project_ctx_base_dir }}/vars.yml"
     mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
 

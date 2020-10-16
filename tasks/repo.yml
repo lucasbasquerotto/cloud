@@ -1,6 +1,6 @@
 - name: "{{ repo_title }} - repo_dir_dev"
   set_fact:
-    repo_dir_dev: "{{ repo_dev and ((repo_dev_path | default('')) != '') }}"
+    repo_dir_dev: "{{ (repo_dev | bool) and ((repo_dev_path | default('')) != '') }}"
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - repo_dir"
