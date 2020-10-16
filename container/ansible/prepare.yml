@@ -14,7 +14,7 @@
         project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
         project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
         project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
-        project_dev_repos_dir: "{{ project_base_dir }}/dev"
+        project_dev_repos_dir: "{{ project_base_dir }}/dev/link"
       tags: ["no_print"]
 
     - name: "{{ project_base_title }} - load the init environment vars"
@@ -126,7 +126,7 @@
           when: (project_env.env.repo_dir | default('')) == ''
           tags: ["no_print"]
 
-        - name: "{{ project_env_title }} - set_fact - project_env_file_rel"
+        - name: "{{ project_env_title }} - set_fact - project_env_base_dir"
           set_fact:
             project_env_base_dir: "{{ project_env_dir +'/' + project_env.env.repo_dir }}"
           tags: ["no_print"]

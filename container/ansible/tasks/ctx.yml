@@ -53,6 +53,11 @@
     repo_dev: "{{ env_dev }}"
   tags: ["no_print"]
 
+- name: "{{ project_env_title }} - set_fact - project_ctx_cloud_repo_dir"
+  set_fact:
+    project_ctx_cloud_repo_dir: "{{ repo_dir }}"
+  tags: ["no_print"]
+
 - name: "{{ project_ctx_title }} - env repos (outer)"
   include_tasks: "external-tasks/repo.yml"
   vars:
