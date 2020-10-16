@@ -423,7 +423,7 @@
           ternary(env_local_data_dir | default(''), '')
           }}
         cloud_prepare_dev_pods_dir: "{{ env_dev_repos_dir }}"
-        cloud_prepare_secrets_pod_dir: "{{ env_secrets_pod_dir }}"
+        cloud_prepare_secrets_pod_dir: "{{ env_secrets_ctx_dir }}/pods"
         cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
       loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
       loop_control:

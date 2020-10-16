@@ -11,7 +11,7 @@
     repo_title: "{{ cloud_prepare_inner_title }} - pod - repo"
     repo_main: "{{ cloud_prepare_pod_inner_repo }}"
     repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
-    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/{{ cloud_prepare_pod.repo }}"
+    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/repos/{{ cloud_prepare_pod.repo }}"
     repo_default_dir: "{{ cloud_prepare_repo_location }}"
     repo_dev_base_dir: "{{ cloud_prepare_dev_pods_dir }}"
     repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod.repo] | default('') }}"

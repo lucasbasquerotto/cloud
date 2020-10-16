@@ -14,8 +14,6 @@
         project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
         project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
         project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
-        project_secrets_pod_dir: "{{ project_base_dir }}/secrets/pod"
-        project_secrets_app_dir: "{{ project_base_dir }}/secrets/app"
         project_dev_repos_dir: "{{ project_base_dir }}/dev/link"
       tags: ["no_print"]
 

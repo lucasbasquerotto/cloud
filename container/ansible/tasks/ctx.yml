@@ -81,9 +81,6 @@
     repo_secrets_dir: "{{ project_ctx_secrets_dir + '/' + project_ctx_item.dir }}"
     repo_default_dir: "{{ project_ctx_cloud_repo_dir + '/' + project_ctx_item.dir }}"
     repo_dev_base_dir: "{{ project_dev_repos_dir }}"
-    secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
-    secrets_pod_dir: "{{ project_secrets_pod_dir }}"
-    secrets_app_dir: "{{ project_secrets_app_dir }}"
     repo_dev_path: "{{ project_ctx_path_cloud_env_repo }}"
     repo_dev: "{{ env_dev }}"
   loop: "{{ project_ctx_cloud_env_repos }}"
@@ -114,6 +111,8 @@
       ssh_file: "{{ project_ssh_file }}"
       path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
       dev_repos_dir: "{{ project_dev_repos_dir }}"
+      secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
+      secrets_ctx_dir: "{{ project_secrets_cloud_dir }}/ctxs/{{ project_ctx_key }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"

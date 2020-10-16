@@ -8,7 +8,7 @@
       environment pod ({{ cloud_prepare_pod_inner_env_repo_name }}) - repo
     repo_main: "{{ cloud_prepare_pod_inner_env_repo }}"
     repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
-    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/{{ cloud_prepare_pod_inner_item.repo }}"
+    repo_secrets_dir: "{{ cloud_prepare_secrets_pod_dir }}/repos/{{ cloud_prepare_pod_inner_item.repo }}"
     repo_default_dir: "{{ cloud_prepare_repo_location }}/{{ cloud_prepare_pod_inner_item.dir }}"
     repo_dev_base_dir: "{{ cloud_prepare_dev_pods_dir }}"
     repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod_inner_item.repo] | default('') }}"
