@@ -52,7 +52,7 @@ else
     fi
 
 	# Prepare the cloud contexts
-	ansible-playbook \
+	ANSIBLE_CONFIG=/usr/main/ansible/ansible.cfg ansible-playbook \
 		${prepare_args[@]+"${prepare_args[@]}"} \
 		${vault[@]+"${vault[@]}"} \
 		${debug[@]+"${debug[@]}"} \

@@ -62,7 +62,7 @@ else
     fi
 
 	# Prepare the cloud context
-	ansible-playbook \
+	ANSIBLE_CONFIG=ansible.cfg ansible-playbook \
 		${prepare_args[@]+"${prepare_args[@]}"} \
 		${vault[@]+"${vault[@]}"} \
 		${debug[@]+"${debug[@]}"} \
@@ -78,7 +78,7 @@ else
     var_ctx_dir="$ctx_dir"
 
     # Execute the cloud context
-    ansible-playbook \
+    ANSIBLE_CONFIG=ansible.cfg ansible-playbook \
         ${vault[@]+"${vault[@]}"} \
         ${debug[@]+"${debug[@]}"} \
         -i "$var_ctx_dir/hosts" \
