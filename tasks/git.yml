@@ -3,10 +3,10 @@
     msg: "{{ git_item }} not specified"
   when: lookup('vars', git_item, default='') == ''
   loop:
-  - "git_title"
-  - "git_repo"
-  - "git_repo_dir"
-  - "git_update"
+    - "git_title"
+    - "git_repo"
+    - "git_repo_dir"
+    - "git_update"
   loop_control:
     loop_var: git_item
   tags: ["no_print"]
@@ -19,8 +19,8 @@
     and
     (lookup('vars', git_item, default='') == '')
   loop:
-  - "git_ssh_src_dir"
-  - "git_secrets_dir"
+    - "git_ssh_src_dir"
+    - "git_secrets_dir"
   loop_control:
     loop_var: git_item
   tags: ["no_print"]
@@ -30,8 +30,8 @@
     msg: "{{ git_item }} not specified in git_repo"
   when: (git_repo[git_item] | default('')) == ''
   loop:
-  - "src"
-  - "version"
+    - "src"
+    - "version"
   loop_control:
     loop_var: git_item
   tags: ["no_print"]
@@ -49,12 +49,12 @@
   file:
     path: "{{ git_item.dir }}"
     state: directory
-    mode: "{{ git_dev | default(false) | bool | ternary(0775, 0755) }}"
+    mode: "{{ git_dev | default(false) | bool | ternary(0777, 0755) }}"
   when: git_item.when | default(true) | bool
   loop:
-  - { dir: "{{ git_ssh_src_dir }}", when: "{{ git_ssh_file != '' }}" }
-  - { dir: "{{ git_secrets_dir }}", when: "{{ git_ssh_file != '' }}" }
-  - { dir: "{{ git_repo_dir }}" }
+    - { dir: "{{ git_ssh_src_dir }}", when: "{{ git_ssh_file != '' }}" }
+    - { dir: "{{ git_secrets_dir }}", when: "{{ git_ssh_file != '' }}" }
+    - { dir: "{{ git_repo_dir }}" }
   loop_control:
     loop_var: git_item
     label: "{{ git_item.dir }}"

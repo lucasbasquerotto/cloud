@@ -126,43 +126,23 @@
           when: (project_env.env.repo_dir | default('')) == ''
           tags: ["no_print"]
 
-        - name: "{{ project_env_title }} - project_env_base_dir"
+        - name: "{{ project_env_title }} - set_fact - project_env_file_rel"
           set_fact:
-            project_env_base_dir_dev: "{{ env_dev and ((project_env_init.params.path_env_base | default('')) != '') }}"
-            project_env_base_dir_link: "{{ project_env_dir +'/' + project_env.env.repo_dir }}"
+            project_env_base_dir: "{{ project_env_dir +'/' + project_env.env.repo_dir }}"
           tags: ["no_print"]
 
-        - name: "{{ project_env_title }} - project_env_base_dir"
-          set_fact:
-            project_env_base_dir: >-
-              {{
-                project_env_base_dir_dev | bool
-                | ternary(
-                  project_dev_repos_dir + '/'
-                    + (project_env_init.params.path_env_base | default('')),
-                  project_env_dir +'/' + project_env.env.repo_dir
-                )
-              }}
-          tags: ["no_print"]
-
-        - name: "{{ project_env_title }} - git env base (main)"
-          include_tasks: "tasks/git.yml"
+        - name: "{{ project_env_title }} - env base - repo (outer)"
+          include_tasks: "external-tasks/repo.yml"
           vars:
-            git_title: "{{ project_env_title }} - git env base"
-            git_repo: "{{ project_env.env.repo }}"
-            git_ssh_src_dir: "{{ project_env_dir }}"
-            git_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
-            git_repo_dir: "{{ project_env_base_dir }}"
-            git_update: "{{ not (env_dev | bool) }}"
-            git_dev: "{{ env_dev }}"
+            repo_title: "{{ project_env_title }} - env base - repo"
+            repo_main: "{{ project_env.env.repo }}"
+            repo_ssh_src_dir: "{{ project_env_dir }}"
+            repo_secrets_dir: "{{ project_secrets_ctl_dir }}/env-base"
+            repo_default_dir: "{{ project_env_base_dir }}"
+            repo_dev_base_dir: "{{ project_dev_repos_dir }}"
+            repo_dev_path: "{{ project_env_init.params.path_env_base | default('') }}"
+            repo_dev: "{{ env_dev }}"
           tags: ["no_print"]
-
-        - name: "{{ project_env_title }} - create symbolic link (env base)"
-          file:
-            src: "{{ project_env_base_dir | relpath(project_env_base_dir_link | dirname) }}"
-            dest: "{{ project_env_base_dir_link }}"
-            state: link
-          when: project_env_base_dir != project_env_base_dir_link
 
         - name: "{{ project_env_title }} - load the base environment vars"
           include_vars:
