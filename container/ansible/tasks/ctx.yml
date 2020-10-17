@@ -109,6 +109,7 @@
         {{ project_ctx_cloud_repo_dir }}/{{ project_ctx_main.run_file | default('run') }}
       vault_file: "{{ project_secrets_ctl_dir }}/vault"
       ssh_file: "{{ project_ssh_file }}"
+      env_params_file: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
       path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
       dev_repos_dir: "{{ project_dev_repos_dir }}"
       secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
@@ -117,12 +118,7 @@
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"
   copy:
-    content: >-
-      {{
-        project_ctx_params
-        | combine({ 'env_params': project_env_init.env_params | default({}) })
-        | to_nice_yaml
-      }}
+    content: "{{ project_ctx_params | to_nice_yaml }}"
     dest: "{{ project_ctx_base_dir }}/vars.yml"
     mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
 

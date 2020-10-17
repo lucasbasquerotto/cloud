@@ -268,9 +268,17 @@
     - name: "{{ project_title }} - project_ctxs_title"
       set_fact:
         project_ctxs_title: "{{ project_title }} - ctxs"
+        project_env_params: "{{ project_env_init.env_params | default({}) }}"
+        project_env_params_file_rel: "env-params.yml"
         project_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
         project_path_map_file_rel: "path-map.yml"
       tags: ["no_print"]
+
+    - name: "{{ project_ctxs_title }} - create the config file with the ctl env params"
+      copy:
+        content: "{{ project_env_params | to_nice_yaml }}"
+        dest: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
+        mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
 
     - name: "{{ project_ctxs_title }} - create the config file with the repo path maps"
       copy:
