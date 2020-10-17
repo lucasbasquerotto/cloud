@@ -1,3 +1,8 @@
-*
-!/container/*
-!/tasks/*
+#*
+#!/container/*
+#!/tasks/*
+
+/callback_plugins/
+/library/
+/roles/
+/templates/
