@@ -216,12 +216,17 @@
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_base_dir_rel"
   set_fact:
-    cloud_prepare_base_dir_rel: "{{ cloud_prepare_dev_repos_dir | relpath(cloud_prepare_repo_dir) }}"
+    cloud_prepare_base_dir_rel: >-
+      {{ cloud_prepare_dev_repos_dir | relpath(cloud_prepare_repo_dir) }}
+    cloud_prepare_pod_extra_repos_dir: ""
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_data_dir"
   set_fact:
-    cloud_prepare_pod_data_dir: "{{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}"
+    cloud_prepare_pod_data_dir: >-
+      {{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}
+    cloud_prepare_pod_extra_repos_dir: >-
+      {{ (env_local_extra_repos_dir | relpath(cloud_prepare_repo_dir)) }}
   when: cloud_prepare_cloud.type == 'local'
   tags: ["no_print"]
 
@@ -232,14 +237,11 @@
       name: "{{ cloud_prepare_pod_name }}"
       pod: "{{ cloud_prepare_pod }}"
       git_commit: "{{ cloud_prepare_git_commit }}"
-      repo_name: "{{ cloud_prepare_env_name }}"
-      env_path_map: "{{ cloud_prepare_env_path_map }}"
+      env_repos_commits: "{{ cloud_prepare_env_repos_commits }}"
       repo_location: "{{ cloud_prepare_repo_dir }}"
       base_dir_rel: "{{ cloud_prepare_base_dir_rel }}"
       data_dir: "{{ cloud_prepare_pod_data_dir }}"
-      local_data_dir_inside: "{{ cloud_prepare_pod_local_data_dir_inside }}"
-      env_cmd: "{{ cloud_prepare_env_cmd }}"
-      env_repos_commits: "{{ cloud_prepare_env_repos_commits }}"
+      extra_repos_dir: "{{ cloud_prepare_pod_extra_repos_dir }}"
   tags: ["no_print"]
 
 ### Generate a file with the environment variables and state (for idempotence) ###

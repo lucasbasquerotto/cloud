@@ -413,7 +413,6 @@
         cloud_prepare_env_dir: "{{ env_dir }}"
         cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
         cloud_prepare_local_pods_base_dir: "{{ env_ctx_dir }}/pods"
-        cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
         cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
         cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
         cloud_prepare_instance_index: "{{ instance_index }}"
@@ -425,6 +424,7 @@
           }}
         cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
         cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+        cloud_prepare_extra_repos_dir: "{{ env_local_extra_repos_dir }}"
         cloud_prepare_env_dev: "{{ env_dev }}"
         cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
       loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"

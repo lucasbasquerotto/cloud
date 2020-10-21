@@ -410,7 +410,6 @@
       cloud_prepare_env_dir: "{{ env_dir }}"
       cloud_prepare_local_tmp_dir: "{{ env_tmp_dir }}/node/{{ cloud_prepare_node_name }}"
       cloud_prepare_local_pod_repo_base: "{{ env_tmp_dir }}/repo/pod"
-      cloud_prepare_env_cmd: "{{ env_cmd | default('', true) }}"
       cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
       cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
       cloud_prepare_instance_index: "{{ instance_index }}"
