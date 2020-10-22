@@ -56,7 +56,10 @@
     cloud_prepare_pod_dirname: "{{ cloud_prepare_pod.base_dir | default(cloud_prepare_pod_name, true) }}"
     cloud_prepare_pod_base_dir: "{{ cloud_prepare_base_dir }}/{{ cloud_prepare_pod_dirname }}"
     cloud_prepare_pod_identifier: >-
-      {{ cloud_prepare_env_name }}/{{ cloud_prepare_ctx_name }}/{{ cloud_prepare_pod_name }}
+      {{
+        (cloud_prepare_cloud.type == 'local')
+        | ternary(cloud_prepare_env_project, cloud_prepare_env_name)
+      }}/{{ cloud_prepare_ctx_name }}/{{ cloud_prepare_pod_name }}
     cloud_prepare_host_user: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_host_group: "{{ cloud_prepare_node_credentials.host_user }}"
     cloud_prepare_local_pod_default_repo_dir: >-
