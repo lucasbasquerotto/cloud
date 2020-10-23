@@ -13,9 +13,12 @@ function error {
 args=()
 debug=()
 
+last_index=1
+
 # shellcheck disable=SC2214
 while getopts ':fp-:' OPT; do
-	if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+	last_index="$OPTIND"
+	if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
 		OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
@@ -24,10 +27,15 @@ while getopts ':fp-:' OPT; do
 		f|fast ) fast="true"; args+=( "--fast" );;
 		p|prepare ) prepare="true"; args+=( "--prepare" );;
 		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
-		??* ) break;;  # long option
-		\? )  break;;  # short option
+		\? ) error "[error] unknown short option: -${OPTARG:-}";;
+		?* ) error "[error] unknown long option: --${OPT:-}";;
 	esac
 done
+
+if [ "$last_index" != "$OPTIND" ]; then
+	args+=( "--" );
+fi
+
 shift $((OPTIND-1))
 
 if [ "${fast:-}" = 'true' ]; then
@@ -46,17 +54,36 @@ else
 	cd /usr/main/ansible
 
     prepare_args=()
+	skip=''
 
     if [ "${prepare:-}" = 'true' ]; then
-        prepare_args=( "${@}" )
+		if [ "${1:-}" = "--skip" ]; then
+			skip='true';
+			shift;
+		else
+			for arg in "$@"; do
+				shift;
+
+				if [ "$arg" = "--" ]; then
+					break;
+				fi
+
+				prepare_args+=( "$arg" )
+			done
+		fi
     fi
 
-	# Prepare the cloud contexts
-	ANSIBLE_CONFIG=/usr/main/ansible/ansible.cfg ansible-playbook \
-		${prepare_args[@]+"${prepare_args[@]}"} \
-		${vault[@]+"${vault[@]}"} \
-		${debug[@]+"${debug[@]}"} \
-		prepare.yml || error "[error] prepare ctxs"
+	if [ "$skip" = "true" ]; then
+		echo "[cloud] skipping prepare project (skip)..."
+	else
+		# Prepare the cloud contexts
+		ANSIBLE_CONFIG=/usr/main/ansible/ansible.cfg ansible-playbook \
+			${vault[@]+"${vault[@]}"} \
+			${debug[@]+"${debug[@]}"} \
+			prepare.yml \
+			${prepare_args[@]+"${prepare_args[@]}"} \
+			|| error "[error] prepare ctxs"
+	fi
 fi
 
 # Execute the cloud contexts

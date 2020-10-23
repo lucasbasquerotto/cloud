@@ -28,8 +28,8 @@ while getopts ':fp-:' OPT; do
 		f|fast ) fast="true";;
 		p|prepare ) prepare="true";;
 		debug ) debug=( "-vvvvv" );;
-		??* ) break;;  # long option
-		\? )  break;;  # short option
+		\? ) error "[error] unknown short option: -${OPTARG:-}";;
+		?* ) error "[error] unknown long option: --${OPT:-}";;
 	esac
 done
 shift $((OPTIND-1))
@@ -56,19 +56,38 @@ if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project context (fast)..."
 else
     prepare_args=()
+	skip=''
 
     if [ "${prepare:-}" = 'true' ]; then
-        prepare_args=( "${@}" )
+		if [ "${1:-}" = "--skip" ]; then
+			skip='true';
+			shift;
+		else
+			for arg in "$@"; do
+				shift;
+
+				if [ "$arg" = "--" ]; then
+					break;
+				fi
+
+				prepare_args+=( "$arg" )
+			done
+		fi
     fi
 
-	# Prepare the cloud context
-	ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
-		${prepare_args[@]+"${prepare_args[@]}"} \
-		${vault[@]+"${vault[@]}"} \
-		${debug[@]+"${debug[@]}"} \
-		-i ansible/prepare.hosts \
-		-e env_vars_file="$vars_file_yaml" \
-        prepare.ctx.yml || error "[error] prepare ctx"
+	if [ "$skip" = "true" ]; then
+		echo "[cloud] skipping prepare project context (skip)..."
+	else
+		# Prepare the cloud context
+		ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
+			${vault[@]+"${vault[@]}"} \
+			${debug[@]+"${debug[@]}"} \
+			-i ansible/prepare.hosts \
+			-e env_vars_file="$vars_file_yaml" \
+			prepare.ctx.yml \
+			${prepare_args[@]+"${prepare_args[@]}"} \
+			|| error "[error] prepare ctx"
+	fi
 fi
 
 if [ "${prepare:-}" = 'true' ]; then
