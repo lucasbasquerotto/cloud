@@ -141,6 +141,32 @@
       when: project_env.env is defined
       tags: ["no_print"]
 
+    # validate environment
+
+    - name: "{{ project_env_title }} - validate the container"
+      fail:
+        msg: >-
+          {{ project_env_title }} - the container specified in the environment
+          ({{ project_env.container }}) is not the container in which the project is being run
+          ({{ project_env_init.init.container }})
+      when: >-
+        ((project_env.container | default('')) != '')
+        and
+        ((project_env.container | default('')) != project_env_init.init.container)
+      tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - validate the migration version"
+      fail:
+        msg: >-
+          {{ project_env_title }} - the migration version specified in the environment
+          ({{ project_env.migration }}) is not the migration version specified for the project
+          in the root environment ({{ project_env_init.migration }})
+      when: >-
+        ((project_env.container | default('')) != '')
+        and
+        ((project_env.container | default('')) != project_env_init.init.container)
+      tags: ["no_print"]
+
     # environment contexts (ctxs)
 
     - name: "{{ project_env_title }} - project_env_ctxs"
