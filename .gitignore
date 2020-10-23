@@ -1,10 +1,13 @@
 **/*.pyc
 
-/env/
-/env-*/
-
 /custom/
 /custom-*/
 /custom-*
+
+/env/
+/env-*/
+
+/ext/
+/ext-*/
 
 /plays/
