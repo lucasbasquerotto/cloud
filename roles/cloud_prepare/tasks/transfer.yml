@@ -79,6 +79,7 @@
           'src': cloud_prepare_transfer_item_src_full,
           'dest': cloud_prepare_transfer_item_dest_full,
           'dest_rel': cloud_prepare_transfer_item_dest_rel,
+          'encrypted': cloud_prepare_transfer_item.encrypted | default(false),
           'mode': cloud_prepare_transfer_item.mode | default(
           (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
         }]
@@ -105,6 +106,7 @@
           'src': cloud_prepare_transfer_item_src_full,
           'dest': cloud_prepare_transfer_item_dest_full,
           'dest_rel': cloud_prepare_transfer_item_dest_rel,
+          'encrypted': cloud_prepare_transfer_item.encrypted | default(false),
           'mode': cloud_prepare_transfer_item.mode | default(
           (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
         }]
@@ -315,6 +317,7 @@
     dest: "{{ cloud_prepare_transfer_item.dest }}"
     owner: "{{ cloud_prepare_owner }}"
     group: "{{ cloud_prepare_group }}"
+    decrypt: "{{ cloud_prepare_transfer_item.encrypted | bool }}"
     mode: >-
       {{
       cloud_prepare_transfer_item.mode | default(
