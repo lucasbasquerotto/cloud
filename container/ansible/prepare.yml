@@ -83,6 +83,7 @@
       set_fact:
         project_env: "{{ project_env_aux }}"
       vars:
+        project_name: "{{ project_env_init.key }}"
         params: "{{ project_env_init.env_params | default({}) }}"
       tags: ["no_print"]
 
