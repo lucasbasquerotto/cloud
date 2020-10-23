@@ -249,7 +249,6 @@
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_vars_full"
   set_fact:
     cloud_prepare_vars_full:
-      env_project: "{{ cloud_prepare_env_project }}"
       env_name: "{{ cloud_prepare_env_name }}"
       ctx_name: "{{ cloud_prepare_ctx_name }}"
       main: "{{ cloud_prepare_inner_params }}"

@@ -383,7 +383,6 @@
       include_role:
         name: "cloud_prepare"
       vars:
-        cloud_prepare_env_project: "{{ env_project }}"
         cloud_prepare_env_name: "{{ env.name }}"
         cloud_prepare_ctx_name: "{{ env_ctx }}"
         cloud_prepare_node_info: "{{ main_item }}"

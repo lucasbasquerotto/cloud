@@ -55,9 +55,9 @@
       vars:
         repo_title: "{{ project_env_title }} - env - repo"
         repo_main: "{{ project_env_init.repo }}"
-        repo_ssh_src_dir: "{{ project_env_dir }}"
+        repo_ssh_src_dir: "{{ project_secrets_ctl_dir }}"
         repo_secrets_dir: "{{ project_secrets_ctl_dir }}"
-        repo_default_dir: "{{ project_env_base_dir }}"
+        repo_default_dir: "{{ project_base_dir }}/env"
         repo_dev_base_dir: "{{ project_dev_repos_dir }}"
         repo_dev_path: "{{ project_env_init.path_params.path_env | default('') }}"
         repo_dev: "{{ env_dev }}"
@@ -146,7 +146,7 @@
     - name: "{{ project_env_title }} - validate the container"
       fail:
         msg: >-
-          {{ project_env_title }} - the container specified in the environment
+          {{ project_env_title }} - the container specified in the project environment
           ({{ project_env.container }}) is not the container in which the project is being run
           ({{ project_env_init.init.container }})
       when: >-
@@ -158,13 +158,13 @@
     - name: "{{ project_env_title }} - validate the migration version"
       fail:
         msg: >-
-          {{ project_env_title }} - the migration version specified in the environment
+          {{ project_env_title }} - the migration version specified in the project environment
           ({{ project_env.migration }}) is not the migration version specified for the project
           in the root environment ({{ project_env_init.migration }})
       when: >-
-        ((project_env.container | default('')) != '')
+        ((project_env.migration | default('')) != '')
         and
-        ((project_env.container | default('')) != project_env_init.init.container)
+        ((project_env.migration | default('')) != project_env_init.migration)
       tags: ["no_print"]
 
     # environment contexts (ctxs)

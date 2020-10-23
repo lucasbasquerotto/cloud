@@ -103,12 +103,11 @@
       env_dev: "{{ env_dev | bool | ternary('true', 'false') }}"
       ctx_dir: "{{ project_ctx_base_dir }}"
       env_dir: "{{ project_env_dir }}"
-      env_file: "{{ project_env_dir }}/{{ project_env_file_rel }}"
+      env_file: "{{ project_env_file }}"
       repo_dir: "{{ project_ctx_cloud_repo_dir }}"
       repo_run_file: >-
         {{ project_ctx_cloud_repo_dir }}/{{ project_ctx_main.run_file | default('run') }}
       vault_file: "{{ project_secrets_ctl_dir }}/vault"
-      ssh_file: "{{ project_ssh_file }}"
       env_params_file: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
       path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
       dev_repos_dir: "{{ project_dev_repos_dir }}"
