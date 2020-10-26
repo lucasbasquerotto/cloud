@@ -1,18 +1,6 @@
 # repo files
 
 - name: >-
-    {{ cloud_repos_extra_repo_title }} - repo files - create the src files directories
-  file:
-    path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
-    state: directory
-    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.files | default([]) }}"
-  loop_control:
-    loop_var: cloud_repos_extra_repo_item
-    label: "{{ cloud_repos_extra_repo_item.src }}"
-  tags: ["no_print"]
-
-- name: >-
     {{ cloud_repos_extra_repo_title }} - repo files - create the dest files directories
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest) | dirname }}"
@@ -36,18 +24,6 @@
   tags: ["no_print_skipped"]
 
 # env files
-
-- name: >-
-    {{ cloud_repos_extra_repo_title }} - env files - create the src files directories
-  file:
-    path: "{{ (cloud_repos_env_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
-    state: directory
-    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.env_files | default([]) }}"
-  loop_control:
-    loop_var: cloud_repos_extra_repo_item
-    label: "{{ cloud_repos_extra_repo_item.src }}"
-  tags: ["no_print"]
 
 - name: >-
     {{ cloud_repos_extra_repo_title }} - env files - create the dest files directories
@@ -75,18 +51,6 @@
 # repo templates
 
 - name: >-
-    {{ cloud_repos_extra_repo_title }} - repo templates - create the src templates directories
-  file:
-    path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
-    state: directory
-    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.templates | default([]) }}"
-  loop_control:
-    loop_var: cloud_repos_extra_repo_item
-    label: "{{ cloud_repos_extra_repo_item.src }}"
-  tags: ["no_print"]
-
-- name: >-
     {{ cloud_repos_extra_repo_title }} - repo templates - create the dest templates directories
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest) | dirname }}"
@@ -112,18 +76,6 @@
   tags: ["no_print_skipped"]
 
 # env templates
-
-- name: >-
-    {{ cloud_repos_extra_repo_title }} - env templates - create the src templates directories
-  file:
-    path: "{{ (cloud_repos_env_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
-    state: directory
-    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.env_templates | default([]) }}"
-  loop_control:
-    loop_var: cloud_repos_extra_repo_item
-    label: "{{ cloud_repos_extra_repo_item.src }}"
-  tags: ["no_print"]
 
 - name: >-
     {{ cloud_repos_extra_repo_title }} - env templates - create the dest templates directories
@@ -165,46 +117,46 @@
     tmp_target_repos: >-
       {{
         cloud_repos_ctx_extra_repos
-        | selectattr('repo', 'equalto', tmp_target_repo_name)
+        | selectattr('repo', 'equalto', tmp_target_repo_name) | list
       }}
     tmp_target_repo: >-
       {{
         ((tmp_target_repos | length) > 0)
         | ternary(
           tmp_target_repos[0],
-          error['extra repo link: repo ' + cloud_repos_extra_repo_item.repo + ' not found'],
+          error['extra repo link: repo ' + cloud_repos_extra_repo_name + ' not found'],
         )
       }}
-    cloud_repos_extra_repo_link_title: >-
-      {{ cloud_repos_extra_repo_title }} - link [cloud_repos_extra_repo_item.src]
     tmp_src_default: >-
-      {{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src }}
-    tmp_dev_path_src: "{{ cloud_repos_env_path_map[cloud_repos_extra_repo_name] | default('') }}"
+      {{
+        cloud_repos_extra_repos_dir + '/' +
+        tmp_target_repo.dir + '/' +
+        cloud_repos_extra_repo_item.src
+      }}
+    tmp_dev_path_src: "{{ cloud_repos_env_path_map[tmp_target_repo_name] | default('') }}"
     cloud_repos_extra_repo_link_src: >-
       {{
         (tmp_dev_path_src != '')
         | ternary(
-          cloud_repos_dev_repos_dir + '/' + tmp_dev_path_src,
+          cloud_repos_dev_repos_dir + '/' + tmp_dev_path_src + '/' + cloud_repos_extra_repo_item.src,
           tmp_src_default
         )
       }}
-    tmp_dest_default: >-
-      {{
-        cloud_repos_extra_repos_dir + '/' +
-        tmp_target_repo.dir + '/' +
-        cloud_repos_extra_repo_item.dest
-      }}
+    tmp_dest_default: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest }}"
     tmp_dev_path_dest: "{{ cloud_repos_env_path_map[cloud_repos_extra_repo_name] | default('') }}"
     cloud_repos_extra_repo_link_dest: >-
       {{
         (tmp_dev_path_dest != '')
         | ternary(
-          cloud_repos_dev_repos_dir + '/' + tmp_dev_path_dest,
+          cloud_repos_dev_repos_dir + '/' + tmp_dev_path_dest + '/' + cloud_repos_extra_repo_item.dest,
           tmp_dest_default
         )
       }}
+    cloud_repos_extra_repo_link_title: >-
+      {{ cloud_repos_extra_repo_title }} -
+      link [{{ cloud_repos_extra_repo_link_dest }} -> {{ cloud_repos_extra_repo_link_src }}]
   loop: "{{ cloud_repos_item.links | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
-    label: "{{ cloud_repos_extra_repo_link_src }} -> {{ cloud_repos_extra_repo_link_dest }}"
+    label: "{{ cloud_repos_extra_repo_link_dest }} -> {{ cloud_repos_extra_repo_link_src }}"
   tags: ["no_print"]
