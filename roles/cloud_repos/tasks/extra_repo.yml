@@ -5,10 +5,11 @@
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.repo_files | default([]) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
+  loop: "{{ cloud_repos_item.files | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }}"
   tags: ["no_print"]
 
 - name: >-
@@ -16,20 +17,22 @@
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.repo_files | default([]) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
+  loop: "{{ cloud_repos_item.files | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_repos_extra_repo_title }} - repo files - copy"
   copy:
     src: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src }}"
     dest: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest }}"
-    mode: "{{ repo_dev | bool | ternary(0666, 0600) }}"
-  loop: "{{ cloud_repos_item.repo_files | default([]) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0666, 0600) }}"
+  loop: "{{ cloud_repos_item.files | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }} -> {{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print_skipped"]
 
 # env files
@@ -39,10 +42,11 @@
   file:
     path: "{{ (cloud_repos_env_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
   loop: "{{ cloud_repos_item.env_files | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }}"
   tags: ["no_print"]
 
 - name: >-
@@ -50,20 +54,22 @@
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
   loop: "{{ cloud_repos_item.env_files | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_repos_extra_repo_title }} - env files - copy"
   copy:
     src: "{{ cloud_repos_env_dir + '/' + cloud_repos_extra_repo_item.src }}"
     dest: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest }}"
-    mode: "{{ repo_dev | bool | ternary(0666, 0600) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0666, 0600) }}"
   loop: "{{ cloud_repos_item.env_files | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }} -> {{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print_skipped"]
 
 # repo templates
@@ -73,10 +79,11 @@
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.repo_templates | default([]) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
+  loop: "{{ cloud_repos_item.templates | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }}"
   tags: ["no_print"]
 
 - name: >-
@@ -84,22 +91,24 @@
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
-  loop: "{{ cloud_repos_item.repo_templates | default([]) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
+  loop: "{{ cloud_repos_item.templates | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_repos_extra_repo_title }} - repo templates - transfer"
   template:
     src: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.src }}"
     dest: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest }}"
-    mode: "{{ repo_dev | bool | ternary(0666, 0600) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0666, 0600) }}"
   vars:
     params: "{{ cloud_repos_extra_repo_item.params }}"
-  loop: "{{ cloud_repos_item.repo_templates | default([]) }}"
+  loop: "{{ cloud_repos_item.templates | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }} -> {{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print_skipped"]
 
 # env templates
@@ -109,10 +118,11 @@
   file:
     path: "{{ (cloud_repos_env_dir + '/' + cloud_repos_extra_repo_item.src) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
   loop: "{{ cloud_repos_item.env_templates | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }}"
   tags: ["no_print"]
 
 - name: >-
@@ -120,22 +130,24 @@
   file:
     path: "{{ (cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest) | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
   loop: "{{ cloud_repos_item.env_templates | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_repos_extra_repo_title }} - env templates - transfer"
   template:
     src: "{{ cloud_repos_env_dir + '/' + cloud_repos_extra_repo_item.src }}"
     dest: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest }}"
-    mode: "{{ repo_dev | bool | ternary(0666, 0600) }}"
+    mode: "{{ cloud_repos_env_dev | bool | ternary(0666, 0600) }}"
   vars:
     params: "{{ cloud_repos_extra_repo_item.params }}"
   loop: "{{ cloud_repos_item.env_templates | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_item.src }} -> {{ cloud_repos_extra_repo_item.dest }}"
   tags: ["no_print_skipped"]
 
 # links
@@ -194,4 +206,5 @@
   loop: "{{ cloud_repos_item.links | default([]) }}"
   loop_control:
     loop_var: cloud_repos_extra_repo_item
+    label: "{{ cloud_repos_extra_repo_link_src }} -> {{ cloud_repos_extra_repo_link_dest }}"
   tags: ["no_print"]
