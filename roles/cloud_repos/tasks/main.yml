@@ -28,12 +28,12 @@
     loop_var: cloud_repos_item
   tags: ["no_print"]
 
-- name: "{{ cloud_repos_title }} - local repos - apps"
+- name: "{{ cloud_repos_title }} - extra repos (local)"
   include_tasks: "layer.yml"
   vars:
     cloud_repos_layer: "{{ cloud_repos_item }}"
     cloud_repos_layer_title: >-
-      {{ cloud_repos_title }} - local repos - extra
+      {{ cloud_repos_title }} - extra repos (local)
       [{{ cloud_repos_item.dir }} ({{ cloud_repos_item.repo }})]
     cloud_repos_layer_dest: >-
       {{ cloud_repos_extra_repos_dir + '/' + cloud_repos_item.dir }}
@@ -41,3 +41,17 @@
   loop_control:
     loop_var: cloud_repos_item
   tags: ["no_print"]
+#
+# - name: "{{ cloud_repos_title }} - extra repos (local)"
+#   include_tasks: "extra_repo.yml"
+#   vars:
+#     cloud_repos_extra_repo: "{{ cloud_repos_item }}"
+#     cloud_repos_extra_repo_title: >-
+#       {{ cloud_repos_title }} - extra repo (local)
+#       [{{ cloud_repos_item.dir }} ({{ cloud_repos_item.repo }})]
+#     cloud_repos_extra_repo_dir: >-
+#       {{ cloud_repos_extra_repos_dir + '/' + cloud_repos_item.dir }}
+#   loop: "{{ cloud_repos_ctx_extra_repos }}"
+#   loop_control:
+#     loop_var: cloud_repos_item
+#   tags: ["no_print"]
