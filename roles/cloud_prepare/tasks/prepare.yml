@@ -226,7 +226,7 @@
     cloud_prepare_pod_data_dir: >-
       {{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}
     cloud_prepare_pod_extra_repos_dir: >-
-      {{ (env_local_extra_repos_dir | relpath(cloud_prepare_repo_dir)) }}
+      {{ cloud_prepare_extra_repos_dir | relpath(cloud_prepare_repo_dir) }}
   when: cloud_prepare_cloud.type == 'local'
   tags: ["no_print"]
 

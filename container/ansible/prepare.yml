@@ -11,6 +11,7 @@
 
     - name: "{{ project_base_title }} - project directories"
       set_fact:
+        project_files_cloud_dir_rel: "files/cloud"
         project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
         project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
         project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"

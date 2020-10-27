@@ -350,6 +350,7 @@
         cloud_repos_dev_repos_dir: "{{ env_dev_repos_dir }}"
         cloud_repos_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
         cloud_repos_env_dev: "{{ env_dev }}"
+        cloud_repos_env_dev_extra_repos_dir: "{{ env_dev_extra_repos_dir }}"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_local_prepare }}"
@@ -423,7 +424,7 @@
           }}
         cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
         cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
-        cloud_prepare_extra_repos_dir: "{{ env_local_extra_repos_dir }}"
+        cloud_prepare_extra_repos_dir: "{{ env_dev_extra_repos_dir }}"
         cloud_prepare_env_dev: "{{ env_dev }}"
         cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
       loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"

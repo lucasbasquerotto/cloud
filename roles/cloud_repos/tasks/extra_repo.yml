@@ -127,31 +127,39 @@
           error['extra repo link: repo ' + cloud_repos_extra_repo_name + ' not found'],
         )
       }}
+    tmp_dev_path_src: "{{ cloud_repos_env_path_map[tmp_target_repo_name] | default('') }}"
+    tmp_dev_path_dest: "{{ cloud_repos_env_path_map[cloud_repos_extra_repo_name] | default('') }}"
+    tmp_src_extra_repos_dir: >-
+      {{
+        ((tmp_dev_path_src == '') and (tmp_dev_path_dest != ''))
+        | ternary(
+          cloud_repos_env_dev_extra_repos_dir,
+          cloud_repos_extra_repos_dir
+        )
+      }}
     tmp_src_default: >-
       {{
-        cloud_repos_extra_repos_dir + '/' +
+        tmp_src_extra_repos_dir + '/' +
         tmp_target_repo.dir + '/' +
         cloud_repos_extra_repo_item.src
       }}
-    tmp_dev_path_src: "{{ cloud_repos_env_path_map[tmp_target_repo_name] | default('') }}"
-    cloud_repos_extra_repo_link_src: >-
+    tmp_src_dev: >-
       {{
-        (tmp_dev_path_src != '')
-        | ternary(
-          cloud_repos_dev_repos_dir + '/' + tmp_dev_path_src + '/' + cloud_repos_extra_repo_item.src,
-          tmp_src_default
-        )
+        cloud_repos_dev_repos_dir + '/' +
+        tmp_dev_path_src + '/' +
+        cloud_repos_extra_repo_item.src
       }}
     tmp_dest_default: "{{ cloud_repos_extra_repo_dir + '/' + cloud_repos_extra_repo_item.dest }}"
-    tmp_dev_path_dest: "{{ cloud_repos_env_path_map[cloud_repos_extra_repo_name] | default('') }}"
-    cloud_repos_extra_repo_link_dest: >-
+    tmp_dest_dev: >-
       {{
-        (tmp_dev_path_dest != '')
-        | ternary(
-          cloud_repos_dev_repos_dir + '/' + tmp_dev_path_dest + '/' + cloud_repos_extra_repo_item.dest,
-          tmp_dest_default
-        )
+        cloud_repos_dev_repos_dir + '/' +
+        tmp_dev_path_dest + '/' +
+        cloud_repos_extra_repo_item.dest
       }}
+    cloud_repos_extra_repo_link_src: >-
+      {{ (tmp_dev_path_src != '') | ternary(tmp_src_dev, tmp_src_default) }}
+    cloud_repos_extra_repo_link_dest: >-
+      {{ (tmp_dev_path_dest != '') | ternary(tmp_dest_dev, tmp_dest_default) }}
     cloud_repos_extra_repo_link_title: >-
       {{ cloud_repos_extra_repo_title }} -
       link [{{ cloud_repos_extra_repo_link_dest }} -> {{ cloud_repos_extra_repo_link_src }}]

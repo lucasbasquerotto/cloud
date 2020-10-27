@@ -1,5 +1,7 @@
 - name: "{{ project_ctx_title }}"
   set_fact:
+    project_ctx_base_dir_rel: >-
+      {{ project_files_cloud_dir_rel }}/ctxs/{{ project_ctx_key }}
     project_ctx_base_dir: >-
       {{ project_files_cloud_dir }}/ctxs/{{ project_ctx_key }}
     project_ctx_secrets_dir: >-
@@ -102,6 +104,10 @@
       ctx: "{{ project_ctx_key }}"
       env_dev: "{{ env_dev | bool | ternary('true', 'false') }}"
       ctx_dir: "{{ project_ctx_base_dir }}"
+      ctx_dev_dir: >-
+        {{ project_dev_repos_dir }}/{{
+          project_env_init.project_dir_rel
+        }}/{{ project_ctx_base_dir_rel }}
       env_dir: "{{ project_env_dir }}"
       env_file: "{{ project_env_file }}"
       repo_dir: "{{ project_ctx_cloud_repo_dir }}"
