@@ -10,4 +10,3 @@
     src: "{{ cloud_repos_extra_repo_link_src | relpath(cloud_repos_extra_repo_link_dest | dirname) }}"
     dest: "{{ cloud_repos_extra_repo_link_dest }}"
     state: link
-    mode: "{{ cloud_repos_env_dev | bool | ternary(0777, 0755) }}"
