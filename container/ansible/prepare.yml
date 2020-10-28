@@ -85,20 +85,8 @@
         project_env: "{{ project_env_aux }}"
       vars:
         project_name: "{{ project_env_init.key }}"
+        project_ctxs: "{{ project_env_init.ctxs | default([]) }}"
         params: "{{ project_env_init.env_params | default({}) }}"
-      tags: ["no_print"]
-
-    - name: "{{ project_env_title }} - validate ctxs"
-      fail:
-        msg: >-
-          {{ project_env_title }} - the contexts list (ctxs) parameter is defined in both
-          the main environment file ({{ project_env_init.ctxs | default([]) }})
-          as well as in the repo environment file ({{ project_env.ctxs | default([]) }})
-          - it should be in only 1 of them, or none
-      when: >-
-        ((project_env.ctxs | default([]) | length) > 0)
-        and
-        ((project_env_init.ctxs | default([]) | length) > 0)
       tags: ["no_print"]
 
     # env base repository
@@ -166,30 +154,6 @@
         ((project_env.migration | default('')) != '')
         and
         ((project_env.migration | default('')) != project_env_init.migration)
-      tags: ["no_print"]
-
-    # environment contexts (ctxs)
-
-    - name: "{{ project_env_title }} - project_env_ctxs"
-      set_fact:
-        project_env_ctxs: "{{ project_env_init.ctxs | default([]) }}"
-      tags: ["no_print"]
-
-    - name: "{{ project_env_title }}"
-      set_fact:
-        project_env: "{{ project_env | combine({ 'ctxs': project_env_ctxs | default([]) }) }}"
-      when: >-
-        ((project_env.ctxs | default([]) | length) == 0)
-        and
-        ((project_env_ctxs | default([]) | length) > 0)
-      tags: ["no_print"]
-
-    - name: "{{ project_env_title }} - validate ctx(s) - name"
-      fail:
-        msg: >-
-          {{ project_env_title }} -
-          ctx should not be defined directly in the env file (define ctxs instead)
-      when: (project_env.ctx | default('')) != ''
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - validate ctx(s) - required"
