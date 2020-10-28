@@ -15,9 +15,15 @@
 
 # ctx - cloud repository
 
+- name: "{{ project_ctx_title }} - validate - ctx - required"
+  fail:
+    msg: "ctx [{{ project_ctx_key }}] not specified for under 'main' in the environment file"
+  when: project_env.main[project_ctx_key] is not defined
+  tags: ["no_print"]
+
 - name: "{{ project_ctx_title }} - validate - cloud repo - required"
   fail:
-    msg: "cloud repo (under main) not specified for ctx [{{ project_ctx_key }}]"
+    msg: "cloud repo (under 'main' in the environment file) not specified for ctx [{{ project_ctx_key }}]"
   when: (project_env.main[project_ctx_key].repo | default('')) == ''
   tags: ["no_print"]
 
