@@ -5,7 +5,7 @@
     - name: "[cloud - init] - project_base_title"
       set_fact:
         project_base_title: "[cloud - init]"
-        project_base_dir: "/main"
+        project_base_dir: "{{ env_project_dir }}"
         project_keys_file_rel: "files/ctl/vars.yml"
       tags: ["no_print"]
 

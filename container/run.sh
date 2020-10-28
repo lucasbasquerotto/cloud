@@ -27,10 +27,15 @@ while getopts ':fp-:' OPT; do
 		f|fast ) fast="true"; args+=( "--fast" );;
 		p|prepare ) prepare="true"; args+=( "--prepare" );;
 		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
+		project-dir ) project_dir=${OPTARG:-};;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;
 		?* ) error "[error] unknown long option: --${OPT:-}";;
 	esac
 done
+
+if [ -z "${project_dir:-}" ]; then
+	error "[error] project-dir not specified"
+fi
 
 if [ "$last_index" != "$OPTIND" ]; then
 	args+=( "--" );
@@ -43,7 +48,7 @@ if [ "${fast:-}" = 'true' ]; then
 else
 	vault=()
 
-	vault_file="/main/secrets/ctl/vault"
+	vault_file="$project_dir/secrets/ctl/vault"
 
 	if [ -f "$vault_file" ]; then
 		vault=( '--vault-id' "$vault_file" )
@@ -81,12 +86,13 @@ else
 			${vault[@]+"${vault[@]}"} \
 			${debug[@]+"${debug[@]}"} \
 			prepare.yml \
+			--extra-vars "env_project_dir=$project_dir" \
 			${prepare_args[@]+"${prepare_args[@]}"} \
 			|| error "[error] prepare ctxs"
 	fi
 fi
 
 # Execute the cloud contexts
-bash /main/files/cloud/run-ctxs \
+bash "$project_dir/files/cloud/run-ctxs" \
 	${args[@]+"${args[@]}"} "${@}" \
 	|| error "[error] run-ctxs"
