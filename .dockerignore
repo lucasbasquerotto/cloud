@@ -2,7 +2,8 @@
 #!/container/*
 #!/tasks/*
 
-/callback_plugins/
+/ansible/
+/files/
 /library/
+/old/
 /roles/
-/templates/
