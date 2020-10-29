@@ -315,51 +315,7 @@
 ######################        PREPARE THE PODS         ########################
 ###############################################################################
 
-- name: Play 02.01 - Prepare the Pods Repositories (Local)
-  hosts: main
-  tags:
-    - init
-    - pod
-    - prepare
-    - prepare-local
-  gather_facts: no
-  tasks:
-    - include_tasks: "tasks/init.yml"
-      when: ansible_connection != 'local'
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_local_prepare }}"
-      when: (env_ctx_params.hooks.before_local_prepare | default('')) != ''
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_repos"
-      vars:
-        cloud_repos_title: "{{ env_title }} - cloud repositories (local)"
-        cloud_repos_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
-        cloud_repos_nodes_dict: "{{ env.nodes | default({}) }}"
-        cloud_repos_pods_dict: "{{ env.pods | default({}) }}"
-        cloud_repos_ctx_extra_repos: "{{ env.main[env_ctx].extra_repos | default([]) }}"
-        cloud_repos_repos_dict: "{{ env.repos | default({}) }}"
-        cloud_repos_env_path_map: "{{ env_path_map }}"
-        cloud_repos_env_dir: "{{ env_dir }}"
-        cloud_repos_pods_dir: "{{ env_ctx_dir }}/pods"
-        cloud_repos_extra_repos_dir: "{{ env_ctx_dir }}/extra-repos"
-        cloud_repos_dev_repos_dir: "{{ env_dev_repos_dir }}"
-        cloud_repos_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
-        cloud_repos_env_dev: "{{ env_dev }}"
-        cloud_repos_env_dev_extra_repos_dir: "{{ env_dev_extra_repos_dir }}"
-
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_local_prepare }}"
-      when: (env_ctx_params.hooks.after_local_prepare | default('')) != ''
-      tags: ["no_print"]
-
-###############################################################################
-
-- name: Play 02.02 - Prepare the Pods - Remote
+- name: Play 02 - Prepare the Pods
   hosts: main,host
   tags:
     - init
@@ -373,11 +329,11 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_remote_prepare }}"
+      include_tasks: "{{ env_ctx_params.hooks.before_prepare }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == instance_type))
         and
-        ((env_ctx_params.hooks.before_remote_prepare | default('')) != '')
+        ((env_ctx_params.hooks.before_prepare | default('')) != '')
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
@@ -444,16 +400,18 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_remote_prepare }}"
+      include_tasks: "{{ env_ctx_params.hooks.after_prepare }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == instance_type))
         and
-        ((env_ctx_params.hooks.after_remote_prepare | default('')) != '')
+        ((env_ctx_params.hooks.after_prepare | default('')) != '')
       tags: ["no_print"]
 
 ###############################################################################
 ###########        RUN - MIGRATE THE DATA & START THE PODS         ############
 ###############################################################################
+
+# Play 03
 
 - import_playbook: plays/run.yml
 

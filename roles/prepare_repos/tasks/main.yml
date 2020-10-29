@@ -1,0 +1,62 @@
+# Extra Repos
+
+- name: "{{ prepare_repos_title }} - extra repos (local) - repos"
+  include_tasks: "layer.yml"
+  vars:
+    prepare_repos_layer: "{{ prepare_repos_item }}"
+    prepare_repos_layer_title: >-
+      {{ prepare_repos_title }} - extra repos (local) - repo
+      [{{ prepare_repos_item.dir }} ({{ prepare_repos_item.repo }})]
+    prepare_repos_layer_dest: >-
+      {{ prepare_repos_extra_repos_dir + '/' + prepare_repos_item.dir }}
+  loop: "{{ prepare_repos_ctx_extra_repos }}"
+  loop_control:
+    loop_var: prepare_repos_item
+  tags: ["no_print"]
+
+- name: "{{ prepare_repos_title }} - extra repos (local) - options"
+  include_tasks: "extra_repo.yml"
+  vars:
+    prepare_repos_extra_repo: "{{ prepare_repos_item }}"
+    prepare_repos_extra_repo_name: "{{ prepare_repos_item.repo }}"
+    prepare_repos_extra_repo_title: >-
+      {{ prepare_repos_title }} - extra repo (local) - options
+      [{{ prepare_repos_item.dir }} ({{ prepare_repos_extra_repo_name }})]
+    prepare_repos_extra_repo_dir: >-
+      {{ prepare_repos_extra_repos_dir + '/' + prepare_repos_item.dir }}
+  loop: "{{ prepare_repos_ctx_extra_repos }}"
+  loop_control:
+    loop_var: prepare_repos_item
+  tags: ["no_print"]
+
+# Pods Repos (Local)
+
+- set_fact:
+    prepare_repos_pods_list: []
+  tags: ["no_print"]
+
+- set_fact:
+    prepare_repos_pods_list: "{{ prepare_repos_pods_list + (prepare_repos_node.pods | default([])) }}"
+  vars:
+    prepare_repos_node_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name) | default(prepare_repos_item) }}"
+    prepare_repos_node: "{{ prepare_repos_nodes_dict[prepare_repos_node_key] }}"
+  loop: "{{ prepare_repos_nodes }}"
+  loop_control:
+    loop_var: prepare_repos_item
+  tags: ["no_print"]
+
+- name: "{{ prepare_repos_title }} - local repos - pods"
+  include_tasks: "layer.yml"
+  vars:
+    prepare_repos_layer_name: "{{ prepare_repos_item.name | default(prepare_repos_item) }}"
+    prepare_repos_layer_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name) | default(prepare_repos_item) }}"
+    prepare_repos_layer: "{{ prepare_repos_pods_dict[prepare_repos_layer_key] }}"
+    prepare_repos_layer_title: >-
+      {{ prepare_repos_title }} - local repos - pod
+      [{{ prepare_repos_layer_name }} ({{ prepare_repos_layer.repo }})]
+    prepare_repos_layer_dest: >-
+      {{ prepare_repos_pods_dir + '/' + prepare_repos_layer_name }}
+  loop: "{{ prepare_repos_pods_list }}"
+  loop_control:
+    loop_var: prepare_repos_item
+  tags: ["no_print"]
