@@ -12,10 +12,63 @@
       tags: ["no_print"]
 
 ###############################################################################
+###################           INITIAL SERVICES            #####################
+###############################################################################
+
+- name: Play 01 - Initial Services
+  hosts: main
+  tags:
+    - init
+    - services
+    - initial_services
+  gather_facts: no
+  tasks:
+    - include_tasks: "tasks/init.yml"
+      when: ansible_connection != 'local'
+      tags: ["no_print"]
+
+    - name: "{{ env_title }}"
+      include_tasks: "{{ env_ctx_params.hooks.before_initial_services }}"
+      when: (env_ctx_params.hooks.before_initial_services | default('')) != ''
+      tags: ["no_print"]
+
+    - name: "{{ env_title }} - initial services (outer)"
+      include_role:
+        name: "cloud_service"
+      vars:
+        cloud_service_info: "{{ main_item }}"
+        cloud_service_name: "{{ cloud_service_info.name | default(cloud_service_info) | default('') }}"
+        cloud_service_key: >-
+          {{
+            cloud_service_info.key
+            | default(cloud_service_info.name)
+            | default(cloud_service_info)
+            | default('')
+          }}
+        cloud_service_title: "{{ env_title }} - initial service {{ cloud_service_name }}"
+        cloud_service_services_dict: "{{ env.services | default({}) }}"
+        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
+        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
+        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
+        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
+        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services/{{ cloud_service_name }}"
+      loop: "{{ env.main[env_ctx].initial_services | default([]) | list }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ cloud_service_name }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ env_title }}"
+      include_tasks: "{{ env_ctx_params.hooks.after_initial_services }}"
+      when: (env_ctx_params.hooks.after_initial_services | default('')) != ''
+      tags: ["no_print"]
+
+###############################################################################
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 01.01 - Cloud - Main
+- name: Play 01.02 - Cloud - Main
   hosts: main
   tags:
     - init
@@ -59,7 +112,7 @@
 
 ###############################################################################
 
-- name: Play 01.01 - Cloud - DNS
+- name: Play 01.03 - Cloud - DNS
   hosts: main
   tags:
     - init
@@ -105,7 +158,7 @@
 
 ###############################################################################
 
-- name: Play 01.02 - Cloud - Buckets
+- name: Play 01.04 - Cloud - Buckets
   hosts: main
   tags:
     - init
@@ -145,8 +198,10 @@
       tags: ["no_print"]
 
 ###############################################################################
+############################        NODES         #############################
+###############################################################################
 
-- name: Play 01.04 - Cloud - Nodes
+- name: Play 02.01 - Cloud - Nodes - Create
   hosts: main
   tags:
     - init
@@ -190,7 +245,7 @@
         cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
         cloud_node_cloud_credentials: >-
           {{ env.credentials[cloud_node_cloud.credentials] }}
-        cloud_node_credentials_dict: "{{ env.credentials }}"
+        cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_node_dns_dict: "{{ env.dns }}"
         cloud_node_env_dir: "{{ env_dir }}"
         cloud_node_tmp_dir: >-
@@ -216,7 +271,7 @@
 
 ###############################################################################
 
-- name: Play 01.05 - Wait for the hosts to be ready
+- name: Play 02.02 - Cloud - Nodes - Wait for the hosts to be ready
   hosts: host
   tags:
     - init
@@ -315,7 +370,7 @@
 ######################        PREPARE THE PODS         ########################
 ###############################################################################
 
-- name: Play 02 - Prepare the Pods
+- name: Play 03 - Prepare the Pods
   hosts: main,host
   tags:
     - init
@@ -364,7 +419,7 @@
         cloud_prepare_pod_params_dict: "{{ env.pod_params | default({}) }}"
         cloud_prepare_pod_shared_params_dict: "{{ env.pod_shared_params | default({}) }}"
         cloud_prepare_pod_shared_group_params_dict: "{{ env.pod_shared_group_params | default({}) }}"
-        cloud_prepare_credentials_dict: "{{ env.credentials }}"
+        cloud_prepare_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_prepare_repos_dict: "{{ env.repos }}"
         cloud_prepare_env_dir: "{{ env_dir }}"
         cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
@@ -411,7 +466,7 @@
 ###########        RUN - MIGRATE THE DATA & START THE PODS         ############
 ###############################################################################
 
-# Play 03
+# Play 04
 
 - import_playbook: plays/run.yml
 
@@ -419,7 +474,7 @@
 ##################          DEFINE THE CRON JOBS           ####################
 ###############################################################################
 
-- name: Play 04 - Define the cron jobs
+- name: Play 05 - Define the cron jobs
   hosts: main,host
   tags:
     - init
@@ -481,10 +536,63 @@
       tags: ["no_print"]
 
 ###############################################################################
-##################            DESTROY THE CLOUD            ####################
+####################           FINAL SERVICES            ######################
 ###############################################################################
 
-- name: Play 05.01 - Delete Temporary Cloud Instances
+- name: Play 06 - Final Services
+  hosts: main
+  tags:
+    - init
+    - services
+    - final_services
+  gather_facts: no
+  tasks:
+    - include_tasks: "tasks/init.yml"
+      when: ansible_connection != 'local'
+      tags: ["no_print"]
+
+    - name: "{{ env_title }}"
+      include_tasks: "{{ env_ctx_params.hooks.before_final_services }}"
+      when: (env_ctx_params.hooks.before_final_services | default('')) != ''
+      tags: ["no_print"]
+
+    - name: "{{ env_title }} - final services (outer)"
+      include_role:
+        name: "cloud_service"
+      vars:
+        cloud_service_info: "{{ main_item }}"
+        cloud_service_name: "{{ cloud_service_info.name | default(cloud_service_info) | default('') }}"
+        cloud_service_key: >-
+          {{
+            cloud_service_info.key
+            | default(cloud_service_info.name)
+            | default(cloud_service_info)
+            | default('')
+          }}
+        cloud_service_title: "{{ env_title }} - final service {{ cloud_service_name }}"
+        cloud_service_services_dict: "{{ env.services | default({}) }}"
+        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
+        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
+        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
+        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
+        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services/{{ cloud_service_name }}"
+      loop: "{{ env.main[env_ctx].final_services | default([]) | list }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ cloud_service_name }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ env_title }}"
+      include_tasks: "{{ env_ctx_params.hooks.after_final_services }}"
+      when: (env_ctx_params.hooks.after_final_services | default('')) != ''
+      tags: ["no_print"]
+
+###############################################################################
+#########            DESTROY TEMPORARY SERVICES AND NODES            ##########
+###############################################################################
+
+- name: Play 07 - Delete Temporary Cloud Instances
   hosts: main
   tags:
     - init
@@ -527,7 +635,7 @@
         cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
         cloud_node_cloud_credentials: >-
           {{ env.credentials[cloud_node_cloud.credentials] }}
-        cloud_node_credentials_dict: "{{ env.credentials }}"
+        cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_node_dns_dict: "{{ env.dns }}"
         cloud_node_env_dir: "{{ env_dir }}"
         cloud_node_tmp_dir: >-
@@ -618,8 +726,10 @@
       tags: ["no_print"]
 
 ###############################################################################
+#########            DESTROY SPECIFIED SERVICES AND NODES            ##########
+###############################################################################
 
-- name: Play 05.02 - Delete everything that was created previously
+- name: Play 08 - Delete everything that was created previously
   hosts: main
   tags:
     - never
@@ -661,7 +771,7 @@
         cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
         cloud_node_cloud_credentials: >-
           {{ env.credentials[cloud_node_cloud.credentials] }}
-        cloud_node_credentials_dict: "{{ env.credentials }}"
+        cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_node_dns_dict: "{{ env.dns }}"
         cloud_node_env_dir: "{{ env_dir }}"
         cloud_node_tmp_dir: >-
