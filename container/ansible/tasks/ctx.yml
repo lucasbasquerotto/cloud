@@ -135,7 +135,7 @@
 
 - name: "{{ project_ctx_title }} - project_ctx_params"
   set_fact:
-    project_ctx_params_list: []
+    project_ctx_params_list: ["#!/bin/bash"]
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - project_ctx_params"
@@ -143,7 +143,7 @@
     project_ctx_params_list: >-
       {{
         project_ctx_params_list
-        + [project_ctx_item.key + '=' + (project_ctx_item.value | quote)]
+        + ['export ' + project_ctx_item.key + '=' + (project_ctx_item.value | quote)]
       }}
   loop: "{{ project_ctx_params | dict2items }}"
   loop_control:
