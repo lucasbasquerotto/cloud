@@ -37,6 +37,7 @@
     cloud_service_type: "{{ tmp_item.type | default('') }}"
     cloud_service_allowed_props:
       - "type"
+      - "credentials"
       - "params"
       - "group_params"
       - "shared_params"
