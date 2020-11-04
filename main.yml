@@ -33,8 +33,7 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }} - initial services (outer)"
-      include_role:
-        name: "cloud_service"
+      include_tasks: "tasks/cloud_service.yml"
       vars:
         cloud_service_info: "{{ main_item }}"
         cloud_service_name: "{{ cloud_service_info.name | default(cloud_service_info) | default('') }}"
@@ -557,8 +556,7 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }} - final services (outer)"
-      include_role:
-        name: "cloud_service"
+      include_tasks: "tasks/cloud_service.yml"
       vars:
         cloud_service_info: "{{ main_item }}"
         cloud_service_name: "{{ cloud_service_info.name | default(cloud_service_info) | default('') }}"

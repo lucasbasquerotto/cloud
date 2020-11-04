@@ -34,8 +34,12 @@
 - name: "{{ cloud_service_title }} - cloud_service"
   set_fact:
     cloud_service: "{{ tmp_item }}"
+    cloud_service_base_dir: "{{ tmp_base_dir }}"
+    cloud_service_base_dir_prefix: >-
+      {{ (tmp_base_dir != '') | ternary(tmp_base_dir + '/', '') }}
     cloud_service_type: "{{ tmp_item.type | default('') }}"
     cloud_service_allowed_props:
+      - "base_dir"
       - "type"
       - "credentials"
       - "params"
@@ -44,6 +48,7 @@
       - "shared_group_params"
   vars:
     tmp_item: "{{ cloud_service_services_dict[cloud_service_key] }}"
+    tmp_base_dir: "{{ tmp_item.base_dir | default('') }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - validate the cloud service type"
@@ -126,6 +131,6 @@
       tags: ["no_print"]
 
     - name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
-      include_tasks: "{{ cloud_service_type }}.yml"
+      include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
 
   when: cloud_service_type != 'skip'
