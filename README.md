@@ -1,91 +1,136 @@
-# Ansible with Docker
+# (Under Construction) Cloud Layer
 
-Setup for using **Ansible** to create droplets in **Digital Ocean** that run **Docker** containers and a MySQL database.
+This repository corresponds to the cloud layer and is used to deploy projects. This layer is responsible to deploy a specific project, using the [Cloud Input Vars](#cloud-input-vars) as the input values that contain the data needed to [deploy the project](#deploying-a-project).
 
-Tested with Ansible 2.8.0.
+_It's recommended to use a controller layer, like defined at http://github.com/lucasbasquerotto/ctl, to manage projects and generate those variables, instead of using this layer to deploy a project directly._
 
-### 1) Create an account in Digital Ocean (if you don't have already)
+## Demo
 
-### 2) Generate a token in https://cloud.digitalocean.com/account/api/tokens
+Before start using this layer, it's easier to see it in action. Below is a simple demo used to deploy a project. The demo uses pre-defined [input variables](#cloud-input-vars), and then execute this layer to deploy a project.
 
-### 3) Create Firewalls in https://cloud.digitalocean.com/networking/firewalls to allow requests from anywhere to any of the droplets.
+To execute the demo you will need a container engine (like `docker` or `podman`).
 
-#### 3.1) For a more granular (and secure) approach using tags:
+1. Create an empty directory somewhere in your filesystem, let's say, `/var/demo`.
 
-```
-- Firewall01 (External SSH): [YourIP] -> Port 22 -> (tag) main
-- Firewall02 (Internal SSH): (tag) main -> Port 22 -> (tag) host
-- Firewall03 (Internet): All IPs -> All Ports -> (tag) web
-```
+2. Create 2 directories in it: `env` and `data` (the names could be different, just remember to use these directories when mapping volumes to the container).
 
-The machine with Ansible (has the `main` tag) will be the only one that can be accessed externally through SSH, and using your IP should remove the threat of brute force attacks.
+3. Create a `demo.yml` file inside `env` with the data needed to deploy the project:
 
-The other machines (have the `host` tag) can be accessed through SSH from the Ansible machine. Inside the machine with Ansible, run `ssh host@[hostIP]`, assuming the user name in the other machines is `host` (the default in this setup).
-
-The created droplets have the `web` tag, allowing them to be accessed from anywhere in all ports (for a demo, it should be fine, but for production servers a loadbalancer should be included to receive connections from the internet and forward them to the correct containers in the correct ports).
-
-### 4) Create a droplet in Digital Ocean:
-
-```
-- Ubuntu 18.04
-- US$ 5.00
-- User Data: paste the text in /setup/ansible.sh in the textarea
-- Tags: main
+```yaml
+# Enter the data here (see the demo examples)
 ```
 
-### 5) Connect to the droplet through SSH:
+4. Deploy the project:
 
-```
-- Accept the fingerprint (if asked, type 'yes' and press ENTER)
-- SSH password: abc321
-```
-
-### 6) Verify that the droplet preparation is finished
-
-```
-- Run: tail /var/log/setup.log
-- See if the last line printed is: "Setup Finished" (wait while it isn't finished)
+```shell
+docker run -it --rm -v /var/demo/env:/env -v /var/demo/data:/lrd local/demo
 ```
 
-### 7) Prepare the script to download the repository and run the playbook:
+**The above commands in a shell script:**
 
-```
-$ nano run.sh
-[paste the content of the file run.sh in this repository]
-Save and exit: Ctrl+X -> y -> ENTER
-chmod +x run.sh
-```
+```shell
+mkdir -p /var/demo/env /var/demo/data
 
-### 8) Run the script:
+cat <<'SHELL' > /var/demo/env/demo.yml
+# Enter the data here (see the demo examples)
+SHELL
 
-```
-./run.sh
+docker run -it --rm -v /var/demo/env:/env -v /var/demo/data:/lrd local/demo
 ```
 
-It may give an error the first time, because the Digital Ocean API token is not defined, so define it in `~/env/env.yml`:
+**That's it. The project was deployed.**
 
+🚀 You can see examples of project deployment demos [here](#).
+
+The demos are great for what they are meant to be: demos, prototypes. **They shouldn't be used for development** (bad DX if you need real time changes without having to push and pull newer versions of repositories, furthermore you are unable to clone repositories in specific locations defined by you in the project folder). **They also shouldn't be used in production environments** due to bad security (the vault value used for decryption is `123456`, and changes to the [project environment repository](#project-environment-repository) may be lost if you forget to push them).
+
+# Deploying a Project
+
+The deployment of a project in this layer is done, by default, in 3 steps.
+
+1. [Cloud Preparation Step](#cloud-preparation-step)
+
+2. [Cloud Context Preparation Step](#cloud-context-preparation-step)
+
+## Project Base Directory
+
+The project base directory is the directory (`project_base_dir`) in which the files generated by the project deployment and used to deploy the project are located.
+
+When running with the `dev` [input variable](#cloud-input-vars), there should be a relative symlink `project_base_dir/dev/link` that points to a folder that will be the base of the paths (`base_path`) used to map repositories (so that you can share repositories across projects).
+
+When running this step in a container, `<project_base_dir>/dev` should map to `<base_path>` in the host, and a symlink `<base_path>/link` should be created pointing to itself (`.`) so that the relative symlinks work inside and outside the container.
+
+_If using the controller layer at http://github.com/lucasbasquerotto/ctl to deploy the project, the project base directory will be at `<root_dir>/projects/<project_name>/` and the symlinks and volume mappings will be already handled._
+
+## Cloud Input Vars
+
+The [Cloud Preparation Step](#cloud-preparation-step) needs a file in the following format located at `<project_base_dir>/files/ctl/vars.yml` to deploy a project:
+
+```yaml
+ctxs:
+- ctx1
+- ctx2
+dev: true
+env_file: path/to/env.yml
+env_params:
+    param1: value1
+    param2: value2
+init:
+    container: lucasbasquerotto/cloud:1.3.6
+    container_type: docker
+    root: true
+    run_file: /usr/local/bin/run
+key: project-key
+migration: ''
+path_params:
+    path_env: repos/env
+    path_env_base: repos/env-base
+    path_map_repos:
+        app: repos/app
+        cloud: repos/cloud
+        custom_cloud: repos/custom-cloud
+        custom_pod: repos/custom-pod
+        env_base: repos/env-base
+        pod: repos/pod
+project_dir_rel: projects/project-key
+repo:
+    src: ssh://git@github.com/lucasbasquerotto/project-env-demo.git
+    ssh_file: ssh.key
+    version: master
+repo_vault:
+    file: vault
+    force: true
+root_dir: <root_dir>
 ```
-$ nano ~/env/env.yml
-[paste the token of step [2] in the first field `do_token`, then uncomment the `droplet_state` that has the value `present` and comment the one that has the value `deleted` (see step [9] for more information)]
-Save and exit: Ctrl+X -> y -> ENTER
-$ ./run.sh
-```
 
-After running the playbook, you should see the new droplets created in your Digital Ocean dashboard. 
+## Cloud Preparation Step
 
-### 9) Alternatives to run ansible:
+This step receives a `project-dir` parameter with the [project base directory](#project-base-directory), then use the [Cloud Input Vars](#cloud-input-vars) at `<project_base_dir>/files/ctl/vars.yml` to clone the [project environment repository](#project-environment-repository), load the [`env_file`](#project-environment-file) defined in the input vars, load the [project base environment repository](#project-environment-repository) if defined in the [`env_file`](#project-environment-file), in which case it loads the [`env_base_file`](#project-environment-base-file) passing the variables at the `env_file` as parameters, and, finally, for each context defined in the input vars (`ctxs`), clone the cloud repository for that context.
 
-Instead of running with:
+This preparation step is commonly executted inside a container, runs only once for the project and is the same even if the cloud repositories for the contexts are different, so it's expected that all the contexts in a project are compatible with this preparation step, and any specific stuff related to the context is run in the [Cloud Context Preparation Step](#cloud-context-preparation-step).
 
-```
-$ ./run.sh
-```
+To clone/pull the [project environment repository](#project-environment-repository), the `repo.src` and `repo.version` are used. If `repo.ssh_file` is specified, the ssh file defined at `<project_base_dir>/secrets/ctl/` is used.
 
-You can run with:
+When loading the environment variables defined in the [`env_file`](#project-environment-file), if `repo_vault.file` is defined, the vault file there is used to decrypt the encrypted values. The [`env_file`](#project-environment-file) can access use jinja2 expressions and has access to the following variables:
 
-```
-$ cd ~/ansible
-$ ansible-playbook main.yml
-```
+- `project_name` (`string`): the project name, the value of `key` in the [Cloud Input Vars](#cloud-input-vars).
+- `project_ctxs` (`list` of `string`): the contexts that will run in the project, the value of `ctxs` in the [Cloud Input Vars](#cloud-input-vars). The value `ctxs` is optional in the [Cloud Input Vars](#cloud-input-vars), and if not defined there, should be defined in the `env_file` (or `env_base_file`)
+- `params` (`dict`): any parameters defined at `env_params` in the [Cloud Input Vars](#cloud-input-vars).
 
-(this won't update the repository with changes, while with `./run.sh` will (good for development), except for the files inside the `env` directory, that are defined only in the 1st run)
+Aside from `project-dir`, the file that [runs this preparation step](container/run.sh) also accepts the following options:
+
+| Option        | Description |
+| ------------- | ----------- |
+| <nobr>`-f`</nobr><br><nobr>`--fast`</nobr> | Skips the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step). |
+| <nobr>`-p`</nobr><br><nobr>`--prepare`</nobr> | Only runs the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step).<br><br>This has a particular feature that allows to pass arguments to each step that will handle it (as long as subsequent layers handle it). For example, passing the args `-vv` would generally be used only by the last step, but in this case it will be used as args to run the [Cloud Preparation Step](#cloud-preparation-step) and no args to subsequent steps.<br><br>You can pass `--` to indicate the end of the arguments for a given step, so the following args `-a -b -c -- -d` will pass the argument `-a -b -c` to the [Cloud Preparation Step](#cloud-preparation-step), and `-d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). You can use `--skip` to skip a given step (you shouldn't pass `--` in this case). For example, `--skip -c -d` will skip the [Cloud Preparation Step](#cloud-preparation-step) and pass `-c -d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). |
+| <nobr>`--debug`</nobr> | Runs in verbose mode and forwards this option to the subsequent step. |
+
+In this step, when the `dev` input var is `true`, the `path_params` value in the [Cloud Input Vars](#cloud-input-vars) file will be included in a new file at `<project_base_dir>/files/cloud/path-map.yml` so that the next steps can use it to map repositories to other locations and skip pulling already cloned repositories.
+
+The value of `env_params` is written to the file `<project_base_dir>/files/cloud/env-params.yml` so that the next steps can use it to load the [`env_file`](#project-environment-file).
+
+For each context in the project, 2 files with the same content in a different format will be created at `<project_base_dir>/files/cloud/ctxs/<ctx>/vars.yml` and `<project_base_dir>/files/cloud/ctxs/<ctx>/vars.sh` to be used in the [Cloud Context Preparation Step](#cloud-context-preparation-step) and [Cloud Context Main Step](#cloud-context-main-step). The contents of those files are defined in the [Cloud Context Input Vars](#cloud-context-input-vars) section.
+
+This steps generate a file `<project_base_dir>/files/cloud/run-ctxs` to run each context passing as the first parameter the location of context directory (`<project_base_dir>/files/cloud/ctxs/<ctx>/`). Each context is run entirely ([Cloud Context Preparation Step](#cloud-context-preparation-step) and [Cloud Context Main Step](#cloud-context-main-step)) before starting the next context.
+
+## Cloud Context Preparation Step
