@@ -176,6 +176,8 @@
         dest: "{{ project_ctx_run_dest }}"
         mode: "{{ env_dev | ternary(0666, 0600) }}"
 
+    # prepare the repositories
+
     - name: "{{ project_ctx_run_title }} - prepare repos (outer)"
       include_role:
         name: "prepare_repos"
