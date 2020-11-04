@@ -64,67 +64,68 @@
     label: "{{ cloud_service_item.key }}"
   tags: ["no_print_skipped"]
 
-### Generate the environment pod context variables ###
+- block:
+    - name: "{{ cloud_service_title }} - generate credentials params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_service_title }} - generate credentials params"
+        params_mixer_main_params: {}
+        params_mixer_group_params_names: "{{ cloud_service.credentials | default({}) }}"
+        params_mixer_shared_params_names: []
+        params_mixer_shared_params_names_dict: {}
+        params_mixer_shared_group_params_name: ""
+        params_mixer_shared_group_params_names_dict: {}
+        params_mixer_params_dict: "{{ cloud_service_credentials_dict }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - generate credentials params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
-  vars:
-    params_mixer_title: "{{ cloud_service_title }} - generate credentials params"
-    params_mixer_main_params: {}
-    params_mixer_group_params_names: "{{ cloud_service.credentials | default({}) }}"
-    params_mixer_shared_params_names: []
-    params_mixer_shared_params_names_dict: {}
-    params_mixer_shared_group_params_name: ""
-    params_mixer_shared_group_params_names_dict: {}
-    params_mixer_params_dict: "{{ cloud_service_credentials_dict }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - cloud_service_credentials"
+      set_fact:
+        cloud_service_credentials: "{{ params_mixer_params }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - cloud_service_credentials"
-  set_fact:
-    cloud_service_credentials: "{{ params_mixer_params }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - generate service params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_service_title }} - generate service params"
+        params_mixer_main_params: "{{ cloud_service.params | default({}) }}"
+        params_mixer_group_params_names: "{{ cloud_service.group_params | default({}) }}"
+        params_mixer_shared_params_names: "{{ cloud_service.shared_params | default([]) }}"
+        params_mixer_shared_group_params_name: "{{ cloud_service.shared_group_params | default('') }}"
+        params_mixer_shared_params_names_dict: "{{ cloud_service_shared_params_dict | default({}) }}"
+        params_mixer_shared_group_params_names_dict: "{{ cloud_service_shared_group_params_dict | default({}) }}"
+        params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - generate service params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
-  vars:
-    params_mixer_title: "{{ cloud_service_title }} - generate service params"
-    params_mixer_main_params: "{{ cloud_service.params | default({}) }}"
-    params_mixer_group_params_names: "{{ cloud_service.group_params | default({}) }}"
-    params_mixer_shared_params_names: "{{ cloud_service.shared_params | default([]) }}"
-    params_mixer_shared_group_params_name: "{{ cloud_service.shared_group_params | default('') }}"
-    params_mixer_shared_params_names_dict: "{{ cloud_service_shared_params_dict | default({}) }}"
-    params_mixer_shared_group_params_names_dict: "{{ cloud_service_shared_group_params_dict | default({}) }}"
-    params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - cloud_service_params"
+      set_fact:
+        cloud_service_params: "{{ params_mixer_params }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - cloud_service_params"
-  set_fact:
-    cloud_service_params: "{{ params_mixer_params }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - generate service ctx params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_service_title }} - generate service ctx params"
+        params_mixer_main_params: "{{ cloud_service_info.params | default({}) }}"
+        params_mixer_group_params_names: "{{ cloud_service_info.group_params | default({}) }}"
+        params_mixer_shared_params_names: "{{ cloud_service_info.shared_params | default([]) }}"
+        params_mixer_shared_group_params_name: "{{ cloud_service_info.shared_group_params | default('') }}"
+        params_mixer_shared_params_names_dict: "{{ cloud_service_shared_params_dict | default({}) }}"
+        params_mixer_shared_group_params_names_dict: "{{ cloud_service_shared_group_params_dict | default({}) }}"
+        params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - generate service ctx params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
-  vars:
-    params_mixer_title: "{{ cloud_service_title }} - generate service ctx params"
-    params_mixer_main_params: "{{ cloud_service_info.params | default({}) }}"
-    params_mixer_group_params_names: "{{ cloud_service_info.group_params | default({}) }}"
-    params_mixer_shared_params_names: "{{ cloud_service_info.shared_params | default([]) }}"
-    params_mixer_shared_group_params_name: "{{ cloud_service_info.shared_group_params | default('') }}"
-    params_mixer_shared_params_names_dict: "{{ cloud_service_shared_params_dict | default({}) }}"
-    params_mixer_shared_group_params_names_dict: "{{ cloud_service_shared_group_params_dict | default({}) }}"
-    params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - cloud_service_ctx_params"
+      set_fact:
+        cloud_service_ctx_params: "{{ params_mixer_params }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - cloud_service_ctx_params"
-  set_fact:
-    cloud_service_ctx_params: "{{ params_mixer_params }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - cloud_service_params"
+      set_fact:
+        cloud_service_params: >-
+          {{ cloud_service_params | combine(cloud_service_ctx_params) }}
+      tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - cloud_service_params"
-  set_fact:
-    cloud_service_params: >-
-      {{ cloud_service_params | combine(cloud_service_ctx_params) }}
-  tags: ["no_print"]
+    - name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
+      include_tasks: "{{ cloud_service_type }}.yml"
 
-- name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
-  include_tasks: "{{ cloud_service_type }}.yml"
+  when: cloud_service_type != 'skip'
