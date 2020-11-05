@@ -277,7 +277,7 @@
 <% set ns_outer_run.first = false %>
 <% set ns_run.hosts = ['main'] + ns_run.hosts %>
 
-- name: Play 03.<< loop.index >> - Run (<< var_run_stage_name >>)
+- name: Play 04.<< loop.index >> - Run (<< var_run_stage_name >>)
   hosts: << ns_run.hosts | unique | join(',') >>
   strategy: free
   tags:
@@ -338,7 +338,7 @@
 
 ###############################################################################
 
-- name: Play 03.<< loop.index >> - Wait (<< var_run_stage_name >>)
+- name: Play 04.<< loop.index >> - Wait (<< var_run_stage_name >>)
   hosts: main,host
   strategy: linear
   any_errors_fatal: true
@@ -351,7 +351,7 @@
 <% endif %>
 <% endfor %>
 
-- name: Play 03.end - End of run steps
+- name: Play 04.end - End of run steps
   hosts: main,host
   strategy: linear
   any_errors_fatal: true

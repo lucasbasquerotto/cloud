@@ -101,9 +101,9 @@
         params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_title }} - cloud_service_params"
+    - name: "{{ cloud_service_title }} - cloud_service_original_params"
       set_fact:
-        cloud_service_params: "{{ params_mixer_params }}"
+        cloud_service_original_params: "{{ params_mixer_params }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_service_title }} - generate service ctx params (outer)"
@@ -124,13 +124,60 @@
         cloud_service_ctx_params: "{{ params_mixer_params }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_title }} - cloud_service_params"
+    - name: "{{ cloud_service_title }} - cloud_service_original_params"
       set_fact:
-        cloud_service_params: >-
-          {{ cloud_service_params | combine(cloud_service_ctx_params) }}
+        cloud_service_original_title: "{{ cloud_service_title }}"
+        cloud_service_original_params: >-
+          {{ cloud_service_original_params | combine(cloud_service_ctx_params) }}
       tags: ["no_print"]
 
     - name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
       include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
+      vars:
+        cloud_service_params: "{{ cloud_service_original_params }}"
+      when: not (cloud_service_original_params.meta.list | default(false) | bool)
+
+    - name: "{{ cloud_service_title }} - list block"
+      block:
+        - name: "{{ cloud_service_title }} - cloud_service_params_list - init"
+          set_fact:
+            cloud_service_params_list: []
+            cloud_service_item_list: >-
+              {{ cloud_service_original_params.list | default([]) }}
+          tags: ["no_print"]
+
+        - name: "{{ cloud_service_title }} - cloud_service_params_list - fill"
+          set_fact:
+            cloud_service_params_list: >-
+              {{ cloud_service_params_list + [cloud_service_params_list_item] }}
+          vars:
+            cloud_service_params_list_item: >-
+              {{
+                cloud_service_original_params.meta.use_dict | default(false) | bool
+                | ternary(
+                  cloud_service_original_params[cloud_service_item],
+                  cloud_service_item
+                )
+              }}
+          loop: "{{ cloud_service_item_list }}"
+          loop_control:
+            loop_var: cloud_service_item
+            label: "{{ cloud_service_params_list_item.name | default('') }}"
+          tags: ["no_print"]
+
+        - name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
+          include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
+          vars:
+            cloud_service_title: >-
+              {{ cloud_service_original_title }} -
+              service item [{{ cloud_service_item.name | default('') }}]
+            cloud_service_params: "{{ cloud_service_item }}"
+          loop: "{{ cloud_service_params_list }}"
+          loop_control:
+            loop_var: cloud_service_item
+            label: "{{ cloud_service_item.name | default('') }}"
+          tags: ["no_print_skipped"]
+
+      when: cloud_service_original_params.meta.list | default(false) | bool
 
   when: cloud_service_type != 'skip'

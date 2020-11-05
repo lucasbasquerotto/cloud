@@ -67,47 +67,47 @@
 ##################            PREPARE THE CLOUD            ####################
 ###############################################################################
 
-- name: Play 01.02 - Cloud - Main
-  hosts: main
-  tags:
-    - init
-    - cloud
-    - cloud_main
-  gather_facts: no
-  tasks:
-    - include_tasks: "tasks/init.yml"
-      when: ansible_connection != 'local'
-      tags: ["no_print"]
+# - name: Play 01.02 - Cloud - Main
+#   hosts: main
+#   tags:
+#     - init
+#     - cloud
+#     - cloud_main
+#   gather_facts: no
+#   tasks:
+#     - include_tasks: "tasks/init.yml"
+#       when: ansible_connection != 'local'
+#       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_cloud_main }}"
-      when: (env_ctx_params.hooks.before_cloud_main | default('')) != ''
-      tags: ["no_print"]
+#     - name: "{{ env_title }}"
+#       include_tasks: "{{ env_ctx_params.hooks.before_cloud_main }}"
+#       when: (env_ctx_params.hooks.before_cloud_main | default('')) != ''
+#       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_main"
-      vars:
-        cloud_main_title: "{{ env_title }} - [prepare] cloud[{{ main_item }}]"
-        cloud_main_env_name: "{{ env.name }}"
-        cloud_main_cloud: "{{ env.clouds[main_item] }}"
-        cloud_main_credentials: >-
-          {{ env.credentials[cloud_main_cloud.credentials] }}
-        cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
-        cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
-        cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
-        cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
-        cloud_main_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_main_state: "present"
-      loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-      tags: ["no_print_skipped"]
+#     - name: "{{ env_title }}"
+#       include_role:
+#         name: "cloud_main"
+#       vars:
+#         cloud_main_title: "{{ env_title }} - [prepare] cloud[{{ main_item }}]"
+#         cloud_main_env_name: "{{ env.name }}"
+#         cloud_main_cloud: "{{ env.clouds[main_item] }}"
+#         cloud_main_credentials: >-
+#           {{ env.credentials[cloud_main_cloud.credentials] }}
+#         cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+#         cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+#         cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+#         cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
+#         cloud_main_env_ctx_params: "{{ env_ctx_params }}"
+#         cloud_main_state: "present"
+#       loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+#       loop_control:
+#         loop_var: main_item
+#       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_cloud_main }}"
-      when: (env_ctx_params.hooks.after_cloud_main | default('')) != ''
-      tags: ["no_print"]
+#     - name: "{{ env_title }}"
+#       include_tasks: "{{ env_ctx_params.hooks.after_cloud_main }}"
+#       when: (env_ctx_params.hooks.after_cloud_main | default('')) != ''
+#       tags: ["no_print"]
 
 ###############################################################################
 
@@ -345,8 +345,7 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_role:
-        name: "host_test"
+      include_tasks: "tasks/host_test.yml"
       vars:
         host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
         host_test_node_info: "{{ host_test_node_info_aux }}"
@@ -695,26 +694,58 @@
       when: main_item.tmp | default(false) | bool
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_main"
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_main"
+    #   vars:
+    #     main_cloud_name: "{{ main_item.name | default(main_item) }}"
+    #     cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_cloud_name }}]"
+    #     cloud_main_env_name: "{{ env.name }}"
+    #     cloud_main_cloud: "{{ env.clouds[main_cloud_name] }}"
+    #     cloud_main_credentials: >-
+    #       {{ env.credentials[cloud_main_cloud.credentials] }}
+    #     cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+    #     cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+    #     cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+    #     cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_cloud_name }}"
+    #     cloud_main_env_ctx_params: "{{ env_ctx_params }}"
+    #     cloud_main_state: "absent"
+    #   loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ main_cloud_name }}"
+    #   when: main_item.tmp | default(false) | bool
+    #   tags: ["no_print_skipped"]
+
+    - name: "{{ env_title }} - [destroy (tmp)] services (outer)"
+      include_tasks: "tasks/cloud_service.yml"
       vars:
-        main_cloud_name: "{{ main_item.name | default(main_item) }}"
-        cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_cloud_name }}]"
-        cloud_main_env_name: "{{ env.name }}"
-        cloud_main_cloud: "{{ env.clouds[main_cloud_name] }}"
-        cloud_main_credentials: >-
-          {{ env.credentials[cloud_main_cloud.credentials] }}
-        cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
-        cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
-        cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
-        cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_cloud_name }}"
-        cloud_main_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_main_state: "absent"
-      loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+        cloud_service_info: "{{ main_item }}"
+        cloud_service_name: "{{ cloud_service_info.name | default(cloud_service_info) | default('') }}"
+        cloud_service_key: >-
+          {{
+            cloud_service_info.key
+            | default(cloud_service_info.name)
+            | default(cloud_service_info)
+            | default('')
+          }}
+        cloud_service_title: "{{ env_title }} - [destroy (tmp)] service {{ cloud_service_name }}"
+        cloud_service_services_dict: "{{ env.services | default({}) }}"
+        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
+        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
+        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
+        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
+        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services/{{ cloud_service_name }}"
+      loop: >-
+        {{
+          (env.main[env_ctx].initial_services | default([]) | list)
+          +
+          (env.main[env_ctx].final_services | default([]) | list)
+        }}
       loop_control:
         loop_var: main_item
-        label: "{{ main_cloud_name }}"
+        label: "{{ cloud_service_name }}"
       when: main_item.tmp | default(false) | bool
       tags: ["no_print_skipped"]
 
@@ -829,25 +860,57 @@
       when: env.main[env_ctx].destroy.dns | default(false) | bool
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_main"
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_main"
+    #   vars:
+    #     cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_item }}]"
+    #     cloud_main_env_name: "{{ env.name }}"
+    #     cloud_main_cloud: "{{ env.clouds[main_item] }}"
+    #     cloud_main_credentials: >-
+    #       {{ env.credentials[cloud_main_cloud.credentials] }}
+    #     cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
+    #     cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
+    #     cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
+    #     cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
+    #     cloud_main_env_ctx_params: "{{ env_ctx_params }}"
+    #     cloud_main_state: "absent"
+    #   loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #   when: env.main[env_ctx].destroy.clouds | default(false) | bool
+    #   tags: ["no_print_skipped"]
+
+    - name: "{{ env_title }} - [destroy] services (outer)"
+      include_tasks: "tasks/cloud_service.yml"
       vars:
-        cloud_main_title: "{{ env_title }} - [destroy] cloud[{{ main_item }}]"
-        cloud_main_env_name: "{{ env.name }}"
-        cloud_main_cloud: "{{ env.clouds[main_item] }}"
-        cloud_main_credentials: >-
-          {{ env.credentials[cloud_main_cloud.credentials] }}
-        cloud_main_cloud_params_dict: "{{ env.cloud_params | default({}) }}"
-        cloud_main_cloud_shared_params_dict: "{{ env.cloud_shared_params | default({}) }}"
-        cloud_main_cloud_shared_group_params_dict: "{{ env.cloud_shared_group_params | default({}) }}"
-        cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
-        cloud_main_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_main_state: "absent"
-      loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+        cloud_service_info: "{{ main_item }}"
+        cloud_service_name: "{{ cloud_service_info.name | default(cloud_service_info) | default('') }}"
+        cloud_service_key: >-
+          {{
+            cloud_service_info.key
+            | default(cloud_service_info.name)
+            | default(cloud_service_info)
+            | default('')
+          }}
+        cloud_service_title: "{{ env_title }} - [destroy] service {{ cloud_service_name }}"
+        cloud_service_services_dict: "{{ env.services | default({}) }}"
+        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
+        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
+        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
+        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
+        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services/{{ cloud_service_name }}"
+      loop: >-
+        {{
+          (env.main[env_ctx].initial_services | default([]) | list)
+          +
+          (env.main[env_ctx].final_services | default([]) | list)
+        }}
       loop_control:
         loop_var: main_item
-      when: env.main[env_ctx].destroy.clouds | default(false) | bool
+        label: "{{ cloud_service_name }}"
+      when: main_item.tmp | default(false) | bool
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
