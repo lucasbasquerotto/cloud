@@ -25,7 +25,7 @@
   when: repo_dir != repo_default_dir
 
 - name: "{{ repo_title }} - git (outer)"
-  include_tasks: "git.yml"
+  include_tasks: "tasks/util/git.yml"
   vars:
     git_title: "{{ repo_title }} - git"
     git_repo: "{{ repo_main }}"

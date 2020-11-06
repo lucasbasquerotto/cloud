@@ -1,7 +1,7 @@
 - name: >-
     {{ cloud_prepare_inner_title }} -
     environment pod ({{ cloud_prepare_pod_inner_env_repo_name }}) - repo (outer)
-  include_tasks: "tasks/repo.yml"
+  include_tasks: "tasks/util/repo.yml"
   vars:
     repo_title: >-
       {{ cloud_prepare_inner_title }} -

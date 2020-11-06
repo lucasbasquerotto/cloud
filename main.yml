@@ -8,7 +8,7 @@
     - always
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       tags: ["no_print"]
 
 ###############################################################################
@@ -23,7 +23,7 @@
     - initial_services
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -67,7 +67,7 @@
 #     - cloud_main
 #   gather_facts: no
 #   tasks:
-#     - include_tasks: "tasks/init.yml"
+#     - include_tasks: "tasks/util/init.yml"
 #       when: ansible_connection != 'local'
 #       tags: ["no_print"]
 
@@ -111,7 +111,7 @@
     - dns
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -157,7 +157,7 @@
     - buckets
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -201,7 +201,7 @@
     - create
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -271,7 +271,7 @@
     - wait
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/env.yml"
+    - include_tasks: "tasks/util/env.yml"
       vars:
         env_stage_title: "main"
       tags: ["no_print"]
@@ -337,7 +337,7 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "tasks/host_test.yml"
+      include_tasks: "tasks/util/host_test.yml"
       vars:
         host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
         host_test_node_info: "{{ host_test_node_info_aux }}"
@@ -369,7 +369,7 @@
     - prepare-remote
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -472,7 +472,7 @@
     - cron_local
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -537,7 +537,7 @@
     - final_services
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -581,7 +581,7 @@
     - cloud
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -707,7 +707,9 @@
         main_tmp_services: >-
           {{
             env.main[env_ctx].final_services | default([])
-            | selectattr("tmp", "equalto", "true") | list
+            | selectattr('tmp','defined')
+            | selectattr('tmp', 'equalto', 'true')
+            | list
           }}
         cloud_service:
           list: true
@@ -729,7 +731,9 @@
         main_tmp_services: >-
           {{
             env.main[env_ctx].initial_services | default([])
-            | selectattr("tmp", "equalto", "true") | list
+            | selectattr('tmp','defined')
+            | selectattr('tmp', 'equalto', True)
+            | list
           }}
         cloud_service:
           list: true
@@ -761,7 +765,7 @@
     - destroy
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/init.yml"
+    - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
@@ -880,11 +884,7 @@
     - name: "{{ env_title }} - [destroy (tmp)] final services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: >-
-          {{
-            env.main[env_ctx].final_services | default([])
-            | selectattr("tmp", "equalto", "true") | list
-          }}
+        main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) }}"
         cloud_service:
           list: true
           services: "{{ main_tmp_services }}"
@@ -905,11 +905,7 @@
     - name: "{{ env_title }} - [destroy (tmp)] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: >-
-          {{
-            env.main[env_ctx].initial_services | default([])
-            | selectattr("tmp", "equalto", "true") | list
-          }}
+        main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) }}"
         cloud_service:
           list: true
           services: "{{ main_tmp_services }}"

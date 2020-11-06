@@ -1,4 +1,4 @@
-- name: "{{ cloud_service_inner_title }} - verify item(s)"
+- name: "{{ cloud_service_inner_title }} - prepare service"
   include_tasks: "tasks/services/cloud_service_item.yml"
 
 - name: "{{ cloud_service_inner_title }} - cloud_service_inner_again"
@@ -16,22 +16,15 @@
         cloud_service_inner_key: "{{ tmp_item.key }}"
         cloud_service_inner_info: "{{ tmp_item.info }}"
         cloud_service_inner_tmp_dir: "{{ tmp_item.tmp_dir }}"
+        cloud_service_inner_prev_name: "{{ tmp_item.prev_name }}"
       vars:
         tmp_item: "{{ cloud_service_pending_list[cloud_service_pending_idx | int] | default({}) }}"
-      tags: ["no_print"]
-
-    - name: "{{ cloud_service_inner_title }} - cloud_service_inner"
-      set_fact:
-        cloud_service_inner: "{{ tmp_item }}"
-        cloud_service_inner_type: "{{ tmp_item.type | default('') }}"
-      vars:
-        tmp_item: "{{ cloud_service_services_dict[cloud_service_inner_key] }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - validate the cloud service name"
       fail:
         msg: "cloud service name is not defined"
-      when: (cloud_service_inner_name | default('')) == ''
+      when: cloud_service_inner_name == ''
       tags: ["no_print_skipped"]
 
     - name: "{{ cloud_service_inner_title }} - validate the cloud service key"
@@ -74,15 +67,56 @@
 
     - name: "{{ cloud_service_inner_title }} - validate unique names"
       fail:
-        msg: "duplicated services in services list: {{ cloud_service_name_list }}"
+        msg: |
+          duplicated services in services list:
+          {{ cloud_service_name_list | to_nice_yaml }}"
       when: (cloud_service_name_list | length) != (cloud_service_name_list | unique | length)
+      tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_pending_idx"
       set_fact:
         cloud_service_pending_idx: "{{ (cloud_service_pending_idx | int) + 1 }}"
       tags: ["no_print"]
 
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner"
+      set_fact:
+        cloud_service_inner: "{{ tmp_item }}"
+        cloud_service_inner_type: "{{ tmp_item.type | default('') }}"
+      vars:
+        tmp_item: "{{ cloud_service_services_dict[cloud_service_inner_key] }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - top service"
+      block:
+        - name: "{{ cloud_service_inner_title }} - remove tmp property"
+          block:
+            - name: "{{ cloud_service_inner_title }} - cloud_service_inner_aux"
+              set_fact:
+                cloud_service_inner_aux: {}
+              tags: ["no_print"]
+
+            - set_fact:
+                cloud_service_inner_aux: >-
+                  {{ cloud_service_inner_aux | combine({ tmp_item.key: tmp_item.value }) }}
+              when: not (tmp_item.key in ['tmp'])
+              loop: "{{ cloud_service_inner | dict2items | list }}"
+              loop_control:
+                loop_var: tmp_item
+                label: "{{ tmp_item.key }}"
+              tags: ["no_print_skipped"]
+
+            - name: "{{ cloud_service_inner_title }} - cloud_service_inner_aux"
+              set_fact:
+                cloud_service_inner: "{{ cloud_service_inner_aux }}"
+              tags: ["no_print"]
+
+          when: cloud_service_inner.tmp is defined
+
+      when: cloud_service_inner_prev_name == ''
+      tags: ["no_print_skipped"]
+
     - name: "{{ cloud_service_inner_title }} - execute the service ({{ cloud_service_inner_type }})"
       include_tasks: "tasks/services/cloud_service_recursive.yml"
+      tags: ["no_print_skipped"]
 
   when: cloud_service_inner_again | bool

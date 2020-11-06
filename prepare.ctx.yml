@@ -1,7 +1,7 @@
 - name: Cloud - Prepare Context
   hosts: main
   tasks:
-    - include_tasks: "tasks/env.yml"
+    - include_tasks: "tasks/util/env.yml"
       vars:
         env_stage_title: "prepare"
 

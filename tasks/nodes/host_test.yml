@@ -1,5 +1,5 @@
 - name: "{{ host_test_title }} - generate node params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ host_test_title }} - generate node params"
     params_mixer_main_params: "{{ host_test_node.params | default({}) }}"
@@ -17,7 +17,7 @@
   tags: ["no_print"]
 
 - name: "{{ host_test_title }} - generate node ctx params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ host_test_title }} - generate node ctx params"
     params_mixer_main_params: "{{ host_test_node_info.params | default({}) }}"

@@ -7,7 +7,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - pod - repo (outer)"
-  include_tasks: "tasks/repo.yml"
+  include_tasks: "tasks/util/repo.yml"
   vars:
     repo_title: "{{ cloud_prepare_inner_title }} - pod - repo"
     repo_main: "{{ cloud_prepare_pod_inner_repo }}"
@@ -63,7 +63,7 @@
 ### Generate the environment pod context variables ###
 
 - name: "{{ cloud_prepare_inner_title }} - generate credentials params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ cloud_prepare_inner_title }} - generate credentials params"
     params_mixer_main_params: {}
@@ -81,7 +81,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate pod params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ cloud_prepare_inner_title }} - generate pod params"
     params_mixer_main_params: "{{ cloud_prepare_pod.params | default({}) }}"
@@ -99,7 +99,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate node params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ cloud_prepare_inner_title }} - generate node params"
     params_mixer_main_params: "{{ cloud_prepare_node.params | default({}) }}"
@@ -117,7 +117,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate node ctx params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ cloud_prepare_inner_title }} - generate node ctx params"
     params_mixer_main_params: "{{ cloud_prepare_node_info.params | default({}) }}"
@@ -141,7 +141,7 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params (outer)"
-  include_tasks: "tasks/params_mixer.yml"
+  include_tasks: "tasks/util/params_mixer.yml"
   vars:
     params_mixer_title: "{{ cloud_prepare_inner_title }} - generate pod params with node pod override params"
     params_mixer_main_params: "{{ cloud_prepare_pod_info.params | default({}) }}"
@@ -167,7 +167,7 @@
 
 - block:
     - name: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params (outer)"
-      include_tasks: "tasks/params_mixer.yml"
+      include_tasks: "tasks/util/params_mixer.yml"
       vars:
         params_mixer_title: "{{ cloud_prepare_inner_title }} - generate pod params with ctx pod override params"
         params_mixer_main_params: "{{ cloud_prepare_node_info_pod_params.params | default({}) }}"

@@ -1,3 +1,10 @@
+# https://github.com/ansible/ansible/issues/64883
+- name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map"
+  set_fact:
+    cloud_service_inner_info_map: >-
+      {{ (cloud_service_inner_info is mapping) | ternary(cloud_service_inner_info, {}) }}
+  tags: ["no_print"]
+
 - name: "{{ cloud_service_inner_title }} - service list"
   block:
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_allowed_props"
@@ -7,9 +14,15 @@
           - "services"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - validate the cloud service props"
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service list props"
       fail:
-        msg: "invalid property {{ cloud_service_inner_item.key }} defined for service list"
+        msg: |
+          Invalid property defined for service list
+          Property: {{ cloud_service_inner_item.key }}
+          Allowed:
+          {{ cloud_service_inner_allowed_props | to_nice_yaml }}
+          Item:
+          {{ cloud_service_inner_info_map | to_nice_yaml }}
       when: cloud_service_inner_item.key not in cloud_service_inner_allowed_props
       loop: "{{ cloud_service_inner | dict2items | list }}"
       loop_control:
@@ -17,9 +30,53 @@
         label: "{{ cloud_service_inner_item.key }}"
       tags: ["no_print_skipped"]
 
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service list info props (outer)"
+      block:
+        - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_allowed_props"
+          set_fact:
+            cloud_service_inner_info_allowed_props:
+              - "name"
+              - "key"
+          tags: ["no_print"]
+
+        - name: "{{ cloud_service_inner_title }} - validate the cloud service list info props"
+          fail:
+            msg: |
+              Invalid property defined for service list info
+              Property: {{ cloud_service_inner_item.key }}
+              Allowed:
+              {{ cloud_service_inner_info_allowed_props | to_nice_yaml }}
+              Item:
+              {{ cloud_service_inner_info_map | to_nice_yaml }}
+          when: cloud_service_inner_item.key not in cloud_service_inner_info_allowed_props
+          loop: "{{ cloud_service_inner_info_map | dict2items | list }}"
+          loop_control:
+            loop_var: cloud_service_inner_item
+            label: "{{ cloud_service_inner_item.key }}"
+          tags: ["no_print_skipped"]
+
+      when: cloud_service_inner_info is mapping
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux"
+      set_fact:
+        cloud_service_pending_list_aux: []
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill first"
+      set_fact:
+        cloud_service_pending_list_aux: >-
+          {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx]] }}
+      loop: "{{ range(0, cloud_service_pending_idx | int) | list }}"
+      loop_control:
+        index_var: tmp_idx
+        loop_var: tmp_item_idx
+        label: "{{ tmp_idx }}"
+      tags: ["no_print"]
+
     - name: "{{ cloud_service_inner_title }} - add services (list)"
       set_fact:
-        cloud_service_pending_list: "{{ cloud_service_pending_list + [tmp_service_to_add] }}"
+        cloud_service_pending_list_aux: "{{ cloud_service_pending_list_aux + [tmp_service_to_add] }}"
       vars:
         tmp_info: "{{ tmp_item }}"
         tmp_name: "{{ tmp_info.name | default(tmp_info) | default('') }}"
@@ -38,11 +95,28 @@
           key: "{{ tmp_key }}"
           info: "{{ tmp_info }}"
           tmp_dir: "{{ tmp_tmp_dir }}"
+          prev_name: "{{ cloud_service_inner_name }}"
       loop: "{{ cloud_service_inner.services | default([]) | list }}"
       loop_control:
         loop_var: tmp_item
         label: "{{ tmp_name }}"
       tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill first"
+      set_fact:
+        cloud_service_pending_list_aux: >-
+          {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx]] }}
+      loop: "{{ range(cloud_service_pending_idx | int, cloud_service_pending_list | length) | list }}"
+      loop_control:
+        index_var: tmp_idx
+        loop_var: tmp_item_idx
+        label: "{{ tmp_idx }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list"
+      set_fact:
+        cloud_service_pending_list: "{{ cloud_service_pending_list_aux }}"
+      tags: ["no_print"]
 
   when: cloud_service_inner.list | default(false) | bool
 
@@ -77,7 +151,13 @@
 
     - name: "{{ cloud_service_inner_title }} - validate the cloud service props"
       fail:
-        msg: "invalid property {{ cloud_service_inner_item.key }} defined for service"
+        msg: |
+          Invalid property defined for service
+          Property: {{ cloud_service_inner_item.key }}
+          Allowed:
+          {{ cloud_service_inner_allowed_props | to_nice_yaml }}
+          Item:
+          {{ cloud_service_inner_info_map | to_nice_yaml }}
       when: cloud_service_inner_item.key not in cloud_service_inner_allowed_props
       loop: "{{ cloud_service_inner | dict2items | list }}"
       loop_control:
@@ -85,8 +165,40 @@
         label: "{{ cloud_service_inner_item.key }}"
       tags: ["no_print_skipped"]
 
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service info props (outer)"
+      block:
+        - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_allowed_props"
+          set_fact:
+            cloud_service_inner_info_allowed_props:
+              - "name"
+              - "key"
+              - "params"
+              - "group_params"
+              - "shared_params"
+              - "shared_group_params"
+          tags: ["no_print"]
+
+        - name: "{{ cloud_service_inner_title }} - validate the cloud service info props"
+          fail:
+            msg: |
+              Invalid property defined for service info
+              Property: {{ cloud_service_inner_item.key }}
+              Allowed:
+              {{ cloud_service_inner_info_allowed_props | to_nice_yaml }}
+              Item:
+              {{ cloud_service_inner_info_map | to_nice_yaml }}
+          when: cloud_service_inner_item.key not in cloud_service_inner_info_allowed_props
+          loop: "{{ cloud_service_inner_info_map | dict2items | list }}"
+          loop_control:
+            loop_var: cloud_service_inner_item
+            label: "{{ cloud_service_inner_item.key }}"
+          tags: ["no_print_skipped"]
+
+      when: cloud_service_inner_info is mapping
+      tags: ["no_print"]
+
     - name: "{{ cloud_service_inner_title }} - generate credentials params (outer)"
-      include_tasks: "tasks/params_mixer.yml"
+      include_tasks: "tasks/util/params_mixer.yml"
       vars:
         params_mixer_title: "{{ cloud_service_inner_title }} - generate credentials params"
         params_mixer_main_params: {}
@@ -104,7 +216,7 @@
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - generate service params (outer)"
-      include_tasks: "tasks/params_mixer.yml"
+      include_tasks: "tasks/util/params_mixer.yml"
       vars:
         params_mixer_title: "{{ cloud_service_inner_title }} - generate service params"
         params_mixer_main_params: "{{ cloud_service_inner.params | default({}) }}"
@@ -122,7 +234,7 @@
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - generate service ctx params (outer)"
-      include_tasks: "tasks/params_mixer.yml"
+      include_tasks: "tasks/util/params_mixer.yml"
       vars:
         params_mixer_title: "{{ cloud_service_inner_title }} - generate service ctx params"
         params_mixer_main_params: "{{ cloud_service_inner_info.params | default({}) }}"
@@ -148,6 +260,7 @@
           name: "{{ cloud_service_inner_name }}"
           type: "{{ cloud_service_inner_type }}"
           params: "{{ cloud_service_inner_params | combine(cloud_service_inner_ctx_params) }}"
+          credentials: "{{ cloud_service_inner_credentials }}"
           base_dir_prefix: "{{ cloud_service_inner_base_dir_prefix }}"
           tmp_dir: "{{ cloud_service_inner_tmp_dir }}"
       tags: ["no_print"]

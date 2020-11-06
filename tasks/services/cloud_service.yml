@@ -14,6 +14,9 @@
 - name: "{{ cloud_service_title }} - cloud_service_inner"
   set_fact:
     cloud_service_inner_title: "{{ cloud_service_title }}"
+    cloud_service_inner_info: ""
+    cloud_service_inner_name: ""
+    cloud_service_inner_prev_name: ""
     cloud_service_inner: "{{ cloud_service }}"
     cloud_service_inner_type: "{{ cloud_service.type | default('') }}"
     cloud_service_inner_tmp_dir: "{{ cloud_service_tmp_dir }}"
@@ -21,6 +24,7 @@
 
 - name: "{{ cloud_service_title }} - recursive services"
   include_tasks: "tasks/services/cloud_service_recursive.yml"
+  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
   include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
@@ -29,6 +33,7 @@
     cloud_service_name: "{{ cloud_service_item.name }}"
     cloud_service_type: "{{ cloud_service_item.type }}"
     cloud_service_params: "{{ cloud_service_item.params }}"
+    cloud_service_credentials: "{{ cloud_service_item.credentials }}"
     cloud_service_base_dir_prefix: "{{ cloud_service_item.base_dir_prefix }}"
     cloud_service_tmp_dir: "{{ cloud_service_item.tmp_dir }}"
   loop: "{{ cloud_service_list }}"

@@ -18,9 +18,9 @@
   fail:
     msg: "{{ cloud_dns_title }} - {{ cloud_dns_godaddy_item.name }} not specified"
   loop:
-  - { name: "dns_zone", value: "{{ cloud_dns_zone }}" }
-  - { name: "dns_record_type", value: "{{ cloud_dns_record_type }}" }
-  - { name: "dns_record_name", value: "{{ cloud_dns_record }}" }
+    - { name: "dns_zone", value: "{{ cloud_dns_zone }}" }
+    - { name: "dns_record_type", value: "{{ cloud_dns_record_type }}" }
+    - { name: "dns_record_name", value: "{{ cloud_dns_record }}" }
   loop_control:
     loop_var: cloud_dns_godaddy_item
     label: "{{ cloud_dns_godaddy_item.name }}"
@@ -60,34 +60,33 @@
   tags: ["no_print"]
 
 - block:
+    - name: "{{ cloud_dns_title }} - define the records"
+      include_tasks: "godaddy.record.dns.yml"
+      loop: "{{ cloud_dns_data_list | default([]) | flatten(levels=1) }}"
+      loop_control:
+        loop_var: cloud_dns_item
+        index_var: cloud_dns_index
+        label: "{{ cloud_dns_index }}"
+      when: cloud_dns_item.value != ''
+      tags: ["no_print"]
 
-  - name: "{{ cloud_dns_title }} - define the records"
-    include_tasks: "godaddy.record.dns.yml"
-    loop: "{{ cloud_dns_data_list | default([]) | flatten(levels=1) }}"
-    loop_control:
-      loop_var: cloud_dns_item
-      index_var: cloud_dns_index
-      label: "{{ cloud_dns_index }}"
-    when: cloud_dns_item.value != ''
-    tags: ["no_print"]
+    - include_tasks: "tasks/util/diff.yml"
+      vars:
+        diff_list_1: "{{ cloud_dns_godaddy_old_records }}"
+        diff_list_2: "{{ cloud_dns_godaddy_records }}"
+      tags: ["no_print"]
 
-  - include_tasks: "tasks/diff.yml"
-    vars:
-      diff_list_1: "{{ cloud_dns_godaddy_old_records }}"
-      diff_list_2: "{{ cloud_dns_godaddy_records }}"
-    tags: ["no_print"]
+    - name: "{{ cloud_dns_inner_title }} - get old record"
+      set_fact:
+        cloud_dns_godaddy_execute: false
+      when: (diff_list_result | default([]) | length) == 0
+      tags: ["no_print"]
 
-  - name: "{{ cloud_dns_inner_title }} - get old record"
-    set_fact:
-      cloud_dns_godaddy_execute: false
-    when: (diff_list_result | default([]) | length) == 0
-    tags: ["no_print"]
-
-  - name: "{{ cloud_dns_inner_title }} - print body"
-    debug:
-      var: cloud_dns_godaddy_records
-      verbosity:  3
-    tags: ["no_print_skipped"]
+    - name: "{{ cloud_dns_inner_title }} - print body"
+      debug:
+        var: cloud_dns_godaddy_records
+        verbosity: 3
+      tags: ["no_print_skipped"]
 
   when: cloud_dns_final_state == 'present'
   tags: ["no_print_skipped"]
@@ -117,4 +116,3 @@
   changed_when: cloud_dns_godaddy_execute | bool
   when: cloud_dns_godaddy_execute | bool
   tags: ["no_print_skipped"]
-

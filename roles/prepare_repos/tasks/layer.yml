@@ -1,5 +1,5 @@
 - name: "{{ prepare_repos_layer_title }} - main (outer)"
-  include_tasks: "tasks/repo.yml"
+  include_tasks: "tasks/util/repo.yml"
   vars:
     repo_title: "{{ prepare_repos_layer_title }} - main"
     repo_main: "{{ prepare_repos_repos_dict[prepare_repos_layer.repo] }}"
@@ -17,7 +17,7 @@
   tags: ["no_print"]
 
 - name: "{{ prepare_repos_layer_title }} - env repos"
-  include_tasks: "tasks/repo.yml"
+  include_tasks: "tasks/util/repo.yml"
   vars:
     repo_title: "{{ prepare_repos_layer_title }} - env repo ({{ prepare_repos_layer_item.repo }})"
     repo_main: "{{ prepare_repos_repos_dict[prepare_repos_layer_item.repo] }}"
