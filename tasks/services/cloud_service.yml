@@ -1,0 +1,38 @@
+- name: "{{ cloud_service_title }} - validate entrypoint service (must be a list)"
+  fail:
+    msg: "the first cloud service received must be a list"
+  when: not (cloud_service.list | default(false) | bool)
+
+- name: "{{ cloud_service_title }} - cloud_service_list"
+  set_fact:
+    cloud_service_list: []
+    cloud_service_pending_list: []
+    cloud_service_name_list: []
+    cloud_service_pending_idx: 0
+  tags: ["no_print"]
+
+- name: "{{ cloud_service_title }} - cloud_service_inner"
+  set_fact:
+    cloud_service_inner_title: "{{ cloud_service_title }}"
+    cloud_service_inner: "{{ cloud_service }}"
+    cloud_service_inner_type: "{{ cloud_service.type | default('') }}"
+    cloud_service_inner_tmp_dir: "{{ cloud_service_tmp_dir }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_service_title }} - recursive services"
+  include_tasks: "tasks/services/cloud_service_recursive.yml"
+
+- name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
+  include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
+  vars:
+    cloud_service_title: "{{ cloud_service_item.title }}"
+    cloud_service_name: "{{ cloud_service_item.name }}"
+    cloud_service_type: "{{ cloud_service_item.type }}"
+    cloud_service_params: "{{ cloud_service_item.params }}"
+    cloud_service_base_dir_prefix: "{{ cloud_service_item.base_dir_prefix }}"
+    cloud_service_tmp_dir: "{{ cloud_service_item.tmp_dir }}"
+  loop: "{{ cloud_service_list }}"
+  loop_control:
+    loop_var: cloud_service_item
+    label: "{{ cloud_service_item.name }}"
+  tags: ["no_print_skipped"]

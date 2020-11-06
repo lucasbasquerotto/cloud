@@ -1,0 +1,88 @@
+- name: "{{ cloud_service_inner_title }} - verify item(s)"
+  include_tasks: "tasks/services/cloud_service_item.yml"
+
+- name: "{{ cloud_service_inner_title }} - cloud_service_inner_again"
+  set_fact:
+    cloud_service_inner_again: >-
+      {{ (cloud_service_pending_idx | int) < (cloud_service_pending_list | length) }}
+  tags: ["no_print"]
+
+- name: "{{ cloud_service_inner_title }} - recursive"
+  block:
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner vars"
+      set_fact:
+        cloud_service_inner_title: "{{ tmp_item.title }}"
+        cloud_service_inner_name: "{{ tmp_item.name }}"
+        cloud_service_inner_key: "{{ tmp_item.key }}"
+        cloud_service_inner_info: "{{ tmp_item.info }}"
+        cloud_service_inner_tmp_dir: "{{ tmp_item.tmp_dir }}"
+      vars:
+        tmp_item: "{{ cloud_service_pending_list[cloud_service_pending_idx | int] | default({}) }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner"
+      set_fact:
+        cloud_service_inner: "{{ tmp_item }}"
+        cloud_service_inner_type: "{{ tmp_item.type | default('') }}"
+      vars:
+        tmp_item: "{{ cloud_service_services_dict[cloud_service_inner_key] }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service name"
+      fail:
+        msg: "cloud service name is not defined"
+      when: (cloud_service_inner_name | default('')) == ''
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service key"
+      fail:
+        msg: "cloud service key is not defined"
+      when: (cloud_service_inner_key | default('')) == ''
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_name_title"
+      set_fact:
+        cloud_service_inner_name_title: >-
+          {{ cloud_service_inner_name }}{{
+            (cloud_service_inner_name != cloud_service_inner_key)
+            | ternary(' (' + cloud_service_inner_key + ')', '')
+          }}
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_title"
+      set_fact:
+        cloud_service_inner_title: >-
+          {{ cloud_service_title }} - service item [{{ cloud_service_inner_name_title }}]
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the services dictionary"
+      fail:
+        msg: "no service is defined in the services dictionary"
+      when: (cloud_service_services_dict | default({}) | dict2items | length) == 0
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the service {{ cloud_service_inner_name }}"
+      fail:
+        msg: "the service {{ cloud_service_inner_name_title }} is not defined"
+      when: cloud_service_services_dict[cloud_service_inner_key] is not defined
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_name_list"
+      set_fact:
+        cloud_service_name_list: "{{ cloud_service_name_list + [cloud_service_inner_name] }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - validate unique names"
+      fail:
+        msg: "duplicated services in services list: {{ cloud_service_name_list }}"
+      when: (cloud_service_name_list | length) != (cloud_service_name_list | unique | length)
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_idx"
+      set_fact:
+        cloud_service_pending_idx: "{{ (cloud_service_pending_idx | int) + 1 }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - execute the service ({{ cloud_service_inner_type }})"
+      include_tasks: "tasks/services/cloud_service_recursive.yml"
+
+  when: cloud_service_inner_again | bool

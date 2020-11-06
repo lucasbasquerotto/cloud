@@ -1,0 +1,158 @@
+- name: "{{ cloud_service_inner_title }} - service list"
+  block:
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_allowed_props"
+      set_fact:
+        cloud_service_inner_allowed_props:
+          - "list"
+          - "services"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service props"
+      fail:
+        msg: "invalid property {{ cloud_service_inner_item.key }} defined for service list"
+      when: cloud_service_inner_item.key not in cloud_service_inner_allowed_props
+      loop: "{{ cloud_service_inner | dict2items | list }}"
+      loop_control:
+        loop_var: cloud_service_inner_item
+        label: "{{ cloud_service_inner_item.key }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - add services (list)"
+      set_fact:
+        cloud_service_pending_list: "{{ cloud_service_pending_list + [tmp_service_to_add] }}"
+      vars:
+        tmp_info: "{{ tmp_item }}"
+        tmp_name: "{{ tmp_info.name | default(tmp_info) | default('') }}"
+        tmp_key: >-
+          {{
+            tmp_info.key
+            | default(tmp_info.name)
+            | default(tmp_info)
+            | default('')
+          }}
+        tmp_title: "{{ cloud_service_title }} - service item [{{ tmp_name }}]"
+        tmp_tmp_dir: "{{ cloud_service_tmp_dir }}/{{ tmp_name }}"
+        tmp_service_to_add:
+          title: "{{ tmp_title }}"
+          name: "{{ tmp_name }}"
+          key: "{{ tmp_key }}"
+          info: "{{ tmp_info }}"
+          tmp_dir: "{{ tmp_tmp_dir }}"
+      loop: "{{ cloud_service_inner.services | default([]) | list }}"
+      loop_control:
+        loop_var: tmp_item
+        label: "{{ tmp_name }}"
+      tags: ["no_print_skipped"]
+
+  when: cloud_service_inner.list | default(false) | bool
+
+- name: "{{ cloud_service_inner_title }} - service item"
+  block:
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_base_dir_prefix"
+      set_fact:
+        cloud_service_inner_base_dir_prefix: >-
+          {{ (tmp_base_dir != '') | ternary(tmp_base_dir + '/', '') }}
+      vars:
+        tmp_base_dir: "{{ cloud_service_inner.base_dir | default('') }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service type"
+      fail:
+        msg: "cloud service type not defined"
+      when: (cloud_service_inner_type | default('')) == ''
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_allowed_props"
+      set_fact:
+        cloud_service_inner_allowed_props:
+          - "list"
+          - "base_dir"
+          - "type"
+          - "credentials"
+          - "params"
+          - "group_params"
+          - "shared_params"
+          - "shared_group_params"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - validate the cloud service props"
+      fail:
+        msg: "invalid property {{ cloud_service_inner_item.key }} defined for service"
+      when: cloud_service_inner_item.key not in cloud_service_inner_allowed_props
+      loop: "{{ cloud_service_inner | dict2items | list }}"
+      loop_control:
+        loop_var: cloud_service_inner_item
+        label: "{{ cloud_service_inner_item.key }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ cloud_service_inner_title }} - generate credentials params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_service_inner_title }} - generate credentials params"
+        params_mixer_main_params: {}
+        params_mixer_group_params_names: "{{ cloud_service_inner.credentials | default({}) }}"
+        params_mixer_shared_params_names: []
+        params_mixer_shared_params_names_dict: {}
+        params_mixer_shared_group_params_name: ""
+        params_mixer_shared_group_params_names_dict: {}
+        params_mixer_params_dict: "{{ cloud_service_credentials_dict }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_credentials"
+      set_fact:
+        cloud_service_inner_credentials: "{{ params_mixer_params }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - generate service params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_service_inner_title }} - generate service params"
+        params_mixer_main_params: "{{ cloud_service_inner.params | default({}) }}"
+        params_mixer_group_params_names: "{{ cloud_service_inner.group_params | default({}) }}"
+        params_mixer_shared_params_names: "{{ cloud_service_inner.shared_params | default([]) }}"
+        params_mixer_shared_group_params_name: "{{ cloud_service_inner.shared_group_params | default('') }}"
+        params_mixer_shared_params_names_dict: "{{ cloud_service_shared_params_dict | default({}) }}"
+        params_mixer_shared_group_params_names_dict: "{{ cloud_service_shared_group_params_dict | default({}) }}"
+        params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_params"
+      set_fact:
+        cloud_service_inner_params: "{{ params_mixer_params }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - generate service ctx params (outer)"
+      include_tasks: "tasks/params_mixer.yml"
+      vars:
+        params_mixer_title: "{{ cloud_service_inner_title }} - generate service ctx params"
+        params_mixer_main_params: "{{ cloud_service_inner_info.params | default({}) }}"
+        params_mixer_group_params_names: "{{ cloud_service_inner_info.group_params | default({}) }}"
+        params_mixer_shared_params_names: "{{ cloud_service_inner_info.shared_params | default([]) }}"
+        params_mixer_shared_group_params_name: "{{ cloud_service_inner_info.shared_group_params | default('') }}"
+        params_mixer_shared_params_names_dict: "{{ cloud_service_shared_params_dict | default({}) }}"
+        params_mixer_shared_group_params_names_dict: "{{ cloud_service_shared_group_params_dict | default({}) }}"
+        params_mixer_params_dict: "{{ cloud_service_params_dict | default({}) }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_ctx_params"
+      set_fact:
+        cloud_service_inner_ctx_params: "{{ params_mixer_params }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_item_to_add"
+      set_fact:
+        cloud_service_list: "{{ cloud_service_list + [tmp_service_to_add] }}"
+      vars:
+        tmp_service_to_add:
+          title: "{{ cloud_service_inner_title }}"
+          name: "{{ cloud_service_inner_name }}"
+          type: "{{ cloud_service_inner_type }}"
+          params: "{{ cloud_service_inner_params | combine(cloud_service_inner_ctx_params) }}"
+          base_dir_prefix: "{{ cloud_service_inner_base_dir_prefix }}"
+          tmp_dir: "{{ cloud_service_inner_tmp_dir }}"
+      tags: ["no_print"]
+
+  when: >-
+    (cloud_service_inner_type != 'skip')
+    and
+    (not (cloud_service_inner.list | default(false) | bool))
