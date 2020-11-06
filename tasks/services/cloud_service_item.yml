@@ -95,6 +95,7 @@
     - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux"
       set_fact:
         cloud_service_pending_list_aux: []
+        cloud_service_inner_pending_list_aux: []
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill first"
@@ -108,9 +109,9 @@
         label: "{{ tmp_idx }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - add services (list)"
+    - name: "{{ cloud_service_inner_title }} - define services to add (list)"
       set_fact:
-        cloud_service_pending_list_aux: "{{ cloud_service_pending_list_aux + [tmp_service_to_add] }}"
+        cloud_service_inner_pending_list_aux: "{{ cloud_service_inner_pending_list_aux + [tmp_service_to_add] }}"
       vars:
         tmp_info: "{{ tmp_item }}"
         tmp_name: "{{ tmp_info.name | default(tmp_info) | default('') }}"
@@ -136,7 +137,20 @@
         label: "{{ tmp_name }}"
       tags: ["no_print_skipped"]
 
-    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill first"
+    - name: "{{ cloud_service_inner_title }} - reverse order"
+      set_fact:
+        cloud_service_inner_pending_list_aux: >-
+          {{ cloud_service_inner_pending_list_aux | reverse | list }}
+      when: cloud_service_state == 'absent'
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - add services (list)"
+      set_fact:
+        cloud_service_pending_list_aux: >-
+          {{ cloud_service_pending_list_aux + cloud_service_inner_pending_list_aux }}
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill last"
       set_fact:
         cloud_service_pending_list_aux: >-
           {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx]] }}
