@@ -47,6 +47,7 @@
         cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_service_env_dir: "{{ env_dir }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
+        cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
@@ -561,6 +562,7 @@
         cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_service_env_dir: "{{ env_dir }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
+        cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
@@ -708,7 +710,7 @@
           {{
             env.main[env_ctx].final_services | default([])
             | selectattr('tmp','defined')
-            | selectattr('tmp', 'equalto', 'true')
+            | selectattr('tmp', 'equalto', true)
             | list
           }}
         cloud_service:
@@ -722,6 +724,7 @@
         cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_service_env_dir: "{{ env_dir }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
+        cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
@@ -746,6 +749,7 @@
         cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_service_env_dir: "{{ env_dir }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
+        cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
@@ -881,14 +885,14 @@
     #   when: env.main[env_ctx].destroy.clouds | default(false) | bool
     #   tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }} - [destroy (tmp)] final services (outer)"
+    - name: "{{ env_title }} - [destroy] final services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) }}"
         cloud_service:
           list: true
           services: "{{ main_tmp_services }}"
-        cloud_service_title: "{{ env_title }} - [destroy (tmp)] final services"
+        cloud_service_title: "{{ env_title }} - [destroy] final services"
         cloud_service_services_dict: "{{ env.services | default({}) }}"
         cloud_service_params_dict: "{{ env.service_params | default({}) }}"
         cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
@@ -896,20 +900,21 @@
         cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_service_env_dir: "{{ env_dir }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
+        cloud_service_state: "absent"
       when: >-
         (env.main[env_ctx].destroy.final_services | default(false) | bool)
         and
         (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }} - [destroy (tmp)] initial services (outer)"
+    - name: "{{ env_title }} - [destroy] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) }}"
         cloud_service:
           list: true
           services: "{{ main_tmp_services }}"
-        cloud_service_title: "{{ env_title }} - [destroy (tmp)] initial services"
+        cloud_service_title: "{{ env_title }} - [destroy] initial services"
         cloud_service_services_dict: "{{ env.services | default({}) }}"
         cloud_service_params_dict: "{{ env.service_params | default({}) }}"
         cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
@@ -917,6 +922,7 @@
         cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
         cloud_service_env_dir: "{{ env_dir }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
+        cloud_service_state: "absent"
       when: >-
         (env.main[env_ctx].destroy.initial_services | default(false) | bool)
         and

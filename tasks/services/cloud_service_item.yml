@@ -5,6 +5,40 @@
       {{ (cloud_service_inner_info is mapping) | ternary(cloud_service_inner_info, {}) }}
   tags: ["no_print"]
 
+- name: "{{ cloud_service_inner_title }} - top service info (may have a tmp property)"
+  block:
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_has_tmp"
+      set_fact:
+        cloud_service_inner_info_has_tmp: "{{ cloud_service_inner_info_map.tmp is defined }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_inner_title }} - remove tmp property"
+      block:
+        - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map_aux"
+          set_fact:
+            cloud_service_inner_info_map_aux: {}
+          tags: ["no_print"]
+
+        - set_fact:
+            cloud_service_inner_info_map_aux: >-
+              {{ cloud_service_inner_info_map_aux | combine({ tmp_item.key: tmp_item.value }) }}
+          when: not (tmp_item.key in ['tmp'])
+          loop: "{{ cloud_service_inner_info_map | dict2items | list }}"
+          loop_control:
+            loop_var: tmp_item
+            label: "{{ tmp_item.key }}"
+          tags: ["no_print"]
+
+        - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map_aux"
+          set_fact:
+            cloud_service_inner_info_map: "{{ cloud_service_inner_info_map_aux }}"
+          tags: ["no_print"]
+
+      when: cloud_service_inner_info_has_tmp | bool
+
+  when: (cloud_service_inner_info is mapping) and (cloud_service_inner_prev_name == '')
+  tags: ["no_print_skipped"]
+
 - name: "{{ cloud_service_inner_title }} - service list"
   block:
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_allowed_props"
@@ -22,7 +56,7 @@
           Allowed:
           {{ cloud_service_inner_allowed_props | to_nice_yaml }}
           Item:
-          {{ cloud_service_inner_info_map | to_nice_yaml }}
+          {{ cloud_service_inner | to_nice_yaml }}
       when: cloud_service_inner_item.key not in cloud_service_inner_allowed_props
       loop: "{{ cloud_service_inner | dict2items | list }}"
       loop_control:
@@ -157,7 +191,7 @@
           Allowed:
           {{ cloud_service_inner_allowed_props | to_nice_yaml }}
           Item:
-          {{ cloud_service_inner_info_map | to_nice_yaml }}
+          {{ cloud_service_inner | to_nice_yaml }}
       when: cloud_service_inner_item.key not in cloud_service_inner_allowed_props
       loop: "{{ cloud_service_inner | dict2items | list }}"
       loop_control:

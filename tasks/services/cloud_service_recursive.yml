@@ -86,35 +86,6 @@
         tmp_item: "{{ cloud_service_services_dict[cloud_service_inner_key] }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - top service"
-      block:
-        - name: "{{ cloud_service_inner_title }} - remove tmp property"
-          block:
-            - name: "{{ cloud_service_inner_title }} - cloud_service_inner_aux"
-              set_fact:
-                cloud_service_inner_aux: {}
-              tags: ["no_print"]
-
-            - set_fact:
-                cloud_service_inner_aux: >-
-                  {{ cloud_service_inner_aux | combine({ tmp_item.key: tmp_item.value }) }}
-              when: not (tmp_item.key in ['tmp'])
-              loop: "{{ cloud_service_inner | dict2items | list }}"
-              loop_control:
-                loop_var: tmp_item
-                label: "{{ tmp_item.key }}"
-              tags: ["no_print_skipped"]
-
-            - name: "{{ cloud_service_inner_title }} - cloud_service_inner_aux"
-              set_fact:
-                cloud_service_inner: "{{ cloud_service_inner_aux }}"
-              tags: ["no_print"]
-
-          when: cloud_service_inner.tmp is defined
-
-      when: cloud_service_inner_prev_name == ''
-      tags: ["no_print_skipped"]
-
     - name: "{{ cloud_service_inner_title }} - execute the service ({{ cloud_service_inner_type }})"
       include_tasks: "tasks/services/cloud_service_recursive.yml"
       tags: ["no_print_skipped"]
