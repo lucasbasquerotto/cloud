@@ -51,13 +51,13 @@
     - name: "{{ cloud_service_inner_title }} - validate the services dictionary"
       fail:
         msg: "no service is defined in the services dictionary"
-      when: (cloud_service_services_dict | default({}) | dict2items | length) == 0
+      when: (env.services | default({}) | dict2items | length) == 0
       tags: ["no_print_skipped"]
 
     - name: "{{ cloud_service_inner_title }} - validate the service {{ cloud_service_inner_name }}"
       fail:
         msg: "the service {{ cloud_service_inner_name_title }} is not defined"
-      when: cloud_service_services_dict[cloud_service_inner_key] is not defined
+      when: env.services[cloud_service_inner_key] is not defined
       tags: ["no_print_skipped"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_name_list"
@@ -83,10 +83,12 @@
         cloud_service_inner: "{{ tmp_item }}"
         cloud_service_inner_type: "{{ tmp_item.type | default('') }}"
       vars:
-        tmp_item: "{{ cloud_service_services_dict[cloud_service_inner_key] }}"
+        tmp_item: "{{ env.services[cloud_service_inner_key] }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - execute the service ({{ cloud_service_inner_type }})"
+    - name: >-
+        {{ cloud_service_inner_title }} - execute the service
+        ({{ cloud_service_inner_type | default('<list>', true) }})
       include_tasks: "tasks/services/cloud_service_recursive.yml"
       tags: ["no_print_skipped"]
 

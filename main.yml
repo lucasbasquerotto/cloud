@@ -36,16 +36,8 @@
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) | list }}"
-        cloud_service:
-          list: true
-          services: "{{ main_tmp_services }}"
         cloud_service_title: "{{ env_title }} - initial services"
-        cloud_service_services_dict: "{{ env.services | default({}) }}"
-        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
-        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
-        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
-        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
@@ -551,16 +543,8 @@
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) | list }}"
-        cloud_service:
-          list: true
-          services: "{{ main_tmp_services }}"
         cloud_service_title: "{{ env_title }} - final services"
-        cloud_service_services_dict: "{{ env.services | default({}) }}"
-        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
-        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
-        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
-        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
@@ -602,16 +586,8 @@
             | selectattr('tmp', 'equalto', True)
             | list
           }}
-        cloud_service:
-          list: true
-          services: "{{ main_tmp_services }}"
         cloud_service_title: "{{ env_title }} - [destroy (tmp)] final services"
-        cloud_service_services_dict: "{{ env.services | default({}) }}"
-        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
-        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
-        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
-        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
@@ -738,16 +714,8 @@
             | selectattr('tmp', 'equalto', True)
             | list
           }}
-        cloud_service:
-          list: true
-          services: "{{ main_tmp_services }}"
         cloud_service_title: "{{ env_title }} - [destroy (tmp)] initial services"
-        cloud_service_services_dict: "{{ env.services | default({}) }}"
-        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
-        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
-        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
-        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
@@ -782,16 +750,8 @@
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) }}"
-        cloud_service:
-          list: true
-          services: "{{ main_tmp_services }}"
         cloud_service_title: "{{ env_title }} - [destroy] final services"
-        cloud_service_services_dict: "{{ env.services | default({}) }}"
-        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
-        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
-        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
-        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: >-
@@ -911,16 +871,8 @@
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) }}"
-        cloud_service:
-          list: true
-          services: "{{ main_tmp_services }}"
         cloud_service_title: "{{ env_title }} - [destroy] initial services"
-        cloud_service_services_dict: "{{ env.services | default({}) }}"
-        cloud_service_params_dict: "{{ env.service_params | default({}) }}"
-        cloud_service_shared_params_dict: "{{ env.service_shared_params | default({}) }}"
-        cloud_service_shared_group_params_dict: "{{ env.service_shared_group_params | default({}) }}"
-        cloud_service_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_service_env_dir: "{{ env_dir }}"
+        cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: >-
