@@ -1,3 +1,54 @@
+- name: "{{ host_test_title }} - host_test_node_name - initial"
+  set_fact:
+    host_test_node_info: ""
+    host_test_node_name: ""
+    host_test_node_key: ""
+  tags: ["no_print"]
+
+- name: "{{ host_test_title }} - host_test_node_name - fill"
+  set_fact:
+    host_test_node_info: "{{ host_test_node_info }}"
+    host_test_node_name: "{{ host_test_node_name_aux }}"
+    host_test_node_key: >-
+      {{
+        host_test_node_info_aux.key
+        | default(host_test_node_info_aux.name)
+        | default(host_test_node_info_aux)
+      }}
+  vars:
+    host_test_node_info_aux: "{{ host_test_item }}"
+    host_test_node_name_aux: >-
+      {{ host_test_node_info_aux.name | default(host_test_node_info_aux) }}
+  loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+  loop_control:
+    loop_var: host_test_item
+    label: "{{ host_test_node_name_aux }}"
+  when: host_test_node_name_aux == instance_type
+  tags: ["no_print"]
+
+- name: "{{ host_test_title }} - validate instance type - exists"
+  fail:
+    msg: "there is no node with the name {{ instance_type }} declared in the main context"
+  when: host_test_node_name == ''
+  tags: ["no_print"]
+
+- name: "{{ host_test_title }} - validate instance type - node name"
+  fail:
+    msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
+  when: host_test_node_name != instance_type
+  tags: ["no_print"]
+
+- name: "{{ host_test_title }} - validate instance key"
+  fail:
+    msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
+  when: host_test_node_key != instance_key
+  tags: ["no_print"]
+
+- name: "{{ host_test_title }} - host_test_node"
+  set_fact:
+    host_test_node: "{{ env.nodes[instance_key] }}"
+  tags: ["no_print"]
+
 - name: "{{ host_test_title }} - generate node params (outer)"
   include_tasks: "tasks/util/params_mixer.yml"
   vars:
@@ -6,9 +57,9 @@
     params_mixer_group_params_names: "{{ host_test_node.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ host_test_node.shared_params | default([]) }}"
     params_mixer_shared_group_params_name: "{{ host_test_node.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
-    params_mixer_group_params_dict: "{{ host_test_node_params_dict }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.node_shared_group_params | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ host_test_title }}"
@@ -24,9 +75,9 @@
     params_mixer_group_params_names: "{{ host_test_node_info.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ host_test_node_info.shared_params | default([]) }}"
     params_mixer_shared_group_params_name: "{{ host_test_node_info.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ host_test_node_shared_group_params_dict | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ host_test_node_shared_params_dict | default({}) }}"
-    params_mixer_group_params_dict: "{{ host_test_node_params_dict }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.node_shared_group_params | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
   tags: ["no_print"]
 
 - set_fact:
@@ -39,18 +90,18 @@
 
 - name: "{{ host_test_title }}"
   set_fact:
-    host_test_vars: >-
-      {{
-      (host_test_node_params.meta.use_dict | default(false) | bool) | ternary(
-      host_test_node_params.host_test_dict[host_test_node_params.host_test],
-      host_test_node_params.host_test)
-      }}
+    host_test_vars: "{{ host_test_node_params[host_test_param_name] }}"
+  vars:
+    host_test_param_name: >-
+      {{ host_test_node_params.meta.host_test_param_name | default('host_test', true) }}
   tags: ["no_print"]
 
 - name: "{{ host_test_title }}"
   set_fact:
     host_test_log_file: "{{ host_test_vars.log_file }}"
-    host_test_setup_last_line: "{{ host_test_vars.setup_last_line }}"
+    host_test_setup_finished_log_regex: "{{ host_test_vars.setup_finished_log_regex }}"
+    host_test_setup_finished_log_last_line: >-
+      {{ host_test_vars.setup_finished_log_last_line | default('') }}
     host_test_initial_connection_timeout: >-
       {{ host_test_vars.initial_connection_timeout }}
     host_test_setup_finished_timeout: >-
@@ -70,32 +121,38 @@
 
 - name: >
     {{ host_test_title }} - make sure the file "{{ host_test_log_file }}"
-    has "{{ host_test_setup_last_line }}" in it
+    has "{{ host_test_setup_finished_log_regex }}" in it
     (wait {{ host_test_setup_finished_timeout }} seconds)
   wait_for:
     delay: 0
     sleep: 1
     timeout: "{{ host_test_setup_finished_timeout }}"
     path: "{{ host_test_log_file }}"
-    search_regex: "{{ host_test_setup_last_line }}"
+    search_regex: "{{ host_test_setup_finished_log_regex }}"
     msg: >
-      Timeout to find "{{ host_test_setup_last_line }}"
+      Timeout to find "{{ host_test_setup_finished_log_regex }}"
       inside file "{{ host_test_log_file }}"
 
-- name: '{{ host_test_title }} - retrieve last line of "{{ host_test_log_file }}"'
-  shell: tail -n 1 "{{ host_test_log_file }}"
-  register: host_test_last_line
-  changed_when: False
+- name: "{{ host_test_title }} - block - verify last line"
+  block:
+    - name: "{{ host_test_title }} - retrieve last line of {{ host_test_log_file }}"
+      shell: tail -n 1 "{{ host_test_log_file }}"
+      register: host_test_last_line_var
+      changed_when: False
 
-- name: "{{ host_test_title }}"
-  set_fact: host_test_last_line="{{ host_test_last_line.stdout }}"
-  tags: ["no_print"]
+    - name: "{{ host_test_title }} - host_test_last_line"
+      set_fact:
+        host_test_last_line: "{{ host_test_last_line_var.stdout }}"
+      tags: ["no_print"]
 
-- debug: msg="last_line='{{ host_test_last_line }}'"
+    - debug:
+        msg: "last_line='{{ host_test_last_line }}'"
 
-- name: "{{ host_test_title }} - verify if the setup was finished successfully"
-  fail:
-    msg: >
-      Variable '{{ host_test_last_line }}' should be equal to
-      '{{ host_test_setup_last_line }}'
-  when: host_test_last_line != host_test_setup_last_line
+    - name: "{{ host_test_title }} - verify if the setup was finished successfully"
+      fail:
+        msg: >
+          Variable '{{ host_test_last_line }}' should be equal to
+          '{{ host_test_setup_finished_log_last_line }}'
+      when: host_test_last_line != host_test_setup_finished_log_last_line
+
+  when: host_test_setup_finished_log_last_line != ''

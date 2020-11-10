@@ -96,90 +96,90 @@
 
 ###############################################################################
 
-- name: Play 01.03 - Cloud - DNS
-  hosts: main
-  tags:
-    - init
-    - cloud
-    - dns
-  gather_facts: no
-  tasks:
-    - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
-      tags: ["no_print"]
+# - name: Play 01.03 - Cloud - DNS
+#   hosts: main
+#   tags:
+#     - init
+#     - cloud
+#     - dns
+#   gather_facts: no
+#   tasks:
+#     - include_tasks: "tasks/util/init.yml"
+#       when: ansible_connection != 'local'
+#       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_dns }}"
-      when: (env_ctx_params.hooks.before_dns | default('')) != ''
-      tags: ["no_print"]
+#     - name: "{{ env_title }}"
+#       include_tasks: "{{ env_ctx_params.hooks.before_dns }}"
+#       when: (env_ctx_params.hooks.before_dns | default('')) != ''
+#       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_dns"
-      vars:
-        cloud_dns: "{{ env.dns[main_item.name] }}"
-        cloud_dns_title: >-
-          {{ env_title }} - create the static dns records -
-          dns[{{ cloud_dns.type }}] - {{ main_item.record }}
-        cloud_dns_credentials: >-
-          {{ env.credentials[cloud_dns.credentials] }}
-        cloud_dns_zone: "{{ cloud_dns.zone }}"
-        cloud_dns_record_type: "{{ main_item.dns_type }}"
-        cloud_dns_record: "{{ main_item.record }}"
-        cloud_dns_data_list: "{{ main_item.data_list }}"
-        cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_dns_state: "present"
-      loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_item.name }}"
-      tags: ["no_print_skipped"]
+#     - name: "{{ env_title }}"
+#       include_role:
+#         name: "cloud_dns"
+#       vars:
+#         cloud_dns: "{{ env.dns[main_item.name] }}"
+#         cloud_dns_title: >-
+#           {{ env_title }} - create the static dns records -
+#           dns[{{ cloud_dns.type }}] - {{ main_item.record }}
+#         cloud_dns_credentials: >-
+#           {{ env.credentials[cloud_dns.credentials] }}
+#         cloud_dns_zone: "{{ cloud_dns.zone }}"
+#         cloud_dns_record_type: "{{ main_item.dns_type }}"
+#         cloud_dns_record: "{{ main_item.record }}"
+#         cloud_dns_data_list: "{{ main_item.data_list }}"
+#         cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
+#         cloud_dns_state: "present"
+#       loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
+#       loop_control:
+#         loop_var: main_item
+#         label: "{{ main_item.name }}"
+#       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_dns }}"
-      when: (env_ctx_params.hooks.after_dns | default('')) != ''
-      tags: ["no_print"]
+#     - name: "{{ env_title }}"
+#       include_tasks: "{{ env_ctx_params.hooks.after_dns }}"
+#       when: (env_ctx_params.hooks.after_dns | default('')) != ''
+#       tags: ["no_print"]
 
-###############################################################################
+# ###############################################################################
 
-- name: Play 01.04 - Cloud - Buckets
-  hosts: main
-  tags:
-    - init
-    - cloud
-    - buckets
-  gather_facts: no
-  tasks:
-    - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
-      tags: ["no_print"]
+# - name: Play 01.04 - Cloud - Buckets
+#   hosts: main
+#   tags:
+#     - init
+#     - cloud
+#     - buckets
+#   gather_facts: no
+#   tasks:
+#     - include_tasks: "tasks/util/init.yml"
+#       when: ansible_connection != 'local'
+#       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_buckets }}"
-      when: (env_ctx_params.hooks.before_buckets | default('')) != ''
-      tags: ["no_print"]
+#     - name: "{{ env_title }}"
+#       include_tasks: "{{ env_ctx_params.hooks.before_buckets }}"
+#       when: (env_ctx_params.hooks.before_buckets | default('')) != ''
+#       tags: ["no_print"]
 
-    - name: "{{ env_title }} - create the buckets"
-      aws_s3:
-        s3_url: "{{ main_credentials.endpoint }}"
-        access_key: "{{ main_credentials.access_key }}"
-        secret_key: "{{ main_credentials.secret_key }}"
-        bucket: "{{ main_bucket.name }}"
-        mode: create
-      vars:
-        main_bucket_name: "{{ main_item.name | default(main_item) }}"
-        main_bucket: "{{ env.buckets[main_bucket_name] }}"
-        main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-      loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_bucket_name }}"
-      tags: ["no_print_skipped"]
+#     - name: "{{ env_title }} - create the buckets"
+#       aws_s3:
+#         s3_url: "{{ main_credentials.endpoint }}"
+#         access_key: "{{ main_credentials.access_key }}"
+#         secret_key: "{{ main_credentials.secret_key }}"
+#         bucket: "{{ main_bucket.name }}"
+#         mode: create
+#       vars:
+#         main_bucket_name: "{{ main_item.name | default(main_item) }}"
+#         main_bucket: "{{ env.buckets[main_bucket_name] }}"
+#         main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+#       loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
+#       loop_control:
+#         loop_var: main_item
+#         label: "{{ main_bucket_name }}"
+#       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_buckets }}"
-      when: (env_ctx_params.hooks.after_buckets | default('')) != ''
-      tags: ["no_print"]
+#     - name: "{{ env_title }}"
+#       include_tasks: "{{ env_ctx_params.hooks.after_buckets }}"
+#       when: (env_ctx_params.hooks.after_buckets | default('')) != ''
+#       tags: ["no_print"]
 
 ###############################################################################
 ############################        NODES         #############################
@@ -270,6 +270,12 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
+      fail:
+        msg: "instance_type is not defined in the host"
+      when: (instance_type | default('')) == ''
+      tags: ["no_print"]
+
+    - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.before_wait_nodes }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == instance_type))
@@ -277,67 +283,12 @@
         ((env_ctx_params.hooks.before_wait_nodes | default('')) != '')
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      set_fact:
-        host_test_node_info_aux: ""
-        host_test_node_name: ""
-        host_test_node_key: ""
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      set_fact:
-        host_test_node_info_aux: "{{ host_test_node_info_aux }}"
-        host_test_node_name: "{{ host_test_node_name_aux }}"
-        host_test_node_key: >-
-          {{
-          host_test_node_info.key |
-          default(host_test_node_info.name) |
-          default(host_test_node_info)
-          }}
-      vars:
-        host_test_node_info: "{{ main_item }}"
-        host_test_node_name_aux: >-
-          {{ host_test_node_info.name | default(host_test_node_info) }}
-      loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ host_test_node_name_aux }}"
-      when: host_test_node_name_aux == instance_type
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      fail:
-        msg: "instance_type is not defined in the host"
-      when: (instance_type | default('')) == ''
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      fail:
-        msg: "there is no node with the name {{ instance_type }} declared in the main context"
-      when: host_test_node_name == ''
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      fail:
-        msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
-      when: host_test_node_name != instance_type
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
-      fail:
-        msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
-      when: host_test_node_key != instance_key
-      tags: ["no_print"]
-
-    - name: "{{ env_title }}"
+    - name: "{{ env_title }} - host test (outer)"
       include_tasks: "tasks/util/host_test.yml"
       vars:
-        host_test_title: "{{ env_title }} - {{ instance_type }} - {{ inventory_hostname }}"
-        host_test_node_info: "{{ host_test_node_info_aux }}"
-        host_test_node: "{{ env.nodes[instance_key] }}"
-        host_test_node_params_dict: "{{ env.node_params | default({}) }}"
-        host_test_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
-        host_test_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+        host_test_title: >-
+          {{ env_title }} - host test -
+          instance [{{ instance_type }} - {{ inventory_hostname }}]
       when: (((env_node | default('')) == '') or (env_node == instance_type))
       tags: ["no_print_skipped"]
 
