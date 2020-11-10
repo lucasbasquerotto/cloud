@@ -413,7 +413,6 @@
   tags:
     - init
     - cron
-    - cron_local
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
@@ -455,9 +454,9 @@
         (((env_node | default('')) == '') or (env_node == cron_node_name))
         and
         (
-        ((ansible_connection == 'local') and (cron_cloud.type == 'local'))
-        or
-        ((ansible_connection != 'local') and (cron_cloud.type != 'local'))
+          ((ansible_connection == 'local') and ((cron_node_info.type | default('')) == 'local'))
+          or
+          ((ansible_connection != 'local') and ((cron_node_info.type | default('')) != 'local'))
         )
       tags: ["no_print_skipped"]
 
