@@ -38,7 +38,7 @@
   include_tasks: "tasks/services/cloud_service_recursive.yml"
   tags: ["no_print_skipped"]
 
-- name: "{{ cloud_service_title }} - execute the service ({{ cloud_service_type }})"
+- name: "{{ cloud_service_title }} - execute the service(s)"
   include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
   vars:
     cloud_service_title: "{{ cloud_service_item.title }}"
@@ -52,4 +52,3 @@
   loop_control:
     loop_var: cloud_service_item
     label: "{{ cloud_service_item.name }}"
-  tags: ["no_print_skipped"]

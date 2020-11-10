@@ -252,10 +252,10 @@
         params_mixer_main_params: {}
         params_mixer_group_params_names: "{{ cloud_service_inner.credentials | default({}) }}"
         params_mixer_shared_params_names: []
-        params_mixer_shared_params_names_dict: {}
         params_mixer_shared_group_params_name: ""
         params_mixer_shared_group_params_names_dict: {}
-        params_mixer_params_dict: "{{ env.credentials }}"
+        params_mixer_shared_params_names_dict: {}
+        params_mixer_group_params_dict: "{{ env.credentials }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_credentials"
@@ -271,9 +271,9 @@
         params_mixer_group_params_names: "{{ cloud_service_inner.group_params | default({}) }}"
         params_mixer_shared_params_names: "{{ cloud_service_inner.shared_params | default([]) }}"
         params_mixer_shared_group_params_name: "{{ cloud_service_inner.shared_group_params | default('') }}"
-        params_mixer_shared_params_names_dict: "{{ env.service_shared_params | default({}) }}"
         params_mixer_shared_group_params_names_dict: "{{ env.service_shared_group_params | default({}) }}"
-        params_mixer_params_dict: "{{ env.service_group_params | default({}) }}"
+        params_mixer_shared_params_names_dict: "{{ env.service_shared_params | default({}) }}"
+        params_mixer_group_params_dict: "{{ env.service_group_params | default({}) }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_params"
@@ -289,9 +289,9 @@
         params_mixer_group_params_names: "{{ cloud_service_inner_info.group_params | default({}) }}"
         params_mixer_shared_params_names: "{{ cloud_service_inner_info.shared_params | default([]) }}"
         params_mixer_shared_group_params_name: "{{ cloud_service_inner_info.shared_group_params | default('') }}"
-        params_mixer_shared_params_names_dict: "{{ env.service_shared_params | default({}) }}"
         params_mixer_shared_group_params_names_dict: "{{ env.service_shared_group_params | default({}) }}"
-        params_mixer_params_dict: "{{ env.service_group_params | default({}) }}"
+        params_mixer_shared_params_names_dict: "{{ env.service_shared_params | default({}) }}"
+        params_mixer_group_params_dict: "{{ env.service_group_params | default({}) }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_ctx_params"

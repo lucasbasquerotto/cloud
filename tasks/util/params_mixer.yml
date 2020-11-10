@@ -29,9 +29,9 @@
 - name: "{{ params_mixer_title }} - params_mixer_shared_group_params - validate"
   fail:
     msg: >-
-      The params dictionary doesn't have the following key from the shared group params:
+      The group params dictionary doesn't have the following key from the shared group params:
       {{ params_mixer_item.value }} ({{ params_mixer_item.key }})
-  when: params_mixer_params_dict[params_mixer_item.value] is not defined
+  when: params_mixer_group_params_dict[params_mixer_item.value] is not defined
   loop: "{{ params_mixer_shared_group_params_names | default({}) | dict2items }}"
   loop_control:
     loop_var: params_mixer_item
@@ -45,7 +45,7 @@
       params_mixer_shared_group_params |
       combine({
       params_mixer_item.key:
-      params_mixer_params_dict[params_mixer_item.value] })
+      params_mixer_group_params_dict[params_mixer_item.value] })
       }}
   loop: "{{ params_mixer_shared_group_params_names | default({}) | dict2items }}"
   loop_control:
@@ -91,7 +91,7 @@
     msg: >-
       The params dictionary doesn't have the following key from the group params:
       {{ params_mixer_item.value }} ({{ params_mixer_item.key }})
-  when: params_mixer_params_dict[params_mixer_item.value] is not defined
+  when: params_mixer_group_params_dict[params_mixer_item.value] is not defined
   loop: "{{ params_mixer_group_params_names | default({}) | dict2items }}"
   loop_control:
     loop_var: params_mixer_item
@@ -105,7 +105,7 @@
       params_mixer_group_params |
       combine({
       params_mixer_item.key:
-      params_mixer_params_dict[params_mixer_item.value] })
+      params_mixer_group_params_dict[params_mixer_item.value] })
       }}
   loop: "{{ params_mixer_group_params_names | default({}) | dict2items }}"
   loop_control:
