@@ -89,7 +89,7 @@
 - name: "{{ params_mixer_title }} - params_mixer_group_params - validate"
   fail:
     msg: >-
-      The params dictionary doesn't have the following key from the group params:
+      The group params dictionary doesn't have the following key from the group params:
       {{ params_mixer_item.value }} ({{ params_mixer_item.key }})
   when: params_mixer_group_params_dict[params_mixer_item.value] is not defined
   loop: "{{ params_mixer_group_params_names | default({}) | dict2items }}"

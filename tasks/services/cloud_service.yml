@@ -15,6 +15,7 @@
 
 - name: "{{ cloud_service_title }} - cloud_service_main_list"
   set_fact:
+    cloud_service_original_title: "{{ cloud_service_title }}"
     cloud_service_main_list: []
     cloud_service_pending_list: []
     cloud_service_name_list: []
@@ -23,7 +24,7 @@
 
 - name: "{{ cloud_service_title }} - cloud_service_inner"
   set_fact:
-    cloud_service_inner_title: "{{ cloud_service_title }}"
+    cloud_service_inner_title: "{{ cloud_service_original_title }}"
     cloud_service_inner_info: ""
     cloud_service_inner_name: ""
     cloud_service_inner_prev_name: ""
@@ -38,7 +39,7 @@
   include_tasks: "tasks/services/cloud_service_recursive.yml"
   tags: ["no_print_skipped"]
 
-- name: "{{ cloud_service_title }} - execute the service(s)"
+- name: "{{ cloud_service_original_title }} - execute the service(s)"
   include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
   vars:
     cloud_service_title: "{{ cloud_service_item.title }}"

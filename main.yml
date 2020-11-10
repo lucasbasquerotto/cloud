@@ -640,46 +640,46 @@
         (not (cloud_node_node_info.external | default(false) | bool))
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }} - delete the temporary buckets"
-      aws_s3:
-        s3_url: "{{ main_credentials.endpoint }}"
-        access_key: "{{ main_credentials.access_key }}"
-        secret_key: "{{ main_credentials.secret_key }}"
-        bucket: "{{ main_bucket.name }}"
-        mode: delete
-      vars:
-        main_bucket_name: "{{ main_item.name | default(main_item) }}"
-        main_bucket: "{{ env.buckets[main_bucket_name] }}"
-        main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-      loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_bucket_name }}"
-      when: main_item.tmp | default(false) | bool
-      tags: ["no_print_skipped"]
+    # - name: "{{ env_title }} - delete the temporary buckets"
+    #   aws_s3:
+    #     s3_url: "{{ main_credentials.endpoint }}"
+    #     access_key: "{{ main_credentials.access_key }}"
+    #     secret_key: "{{ main_credentials.secret_key }}"
+    #     bucket: "{{ main_bucket.name }}"
+    #     mode: delete
+    #   vars:
+    #     main_bucket_name: "{{ main_item.name | default(main_item) }}"
+    #     main_bucket: "{{ env.buckets[main_bucket_name] }}"
+    #     main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    #   loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ main_bucket_name }}"
+    #   when: main_item.tmp | default(false) | bool
+    #   tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_dns"
-      vars:
-        cloud_dns: "{{ env.dns[main_item.name] }}"
-        cloud_dns_title: >-
-          {{ env_title }} - delete the temporary static dns records -
-          dns[{{ cloud_dns.type }}] - {{ main_item.record }}
-        cloud_dns_credentials: >-
-          {{ env.credentials[cloud_dns.credentials] }}
-        cloud_dns_zone: "{{ cloud_dns.zone }}"
-        cloud_dns_record_type: "{{ main_item.dns_type }}"
-        cloud_dns_record: "{{ main_item.record }}"
-        cloud_dns_data_list: []
-        cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_dns_state: "absent"
-      loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_item.name }}"
-      when: main_item.tmp | default(false) | bool
-      tags: ["no_print_skipped"]
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_dns"
+    #   vars:
+    #     cloud_dns: "{{ env.dns[main_item.name] }}"
+    #     cloud_dns_title: >-
+    #       {{ env_title }} - delete the temporary static dns records -
+    #       dns[{{ cloud_dns.type }}] - {{ main_item.record }}
+    #     cloud_dns_credentials: >-
+    #       {{ env.credentials[cloud_dns.credentials] }}
+    #     cloud_dns_zone: "{{ cloud_dns.zone }}"
+    #     cloud_dns_record_type: "{{ main_item.dns_type }}"
+    #     cloud_dns_record: "{{ main_item.record }}"
+    #     cloud_dns_data_list: []
+    #     cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
+    #     cloud_dns_state: "absent"
+    #   loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ main_item.name }}"
+    #   when: main_item.tmp | default(false) | bool
+    #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
     #   include_role:
@@ -749,15 +749,18 @@
     - name: "{{ env_title }} - [destroy] final services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) }}"
+        main_tmp_services: >-
+          {{
+            env.main[env_ctx].final_services | default([])
+            | selectattr('can_destroy','defined')
+            | selectattr('can_destroy', 'equalto', True)
+            | list
+          }}
         cloud_service_title: "{{ env_title }} - [destroy] final services"
         cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
-      when: >-
-        (env.main[env_ctx].destroy.final_services | default(false) | bool)
-        and
-        (main_tmp_services | length) > 0
+      when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -805,46 +808,46 @@
         (not (cloud_node_node_info.external | default(false) | bool))
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }} - delete the buckets and all their contents"
-      aws_s3:
-        s3_url: "{{ main_credentials.endpoint }}"
-        access_key: "{{ main_credentials.access_key }}"
-        secret_key: "{{ main_credentials.secret_key }}"
-        bucket: "{{ main_bucket.name }}"
-        mode: delete
-      vars:
-        main_bucket_name: "{{ main_item.name | default(main_item) }}"
-        main_bucket: "{{ env.buckets[main_bucket_name] }}"
-        main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-      loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_bucket_name }}"
-      when: env.main[env_ctx].destroy.buckets | default(false) | bool
-      tags: ["no_print_skipped"]
+    # - name: "{{ env_title }} - delete the buckets and all their contents"
+    #   aws_s3:
+    #     s3_url: "{{ main_credentials.endpoint }}"
+    #     access_key: "{{ main_credentials.access_key }}"
+    #     secret_key: "{{ main_credentials.secret_key }}"
+    #     bucket: "{{ main_bucket.name }}"
+    #     mode: delete
+    #   vars:
+    #     main_bucket_name: "{{ main_item.name | default(main_item) }}"
+    #     main_bucket: "{{ env.buckets[main_bucket_name] }}"
+    #     main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
+    #   loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ main_bucket_name }}"
+    #   when: env.main[env_ctx].destroy.buckets | default(false) | bool
+    #   tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_dns"
-      vars:
-        cloud_dns: "{{ env.dns[main_item.name] }}"
-        cloud_dns_title: >-
-          {{ env_title }} - delete the static dns records -
-          dns[{{ cloud_dns.type }}] - {{ main_item.record }}
-        cloud_dns_credentials: >-
-          {{ env.credentials[cloud_dns.credentials] }}
-        cloud_dns_zone: "{{ cloud_dns.zone }}"
-        cloud_dns_record_type: "{{ main_item.dns_type }}"
-        cloud_dns_record: "{{ main_item.record }}"
-        cloud_dns_data_list: []
-        cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_dns_state: "absent"
-      loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_item.name }}"
-      when: env.main[env_ctx].destroy.dns | default(false) | bool
-      tags: ["no_print_skipped"]
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_dns"
+    #   vars:
+    #     cloud_dns: "{{ env.dns[main_item.name] }}"
+    #     cloud_dns_title: >-
+    #       {{ env_title }} - delete the static dns records -
+    #       dns[{{ cloud_dns.type }}] - {{ main_item.record }}
+    #     cloud_dns_credentials: >-
+    #       {{ env.credentials[cloud_dns.credentials] }}
+    #     cloud_dns_zone: "{{ cloud_dns.zone }}"
+    #     cloud_dns_record_type: "{{ main_item.dns_type }}"
+    #     cloud_dns_record: "{{ main_item.record }}"
+    #     cloud_dns_data_list: []
+    #     cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
+    #     cloud_dns_state: "absent"
+    #   loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ main_item.name }}"
+    #   when: env.main[env_ctx].destroy.dns | default(false) | bool
+    #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
     #   include_role:
@@ -870,15 +873,18 @@
     - name: "{{ env_title }} - [destroy] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) }}"
+        main_tmp_services: >-
+          {{
+            env.main[env_ctx].initial_services | default([])
+            | selectattr('can_destroy','defined')
+            | selectattr('can_destroy', 'equalto', True)
+            | list
+          }}
         cloud_service_title: "{{ env_title }} - [destroy] initial services"
         cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
-      when: >-
-        (env.main[env_ctx].destroy.initial_services | default(false) | bool)
-        and
-        (main_tmp_services | length) > 0
+      when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"

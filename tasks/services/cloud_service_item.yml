@@ -5,36 +5,28 @@
       {{ (cloud_service_inner_info is mapping) | ternary(cloud_service_inner_info, {}) }}
   tags: ["no_print"]
 
-- name: "{{ cloud_service_inner_title }} - top service info (may have a tmp property)"
+- name: "{{ cloud_service_inner_title }} - top service info (may have additional properties)"
   block:
-    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_has_tmp"
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map_aux"
       set_fact:
-        cloud_service_inner_info_has_tmp: "{{ cloud_service_inner_info_map.tmp is defined }}"
+        cloud_service_inner_info_map_aux: {}
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - remove tmp property"
-      block:
-        - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map_aux"
-          set_fact:
-            cloud_service_inner_info_map_aux: {}
-          tags: ["no_print"]
+    - name: "{{ cloud_service_inner_title }} - remove additional properties"
+      set_fact:
+        cloud_service_inner_info_map_aux: >-
+          {{ cloud_service_inner_info_map_aux | combine({ tmp_item.key: tmp_item.value }) }}
+      when: not (tmp_item.key in ['can_destroy', 'tmp'])
+      loop: "{{ cloud_service_inner_info_map | dict2items | list }}"
+      loop_control:
+        loop_var: tmp_item
+        label: "{{ tmp_item.key }}"
+      tags: ["no_print"]
 
-        - set_fact:
-            cloud_service_inner_info_map_aux: >-
-              {{ cloud_service_inner_info_map_aux | combine({ tmp_item.key: tmp_item.value }) }}
-          when: not (tmp_item.key in ['tmp'])
-          loop: "{{ cloud_service_inner_info_map | dict2items | list }}"
-          loop_control:
-            loop_var: tmp_item
-            label: "{{ tmp_item.key }}"
-          tags: ["no_print"]
-
-        - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map_aux"
-          set_fact:
-            cloud_service_inner_info_map: "{{ cloud_service_inner_info_map_aux }}"
-          tags: ["no_print"]
-
-      when: cloud_service_inner_info_has_tmp | bool
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_map_aux"
+      set_fact:
+        cloud_service_inner_info_map: "{{ cloud_service_inner_info_map_aux }}"
+      tags: ["no_print"]
 
   when: (cloud_service_inner_info is mapping) and (cloud_service_inner_prev_name == '')
   tags: ["no_print_skipped"]
@@ -122,7 +114,7 @@
             | default(tmp_info)
             | default('')
           }}
-        tmp_title: "{{ cloud_service_title }} - service item [{{ tmp_name }}]"
+        tmp_title: "{{ cloud_service_original_title }} - service item [{{ tmp_name }}]"
         tmp_tmp_dir: "{{ cloud_service_tmp_dir }}/inner/{{ tmp_name }}"
         tmp_service_to_add:
           title: "{{ tmp_title }}"

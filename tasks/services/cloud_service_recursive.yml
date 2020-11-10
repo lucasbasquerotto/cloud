@@ -45,7 +45,7 @@
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_title"
       set_fact:
         cloud_service_inner_title: >-
-          {{ cloud_service_title }} - service item [{{ cloud_service_inner_name_title }}]
+          {{ cloud_service_original_title }} - service item [{{ cloud_service_inner_name_title }}]
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - validate the services dictionary"
