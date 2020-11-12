@@ -31,7 +31,7 @@
         cloud_service_title: "{{ cloud_service_run.title }}"
         cloud_service_name: "{{ cloud_service_run.name }}"
         cloud_service_type: "{{ cloud_service_run.type }}"
-        cloud_service_namespace: "{{ cloud_service_run.type }}"
+        cloud_service_namespace: "{{ cloud_service_run.namespace }}"
         cloud_service_params: "{{ cloud_service_run.params }}"
         cloud_service_credentials: "{{ cloud_service_run.credentials }}"
         cloud_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
