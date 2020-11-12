@@ -15,7 +15,6 @@
         cloud_service_inner_name: "{{ tmp_item.name }}"
         cloud_service_inner_key: "{{ tmp_item.key }}"
         cloud_service_inner_info: "{{ tmp_item.info }}"
-        cloud_service_inner_tmp_dir: "{{ tmp_item.tmp_dir }}"
         cloud_service_inner_prev_name: "{{ tmp_item.prev_name }}"
       vars:
         tmp_item: "{{ cloud_service_pending_list[cloud_service_pending_idx | int] | default({}) }}"

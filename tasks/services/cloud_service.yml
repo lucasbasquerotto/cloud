@@ -40,7 +40,6 @@
 - name: "{{ cloud_service_title }} - cloud_service_main_list"
   set_fact:
     cloud_service_original_title: "{{ cloud_service_title }}"
-    cloud_service_top: false
     cloud_service_main_list: []
     cloud_service_main_idx: 0
     cloud_service_pending_list: []
@@ -58,7 +57,6 @@
       list: true
       services: "{{ cloud_service_list }}"
     cloud_service_inner_type: ""
-    cloud_service_inner_tmp_dir: "{{ cloud_service_tmp_dir }}/main"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - recursive services"

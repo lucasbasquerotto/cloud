@@ -115,13 +115,11 @@
             | default('')
           }}
         tmp_title: "{{ cloud_service_original_title }} - service item [{{ tmp_name }}]"
-        tmp_tmp_dir: "{{ cloud_service_tmp_dir }}/inner/{{ tmp_name }}"
         tmp_service_to_add:
           title: "{{ tmp_title }}"
           name: "{{ tmp_name }}"
           key: "{{ tmp_key }}"
           info: "{{ tmp_info }}"
-          tmp_dir: "{{ tmp_tmp_dir }}"
           prev_name: "{{ cloud_service_inner_name }}"
       loop: "{{ cloud_service_inner.services | default([]) | list }}"
       loop_control:
@@ -304,7 +302,7 @@
           params: "{{ cloud_service_inner_params | combine(cloud_service_inner_ctx_params) }}"
           credentials: "{{ cloud_service_inner_credentials }}"
           base_dir_prefix: "{{ cloud_service_inner_base_dir_prefix }}"
-          tmp_dir: "{{ cloud_service_inner_tmp_dir }}"
+          tmp_dir: "{{ cloud_service_tmp_dir }}/{{ cloud_service_inner_name }}"
       tags: ["no_print"]
 
   when: >-

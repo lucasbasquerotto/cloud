@@ -1,13 +1,15 @@
-- name: "{{ cloud_service_run_title }} - recursive"
+- name: "{{ cloud_service_run_title }} - recursive - before"
   block:
-    - name: "{{ cloud_service_run_title }} - cloud_service_run"
+    - name: "{{ cloud_service_run_title }} - cloud_service_run [{{ tmp_item.name | default('') }}]"
       set_fact:
-        cloud_service_run: "{{ cloud_service_main_list[cloud_service_main_idx | int] | default({}) }}"
+        cloud_service_run: "{{ tmp_item }}"
         cloud_service_next_aux_next: "{{ cloud_service_next }}"
         cloud_service_same_namespace: ""
+      vars:
+        tmp_item: "{{ cloud_service_main_list[cloud_service_main_idx | int] | default({}) }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_run_title }} - cloud_service_name_list"
+    - name: "{{ cloud_service_run.title }} - cloud_service_name_list"
       fail:
         msg: >-
           the service that would run ({{ cloud_service_run.name }}) has the same namespace
@@ -25,33 +27,41 @@
       until: cloud_service_next_aux.next is not defined
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_run_title }} - execute the service [{{ cloud_service_name }}]"
-      include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
-      vars:
-        cloud_service_title: "{{ cloud_service_run.title }}"
-        cloud_service_name: "{{ cloud_service_run.name }}"
-        cloud_service_type: "{{ cloud_service_run.type }}"
-        cloud_service_namespace: "{{ cloud_service_run.namespace }}"
-        cloud_service_params: "{{ cloud_service_run.params }}"
-        cloud_service_credentials: "{{ cloud_service_run.credentials }}"
-        cloud_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
-        cloud_service_tmp_dir: "{{ cloud_service_run.tmp_dir }}"
+  when: cloud_service_continue | bool
+  tags: ["no_print_skipped"]
 
-    - name: "{{ cloud_service_run_title }} - cloud_service_main_idx"
-      set_fact:
-        cloud_service_main_idx: "{{ (cloud_service_main_idx | int) + 1 }}"
-      tags: ["no_print"]
+- name: "{{ cloud_service_run.title }} - execute the service"
+  include_tasks: "{{ inner_service_base_dir_prefix }}{{ inner_service_type }}.yml"
+  vars:
+    cloud_service_top: false
+    inner_service_state: "{{ cloud_service_state }}"
+    inner_service_title: "{{ cloud_service_run.title }} - inside"
+    inner_service_name: "{{ cloud_service_run.name }}"
+    inner_service_type: "{{ cloud_service_run.type }}"
+    inner_service_namespace: "{{ cloud_service_run.namespace }}"
+    inner_service_params: "{{ cloud_service_run.params }}"
+    inner_service_credentials: "{{ cloud_service_run.credentials }}"
+    inner_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
+    inner_service_tmp_dir: "{{ cloud_service_run.tmp_dir }}"
+  when: cloud_service_continue | bool
+  tags: ["no_print_skipped"]
 
-    - name: "{{ cloud_service_run_title }} - cloud_service_continue - stop"
-      set_fact:
-        cloud_service_continue: false
-      when: (cloud_service_main_idx | int) >= (cloud_service_main_list | length)
-      tags: ["no_print"]
+- name: "{{ cloud_service_run.title }} - cloud_service_main_idx"
+  set_fact:
+    cloud_service_main_idx: "{{ (cloud_service_main_idx | int) + 1 }}"
+  when: cloud_service_continue | bool
+  tags: ["no_print"]
 
-    - name: "{{ cloud_service_run_title }} - execute the next service"
-      include_tasks: "tasks/services/cloud_service_run.yml"
-      when: cloud_service_continue | bool
-      tags: ["no_print_skipped"]
+- name: "{{ cloud_service_run.title }} - cloud_service_continue ({{ tmp_continue }})"
+  set_fact:
+    cloud_service_continue: "{{ tmp_continue }}"
+  vars:
+    tmp_continue_before: "{{ cloud_service_continue }}"
+    tmp_continue: "{{ (cloud_service_main_idx | int) < (cloud_service_main_list | length) }}"
+  when: tmp_continue_before | bool
+  tags: ["no_print"]
 
+- name: "{{ cloud_service_run.title }} - execute the next service"
+  include_tasks: "tasks/services/cloud_service_run.yml"
   when: cloud_service_continue | bool
   tags: ["no_print_skipped"]
