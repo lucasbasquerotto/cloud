@@ -1,0 +1,56 @@
+- name: "{{ cloud_service_run_title }} - recursive"
+  block:
+    - name: "{{ cloud_service_run_title }} - cloud_service_run"
+      set_fact:
+        cloud_service_run: "{{ cloud_service_main_list[cloud_service_main_idx | int] | default({}) }}"
+        cloud_service_next_aux_next: "{{ cloud_service_next }}"
+        cloud_service_same_namespace: ""
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_run_title }} - cloud_service_name_list"
+      fail:
+        msg: >-
+          the service that would run ({{ cloud_service_run.name }}) has the same namespace
+          ({{ cloud_service_run.namespace }}) that a parent or ancestor of this service
+          ({{ cloud_service_next_aux.name }}) has
+      vars:
+        cloud_service_next_aux: "{{ cloud_service_next_aux_next }}"
+        cloud_service_next_aux_next: "{{ cloud_service_next_aux.next | default({}) }}"
+      when: >-
+        (cloud_service_run.namespace != '')
+        and
+        (cloud_service_run.namespace == cloud_service_next_aux.namespace)
+      until: cloud_service_next_aux.next is not defined
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_run_title }} - execute the service [{{ cloud_service_name }}]"
+      include_tasks: "{{ cloud_service_base_dir_prefix }}{{ cloud_service_type }}.yml"
+      vars:
+        cloud_service_title: "{{ cloud_service_run.title }}"
+        cloud_service_name: "{{ cloud_service_run.name }}"
+        cloud_service_type: "{{ cloud_service_run.type }}"
+        cloud_service_namespace: "{{ cloud_service_run.type }}"
+        cloud_service_params: "{{ cloud_service_run.params }}"
+        cloud_service_credentials: "{{ cloud_service_run.credentials }}"
+        cloud_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
+        cloud_service_tmp_dir: "{{ cloud_service_run.tmp_dir }}"
+
+    - name: "{{ cloud_service_run_title }} - cloud_service_main_idx"
+      set_fact:
+        cloud_service_main_idx: "{{ (cloud_service_main_idx | int) + 1 }}"
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_run_title }} - cloud_service_continue - stop"
+      set_fact:
+        cloud_service_continue: false
+      when: >-
+        (cloud_service_main_idx | int) < (cloud_service_main_list | length)
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_run_title }} - execute the next service"
+      include_tasks: "tasks/services/cloud_service_run.yml"
+      when: cloud_service_continue | bool
+      tags: ["no_print_skipped"]
+
+  when: cloud_service_continue | bool
+  tags: ["no_print_skipped"]
