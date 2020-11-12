@@ -38,6 +38,7 @@
         main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) | list }}"
         cloud_service_title: "{{ env_title }} - initial services"
         cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
@@ -495,6 +496,7 @@
         main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) | list }}"
         cloud_service_title: "{{ env_title }} - final services"
         cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
@@ -538,6 +540,7 @@
           }}
         cloud_service_title: "{{ env_title }} - [destroy (tmp)] final services"
         cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
@@ -666,6 +669,7 @@
           }}
         cloud_service_title: "{{ env_title }} - [destroy (tmp)] initial services"
         cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
@@ -708,6 +712,7 @@
           }}
         cloud_service_title: "{{ env_title }} - [destroy] final services"
         cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
@@ -832,6 +837,7 @@
           }}
         cloud_service_title: "{{ env_title }} - [destroy] initial services"
         cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
