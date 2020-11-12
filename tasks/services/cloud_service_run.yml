@@ -12,14 +12,16 @@
         msg: >-
           the service that would run ({{ cloud_service_run.name }}) has the same namespace
           ({{ cloud_service_run.namespace }}) that a parent or ancestor of this service
-          ({{ cloud_service_next_aux.name }}) has
+          ({{ cloud_service_next_aux_name }}) has
       vars:
         cloud_service_next_aux: "{{ cloud_service_next_aux_next }}"
+        cloud_service_next_aux_name: "{{ cloud_service_next_aux.name | default('') }}"
+        cloud_service_next_aux_namespace: "{{ cloud_service_next_aux.namespace | default('') }}"
         cloud_service_next_aux_next: "{{ cloud_service_next_aux.next | default({}) }}"
       when: >-
         (cloud_service_run.namespace != '')
         and
-        (cloud_service_run.namespace == cloud_service_next_aux.namespace)
+        (cloud_service_run.namespace == cloud_service_next_aux_namespace)
       until: cloud_service_next_aux.next is not defined
       tags: ["no_print"]
 
@@ -43,8 +45,7 @@
     - name: "{{ cloud_service_run_title }} - cloud_service_continue - stop"
       set_fact:
         cloud_service_continue: false
-      when: >-
-        (cloud_service_main_idx | int) < (cloud_service_main_list | length)
+      when: (cloud_service_main_idx | int) >= (cloud_service_main_list | length)
       tags: ["no_print"]
 
     - name: "{{ cloud_service_run_title }} - execute the next service"
