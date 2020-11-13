@@ -38,6 +38,7 @@
         cloud_service_inner_allowed_props:
           - "list"
           - "flat_list"
+          - "inverse_destroy"
           - "services"
       tags: ["no_print"]
 
@@ -144,7 +145,10 @@
       set_fact:
         cloud_service_inner_pending_list_aux: >-
           {{ cloud_service_inner_pending_list_aux | reverse | list }}
-      when: cloud_service_state == 'absent'
+      when: >-
+        (cloud_service_inner.inverse_destroy | default(true) | bool)
+        and
+        (cloud_service_state == 'absent')
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - add services (list)"
