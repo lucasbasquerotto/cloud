@@ -168,7 +168,8 @@
   when: cloud_node_user_data_file != ''
   tags: ["no_print"]
 
-# Will be populeted from the inner task
+# Will be populated from the inner task
+
 - set_fact:
     cloud_node_active_hosts: []
     cloud_node_task: "ext/{{ cloud_node_cloud.type }}.main.node.yml"
@@ -259,18 +260,6 @@
     label: "{{ cloud_node_item.name }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_node_title }} - update the hosts file with the generated hosts"
-  blockinfile:
-    path: "{{ cloud_node_hosts_file }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_name }}"
-    insertafter: "\\[{{ cloud_node_node_name }}\\]"
-    block: "{{ cloud_node_hosts_info }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_title }} - refresh inventory"
-  meta: refresh_inventory
-  tags: ["no_print_skipped"]
-
 - set_fact:
     cloud_node_ips: []
   tags: ["no_print"]
@@ -333,3 +322,15 @@
     (cloud_node_allow_destroy_dns | default(false) | bool)
     )
   tags: ["no_print"]
+
+- name: "{{ cloud_node_title }} - update the hosts file with the generated hosts"
+  blockinfile:
+    path: "{{ cloud_node_hosts_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_node_name }}"
+    insertafter: "\\[{{ cloud_node_node_name }}\\]"
+    block: "{{ cloud_node_hosts_info }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_title }} - refresh inventory"
+  meta: refresh_inventory
+  tags: ["no_print_skipped"]
