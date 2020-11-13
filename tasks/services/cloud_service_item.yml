@@ -290,10 +290,10 @@
         cloud_service_inner_params: "{{ params_mixer_params }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - generate service ctx params (outer)"
+    - name: "{{ cloud_service_inner_title }} - generate service info params (outer)"
       include_tasks: "tasks/util/params_mixer.yml"
       vars:
-        params_mixer_title: "{{ cloud_service_inner_title }} - generate service ctx params"
+        params_mixer_title: "{{ cloud_service_inner_title }} - generate service info params"
         params_mixer_main_params: "{{ cloud_service_inner_info.params | default({}) }}"
         params_mixer_group_params_names: "{{ cloud_service_inner_info.group_params | default({}) }}"
         params_mixer_shared_params_names: "{{ cloud_service_inner_info.shared_params | default([]) }}"
@@ -303,9 +303,9 @@
         params_mixer_group_params_dict: "{{ env.service_group_params | default({}) }}"
       tags: ["no_print"]
 
-    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_ctx_params"
+    - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_params"
       set_fact:
-        cloud_service_inner_ctx_params: "{{ params_mixer_params }}"
+        cloud_service_inner_info_params: "{{ params_mixer_params }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_service_inner_title }} - cloud_service_inner_item_to_add"
@@ -317,7 +317,7 @@
           name: "{{ cloud_service_inner_name }}"
           type: "{{ cloud_service_inner_type }}"
           namespace: "{{ cloud_service_inner.namespace | default('') }}"
-          params: "{{ cloud_service_inner_params | combine(cloud_service_inner_ctx_params) }}"
+          params: "{{ cloud_service_inner_params | combine(cloud_service_inner_info_params) }}"
           credentials: "{{ cloud_service_inner_credentials }}"
           base_dir_prefix: "{{ cloud_service_inner_base_dir_prefix }}"
           tmp_dir: "{{ cloud_service_tmp_dir }}/{{ cloud_service_inner_name }}"
