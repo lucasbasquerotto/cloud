@@ -59,6 +59,12 @@
 
     - name: "{{ cloud_service_inner_title }} - validate the cloud service list info props (outer)"
       block:
+        - name: "{{ cloud_service_inner_title }} - validate the cloud service list single prop"
+          fail:
+            msg: "service expected to be single, but was a list instead"
+          when: cloud_service_inner_info_map.single | default(false) | bool
+          tags: ["no_print_skipped"]
+
         - name: "{{ cloud_service_inner_title }} - cloud_service_inner_info_allowed_props"
           set_fact:
             cloud_service_inner_info_allowed_props:
@@ -83,12 +89,6 @@
             label: "{{ cloud_service_inner_item.key }}"
           tags: ["no_print_skipped"]
 
-        - name: "{{ cloud_service_inner_title }} - validate the cloud service list single prop"
-          fail:
-            msg: "service expected to be single, but was a list instead"
-          when: cloud_service_inner_info_map.single | default(false) | bool
-          tags: ["no_print_skipped"]
-
       when: cloud_service_inner_info is mapping
       tags: ["no_print"]
 
@@ -101,7 +101,7 @@
     - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill first"
       set_fact:
         cloud_service_pending_list_aux: >-
-          {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx]] }}
+          {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx | int]] }}
       loop: "{{ range(0, cloud_service_pending_idx | int) | list }}"
       loop_control:
         index_var: tmp_idx
@@ -156,7 +156,7 @@
     - name: "{{ cloud_service_inner_title }} - cloud_service_pending_list_aux - fill last"
       set_fact:
         cloud_service_pending_list_aux: >-
-          {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx]] }}
+          {{ cloud_service_pending_list_aux + [cloud_service_pending_list[tmp_item_idx | int]] }}
       loop: "{{ range(cloud_service_pending_idx | int, cloud_service_pending_list | length) | list }}"
       loop_control:
         index_var: tmp_idx

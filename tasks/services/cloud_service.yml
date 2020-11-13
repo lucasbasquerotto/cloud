@@ -22,18 +22,26 @@
   vars:
     tmp_idx: "{{ cloud_service_main_idx | default(0) }}"
     tmp_list: "{{ cloud_service_main_list | default([]) }}"
+    tmp_service: "{{ tmp_list[tmp_idx | int] | default({}) }}"
+    tmp_next_prev: "{{ cloud_service_next | default({ 'next_list': [] }) }}"
+    tmp_next_service_item:
+      name: "{{ tmp_service.name | default('') }}"
+      namespace: "{{ tmp_service.namespace | default('') }}"
     tmp_next:
-      next: "{{ cloud_service_next | default({}) }}"
+      next: "{{ tmp_next_prev }}"
       title: "{{ cloud_service_run_title | default('') }}"
       list: "{{ tmp_list }}"
       idx: "{{ tmp_idx }}"
-      namespace: "{{ cloud_service_main_list[tmp_idx].namespace | default('') }}"
+      name: "{{ tmp_next_service_item.name }}"
+      namespace: "{{ tmp_next_service_item.namespace }}"
+      result_map: "{{ cloud_service_result_map | default({}) }}"
+      next_list: "{{ [tmp_next_service_item] + tmp_next_prev.next_list }}"
   when: not (cloud_service_top | bool)
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - cloud_service_next - initialize"
   set_fact:
-    cloud_service_next: {}
+    cloud_service_next: { next_list: [] }
   when: cloud_service_top | bool
   tags: ["no_print"]
 
@@ -45,6 +53,8 @@
     cloud_service_pending_list: []
     cloud_service_name_list: []
     cloud_service_pending_idx: 0
+    cloud_service_result_map: {}
+    cloud_service_result_inner_map: {}
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - cloud_service_inner"
@@ -89,10 +99,12 @@
 # set previous values for the parent service (if there is one)
 - name: "{{ cloud_service_run_title }} - cloud_service_next - after"
   set_fact:
-    cloud_service_next: "{{ tmp_next.next | default({}) }}"
+    cloud_service_next: "{{ tmp_next.next | default({ 'next_list': [] }) }}"
     cloud_service_run_title: "{{ tmp_next.title | default('') }}"
     cloud_service_main_list: "{{ tmp_next.list | default([]) }}"
     cloud_service_main_idx: "{{ tmp_next.idx | default(0) }}"
+    cloud_service_result_inner_map: "{{ cloud_service_result_map }}"
+    cloud_service_result_map: "{{ tmp_next.result_map | default({}) }}"
   vars:
     tmp_next: "{{ cloud_service_next | default({}) }}"
   tags: ["no_print"]
