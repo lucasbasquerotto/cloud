@@ -37,6 +37,7 @@
       set_fact:
         cloud_service_inner_allowed_props:
           - "list"
+          - "flat_list"
           - "services"
       tags: ["no_print"]
 
@@ -63,6 +64,7 @@
             cloud_service_inner_info_allowed_props:
               - "name"
               - "key"
+              - "single"
           tags: ["no_print"]
 
         - name: "{{ cloud_service_inner_title }} - validate the cloud service list info props"
@@ -79,6 +81,12 @@
           loop_control:
             loop_var: cloud_service_inner_item
             label: "{{ cloud_service_inner_item.key }}"
+          tags: ["no_print_skipped"]
+
+        - name: "{{ cloud_service_inner_title }} - validate the cloud service list single prop"
+          fail:
+            msg: "service expected to be single, but was a list instead"
+          when: cloud_service_inner_info_map.single | default(false) | bool
           tags: ["no_print_skipped"]
 
       when: cloud_service_inner_info is mapping
@@ -103,23 +111,28 @@
 
     - name: "{{ cloud_service_inner_title }} - define services to add (list)"
       set_fact:
-        cloud_service_inner_pending_list_aux: "{{ cloud_service_inner_pending_list_aux + [tmp_service_to_add] }}"
+        cloud_service_inner_pending_list_aux: >-
+          {{ cloud_service_inner_pending_list_aux + [tmp_service_to_add] }}
       vars:
-        tmp_info: "{{ tmp_item }}"
-        tmp_name: "{{ tmp_info.name | default(tmp_info) | default('') }}"
-        tmp_key: >-
-          {{
-            tmp_info.key
-            | default(tmp_info.name)
-            | default(tmp_info)
-            | default('')
-          }}
+        tmp_info_dict: >-
+          {{ (tmp_item is mapping) | ternary(tmp_item, { 'name': tmp_item }) }}
+        tmp_name: "{{ tmp_info_dict.name | default('') }}"
+        tmp_key: "{{ tmp_info_dict.key | default(tmp_name) }}"
         tmp_title: "{{ cloud_service_original_title }} - service item [{{ tmp_name }}]"
         tmp_service_to_add:
           title: "{{ tmp_title }}"
           name: "{{ tmp_name }}"
           key: "{{ tmp_key }}"
-          info: "{{ tmp_info }}"
+          info: >-
+            {{
+              tmp_info_dict
+              | combine({
+                'single':
+                  (tmp_info_dict.single | default(false) | bool)
+                  or
+                  (cloud_service_inner.flat_list | default(false) | bool)
+                })
+            }}
           prev_name: "{{ cloud_service_inner_name }}"
       loop: "{{ cloud_service_inner.services | default([]) | list }}"
       loop_control:
@@ -211,6 +224,7 @@
             cloud_service_inner_info_allowed_props:
               - "name"
               - "key"
+              - "single"
               - "params"
               - "group_params"
               - "shared_params"

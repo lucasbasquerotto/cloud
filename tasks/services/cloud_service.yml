@@ -55,6 +55,7 @@
     cloud_service_inner_prev_name: ""
     cloud_service_inner:
       list: true
+      flat_list: "{{ cloud_service_flat_list | default(false) }}"
       services: "{{ cloud_service_list }}"
     cloud_service_inner_type: ""
   tags: ["no_print"]
