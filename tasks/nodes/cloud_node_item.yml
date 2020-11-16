@@ -1,3 +1,171 @@
+# Main Vars and Validations
+
+- name: "{{ cloud_service_inner_title }} - cloud_node_item_info_map"
+  set_fact:
+    cloud_node_item_info_map: >-
+      {{ (cloud_node_info is mapping) | ternary(cloud_node_info, {}) }}
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_info_allowed_props"
+  set_fact:
+    cloud_node_info_allowed_props:
+      - "name"
+      - "key"
+      - "single"
+      - "hostname"
+      - "amount"
+      - "max_amount"
+      - "params"
+      - "group_params"
+      - "shared_params"
+      - "shared_group_params"
+      - "tmp"
+      - "can_destroy"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node info props"
+  fail:
+    msg: |
+      Invalid property defined for node info
+      Property: {{ tmp_item.key }}
+      Allowed:
+      {{ cloud_node_info_allowed_props | to_nice_yaml }}
+      Item:
+      {{ cloud_node_item_info_map | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_info_allowed_props
+  loop: "{{ cloud_node_item_info_map | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - verify if the node exists"
+  fail:
+    msg: "Invalid node: {{ cloud_node_key }}"
+  when: cloud_node_key not in (env.nodes | default({}))
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_node"
+  set_fact:
+    cloud_node_node: "{{ env.nodes[cloud_node_key] }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_allowed_props"
+  set_fact:
+    cloud_node_allowed_props:
+      - "service"
+      - "dns_service"
+      - "credential"
+      - "params"
+      - "group_params"
+      - "shared_params"
+      - "shared_group_params"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node props"
+  fail:
+    msg: |
+      Invalid property defined for node
+      Property: {{ tmp_item.key }}
+      Allowed:
+      {{ cloud_node_allowed_props | to_nice_yaml }}
+      Item:
+      {{ cloud_node_node | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_allowed_props
+  loop: "{{ cloud_node_node | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_required_props"
+  set_fact:
+    cloud_node_required_props:
+      - "service"
+      - "credential"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node props"
+  fail:
+    msg: |
+      Required property not defined for node
+      Property: {{ tmp_item.key }}
+      Required:
+      {{ cloud_node_required_props | to_nice_yaml }}
+      Item:
+      {{ cloud_node_node | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_node
+  loop: "{{ cloud_node_required_props | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - verify if the node credential exists"
+  fail:
+    msg: "Invalid credential: {{ cloud_node_node.credential }}"
+  when: >-
+    ((cloud_node_node.credential | default('')) != '')
+    and
+    (cloud_node_node.credential not in (env.credentials | default({})))
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_node"
+  set_fact:
+    cloud_node_credential: >-
+      {{
+        env.credentials[cloud_node_node.credential | default('')] | default({})
+      }}
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_credential_allowed_props"
+  set_fact:
+    cloud_node_credential_allowed_props:
+      - "ssh_file"
+      - "ssh_file_encrypted"
+      - "host_user"
+      - "host_pass"
+      - "host_ssh_public_keys_path"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node credential allowed props"
+  fail:
+    msg: |
+      Invalid property defined for node credential
+      Property: {{ tmp_item.key }}
+      Allowed:
+      {{ cloud_node_credential_allowed_props | to_nice_yaml }}
+      Item Keys:
+      {{ cloud_node_credential | dict2items | list | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_credential_allowed_props
+  loop: "{{ cloud_node_credential | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_credential_required_props"
+  set_fact:
+    cloud_node_credential_required_props:
+      - "host_user"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node credential required props"
+  fail:
+    msg: |
+      Required property not defined for node credential
+      Property: {{ tmp_item.key }}
+      Required:
+      {{ cloud_node_credential_required_props | to_nice_yaml }}
+      Item Keys:
+      {{ cloud_node_credential | dict2items | list | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_credential
+  loop: "{{ cloud_node_credential_required_props | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
+
 ### Cloud Node Params ###
 
 - name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
@@ -82,164 +250,21 @@
   set_fact:
     cloud_node_ssh_file: >-
       {{
-        cloud_node_credentials.ssh_file | default('')
+        cloud_node_credential.ssh_file | default('')
         | ternary(
           env_dir + '/' +
-            (cloud_node_credentials.ssh_file | default('')),
+            (cloud_node_credential.ssh_file | default('')),
             ''
           )
       }}
     cloud_node_ssh_key_path: >-
       {{
-        ((cloud_node_credentials.ssh_file | default('')) != '')
+        ((cloud_node_credential.ssh_file | default('')) != '')
         | ternary(cloud_node_tmp_dir + '/' + cloud_node_ssh_key_filename, '')
       }}
   tags: ["no_print"]
 
-### Replicas ###
-
-- name: "{{ cloud_node_item_title }} - cloud_node_instance_count"
-  set_fact:
-    cloud_node_instance_count: "{{ tmp_amount }}"
-    cloud_node_instance_max: "{{ cloud_node_info.max_amount | default(tmp_amount) }}"
-    cloud_node_cloud_instances: []
-  vars:
-    tmp_amount: "{{ cloud_node_info.amount | default(1) }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_cloud_instances"
-  set_fact:
-    cloud_node_cloud_instances: >-
-      {{ cloud_node_cloud_instances +
-        [{
-          'name':
-            (cloud_node_info.hostname | default(cloud_node_name, true)) +
-            ((cloud_node_item == 1) | ternary('', '-' + cloud_node_item)),
-          'state':
-            (
-              ((cloud_node_item | int) <= (cloud_node_instance_count | int))
-              and
-              ((cloud_node_state | default('')) != 'absent')
-            )
-            | ternary('present', 'absent')
-        }]
-      }}
-  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
-  loop_control:
-    loop_var: cloud_node_item
-  tags: ["no_print"]
-
-# Main Service
-
-- set_fact:
-    cloud_node_active_hosts: []
-    cloud_node_task: "ext/{{ cloud_node_cloud.type }}.main.node.yml"
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_node_task: "{{ cloud_node_env_ctx_params.custom_tasks[cloud_node_cloud.node_type] }}"
-  when: cloud_node_cloud.custom_task | default(false) | bool
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - create the nodes"
-  include_tasks: "{{ cloud_node_task }}"
-  vars:
-    cloud_node_inner_title: "{{ cloud_node_item_title }} - {{ cloud_node_cloud.type }}"
-    cloud_node_inner_hosts_file: "{{ inventory_file }}"
-    cloud_node_inner_instance_type: "{{ cloud_node_name }}"
-    cloud_node_inner_api_token: "{{ cloud_node_cloud_credentials.api_token | default('') }}"
-    cloud_node_inner_host_user: "{{ cloud_node_credentials.host_user }}"
-    cloud_node_inner_host_pass: "{{ cloud_node_credentials.host_pass }}"
-    cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
-    cloud_node_inner_size_id: "{{ cloud_node_params_size.name | default('') }}"
-    cloud_node_inner_image_id: "{{ cloud_node_params_instance.image | default('') }}"
-    cloud_node_inner_ipv6: "{{ cloud_node_params_instance.ipv6 | default(false) }}"
-    cloud_node_inner_wait_timeout: "{{ cloud_node_wait_timeout | default(500) }}"
-    cloud_node_inner_create: "{{ cloud_node_item.create }}"
-    cloud_node_inner_params: "{{ cloud_node_params }}"
-  loop: "{{ cloud_node_cloud_instances | list }}"
-  loop_control:
-    loop_var: cloud_node_item
-    label: "{{ cloud_node_item.name }}"
-  when: cloud_node_cloud.type != 'local'
-  tags: ["no_print"]
-
-# DNS
-
-- set_fact:
-    cloud_node_ips: []
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
-  loop:
-    - name: "ipv4"
-      record_type: "A"
-      dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
-    - name: "ipv6"
-      record_type: "AAAA"
-      dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
-  loop_control:
-    loop_var: cloud_node_item
-  when: >-
-    (not (cloud_node_shutdown | default(false) | bool)) and
-    (cloud_node_active_hosts | default([]) | length <= 1) and
-    (cloud_node_item.dns_value != '')
-  tags: ["no_print"]
-
-- name: >-
-    {{ cloud_node_item_title }} - create or destroy the main dns records
-    that points to the instance
-  include_role:
-    name: "cloud_dns"
-  vars:
-    cloud_dns: "{{ cloud_node_dns_dict[cloud_node_item_dns.name] }}"
-    cloud_node_item_dns: >-
-      {{
-      (cloud_node_params.meta.use_dict | default(false) | bool) |
-      ternary(cloud_node_params.dns_dict[cloud_node_item.0], cloud_node_item.0)
-      }}
-    cloud_dns_item_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
-    cloud_dns_title: "{{ cloud_node_item_title }} - main dns - {{ cloud_node_item.1.name }}"
-    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].credentials }}"
-    cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
-    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].zone }}"
-    cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
-    cloud_dns_record: "{{ cloud_node_item_dns.record }}"
-    cloud_dns_data_list: >-
-      {{
-      (cloud_dns_item_dns_value != '') |
-      ternary([{ 'value': cloud_dns_item_dns_value }], [])
-      }}
-    cloud_dns_env_ctx_params: "{{ cloud_node_env_ctx_params }}"
-    cloud_dns_state: "{{ (cloud_dns_item_dns_value != '') | ternary('present', 'absent') }}"
-  loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
-  loop_control:
-    loop_var: cloud_node_item
-    label: >-
-      {{ cloud_node_item_dns.record }} ({{ cloud_node_item_dns.name }}) -
-      {{ cloud_node_item.1.name }} ({{ cloud_dns_state }})"
-  when: >-
-    (cloud_node_item_dns.when | default(true, true) | bool) and
-    (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
-    ((cloud_node_dns_dict[cloud_node_item_dns.name].type | default('')) != '') and
-    (
-    (cloud_dns_item_dns_value != '') or
-    (cloud_node_allow_destroy_dns | default(false) | bool)
-    )
-  tags: ["no_print"]
-
 ### SSH File ###
-
-- name: "{{ cloud_node_item_title }} - cloud_node_ssh_file_encrypted"
-  set_fact:
-    cloud_node_ssh_file_encrypted: >-
-      {{
-      ((cloud_node_ssh_file | default('', true)) != '')
-      and
-      ((cloud_node_ssh_key_path | default('', true)) != '')
-      }}
-  tags: ["no_print"]
 
 - name: >-
     {{ cloud_node_item_title }} - create the ssh key file dir -
@@ -254,53 +279,13 @@
   copy:
     src: "{{ cloud_node_ssh_file }}"
     dest: "{{ cloud_node_ssh_key_path }}"
-    decrypt: "{{ cloud_node_credentials.ssh_file_encrypted | default(false) | bool }}"
+    decrypt: "{{ cloud_node_credential.ssh_file_encrypted | default(false) | bool }}"
     mode: 0600
-  when: cloud_node_ssh_file_encrypted | bool
   tags: ["no_print_skipped"]
 
-### Hosts File (Inventory) ###
+# Main Service
 
-- set_fact:
-    cloud_node_hosts_info: ""
-  tags: ["no_print"]
-
-- set_fact:
-    cloud_node_hosts_info: >-
-      {{ cloud_node_hosts_info | default('') }}
-
-      {{ cloud_node_item.name }}
-      ansible_host={{ cloud_node_item.public_ipv4 }}
-      ansible_user={{ cloud_node_credentials.host_user }}
-      {{
-        cloud_node_credentials.host_pass
-        | ternary('ansible_become_pass=' + cloud_node_credentials.host_pass, '')
-      }}
-      {{
-        cloud_node_ssh_key_path
-        | ternary('ansible_ssh_private_key_file=' + cloud_node_ssh_key_path, '')
-      }}
-      instance_type={{ cloud_node_name }}
-      instance_key={{ cloud_node_key }}
-      instance_index={{ cloud_node_index + 1 }}
-      ansible_host_public_ipv4={{ cloud_node_item.public_ipv4 | default('') }}
-      ansible_host_public_ipv6={{ cloud_node_item.public_ipv6 | default('') }}
-      ansible_host_private_ip={{ cloud_node_item.private_ip | default('') }}
-  loop: "{{ cloud_node_active_hosts | list }}"
-  loop_control:
-    index_var: cloud_node_index
-    loop_var: cloud_node_item
-    label: "{{ cloud_node_item.name }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
-  blockinfile:
-    path: "{{ inventory_file }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
-    insertafter: "\\[{{ cloud_node_name }}\\]"
-    block: "{{ cloud_node_hosts_info }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - refresh inventory"
-  meta: refresh_inventory
+- name: "{{ cloud_node_item_title }} - run (outer)"
+  include_tasks: "cloud_node_run.yml"
+  when: (main_tmp_services | length) > 0
   tags: ["no_print_skipped"]

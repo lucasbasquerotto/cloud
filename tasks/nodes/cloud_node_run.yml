@@ -1,0 +1,211 @@
+### Replicas ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_instance_count"
+  set_fact:
+    cloud_node_instance_count: "{{ tmp_amount }}"
+    cloud_node_instance_max: "{{ cloud_node_info.max_amount | default(tmp_amount) }}"
+    cloud_node_services: []
+    cloud_node_service_params_base: "{{ cloud_node_params.service_params | default({}) }}"
+  vars:
+    tmp_amount: "{{ cloud_node_info.amount | default(1) }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_user_data_title }} - cloud_node_user_data - lookup"
+  set_fact:
+    cloud_node_service_params_base: >-
+      {{
+        cloud_node_service_params_base
+        | combine({ 'user_data': cloud_node_user_data })
+      }}
+  when: cloud_node_user_data != ''
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_services"
+  set_fact:
+    cloud_node_services: >-
+      {{ cloud_node_services +
+        [{
+          'name': 'cloud-node-service-' + tmp_item,
+          'key': cloud_node_node.service,
+          'single': 'true',
+          'state':
+            (
+              ((tmp_item | int) <= (cloud_node_instance_count | int))
+              and
+              ((cloud_node_state | default('')) != 'absent')
+            )
+            | ternary('present', 'absent')
+          'params': cloud_node_service_params_base | combine({ 'name': tmp_name })
+        }]
+      }}
+  var:
+    tmp_name: >-
+      {{
+        (cloud_node_info.hostname | default(cloud_node_name, true)) +
+        ((tmp_item == 1) | ternary('', '-' + tmp_item)),
+      }}
+  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
+  loop_control:
+    loop_var: tmp_item
+  tags: ["no_print"]
+
+# Main Service
+
+- name: "{{ cloud_node_item_title }} - main service (outer)"
+  include_tasks: "tasks/services/cloud_service.yml"
+  vars:
+    cloud_service_title: "{{ cloud_node_item_title }} - main service"
+    cloud_service_list: "{{ cloud_node_services }}"
+    cloud_service_top: true
+    cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/services"
+    cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+  when: (cloud_node_services | length) > 0
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_hosts - init"
+  set_fact:
+    cloud_node_hosts: []
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_hosts - fill"
+  set_fact:
+    cloud_node_hosts: >-
+      {{
+        cloud_node_hosts +
+        (cloud_service_result_map['cloud-node-service-' + tmp_item] | default([]))
+      }}
+  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
+  loop_control:
+    loop_var: tmp_item
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_active_hosts"
+  set_fact:
+    cloud_node_active_hosts: >-
+      {{
+        cloud_node_hosts
+        | selectattr('state', 'equalto', 'present')
+        | list
+      }}
+  tags: ["no_print"]
+
+# DNS
+
+- name: "{{ cloud_node_item_title }} - dns - block"
+  block:
+    - name: "{{ cloud_node_item_title }} - cloud_node_dns_service_params_base"
+      set_fact:
+        cloud_node_dns_service_params_base: >-
+          {{ cloud_node_params.dns_service_params | default({}) }}
+        cloud_node_dns_services: []
+      tags: ["no_print"]
+
+    - name: "{{ cloud_node_item_title }} - cloud_node_dns_services - fill"
+      set_fact:
+        cloud_node_dns_services: >-
+          {{
+            cloud_node_dns_services + [{
+              'name': 'cloud-node-dns-service-' + tmp_item.name,
+              'key': cloud_node_node.dns_service,
+              'params': cloud_node_dns_service_params_base | combine(tmp_params)
+            }]
+          }}
+      vars:
+        tmp_params:
+          dns_type: "{{ tmp_item.dns_type }}"
+          data_list:
+            - "{{ tmp_item.dns_value }}"
+      loop:
+        - name: "ipv4"
+          dns_type: "A"
+          dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
+        - name: "ipv6"
+          dns_type: "AAAA"
+          dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
+      loop_control:
+        loop_var: tmp_item
+      when: >-
+        ((cloud_node_state | default('')) != 'absent')
+        and
+        ((cloud_node_active_hosts | length) = 1)
+        and
+        (tmp_item.dns_value != '')
+      tags: ["no_print"]
+
+    - name: "{{ cloud_node_item_title }} - dns service (outer)"
+      include_tasks: "tasks/services/cloud_service.yml"
+      vars:
+        cloud_service_title: "{{ cloud_node_item_title }} - dns service"
+        cloud_service_list: "{{ cloud_node_dns_services }}"
+        cloud_service_top: true
+        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
+        cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+      when: (cloud_node_dns_services | length) > 0
+      tags: ["no_print_skipped"]
+
+  when: >-
+    (cloud_node_params.dns_service | default('') != '')
+    and
+    (
+      ((cloud_node_state | default('present', true)) == 'present')
+      or
+      (cloud_node_dns_service_params_base.can_destroy | default(false) | bool)
+    )
+  tags: ["no_print_skipped"]
+
+### Hosts File (Inventory) ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - init"
+  set_fact:
+    cloud_node_hosts_info: ""
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill"
+  set_fact:
+    cloud_node_hosts_info: >-
+      {{ cloud_node_hosts_info | default('') }}
+
+      {{ tmp_item.name }}
+      ansible_host={{ tmp_item.public_ipv4 }}
+      ansible_user={{ cloud_node_credential.host_user }}
+      {{
+        ((cloud_node_credential.host_pass | default('')) != '')
+        | ternary('ansible_become_pass=' + (cloud_node_credential.host_pass | default('')), '')
+      }}
+      {{
+        (cloud_node_ssh_key_path != '')
+        | ternary('ansible_ssh_private_key_file=' + cloud_node_ssh_key_path, '')
+      }}
+      instance_type={{ cloud_node_name }}
+      instance_key={{ cloud_node_key }}
+      instance_index={{ tmp_idx + 1 }}
+      {{
+        ((tmp_item.public_ipv4 | default('')) != '')
+        | ternary('instance_public_ipv4=' + (tmp_item.public_ipv4) | default(''), '')
+      }}
+      {{
+        ((tmp_item.public_ipv6 | default('')) != '')
+        | ternary('instance_public_ipv6=' + (tmp_item.public_ipv6) | default(''), '')
+      }}
+      {{
+        ((tmp_item.private_ip | default('')) != '')
+        | ternary('instance_private_ip=' + (tmp_item.private_ip) | default(''), '')
+      }}
+  loop: "{{ cloud_node_active_hosts | list }}"
+  loop_control:
+    index_var: tmp_idx
+    loop_var: tmp_item
+    label: "{{ tmp_item.name }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
+  blockinfile:
+    path: "{{ inventory_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
+    insertafter: "\\[{{ cloud_node_name }}\\]"
+    block: "{{ cloud_node_hosts_info }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - refresh inventory"
+  meta: refresh_inventory
+  tags: ["no_print_skipped"]
