@@ -1,0 +1,306 @@
+### Cloud Node Params ###
+
+- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+  lineinfile:
+    name: "{{ inventory_file }}"
+    line: "{{ '[' + cloud_node_name + ']' }}"
+    state: present
+  check_mode: yes
+  register: cloud_node_conf
+  failed_when: cloud_node_conf is failed
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+  fail:
+    msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_name + ']' }}"
+  when: cloud_node_conf is changed
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - generate node params (outer)"
+  include_tasks: "tasks/util/params_mixer.yml"
+  vars:
+    params_mixer_title: "{{ cloud_node_item_title }} - generate node params"
+    params_mixer_main_params: "{{ cloud_node_node.params | default({}) }}"
+    params_mixer_group_params_names: "{{ cloud_node_node.group_params | default({}) }}"
+    params_mixer_shared_params_names: "{{ cloud_node_node.shared_params | default([]) }}"
+    params_mixer_shared_group_params_name: "{{ cloud_node_node.shared_group_params | default('') }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.shared_group_params | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_params (tmp)"
+  set_fact:
+    cloud_node_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - generate node ctx params (outer)"
+  include_tasks: "tasks/util/params_mixer.yml"
+  vars:
+    params_mixer_title: "{{ cloud_node_item_title }} - generate node ctx params"
+    params_mixer_main_params: "{{ cloud_node_info.params | default({}) }}"
+    params_mixer_group_params_names: "{{ cloud_node_info.group_params | default({}) }}"
+    params_mixer_shared_params_names: "{{ cloud_node_info.shared_params | default([]) }}"
+    params_mixer_shared_group_params_name: "{{ cloud_node_info.shared_group_params | default('') }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.shared_group_params | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_info_params"
+  set_fact:
+    cloud_node_info_params: "{{ params_mixer_params }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_params"
+  set_fact:
+    cloud_node_params: >-
+      {{ cloud_node_params | combine(cloud_node_info_params) }}
+  tags: ["no_print"]
+
+### User Data ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_user_data (outer)"
+  set_fact:
+    cloud_node_user_data_task: >-
+      {{ cloud_node_params.user_data_task | default('cloud_node_user_data.yml') }}
+    cloud_node_user_data: ""
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_user_data (outer)"
+  include_tasks: "{{ cloud_node_user_data_task }}"
+  when: (cloud_node_params.user_data_file | default('')) != ''
+
+### SSH Vars ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_filename"
+  set_fact:
+    cloud_node_ssh_key_filename: "{{ cloud_node_name + '.key' }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_path"
+  set_fact:
+    cloud_node_ssh_file: >-
+      {{
+        cloud_node_credentials.ssh_file | default('')
+        | ternary(
+          env_dir + '/' +
+            (cloud_node_credentials.ssh_file | default('')),
+            ''
+          )
+      }}
+    cloud_node_ssh_key_path: >-
+      {{
+        ((cloud_node_credentials.ssh_file | default('')) != '')
+        | ternary(cloud_node_tmp_dir + '/' + cloud_node_ssh_key_filename, '')
+      }}
+  tags: ["no_print"]
+
+### Replicas ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_instance_count"
+  set_fact:
+    cloud_node_instance_count: "{{ tmp_amount }}"
+    cloud_node_instance_max: "{{ cloud_node_info.max_amount | default(tmp_amount) }}"
+    cloud_node_cloud_instances: []
+  vars:
+    tmp_amount: "{{ cloud_node_info.amount | default(1) }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_cloud_instances"
+  set_fact:
+    cloud_node_cloud_instances: >-
+      {{ cloud_node_cloud_instances +
+        [{
+          'name':
+            (cloud_node_info.hostname | default(cloud_node_name, true)) +
+            ((cloud_node_item == 1) | ternary('', '-' + cloud_node_item)),
+          'state':
+            (
+              ((cloud_node_item | int) <= (cloud_node_instance_count | int))
+              and
+              ((cloud_node_state | default('')) != 'absent')
+            )
+            | ternary('present', 'absent')
+        }]
+      }}
+  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+  tags: ["no_print"]
+
+# Main Service
+
+- set_fact:
+    cloud_node_active_hosts: []
+    cloud_node_task: "ext/{{ cloud_node_cloud.type }}.main.node.yml"
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_node_task: "{{ cloud_node_env_ctx_params.custom_tasks[cloud_node_cloud.node_type] }}"
+  when: cloud_node_cloud.custom_task | default(false) | bool
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - create the nodes"
+  include_tasks: "{{ cloud_node_task }}"
+  vars:
+    cloud_node_inner_title: "{{ cloud_node_item_title }} - {{ cloud_node_cloud.type }}"
+    cloud_node_inner_hosts_file: "{{ inventory_file }}"
+    cloud_node_inner_instance_type: "{{ cloud_node_name }}"
+    cloud_node_inner_api_token: "{{ cloud_node_cloud_credentials.api_token | default('') }}"
+    cloud_node_inner_host_user: "{{ cloud_node_credentials.host_user }}"
+    cloud_node_inner_host_pass: "{{ cloud_node_credentials.host_pass }}"
+    cloud_node_inner_user_data: "{{ cloud_node_user_data | default('') }}"
+    cloud_node_inner_size_id: "{{ cloud_node_params_size.name | default('') }}"
+    cloud_node_inner_image_id: "{{ cloud_node_params_instance.image | default('') }}"
+    cloud_node_inner_ipv6: "{{ cloud_node_params_instance.ipv6 | default(false) }}"
+    cloud_node_inner_wait_timeout: "{{ cloud_node_wait_timeout | default(500) }}"
+    cloud_node_inner_create: "{{ cloud_node_item.create }}"
+    cloud_node_inner_params: "{{ cloud_node_params }}"
+  loop: "{{ cloud_node_cloud_instances | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_item.name }}"
+  when: cloud_node_cloud.type != 'local'
+  tags: ["no_print"]
+
+# DNS
+
+- set_fact:
+    cloud_node_ips: []
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_node_ips: "{{ cloud_node_ips + [cloud_node_item] }}"
+  loop:
+    - name: "ipv4"
+      record_type: "A"
+      dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
+    - name: "ipv6"
+      record_type: "AAAA"
+      dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
+  loop_control:
+    loop_var: cloud_node_item
+  when: >-
+    (not (cloud_node_shutdown | default(false) | bool)) and
+    (cloud_node_active_hosts | default([]) | length <= 1) and
+    (cloud_node_item.dns_value != '')
+  tags: ["no_print"]
+
+- name: >-
+    {{ cloud_node_item_title }} - create or destroy the main dns records
+    that points to the instance
+  include_role:
+    name: "cloud_dns"
+  vars:
+    cloud_dns: "{{ cloud_node_dns_dict[cloud_node_item_dns.name] }}"
+    cloud_node_item_dns: >-
+      {{
+      (cloud_node_params.meta.use_dict | default(false) | bool) |
+      ternary(cloud_node_params.dns_dict[cloud_node_item.0], cloud_node_item.0)
+      }}
+    cloud_dns_item_dns_value: "{{ cloud_node_item.1.dns_value | default('') }}"
+    cloud_dns_title: "{{ cloud_node_item_title }} - main dns - {{ cloud_node_item.1.name }}"
+    cloud_dns_credential_name: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].credentials }}"
+    cloud_dns_credentials: "{{ cloud_node_credentials_dict[cloud_dns_credential_name] }}"
+    cloud_dns_zone: "{{ cloud_node_dns_dict[cloud_node_item_dns.name].zone }}"
+    cloud_dns_record_type: "{{ cloud_node_item.1.record_type }}"
+    cloud_dns_record: "{{ cloud_node_item_dns.record }}"
+    cloud_dns_data_list: >-
+      {{
+      (cloud_dns_item_dns_value != '') |
+      ternary([{ 'value': cloud_dns_item_dns_value }], [])
+      }}
+    cloud_dns_env_ctx_params: "{{ cloud_node_env_ctx_params }}"
+    cloud_dns_state: "{{ (cloud_dns_item_dns_value != '') | ternary('present', 'absent') }}"
+  loop: "{{ (cloud_node_params.dns | default([])) | list | product(cloud_node_ips) | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+    label: >-
+      {{ cloud_node_item_dns.record }} ({{ cloud_node_item_dns.name }}) -
+      {{ cloud_node_item.1.name }} ({{ cloud_dns_state }})"
+  when: >-
+    (cloud_node_item_dns.when | default(true, true) | bool) and
+    (cloud_node_dns_dict[cloud_node_item_dns.name] is defined) and
+    ((cloud_node_dns_dict[cloud_node_item_dns.name].type | default('')) != '') and
+    (
+    (cloud_dns_item_dns_value != '') or
+    (cloud_node_allow_destroy_dns | default(false) | bool)
+    )
+  tags: ["no_print"]
+
+### SSH File ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_ssh_file_encrypted"
+  set_fact:
+    cloud_node_ssh_file_encrypted: >-
+      {{
+      ((cloud_node_ssh_file | default('', true)) != '')
+      and
+      ((cloud_node_ssh_key_path | default('', true)) != '')
+      }}
+  tags: ["no_print"]
+
+- name: >-
+    {{ cloud_node_item_title }} - create the ssh key file dir -
+    {{ cloud_node_ssh_key_path | dirname }}
+  file:
+    path: "{{ cloud_node_ssh_key_path | dirname }}"
+    state: directory
+    mode: 0755
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - generate the ssh key file - {{ cloud_node_ssh_key_path }}"
+  copy:
+    src: "{{ cloud_node_ssh_file }}"
+    dest: "{{ cloud_node_ssh_key_path }}"
+    decrypt: "{{ cloud_node_credentials.ssh_file_encrypted | default(false) | bool }}"
+    mode: 0600
+  when: cloud_node_ssh_file_encrypted | bool
+  tags: ["no_print_skipped"]
+
+### Hosts File (Inventory) ###
+
+- set_fact:
+    cloud_node_hosts_info: ""
+  tags: ["no_print"]
+
+- set_fact:
+    cloud_node_hosts_info: >-
+      {{ cloud_node_hosts_info | default('') }}
+
+      {{ cloud_node_item.name }}
+      ansible_host={{ cloud_node_item.public_ipv4 }}
+      ansible_user={{ cloud_node_credentials.host_user }}
+      {{
+        cloud_node_credentials.host_pass
+        | ternary('ansible_become_pass=' + cloud_node_credentials.host_pass, '')
+      }}
+      {{
+        cloud_node_ssh_key_path
+        | ternary('ansible_ssh_private_key_file=' + cloud_node_ssh_key_path, '')
+      }}
+      instance_type={{ cloud_node_name }}
+      instance_key={{ cloud_node_key }}
+      instance_index={{ cloud_node_index + 1 }}
+      ansible_host_public_ipv4={{ cloud_node_item.public_ipv4 | default('') }}
+      ansible_host_public_ipv6={{ cloud_node_item.public_ipv6 | default('') }}
+      ansible_host_private_ip={{ cloud_node_item.private_ip | default('') }}
+  loop: "{{ cloud_node_active_hosts | list }}"
+  loop_control:
+    index_var: cloud_node_index
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_item.name }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
+  blockinfile:
+    path: "{{ inventory_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
+    insertafter: "\\[{{ cloud_node_name }}\\]"
+    block: "{{ cloud_node_hosts_info }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - refresh inventory"
+  meta: refresh_inventory
+  tags: ["no_print_skipped"]

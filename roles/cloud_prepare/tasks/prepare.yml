@@ -194,26 +194,6 @@
   when: (cloud_prepare_node_info_pod_params | dict2items | length) > 0
   tags: ["no_print_skipped"]
 
-- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_node_size"
-  set_fact:
-    cloud_prepare_node_size: >-
-      {{
-        (cloud_prepare_inner_node_params.meta.use_dict | default(false) | bool) | ternary(
-          cloud_prepare_inner_node_params.cloud_size_dict[
-              cloud_prepare_cloud.type][cloud_prepare_inner_node_params.size
-            ],
-          cloud_prepare_inner_node_params.size
-        )
-      }}
-  tags: ["no_print"]
-
-- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_pod_params"
-  set_fact:
-    cloud_prepare_inner_node_pod_params:
-      size: "{{ cloud_prepare_node_size }}"
-      node_pod_params: "{{ cloud_prepare_inner_node_params | default({}) }}"
-  tags: ["no_print"]
-
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_base_dir_rel"
   set_fact:
     cloud_prepare_base_dir_rel: >-

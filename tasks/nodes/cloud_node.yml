@@ -1,0 +1,28 @@
+- name: "{{ cloud_node_title }} - nodes (outer)"
+  include_tasks: "cloud_node_item.yml"
+  vars:
+    cloud_node_info: "{{ cloud_node_item }}"
+    cloud_node_name: "{{ cloud_node_info.name | default(cloud_node_info) }}"
+    cloud_node_key: >-
+      {{
+        cloud_node_info.key |
+        default(cloud_node_info.name) |
+        default(cloud_node_info)
+      }}
+    cloud_node_node: "{{ env.nodes[cloud_node_key] }}"
+    cloud_node_item_title: >-
+      {{ cloud_node_title }} - {{ cloud_node_name }}
+      {{ (cloud_node_name != cloud_node_key) | ternary('(' + cloud_node_key + ')', '') }}
+    cloud_node_credentials: >-
+      {{ env.credentials[cloud_node_node.credentials | default('')] | default({}) }}
+    cloud_node_tmp_dir: >-
+      {{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}
+  loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+  loop_control:
+    loop_var: cloud_node_item
+    label: "{{ cloud_node_name }}"
+  when: >-
+    (((env_node | default('')) == '') or (env_node == cloud_node_name))
+    and
+    (not (cloud_node_info.external | default(false) | bool))
+  tags: ["no_print_skipped"]
