@@ -17,7 +17,7 @@
     loop_var: main_item
     label: "{{ cron_node_name }}"
   when: >-
-    ((ansible_connection == 'local') or (cron_node_name == instance_type))
+    ((ansible_connection == 'local') or (cron_node_name == (instance_type | default(''))))
     and
     (((env_node | default('')) == '') or (env_node == cron_node_name))
   tags: ["no_print_skipped"]

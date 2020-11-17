@@ -290,7 +290,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.before_wait_nodes }}"
       when: >-
-        (((env_node | default('')) == '') or (env_node == instance_type))
+        (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
         ((env_ctx_params.hooks.before_wait_nodes | default('')) != '')
       tags: ["no_print"]
@@ -301,13 +301,13 @@
         host_test_title: >-
           {{ env_title }} - host test -
           instance [{{ instance_type }} - {{ inventory_hostname }}]
-      when: (((env_node | default('')) == '') or (env_node == instance_type))
+      when: (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_wait_nodes }}"
       when: >-
-        (((env_node | default('')) == '') or (env_node == instance_type))
+        (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
         ((env_ctx_params.hooks.after_wait_nodes | default('')) != '')
       tags: ["no_print"]
@@ -332,7 +332,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.before_prepare }}"
       when: >-
-        (((env_node | default('')) == '') or (env_node == instance_type))
+        (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
         ((env_ctx_params.hooks.before_prepare | default('')) != '')
       tags: ["no_print"]
@@ -401,7 +401,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_prepare }}"
       when: >-
-        (((env_node | default('')) == '') or (env_node == instance_type))
+        (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
         ((env_ctx_params.hooks.after_prepare | default('')) != '')
       tags: ["no_print"]
@@ -432,7 +432,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.before_cron }}"
       when: >-
-        (((env_node | default('')) == '') or (env_node == instance_type))
+        (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
         ((env_ctx_params.hooks.before_cron | default('')) != '')
       tags: ["no_print"]
@@ -440,14 +440,14 @@
     - name: "{{ env_title }} - cron (outer)"
       include_tasks: "tasks/nodes/cron.yml"
       vars:
-        cron_title: "{{ env_title }} - cron - instance [{{ instance_type }}]"
+        cron_title: "{{ env_title }} - cron - instance [{{ instance_type | default('') }}]"
         cron_node_list: "{{ env.main[env_ctx].nodes | default([]) | list }}"
         cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_cron }}"
       when: >-
-        (((env_node | default('')) == '') or (env_node == instance_type))
+        (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
         ((env_ctx_params.hooks.after_cron | default('')) != '')
       tags: ["no_print"]

@@ -30,7 +30,7 @@
     loop_var: cloud_prepare_item
     label: "{{ cloud_prepare_node_name }}"
   when: >-
-    ((ansible_connection == 'local') or (cloud_prepare_node_name == instance_type))
+    ((ansible_connection == 'local') or (cloud_prepare_node_name == (instance_type | default(''))))
     and
     (((env_node | default('')) == '') or (env_node == cloud_prepare_node_name))
     and
