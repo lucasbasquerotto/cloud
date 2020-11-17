@@ -10,9 +10,9 @@
     repo_ssh_src_dir: "{{ env_dir }}"
     repo_secrets_dir: "{{ cloud_prepare_secrets_repos_dir }}/{{ cloud_prepare_pod_inner_item.repo }}"
     repo_default_dir: "{{ cloud_prepare_repo_dir }}/{{ cloud_prepare_pod_inner_item.dir }}"
-    repo_dev_base_dir: "{{ cloud_prepare_dev_repos_dir }}"
+    repo_dev_base_dir: "{{ env_dev_repos_dir }}"
     repo_dev_path: "{{ env_path_map[cloud_prepare_pod_inner_item.repo] | default('') }}"
-    repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
+    repo_dev: "{{ env_dev and (cloud_prepare_node_local | bool) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_git_result"

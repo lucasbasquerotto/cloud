@@ -4,7 +4,7 @@
   become: "{{ cron_become }}"
   file:
     state: directory
-    path: "{{ cron_inner_tmp_dir }}"
+    path: "{{ cron_node_tmp_dir }}"
 
 - name: "{{ cron_inner_title }} - ensure the crontab file is present"
   become: "{{ cron_become }}"
@@ -17,7 +17,7 @@
   become: "{{ cron_become }}"
   copy:
     src: "{{ cron_inner_item.src }}"
-    dest: "{{ cron_inner_tmp_dir }}/{{ cron_inner_item.name }}"
+    dest: "{{ cron_node_tmp_dir }}/{{ cron_inner_item.name }}"
     owner: "{{ cron_user }}"
     group: "{{ cron_user }}"
     mode: 0600
@@ -38,7 +38,7 @@
 - name: "{{ cron_inner_title }} - remove the comments from cron files"
   become: "{{ cron_become }}"
   lineinfile:
-    path: "{{ cron_inner_tmp_dir }}/{{ cron_inner_item }}"
+    path: "{{ cron_node_tmp_dir }}/{{ cron_inner_item }}"
     state: absent
     regexp: "^#"
   loop:
@@ -52,7 +52,7 @@
 
 - name: "{{ cron_inner_title }} - get the difference of the 2 files (old and current)"
   become: "{{ cron_become }}"
-  command: "diff {{ cron_inner_tmp_dir + '/current.cron' }} {{ cron_inner_tmp_dir + '/new.cron' }}"
+  command: "diff {{ cron_node_tmp_dir + '/current.cron' }} {{ cron_node_tmp_dir + '/new.cron' }}"
   register: cron_diff
   failed_when: cron_diff.rc > 1
   changed_when: cron_diff.rc == 1

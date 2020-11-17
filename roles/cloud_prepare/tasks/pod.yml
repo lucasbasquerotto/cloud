@@ -25,7 +25,7 @@
     cloud_prepare_tmp_location: >-
       {{
         cloud_prepare_pod.flat | default(false) | bool | ternary(
-          cloud_prepare_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname,
+          cloud_prepare_node_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname,
           cloud_prepare_pod_base_dir + '/tmp/cloud'
         )
       }}
@@ -42,7 +42,7 @@
 - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location"
   set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_local_pod_default_repo_dir }}"
-  when: cloud_prepare_cloud.type == 'local'
+  when: cloud_prepare_node_local | bool
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_backup_file"
@@ -51,7 +51,7 @@
       {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
     cloud_prepare_backup_file_tmp: >-
       {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
-  when: cloud_prepare_cloud.type != 'local'
+  when: not (cloud_prepare_node_local | bool)
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_owner"
@@ -61,7 +61,7 @@
     cloud_prepare_pod_data_dir: >-
       {{
         cloud_prepare_pod.flat | default(false) | bool | ternary(
-          cloud_prepare_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname,
+          cloud_prepare_node_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname,
           cloud_prepare_pod_base_dir + '/data'
         )
       }}
@@ -74,14 +74,14 @@
   file:
     path: "{{ cloud_prepare_pod_item | dirname }}"
     state: directory
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0777, 0755) }}"
+    mode: "{{ (cloud_prepare_node_local | bool) | ternary(0777, 0755) }}"
   loop:
     - "{{ cloud_prepare_backup_file }}"
     - "{{ cloud_prepare_backup_file_tmp }}"
   loop_control:
     loop_var: cloud_prepare_pod_item
     label: "{{ cloud_prepare_pod_item | dirname }}"
-  when: cloud_prepare_cloud.type != 'local'
+  when: not (cloud_prepare_node_local | bool)
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -94,8 +94,8 @@
     dest: "{{ cloud_prepare_backup_file }}"
     owner: "{{ cloud_prepare_owner }}"
     group: "{{ cloud_prepare_group }}"
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
-  when: cloud_prepare_cloud.type != 'local'
+    mode: "{{ (cloud_prepare_node_local | bool) | ternary(0666, 0640) }}"
+  when: not (cloud_prepare_node_local | bool)
   tags: ["no_print_skipped"]
 
 ### Define the environment variables ###
@@ -115,7 +115,7 @@
             value: "{{ cloud_prepare_main_repo_location }}"
           - name: "DATA_DIR"
             value: "{{ cloud_prepare_pod_data_dir }}"
-      when: cloud_prepare_cloud.type != 'local'
+      when: not (cloud_prepare_node_local | bool)
       tags: ["no_print"]
 
     - name: >-
@@ -131,7 +131,7 @@
       loop_control:
         loop_var: cloud_prepare_pod_item
         label: "{{ cloud_prepare_pod_item.name }}"
-      ignore_errors: "{{ cloud_prepare_cloud.type == 'local' }}"
+      ignore_errors: "{{ cloud_prepare_node_local | bool }}"
       when: (cloud_prepare_pod_item.when | default(true) | bool) and
         (cloud_prepare_host_user != 'root')
       tags: ["no_print_skipped"]
@@ -150,7 +150,7 @@
       loop_control:
         loop_var: cloud_prepare_pod_item
         label: "{{ cloud_prepare_pod_item.name }}"
-      ignore_errors: "{{ cloud_prepare_cloud.type == 'local' }}"
+      ignore_errors: "{{ cloud_prepare_node_local | bool }}"
       when: (cloud_prepare_pod_item.when | default(true) | bool) and
         (cloud_prepare_pod.root | default(false) | bool)
       tags: ["no_print_skipped"]
@@ -174,7 +174,7 @@
       register: cloud_prepare_diff
       failed_when: cloud_prepare_diff.rc > 1
       changed_when: cloud_prepare_diff.rc == 1
-      when: cloud_prepare_cloud.type != 'local'
+      when: not (cloud_prepare_node_local | bool)
       tags: ["no_print_skipped"]
 
     - name: "{{ cloud_prepare_pod_title }} - debug - outer"
@@ -206,8 +206,8 @@
         dest: "{{ cloud_prepare_backup_file }}"
         owner: "{{ cloud_prepare_owner }}"
         group: "{{ cloud_prepare_group }}"
-        mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(0666, 0640) }}"
-      when: cloud_prepare_cloud.type != 'local'
+        mode: "{{ (cloud_prepare_node_local | bool) | ternary(0666, 0640) }}"
+      when: not (cloud_prepare_node_local | bool)
       tags: ["no_print_skipped"]
 
   when: >-

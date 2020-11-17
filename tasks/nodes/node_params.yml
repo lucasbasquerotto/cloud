@@ -11,9 +11,9 @@
     params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
   tags: ["no_print"]
 
-- name: "{{ node_params_title }} - cloud_node_params (tmp)"
+- name: "{{ node_params_title }} - node_params (tmp)"
   set_fact:
-    cloud_node_params: "{{ params_mixer_params }}"
+    node_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
 - name: "{{ node_params_title }} - generate node ctx params (outer)"
@@ -34,8 +34,8 @@
     node_params_info_params: "{{ params_mixer_params }}"
   tags: ["no_print"]
 
-- name: "{{ node_params_title }} - cloud_node_params"
+- name: "{{ node_params_title }} - node_params"
   set_fact:
-    cloud_node_params: >-
-      {{ cloud_node_params | combine(node_params_info_params) }}
+    node_params: >-
+      {{ node_params | combine(node_params_info_params) }}
   tags: ["no_print"]

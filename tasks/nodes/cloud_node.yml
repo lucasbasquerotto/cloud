@@ -10,8 +10,10 @@
         default(cloud_node_info)
       }}
     cloud_node_item_title: >-
-      {{ cloud_node_title }} - {{ cloud_node_name }}
-      {{ (cloud_node_name != cloud_node_key) | ternary('(' + cloud_node_key + ')', '') }}
+      {{ cloud_node_title }} - node [{{ cloud_node_name }}{{
+        (cloud_node_name != cloud_node_key)
+        | ternary(' (' + cloud_node_key + ')', '')
+      }}]
     cloud_node_tmp_dir: >-
       {{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}
   loop: "{{ cloud_node_list }}"
@@ -21,5 +23,5 @@
   when: >-
     (((env_node | default('')) == '') or (env_node == cloud_node_name))
     and
-    (not (cloud_node_info.external | default(false) | bool))
+    (not (cloud_node_info.local | default(false) | bool))
   tags: ["no_print_skipped"]

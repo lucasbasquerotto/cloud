@@ -1,24 +1,24 @@
 # Node Params
 
-- name: "{{ cron_title }} - node params (outer)"
-  include_tasks: "tasks/util/node_params.yml"
+- name: "{{ cron_node_title }} - node params (outer)"
+  include_tasks: "tasks/nodes/node_params.yml"
   vars:
-    node_params_title: "{{ cron_title }} - node params"
+    node_params_title: "{{ cron_node_title }} - node params"
     node_params_node: "{{ cron_node }}"
     node_params_info: "{{ cron_node_info }}"
   tags: ["no_print"]
 
-- name: "{{ cron_title }} - cron_node_params"
+- name: "{{ cron_node_title }} - cron_node_params"
   set_fact:
     cron_node_params: "{{ node_params }}"
   tags: ["no_print"]
 
 # Cron Item
 
-- name: "{{ cron_title }} - cron list (outer)"
+- name: "{{ cron_node_title }} - cron list (outer)"
   include_tasks: "cron_item.yml"
   vars:
-    cron_inner_title: "{{ cron_title }} - {{ cron_inner_item.user }} - {{ cron_inner_item.src_file }}"
+    cron_inner_title: "{{ cron_node_title }} - {{ cron_inner_item.user }} - {{ cron_inner_item.src_file }}"
     cron_src_file: "{{ env_dir }}/{{ cron_inner_item.src_file }}"
     cron_become: "{{ cron_inner_item.user == 'root' }}"
     cron_dest_dir: "{{ cron_inner_item.dest_dir }}"
@@ -31,7 +31,7 @@
 
 # Cron - Start
 
-- name: "{{ cron_title }} - ensure cron is running"
+- name: "{{ cron_node_title }} - ensure cron is running"
   become: no
   service:
     name: cron
@@ -41,7 +41,7 @@
     and
     ((cron_node_params.cron | default([]) | list | length) > 0)
 
-- name: "{{ cron_title }} - ensure cron is running"
+- name: "{{ cron_node_title }} - ensure cron is running"
   become: yes
   service:
     name: cron

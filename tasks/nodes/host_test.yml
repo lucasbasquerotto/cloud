@@ -54,7 +54,7 @@
 # Node Params
 
 - name: "{{ host_test_title }} - node params (outer)"
-  include_tasks: "tasks/util/node_params.yml"
+  include_tasks: "tasks/nodes/node_params.yml"
   vars:
     node_params_title: "{{ host_test_title }} - node params"
     node_params_node: "{{ host_test_node }}"

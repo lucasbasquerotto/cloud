@@ -1,6 +1,5 @@
 - name: "{{ cron_title }} - cron node (outer)"
-  include_role:
-    name: "cron"
+  include_tasks: "cron_node.yml"
   vars:
     cron_node_info: "{{ main_item }}"
     cron_node_name: "{{ cron_node_info.name | default(cron_node_info) }}"
@@ -11,8 +10,8 @@
         | default(cron_node_info, true)
       }}
     cron_node: "{{ env.nodes[cron_node_key] }}"
-    cron_title: "{{ cron_title }} - cron node [{{ cron_node_name }}]"
-    cron_inner_tmp_dir: "{{ cron_tmp_dir }}/{{ cron_node_name }}/cron"
+    cron_node_title: "{{ cron_title }} - cron node [{{ cron_node_name }}]"
+    cron_node_tmp_dir: "{{ cron_tmp_dir }}/{{ cron_node_name }}/cron"
   loop: "{{ cron_node_list }}"
   loop_control:
     loop_var: main_item

@@ -207,13 +207,7 @@
     - name: "{{ env_title }} - nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        main_tmp_nodes: >-
-          {{
-            env.main[env_ctx].nodes | default([])
-            | selectattr('service', 'defined')
-            | selectattr('service', 'ne', '')
-            | list
-          }}
+        main_tmp_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
         cloud_node_title: "{{ env_title }} - nodes"
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
@@ -343,53 +337,66 @@
         ((env_ctx_params.hooks.before_prepare | default('')) != '')
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
+    - name: "{{ env_title }} - prepare pods (outer)"
       include_role:
         name: "cloud_prepare"
       vars:
-        cloud_prepare_node_info: "{{ main_item }}"
-        cloud_prepare_node_name: "{{ cloud_prepare_node_info.name | default(cloud_prepare_node_info) }}"
-        cloud_prepare_node_key: >-
-          {{
-          cloud_prepare_node_info.key |
-          default(cloud_prepare_node_info.name) |
-          default(cloud_prepare_node_info)
-          }}
-        cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
-        cloud_prepare_cloud_name: "{{ cloud_prepare_node_info.cloud | default(cloud_prepare_node.cloud) }}"
-        cloud_prepare_title: "{{ env_title }} - prepare - node[{{ cloud_prepare_node_name }}]"
-        cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
-        cloud_prepare_node_credentials: >-
-          {{ env.credentials[cloud_prepare_node.credentials] }}
-        cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_cloud_name] }}"
-        cloud_prepare_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
+        main_tmp_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
+        cloud_prepare_title: "{{ env_title }} - prepare pods"
+        cloud_prepare_node_list: "{{ main_tmp_nodes }}"
+        cloud_prepare_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_prepare_local_pods_base_dir: "{{ env_ctx_dir }}/pods"
-        cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
-        cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
-        cloud_prepare_local_data_dir_inside: >-
-          {{
-          (ansible_connection == 'local') |
-          ternary(env_local_data_dir | default(''), '')
-          }}
-        cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
         cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
-        cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
-      loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ cloud_prepare_node_name }}"
-      when: >-
-        ((ansible_connection == 'local') or (cloud_prepare_node_name == instance_type))
-        and
-        (((env_node | default('')) == '') or (env_node == cloud_prepare_node_name))
-        and
-        (
-        ((ansible_connection == 'local') and (cloud_prepare_cloud.type == 'local'))
-        or
-        ((ansible_connection != 'local') and (cloud_prepare_cloud.type != 'local'))
-        )
+      when: (main_tmp_nodes | length) > 0
       tags: ["no_print_skipped"]
+
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_prepare"
+    #   vars:
+    #     cloud_prepare_node_info: "{{ main_item }}"
+    #     cloud_prepare_node_name: "{{ cloud_prepare_node_info.name | default(cloud_prepare_node_info) }}"
+    #     cloud_prepare_node_key: >-
+    #       {{
+    #       cloud_prepare_node_info.key |
+    #       default(cloud_prepare_node_info.name) |
+    #       default(cloud_prepare_node_info)
+    #       }}
+    #     cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
+    #     cloud_prepare_cloud_name: "{{ cloud_prepare_node_info.cloud | default(cloud_prepare_node.cloud) }}"
+    #     cloud_prepare_title: "{{ env_title }} - prepare - node[{{ cloud_prepare_node_name }}]"
+    #     cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
+    #     cloud_prepare_node_credentials: >-
+    #       {{ env.credentials[cloud_prepare_node.credentials] }}
+    #     cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_cloud_name] }}"
+    #     cloud_prepare_credentials_dict: "{{ env.credentials | default({}) }}"
+    #     cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
+    #     cloud_prepare_local_pods_base_dir: "{{ env_ctx_dir }}/pods"
+    #     cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
+    #     cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
+    #     cloud_prepare_local_data_dir_inside: >-
+    #       {{
+    #       (ansible_connection == 'local') |
+    #       ternary(env_local_data_dir | default(''), '')
+    #       }}
+    #     cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
+    #     cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+    #     cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
+    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ cloud_prepare_node_name }}"
+    #   when: >-
+    #     ((ansible_connection == 'local') or (cloud_prepare_node_name == instance_type))
+    #     and
+    #     (((env_node | default('')) == '') or (env_node == cloud_prepare_node_name))
+    #     and
+    #     (
+    #     ((ansible_connection == 'local') and (cloud_prepare_cloud.type == 'local'))
+    #     or
+    #     ((ansible_connection != 'local') and (cloud_prepare_cloud.type != 'local'))
+    #     )
+    #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_prepare }}"
@@ -530,8 +537,6 @@
             env.main[env_ctx].nodes | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
-            | selectattr('service', 'defined')
-            | selectattr('service', 'ne', '')
             | list
           }}
         cloud_node_title: "{{ env_title }} - [destroy (tmp)] nodes"
@@ -721,8 +726,6 @@
             env.main[env_ctx].nodes | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
-            | selectattr('service', 'defined')
-            | selectattr('service', 'ne', '')
             | list
           }}
         cloud_node_title: "{{ env_title }} - [destroy] nodes"

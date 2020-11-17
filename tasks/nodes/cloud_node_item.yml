@@ -27,6 +27,7 @@
     cloud_node_info_allowed_props:
       - "name"
       - "key"
+      - "external"
       - "hostname"
       - "amount"
       - "max_amount"
@@ -100,6 +101,12 @@
       - "credential"
   tags: ["no_print"]
 
+- name: "{{ cloud_node_item_title }} - cloud_node_required_props (external)"
+  set_fact:
+    cloud_node_required_props: []
+  when: cloud_node_info.external | default(false) | bool
+  tags: ["no_print"]
+
 - name: "{{ cloud_node_item_title }} - validate the node props"
   fail:
     msg: |
@@ -125,7 +132,7 @@
     (cloud_node_node.credential not in (env.credentials | default({})))
   tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_node"
+- name: "{{ cloud_node_item_title }} - cloud_node_credential"
   set_fact:
     cloud_node_credential: >-
       {{
@@ -203,7 +210,7 @@
 ### Cloud Node Params ###
 
 - name: "{{ cloud_node_item_title }} - node params (outer)"
-  include_tasks: "tasks/util/node_params.yml"
+  include_tasks: "tasks/nodes/node_params.yml"
   vars:
     node_params_title: "{{ cloud_node_item_title }} - node params"
     node_params_node: "{{ cloud_node_node }}"
@@ -325,5 +332,5 @@
 
 - name: "{{ cloud_node_item_title }} - run (outer)"
   include_tasks: "cloud_node_run.yml"
-  when: (main_tmp_services | length) > 0
+  when: (not (cloud_node_info.external | default(false) | bool))
   tags: ["no_print_skipped"]

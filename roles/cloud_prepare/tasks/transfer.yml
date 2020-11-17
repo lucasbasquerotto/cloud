@@ -81,7 +81,7 @@
           'dest_rel': cloud_prepare_transfer_item_dest_rel,
           'encrypted': cloud_prepare_transfer_item.encrypted | default(false),
           'mode': cloud_prepare_transfer_item.mode | default(
-          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+          (cloud_prepare_node_local | bool) | ternary(0666, ''), true)
         }]
       }}
   vars:
@@ -108,7 +108,7 @@
           'dest_rel': cloud_prepare_transfer_item_dest_rel,
           'encrypted': cloud_prepare_transfer_item.encrypted | default(false),
           'mode': cloud_prepare_transfer_item.mode | default(
-          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+          (cloud_prepare_node_local | bool) | ternary(0666, ''), true)
         }]
       }}
   vars:
@@ -132,7 +132,7 @@
           'dest': cloud_prepare_transfer_item_dest_full,
           'dest_rel': cloud_prepare_transfer_item_dest_rel,
           'mode': cloud_prepare_transfer_item.mode | default(
-          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true),
+          (cloud_prepare_node_local | bool) | ternary(0666, ''), true),
           'params': cloud_prepare_transfer_item_params
         }]
       }}
@@ -159,7 +159,7 @@
           'dest': cloud_prepare_transfer_item_dest_full,
           'dest_rel': cloud_prepare_transfer_item_dest_rel,
           'mode': cloud_prepare_transfer_item.mode | default(
-          (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true),
+          (cloud_prepare_node_local | bool) | ternary(0666, ''), true),
           'params': cloud_prepare_transfer_item_params
         }]
       }}
@@ -218,7 +218,7 @@
     mode: >-
       {{
       cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0777, ''), true)
+      (cloud_prepare_node_local | bool) | ternary(0777, ''), true)
       }}
   loop: "{{ cloud_prepare_transfer_volumes | default([]) }}"
   loop_control:
@@ -233,7 +233,7 @@
     path: "{{ cloud_prepare_transfer_item }}"
     owner: "{{ cloud_prepare_owner }}"
     group: "{{ cloud_prepare_group }}"
-    mode: "{{ (cloud_prepare_cloud.type == 'local') | ternary(777, 751) }}"
+    mode: "{{ (cloud_prepare_node_local | bool) | ternary(777, 751) }}"
   loop: "{{ cloud_prepare_transfer_dir_list | default([]) | unique | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_transfer_item
@@ -252,7 +252,7 @@
     mode: >-
       {{
       cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      (cloud_prepare_node_local | bool) | ternary(0666, ''), true)
       }}
   vars:
     params: "{{ cloud_prepare_transfer_item.params }}"
@@ -301,7 +301,7 @@
     mode: >-
       {{
       cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      (cloud_prepare_node_local | bool) | ternary(0666, ''), true)
       }}
   loop: "{{ cloud_prepare_transfer_tpl_list | default([]) }}"
   loop_control:
@@ -321,7 +321,7 @@
     mode: >-
       {{
       cloud_prepare_transfer_item.mode | default(
-      (cloud_prepare_cloud.type == 'local') | ternary(0666, ''), true)
+      (cloud_prepare_node_local | bool) | ternary(0666, ''), true)
       }}
   loop: "{{ cloud_prepare_transfer_files_list | default([]) }}"
   loop_control:
