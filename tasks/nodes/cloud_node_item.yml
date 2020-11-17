@@ -1,5 +1,21 @@
 # Main Vars and Validations
 
+- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+  lineinfile:
+    name: "{{ inventory_file }}"
+    line: "{{ '[' + cloud_node_name + ']' }}"
+    state: present
+  check_mode: yes
+  register: cloud_node_conf
+  failed_when: cloud_node_conf is failed
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+  fail:
+    msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_name + ']' }}"
+  when: cloud_node_conf is changed
+  tags: ["no_print"]
+
 - name: "{{ cloud_service_inner_title }} - cloud_node_item_info_map"
   set_fact:
     cloud_node_item_info_map: >-
@@ -11,16 +27,15 @@
     cloud_node_info_allowed_props:
       - "name"
       - "key"
-      - "single"
       - "hostname"
       - "amount"
       - "max_amount"
+      - "tmp"
+      - "can_destroy"
       - "params"
       - "group_params"
       - "shared_params"
       - "shared_group_params"
-      - "tmp"
-      - "can_destroy"
   tags: ["no_print"]
 
 - name: "{{ cloud_node_item_title }} - validate the node info props"
@@ -126,6 +141,7 @@
       - "host_user"
       - "host_pass"
       - "host_ssh_public_keys_path"
+      - "user_data"
   tags: ["no_print"]
 
 - name: "{{ cloud_node_item_title }} - validate the node credential allowed props"
@@ -166,77 +182,99 @@
     label: "{{ tmp_item.key }}"
   tags: ["no_print_skipped"]
 
-### Cloud Node Params ###
-
-- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
-  lineinfile:
-    name: "{{ inventory_file }}"
-    line: "{{ '[' + cloud_node_name + ']' }}"
-    state: present
-  check_mode: yes
-  register: cloud_node_conf
-  failed_when: cloud_node_conf is failed
+- name: "{{ cloud_node_item_title }} - verify if the node main service exists"
+  fail:
+    msg: "Invalid service: {{ cloud_node_node.service }}"
+  when: >-
+    ((cloud_node_node.service | default('')) != '')
+    and
+    (cloud_node_node.service not in (env.services | default({})))
   tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+- name: "{{ cloud_node_item_title }} - verify if the node dns service exists"
   fail:
-    msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_name + ']' }}"
-  when: cloud_node_conf is changed
-  tags: ["no_print"]
+    msg: "Invalid service (dns): {{ cloud_node_node.service }}"
+  when: >-
+    ((cloud_node_node.dns_service | default('')) != '')
+    and
+    (cloud_node_node.dns_service not in (env.services | default({})))
+  tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - generate node params (outer)"
-  include_tasks: "tasks/util/params_mixer.yml"
+### Cloud Node Params ###
+
+- name: "{{ cloud_node_item_title }} - node params (outer)"
+  include_tasks: "tasks/util/node_params.yml"
   vars:
-    params_mixer_title: "{{ cloud_node_item_title }} - generate node params"
-    params_mixer_main_params: "{{ cloud_node_node.params | default({}) }}"
-    params_mixer_group_params_names: "{{ cloud_node_node.group_params | default({}) }}"
-    params_mixer_shared_params_names: "{{ cloud_node_node.shared_params | default([]) }}"
-    params_mixer_shared_group_params_name: "{{ cloud_node_node.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ env.shared_group_params | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
-    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_params (tmp)"
-  set_fact:
-    cloud_node_params: "{{ params_mixer_params }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - generate node ctx params (outer)"
-  include_tasks: "tasks/util/params_mixer.yml"
-  vars:
-    params_mixer_title: "{{ cloud_node_item_title }} - generate node ctx params"
-    params_mixer_main_params: "{{ cloud_node_info.params | default({}) }}"
-    params_mixer_group_params_names: "{{ cloud_node_info.group_params | default({}) }}"
-    params_mixer_shared_params_names: "{{ cloud_node_info.shared_params | default([]) }}"
-    params_mixer_shared_group_params_name: "{{ cloud_node_info.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ env.shared_group_params | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
-    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_info_params"
-  set_fact:
-    cloud_node_info_params: "{{ params_mixer_params }}"
+    node_params_title: "{{ cloud_node_item_title }} - node params"
+    node_params_node: "{{ cloud_node_node }}"
+    node_params_info: "{{ cloud_node_info }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_node_item_title }} - cloud_node_params"
   set_fact:
-    cloud_node_params: >-
-      {{ cloud_node_params | combine(cloud_node_info_params) }}
+    cloud_node_params: "{{ node_params }}"
   tags: ["no_print"]
+
+# Validate Params
+
+- name: "{{ cloud_node_item_title }} - cloud_node_params_allowed_props"
+  set_fact:
+    cloud_node_params_allowed_props:
+      - "service_params"
+      - "dns_service_params"
+      - "user_data_file"
+      - "user_data_params"
+      - "host_test"
+      - "cron"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node credential allowed props"
+  fail:
+    msg: |
+      Invalid property defined for node parameter
+      Property: {{ tmp_item.key }}
+      Allowed:
+      {{ cloud_node_params_allowed_props | to_nice_yaml }}
+      Item Keys:
+      {{ cloud_node_params | dict2items | list | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_params_allowed_props
+  loop: "{{ cloud_node_params | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_params_required_props"
+  set_fact:
+    cloud_node_params_required_props:
+      - "host_test"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node credential required props"
+  fail:
+    msg: |
+      Required property not defined for node parameter
+      Property: {{ tmp_item.key }}
+      Required:
+      {{ cloud_node_params_required_props | to_nice_yaml }}
+      Item Keys:
+      {{ cloud_node_params | dict2items | list | to_nice_yaml }}
+  when: tmp_item.key not in cloud_node_params
+  loop: "{{ cloud_node_params_required_props | dict2items | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.key }}"
+  tags: ["no_print_skipped"]
 
 ### User Data ###
 
-- name: "{{ cloud_node_item_title }} - cloud_node_user_data (outer)"
+- name: "{{ cloud_node_item_title }} - cloud_node_user_data - initial"
   set_fact:
-    cloud_node_user_data_task: >-
-      {{ cloud_node_params.user_data_task | default('cloud_node_user_data.yml') }}
     cloud_node_user_data: ""
   tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_user_data (outer)"
-  include_tasks: "{{ cloud_node_user_data_task }}"
+- name: "{{ cloud_node_item_title }} - cloud_node_user_data - fill (outer)"
+  include_tasks: "cloud_node_user_data.yml"
   when: (cloud_node_params.user_data_file | default('')) != ''
 
 ### SSH Vars ###

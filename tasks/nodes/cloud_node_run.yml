@@ -144,7 +144,7 @@
       tags: ["no_print_skipped"]
 
   when: >-
-    (cloud_node_params.dns_service | default('') != '')
+    (cloud_node_node.dns_service | default('') != '')
     and
     (
       ((cloud_node_state | default('present', true)) == 'present')

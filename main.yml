@@ -204,50 +204,67 @@
       when: (env_ctx_params.hooks.before_nodes | default('')) != ''
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_node"
+    - name: "{{ env_title }} - nodes (outer)"
+      include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        cloud_node_env_name: "{{ env.name }}"
-        cloud_node_node_info: "{{ main_item }}"
-        cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
-        cloud_node_node_key: >-
+        main_tmp_nodes: >-
           {{
-          cloud_node_node_info.key |
-          default(cloud_node_node_info.name) |
-          default(cloud_node_node_info)
+            env.main[env_ctx].nodes | default([])
+            | selectattr('service', 'defined')
+            | selectattr('service', 'ne', '')
+            | list
           }}
-        cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
-        cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
-        cloud_node_title: >-
-          {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] -
-          cloud[{{ cloud_node_cloud_name }}]
-        cloud_node_node_credentials: >-
-          {{ env.credentials[cloud_node_node.credentials] }}
-        cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
-        cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
-        cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-        cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
-        cloud_node_cloud_credentials: >-
-          {{ env.credentials[cloud_node_cloud.credentials] }}
-        cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_node_dns_dict: "{{ env.dns }}"
-        cloud_node_env_dir: "{{ env_dir }}"
-        cloud_node_tmp_dir: >-
-          {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
-        cloud_node_hosts_file: "{{ inventory_file }}"
-        cloud_node_env_ctx_params: "{{ env_ctx_params }}"
-      loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ cloud_node_node_name }}"
-      when: >-
-        (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
-        and
-        (cloud_node_cloud.type != 'local')
-        and
-        (not (cloud_node_node_info.external | default(false) | bool))
+        cloud_node_title: "{{ env_title }} - nodes"
+        cloud_node_list: "{{ main_tmp_nodes }}"
+        cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+        cloud_node_state: "present"
+      when: (main_tmp_nodes | length) > 0
       tags: ["no_print_skipped"]
+
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_node"
+    #   vars:
+    #     cloud_node_env_name: "{{ env.name }}"
+    #     cloud_node_node_info: "{{ main_item }}"
+    #     cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+    #     cloud_node_node_key: >-
+    #       {{
+    #       cloud_node_node_info.key |
+    #       default(cloud_node_node_info.name) |
+    #       default(cloud_node_node_info)
+    #       }}
+    #     cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+    #     cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+    #     cloud_node_title: >-
+    #       {{ env_title }} - cloud - nodes - node[{{ cloud_node_node_name }}] -
+    #       cloud[{{ cloud_node_cloud_name }}]
+    #     cloud_node_node_credentials: >-
+    #       {{ env.credentials[cloud_node_node.credentials] }}
+    #     cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
+    #     cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+    #     cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+    #     cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
+    #     cloud_node_cloud_credentials: >-
+    #       {{ env.credentials[cloud_node_cloud.credentials] }}
+    #     cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
+    #     cloud_node_dns_dict: "{{ env.dns }}"
+    #     cloud_node_env_dir: "{{ env_dir }}"
+    #     cloud_node_tmp_dir: >-
+    #       {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+    #     cloud_node_hosts_file: "{{ inventory_file }}"
+    #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
+    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ cloud_node_node_name }}"
+    #   when: >-
+    #     (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
+    #     and
+    #     (cloud_node_cloud.type != 'local')
+    #     and
+    #     (not (cloud_node_node_info.external | default(false) | bool))
+    #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_nodes }}"
@@ -285,7 +302,7 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }} - host test (outer)"
-      include_tasks: "tasks/util/host_test.yml"
+      include_tasks: "tasks/nodes/host_test.yml"
       vars:
         host_test_title: >-
           {{ env_title }} - host test -
@@ -330,8 +347,6 @@
       include_role:
         name: "cloud_prepare"
       vars:
-        cloud_prepare_env_name: "{{ env.name }}"
-        cloud_prepare_ctx_name: "{{ env_ctx }}"
         cloud_prepare_node_info: "{{ main_item }}"
         cloud_prepare_node_name: "{{ cloud_prepare_node_info.name | default(cloud_prepare_node_info) }}"
         cloud_prepare_node_key: >-
@@ -346,23 +361,12 @@
         cloud_prepare_base_dir: "{{ cloud_prepare_node.base_dir }}"
         cloud_prepare_node_credentials: >-
           {{ env.credentials[cloud_prepare_node.credentials] }}
-        cloud_prepare_node_params_dict: "{{ env.node_params | default({}) }}"
-        cloud_prepare_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
-        cloud_prepare_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
         cloud_prepare_cloud: "{{ env.clouds[cloud_prepare_cloud_name] }}"
-        cloud_prepare_pods_dict: "{{ env.pods }}"
-        cloud_prepare_pod_params_dict: "{{ env.pod_params | default({}) }}"
-        cloud_prepare_pod_shared_params_dict: "{{ env.pod_shared_params | default({}) }}"
-        cloud_prepare_pod_shared_group_params_dict: "{{ env.pod_shared_group_params | default({}) }}"
         cloud_prepare_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_prepare_repos_dict: "{{ env.repos }}"
-        cloud_prepare_env_dir: "{{ env_dir }}"
         cloud_prepare_local_tmp_dir: "{{ env_ctx_dir }}/node/{{ cloud_prepare_node_name }}"
         cloud_prepare_local_pods_base_dir: "{{ env_ctx_dir }}/pods"
         cloud_prepare_env_pod: "{{ env_pod | default('', true) }}"
         cloud_prepare_env_vars_relative_file_name: "cloud.prepare.vars_full.yml"
-        cloud_prepare_instance_index: "{{ instance_index }}"
-        cloud_prepare_env_path_map: "{{ env_path_map }}"
         cloud_prepare_local_data_dir_inside: >-
           {{
           (ansible_connection == 'local') |
@@ -370,8 +374,6 @@
           }}
         cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
         cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
-        cloud_prepare_extra_repos_dir: "{{ env_dev_extra_repos_dir }}"
-        cloud_prepare_env_dev: "{{ env_dev }}"
         cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
       loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
       loop_control:
@@ -428,38 +430,12 @@
         ((env_ctx_params.hooks.before_cron | default('')) != '')
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cron"
+    - name: "{{ env_title }} - cron (outer)"
+      include_tasks: "tasks/nodes/cron.yml"
       vars:
-        cron_node_info: "{{ main_item }}"
-        cron_node_name: "{{ cron_node_info.name | default(cron_node_info) }}"
-        cron_node_key: "{{ cron_node_info.key | default(cron_node_info.name) | default(cron_node_info) }}"
-        cron_node: "{{ env.nodes[cron_node_key] }}"
-        cron_cloud_name: "{{ cron_node_info.cloud | default(cron_node.cloud) }}"
-        cron_title: "{{ env_title }} - cron - {{ cron_node_name }}"
-        cron_node_params_dict: "{{ env.node_params | default({}) }}"
-        cron_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
-        cron_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-        cron_env_dir: "{{ env_dir }}"
-        cron_start: "true"
-        cron_cloud: "{{ env.clouds[cron_cloud_name] }}"
-        cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes/{{ cron_node_name }}/cron"
-      loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ cron_node_name }}"
-      when: >-
-        ((ansible_connection == 'local') or (cron_node_name == instance_type))
-        and
-        (((env_node | default('')) == '') or (env_node == cron_node_name))
-        and
-        (
-          ((ansible_connection == 'local') and ((cron_node_info.type | default('')) == 'local'))
-          or
-          ((ansible_connection != 'local') and ((cron_node_info.type | default('')) != 'local'))
-        )
-      tags: ["no_print_skipped"]
+        cron_title: "{{ env_title }} - cron - instance [{{ instance_type }}]"
+        cron_node_list: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+        cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_cron }}"
@@ -534,7 +510,7 @@
         main_tmp_services: >-
           {{
             env.main[env_ctx].final_services | default([])
-            | selectattr('tmp','defined')
+            | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
           }}
@@ -546,52 +522,71 @@
       when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_node"
+    - name: "{{ env_title }} - [destroy (tmp)] nodes (outer)"
+      include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        cloud_node_env_name: "{{ env.name }}"
-        cloud_node_node_info: "{{ main_item }}"
-        cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
-        cloud_node_node_key: >-
+        main_tmp_nodes: >-
           {{
-          cloud_node_node_info.key |
-          default(cloud_node_node_info.name) |
-          default(cloud_node_node_info)
+            env.main[env_ctx].nodes | default([])
+            | selectattr('tmp', 'defined')
+            | selectattr('tmp', 'equalto', True)
+            | selectattr('service', 'defined')
+            | selectattr('service', 'ne', '')
+            | list
           }}
-        cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
-        cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
-        cloud_node_title: >-
-          {{ env_title }} - cloud - destroy temporary instances - {{ cloud_node_node_name }}
-          ({{ cloud_node_cloud_name }})
-        cloud_node_node_credentials: >-
-          {{ env.credentials[cloud_node_node.credentials] }}
-        cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
-        cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
-        cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-        cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
-        cloud_node_cloud_credentials: >-
-          {{ env.credentials[cloud_node_cloud.credentials] }}
-        cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_node_dns_dict: "{{ env.dns }}"
-        cloud_node_env_dir: "{{ env_dir }}"
-        cloud_node_tmp_dir: >-
-          {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
-        cloud_node_hosts_file: "{{ inventory_file }}"
-        cloud_node_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_node_shutdown: true
-        cloud_node_allow_destroy_dns: "{{ env.main[env_ctx].destroy.node_dns | default(false) | bool }}"
-      loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ cloud_node_node_name }}"
-      when: >-
-        (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
-        and
-        (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
-        and
-        (not (cloud_node_node_info.external | default(false) | bool))
+        cloud_node_title: "{{ env_title }} - [destroy (tmp)] nodes"
+        cloud_node_list: "{{ main_tmp_nodes }}"
+        cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+        cloud_node_state: "absent"
+      when: (main_tmp_nodes | length) > 0
       tags: ["no_print_skipped"]
+
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_node"
+    #   vars:
+    #     cloud_node_env_name: "{{ env.name }}"
+    #     cloud_node_node_info: "{{ main_item }}"
+    #     cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+    #     cloud_node_node_key: >-
+    #       {{
+    #       cloud_node_node_info.key |
+    #       default(cloud_node_node_info.name) |
+    #       default(cloud_node_node_info)
+    #       }}
+    #     cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+    #     cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+    #     cloud_node_title: >-
+    #       {{ env_title }} - cloud - destroy temporary instances - {{ cloud_node_node_name }}
+    #       ({{ cloud_node_cloud_name }})
+    #     cloud_node_node_credentials: >-
+    #       {{ env.credentials[cloud_node_node.credentials] }}
+    #     cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
+    #     cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+    #     cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+    #     cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
+    #     cloud_node_cloud_credentials: >-
+    #       {{ env.credentials[cloud_node_cloud.credentials] }}
+    #     cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
+    #     cloud_node_dns_dict: "{{ env.dns }}"
+    #     cloud_node_env_dir: "{{ env_dir }}"
+    #     cloud_node_tmp_dir: >-
+    #       {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+    #     cloud_node_hosts_file: "{{ inventory_file }}"
+    #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
+    #     cloud_node_shutdown: true
+    #     cloud_node_allow_destroy_dns: "{{ env.main[env_ctx].destroy.node_dns | default(false) | bool }}"
+    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ cloud_node_node_name }}"
+    #   when: >-
+    #     (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
+    #     and
+    #     (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
+    #     and
+    #     (not (cloud_node_node_info.external | default(false) | bool))
+    #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }} - delete the temporary buckets"
     #   aws_s3:
@@ -663,7 +658,7 @@
         main_tmp_services: >-
           {{
             env.main[env_ctx].initial_services | default([])
-            | selectattr('tmp','defined')
+            | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
           }}
@@ -706,7 +701,7 @@
         main_tmp_services: >-
           {{
             env.main[env_ctx].final_services | default([])
-            | selectattr('can_destroy','defined')
+            | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
           }}
@@ -718,50 +713,69 @@
       when: (main_tmp_services | length) > 0
       tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_role:
-        name: "cloud_node"
+    - name: "{{ env_title }} - [destroy] nodes (outer)"
+      include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        cloud_node_env_name: "{{ env.name }}"
-        cloud_node_node_info: "{{ main_item }}"
-        cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
-        cloud_node_node_key: >-
+        main_tmp_nodes: >-
           {{
-          cloud_node_node_info.key |
-          default(cloud_node_node_info.name) |
-          default(cloud_node_node_info)
+            env.main[env_ctx].nodes | default([])
+            | selectattr('can_destroy', 'defined')
+            | selectattr('can_destroy', 'equalto', True)
+            | selectattr('service', 'defined')
+            | selectattr('service', 'ne', '')
+            | list
           }}
-        cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
-        cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
-        cloud_node_title: >-
-          {{ env_title }} - [destroy] cloud - destroy instances - {{ cloud_node_node_name }}
-          ({{ cloud_node_cloud_name }})
-        cloud_node_node_credentials: >-
-          {{ env.credentials[cloud_node_node.credentials] }}
-        cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
-        cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
-        cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
-        cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
-        cloud_node_cloud_credentials: >-
-          {{ env.credentials[cloud_node_cloud.credentials] }}
-        cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
-        cloud_node_dns_dict: "{{ env.dns }}"
-        cloud_node_env_dir: "{{ env_dir }}"
-        cloud_node_tmp_dir: >-
-          {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
-        cloud_node_hosts_file: "{{ inventory_file }}"
-        cloud_node_env_ctx_params: "{{ env_ctx_params }}"
-        cloud_node_shutdown: true
-        cloud_node_allow_destroy_dns: "{{ env.main[env_ctx].destroy.node_dns | default(false) | bool }}"
-      loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ cloud_node_node_name }}"
-      when: >-
-        (env.main[env_ctx].destroy.nodes | default(false) | bool)
-        and
-        (not (cloud_node_node_info.external | default(false) | bool))
+        cloud_node_title: "{{ env_title }} - [destroy] nodes"
+        cloud_node_list: "{{ main_tmp_nodes }}"
+        cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+        cloud_node_state: "absent"
+      when: (main_tmp_nodes | length) > 0
       tags: ["no_print_skipped"]
+
+    # - name: "{{ env_title }}"
+    #   include_role:
+    #     name: "cloud_node"
+    #   vars:
+    #     cloud_node_env_name: "{{ env.name }}"
+    #     cloud_node_node_info: "{{ main_item }}"
+    #     cloud_node_node_name: "{{ cloud_node_node_info.name | default(cloud_node_node_info) }}"
+    #     cloud_node_node_key: >-
+    #       {{
+    #       cloud_node_node_info.key |
+    #       default(cloud_node_node_info.name) |
+    #       default(cloud_node_node_info)
+    #       }}
+    #     cloud_node_node: "{{ env.nodes[cloud_node_node_key] }}"
+    #     cloud_node_cloud_name: "{{ cloud_node_node_info.cloud | default(cloud_node_node.cloud) }}"
+    #     cloud_node_title: >-
+    #       {{ env_title }} - [destroy] cloud - destroy instances - {{ cloud_node_node_name }}
+    #       ({{ cloud_node_cloud_name }})
+    #     cloud_node_node_credentials: >-
+    #       {{ env.credentials[cloud_node_node.credentials] }}
+    #     cloud_node_node_params_dict: "{{ env.node_params | default({}) }}"
+    #     cloud_node_node_shared_params_dict: "{{ env.node_shared_params | default({}) }}"
+    #     cloud_node_node_shared_group_params_dict: "{{ env.node_shared_group_params | default({}) }}"
+    #     cloud_node_cloud: "{{ env.clouds[cloud_node_cloud_name] }}"
+    #     cloud_node_cloud_credentials: >-
+    #       {{ env.credentials[cloud_node_cloud.credentials] }}
+    #     cloud_node_credentials_dict: "{{ env.credentials | default({}) }}"
+    #     cloud_node_dns_dict: "{{ env.dns }}"
+    #     cloud_node_env_dir: "{{ env_dir }}"
+    #     cloud_node_tmp_dir: >-
+    #       {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
+    #     cloud_node_hosts_file: "{{ inventory_file }}"
+    #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
+    #     cloud_node_shutdown: true
+    #     cloud_node_allow_destroy_dns: "{{ env.main[env_ctx].destroy.node_dns | default(false) | bool }}"
+    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #   loop_control:
+    #     loop_var: main_item
+    #     label: "{{ cloud_node_node_name }}"
+    #   when: >-
+    #     (env.main[env_ctx].destroy.nodes | default(false) | bool)
+    #     and
+    #     (not (cloud_node_node_info.external | default(false) | bool))
+    #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }} - delete the buckets and all their contents"
     #   aws_s3:
@@ -831,7 +845,7 @@
         main_tmp_services: >-
           {{
             env.main[env_ctx].initial_services | default([])
-            | selectattr('can_destroy','defined')
+            | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
           }}

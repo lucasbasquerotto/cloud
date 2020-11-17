@@ -36,6 +36,8 @@
       host_user: "{{ cloud_node_user_data_credential.host_user }}"
       host_pass: "{{ cloud_node_user_data_credential.host_pass }}"
       host_ssh_public_keys: "{{ cloud_node_user_data_host_ssh_public_keys }}"
+      credentials: "{{ cloud_node_user_data_credential.user_data | default({}) }}"
+      params: "{{ cloud_node_user_data_params.user_data_params | default({}) }}"
     cloud_node_user_data_file: >-
       {{
         ((cloud_node_user_data_params.user_data_file | default('')) != '')

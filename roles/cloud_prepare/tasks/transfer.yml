@@ -112,7 +112,7 @@
         }]
       }}
   vars:
-    cloud_prepare_transfer_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_transfer_item.src }}"
+    cloud_prepare_transfer_item_src_full: "{{ env_dir }}/{{ cloud_prepare_transfer_item.src }}"
     cloud_prepare_transfer_item_dest_rel: "{{ cloud_prepare_transfer_item.dest }}"
     cloud_prepare_transfer_item_dest_full: >-
       {{ cloud_prepare_repo_dir }}/{{ cloud_prepare_transfer_item_dest_rel }}
@@ -164,7 +164,7 @@
         }]
       }}
   vars:
-    cloud_prepare_transfer_item_src_full: "{{ cloud_prepare_env_dir }}/{{ cloud_prepare_transfer_item.src }}"
+    cloud_prepare_transfer_item_src_full: "{{ env_dir }}/{{ cloud_prepare_transfer_item.src }}"
     cloud_prepare_transfer_item_dest_rel: "{{ cloud_prepare_transfer_item.dest }}"
     cloud_prepare_transfer_item_dest_full: >-
       {{ cloud_prepare_repo_dir }}/{{ cloud_prepare_transfer_item_dest_rel }}

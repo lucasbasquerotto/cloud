@@ -1,3 +1,5 @@
+# Vars & Validation
+
 - name: "{{ host_test_title }} - host_test_node_name - initial"
   set_fact:
     host_test_node_info: ""
@@ -7,7 +9,7 @@
 
 - name: "{{ host_test_title }} - host_test_node_name - fill"
   set_fact:
-    host_test_node_info: "{{ host_test_node_info }}"
+    host_test_node_info: "{{ host_test_node_info_aux }}"
     host_test_node_name: "{{ host_test_node_name_aux }}"
     host_test_node_key: >-
       {{
@@ -46,57 +48,32 @@
 
 - name: "{{ host_test_title }} - host_test_node"
   set_fact:
-    host_test_node: "{{ env.nodes[instance_key] }}"
+    host_test_node: "{{ env.nodes[host_test_node_key] }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }} - generate node params (outer)"
-  include_tasks: "tasks/util/params_mixer.yml"
+# Node Params
+
+- name: "{{ host_test_title }} - node params (outer)"
+  include_tasks: "tasks/util/node_params.yml"
   vars:
-    params_mixer_title: "{{ host_test_title }} - generate node params"
-    params_mixer_main_params: "{{ host_test_node.params | default({}) }}"
-    params_mixer_group_params_names: "{{ host_test_node.group_params | default({}) }}"
-    params_mixer_shared_params_names: "{{ host_test_node.shared_params | default([]) }}"
-    params_mixer_shared_group_params_name: "{{ host_test_node.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ env.node_shared_group_params | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
-    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
+    node_params_title: "{{ host_test_title }} - node params"
+    node_params_node: "{{ host_test_node }}"
+    node_params_info: "{{ host_test_node_info }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }}"
+- name: "{{ host_test_title }} - host_test_node_params"
   set_fact:
-    host_test_node_params: "{{ params_mixer_params }}"
+    host_test_node_params: "{{ node_params }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }} - generate node ctx params (outer)"
-  include_tasks: "tasks/util/params_mixer.yml"
-  vars:
-    params_mixer_title: "{{ host_test_title }} - generate node ctx params"
-    params_mixer_main_params: "{{ host_test_node_info.params | default({}) }}"
-    params_mixer_group_params_names: "{{ host_test_node_info.group_params | default({}) }}"
-    params_mixer_shared_params_names: "{{ host_test_node_info.shared_params | default([]) }}"
-    params_mixer_shared_group_params_name: "{{ host_test_node_info.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ env.node_shared_group_params | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) }}"
-    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
-  tags: ["no_print"]
+# Main Params
 
-- set_fact:
-    host_test_node_ctx_params: "{{ params_mixer_params }}"
-  tags: ["no_print"]
-
-- set_fact:
-    host_test_node_params: "{{ host_test_node_params | combine(host_test_node_ctx_params) }}"
-  tags: ["no_print"]
-
-- name: "{{ host_test_title }}"
+- name: "{{ host_test_title }} - host_test_vars"
   set_fact:
-    host_test_vars: "{{ host_test_node_params[host_test_param_name] }}"
-  vars:
-    host_test_param_name: >-
-      {{ host_test_node_params.meta.host_test_param_name | default('host_test', true) }}
+    host_test_vars: "{{ host_test_node_params.host_test }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }}"
+- name: "{{ host_test_title }} - host_test_log_file"
   set_fact:
     host_test_log_file: "{{ host_test_vars.log_file }}"
     host_test_setup_finished_log_regex: "{{ host_test_vars.setup_finished_log_regex }}"
@@ -108,6 +85,8 @@
       {{ host_test_vars.setup_finished_timeout }}
   tags: ["no_print"]
 
+# Wait Host
+
 - name: >
     {{ host_test_title }} - wait {{ host_test_initial_connection_timeout }}
     seconds for target connection to become reachable/usable
@@ -118,6 +97,8 @@
 
 - name: "{{ host_test_title }} - Gathering facts"
   setup:
+
+# Wait Setup
 
 - name: >
     {{ host_test_title }} - make sure the file "{{ host_test_log_file }}"
@@ -132,6 +113,8 @@
     msg: >
       Timeout to find "{{ host_test_setup_finished_log_regex }}"
       inside file "{{ host_test_log_file }}"
+
+# Verify Successful Setup
 
 - name: "{{ host_test_title }} - block - verify last line"
   block:

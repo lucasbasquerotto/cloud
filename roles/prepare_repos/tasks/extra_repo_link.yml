@@ -2,7 +2,7 @@
   file:
     path: "{{ prepare_repos_extra_repo_link_dest | dirname }}"
     state: directory
-    mode: "{{ prepare_repos_env_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
   tags: ["no_print"]
 
 - name: "{{ prepare_repos_extra_repo_link_title }} - create link"

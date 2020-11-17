@@ -3,7 +3,7 @@
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_inner_repo"
   set_fact:
     cloud_prepare_pod_inner_repo: >-
-      {{ cloud_prepare_repos_dict[cloud_prepare_pod.repo] }}
+      {{ env.repos[cloud_prepare_pod.repo] }}
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - pod - repo (outer)"
@@ -11,12 +11,12 @@
   vars:
     repo_title: "{{ cloud_prepare_inner_title }} - pod - repo"
     repo_main: "{{ cloud_prepare_pod_inner_repo }}"
-    repo_ssh_src_dir: "{{ cloud_prepare_env_dir }}"
+    repo_ssh_src_dir: "{{ env_dir }}"
     repo_secrets_dir: "{{ cloud_prepare_secrets_repos_dir }}/{{ cloud_prepare_pod.repo }}"
     repo_default_dir: "{{ cloud_prepare_repo_location }}"
     repo_dev_base_dir: "{{ cloud_prepare_dev_repos_dir }}"
-    repo_dev_path: "{{ cloud_prepare_env_path_map[cloud_prepare_pod.repo] | default('') }}"
-    repo_dev: "{{ cloud_prepare_env_dev and (cloud_prepare_cloud.type == 'local') }}"
+    repo_dev_path: "{{ env_path_map[cloud_prepare_pod.repo] | default('') }}"
+    repo_dev: "{{ env_dev and (cloud_prepare_cloud.type == 'local') }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_repo_location"
@@ -53,7 +53,7 @@
   vars:
     cloud_prepare_pod_inner_env_repo_name: "{{ cloud_prepare_pod_inner_item.repo }}"
     cloud_prepare_pod_inner_env_repo: >-
-      {{ cloud_prepare_repos_dict[cloud_prepare_pod_inner_item.repo] }}
+      {{ env.repos[cloud_prepare_pod_inner_item.repo] }}
   loop: "{{ cloud_prepare_pod.env_repos | default([]) }}"
   loop_control:
     loop_var: cloud_prepare_pod_inner_item
@@ -88,9 +88,9 @@
     params_mixer_group_params_names: "{{ cloud_prepare_pod.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_pod.shared_params | default([]) }}"
     params_mixer_shared_group_params_name: "{{ cloud_prepare_pod.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ cloud_prepare_pod_shared_group_params_dict | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
-    params_mixer_group_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.pod_shared_group_params | default({}) | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.pod_shared_params | default({}) | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.pod_group_params | default({}) | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_params"
@@ -106,9 +106,9 @@
     params_mixer_group_params_names: "{{ cloud_prepare_node.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_node.shared_params | default([]) }}"
     params_mixer_shared_group_params_name: "{{ cloud_prepare_node.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ cloud_prepare_node_shared_group_params_dict | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ cloud_prepare_node_shared_params_dict | default({}) }}"
-    params_mixer_group_params_dict: "{{ cloud_prepare_node_params_dict }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.node_shared_group_params | default({}) | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }}"
@@ -124,9 +124,9 @@
     params_mixer_group_params_names: "{{ cloud_prepare_node_info.group_params | default({}) }}"
     params_mixer_shared_params_names: "{{ cloud_prepare_node_info.shared_params | default([]) }}"
     params_mixer_shared_group_params_name: "{{ cloud_prepare_node_info.shared_group_params | default('') }}"
-    params_mixer_shared_group_params_names_dict: "{{ cloud_prepare_node_shared_group_params_dict | default({}) }}"
-    params_mixer_shared_params_names_dict: "{{ cloud_prepare_node_shared_params_dict | default({}) }}"
-    params_mixer_group_params_dict: "{{ cloud_prepare_node_params_dict }}"
+    params_mixer_shared_group_params_names_dict: "{{ env.node_shared_group_params | default({}) | default({}) }}"
+    params_mixer_shared_params_names_dict: "{{ env.node_shared_params | default({}) | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.node_group_params | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_ctx_params"
@@ -149,9 +149,9 @@
     params_mixer_shared_params_names: "{{ cloud_prepare_pod_info.shared_params | default([]) }}"
     params_mixer_shared_group_params_name: "{{ cloud_prepare_pod_info.shared_group_params | default('') }}"
     params_mixer_shared_group_params_names_dict: >-
-      {{ cloud_prepare_pod_shared_group_params_dict | default({}) }}
-    params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
-    params_mixer_group_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
+      {{ env.pod_shared_group_params | default({}) | default({}) }}
+    params_mixer_shared_params_names_dict: "{{ env.pod_shared_params | default({}) | default({}) }}"
+    params_mixer_group_params_dict: "{{ env.pod_group_params | default({}) | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_node_pod_params"
@@ -175,9 +175,9 @@
         params_mixer_shared_params_names: "{{ cloud_prepare_node_info_pod_params.shared_params | default([]) }}"
         params_mixer_shared_group_params_name: "{{ cloud_prepare_node_info_pod_params.shared_group_params | default('') }}"
         params_mixer_shared_group_params_names_dict: >-
-          {{ cloud_prepare_pod_shared_group_params_dict | default({}) }}
-        params_mixer_shared_params_names_dict: "{{ cloud_prepare_pod_shared_params_dict | default({}) }}"
-        params_mixer_group_params_dict: "{{ cloud_prepare_pod_params_dict | default({}) }}"
+          {{ env.pod_shared_group_params | default({}) | default({}) }}
+        params_mixer_shared_params_names_dict: "{{ env.pod_shared_params | default({}) | default({}) }}"
+        params_mixer_group_params_dict: "{{ env.pod_group_params | default({}) | default({}) }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_inner_ctx_params"
@@ -206,7 +206,7 @@
     cloud_prepare_pod_data_dir: >-
       {{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}
     cloud_prepare_pod_extra_repos_dir: >-
-      {{ cloud_prepare_extra_repos_dir | relpath(cloud_prepare_repo_dir) }}
+      {{ env_dev_extra_repos_dir | relpath(cloud_prepare_repo_dir) }}
   when: cloud_prepare_cloud.type == 'local'
   tags: ["no_print"]
 
@@ -229,8 +229,8 @@
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_vars_full"
   set_fact:
     cloud_prepare_vars_full:
-      env_name: "{{ cloud_prepare_env_name }}"
-      ctx_name: "{{ cloud_prepare_ctx_name }}"
+      env_name: "{{ env.name }}"
+      ctx_name: "{{ env_ctx }}"
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"
