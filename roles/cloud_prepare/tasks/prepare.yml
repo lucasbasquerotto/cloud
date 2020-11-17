@@ -370,8 +370,8 @@
               params: "{{ cloud_prepare_vars_full }}"
           tags: ["no_print"]
 
-        - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars-ctx.yml"
-          include_tasks: "vars-ctx.yml"
+        - name: "{{ cloud_prepare_inner_title }} - include_tasks - vars_ctx.yml"
+          include_tasks: "vars_ctx.yml"
           tags: ["no_print"]
 
       when: (cloud_prepare_pod.ctx | default('')) != ''

@@ -1,10 +1,10 @@
-- name: "{{ cloud_prepare_inner_title }} - vars-ctx"
+- name: "{{ cloud_prepare_inner_title }} - vars_ctx"
   set_fact:
     cloud_prepare_inner_vars_ctx: "{{ cloud_prepare_inner_vars_ctxs[cloud_prepare_inner_vars_idx | int] }}"
     cloud_prepare_inner_vars_idx: "{{ (cloud_prepare_inner_vars_idx | int) + 1 }}"
   tags: ["no_print"]
-  
-- name: "{{ cloud_prepare_inner_title }} - vars-ctx ({{ cloud_prepare_inner_vars_ctx.name | default('') }})"
+
+- name: "{{ cloud_prepare_inner_title }} - vars_ctx ({{ cloud_prepare_inner_vars_ctx.name | default('') }})"
   set_fact:
     cloud_prepare_inner_vars_title: >-
       {{ cloud_prepare_inner_title }} - vars ({{ cloud_prepare_inner_vars_ctx.name }})
@@ -20,12 +20,12 @@
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_inner_vars_title }} - verify number of completed contexts"
-  fail: 
+  fail:
     msg: "number of completed contexts is greater than the total amount of contexts"
   when: (cloud_prepare_inner_vars_ctxs_completed | length) > (cloud_prepare_inner_vars_ctxs | length)
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_vars_title }} - include_tasks - recursive - vars-ctx.yml"
-  include_tasks: "vars-ctx.yml"
+- name: "{{ cloud_prepare_inner_vars_title }} - include_tasks - recursive - vars_ctx.yml"
+  include_tasks: "vars_ctx.yml"
   when: (cloud_prepare_inner_vars_ctxs_completed | length) < (cloud_prepare_inner_vars_ctxs | length)
   tags: ["no_print"]
