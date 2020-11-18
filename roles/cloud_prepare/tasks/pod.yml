@@ -20,13 +20,13 @@
 
 ### Set vars ###
 
-- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_tmp_location"
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_remote_tmp_location"
   set_fact:
-    cloud_prepare_tmp_location: >-
+    cloud_prepare_remote_tmp_location: >-
       {{
         cloud_prepare_pod.flat | default(false) | bool | ternary(
-          cloud_prepare_node_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname,
-          cloud_prepare_pod_base_dir + '/tmp/cloud'
+          cloud_prepare_remote_node_base_dir + '/cloud/tmp/' + cloud_prepare_pod_dirname,
+          cloud_prepare_remote_pod_base_dir + '/tmp/cloud'
         )
       }}
   tags: ["no_print"]
@@ -34,23 +34,24 @@
 - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location"
   set_fact:
     cloud_prepare_main_repo_location: >-
-      {{ cloud_prepare_pod_base_dir
+      {{ cloud_prepare_remote_pod_base_dir
       }}{{ cloud_prepare_pod.flat | default(false) | bool | ternary('', '/main') }}
-    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_tmp_location + '/main' }}"
+    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_remote_tmp_location + '/main' }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location"
+- name: "{{ cloud_prepare_pod_title }} - cloud_prepare_main_repo_location (local)"
   set_fact:
     cloud_prepare_main_repo_location: "{{ cloud_prepare_local_pod_default_repo_dir }}"
+    cloud_prepare_tmp_repo_location: "{{ cloud_prepare_local_pod_default_repo_dir + '/tmp/pod' }}"
   when: cloud_prepare_node_local | bool
   tags: ["no_print"]
 
 - name: "{{ cloud_prepare_pod_title }} - cloud_prepare_backup_file"
   set_fact:
     cloud_prepare_backup_file: >-
-      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
+      {{ cloud_prepare_remote_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}
     cloud_prepare_backup_file_tmp: >-
-      {{ cloud_prepare_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
+      {{ cloud_prepare_remote_tmp_location }}/env/{{ cloud_prepare_env_vars_relative_file_name }}.tmp
   when: not (cloud_prepare_node_local | bool)
   tags: ["no_print"]
 
@@ -58,11 +59,11 @@
   set_fact:
     cloud_prepare_owner: "{{ cloud_prepare_host_user }}"
     cloud_prepare_group: "{{ cloud_prepare_host_group }}"
-    cloud_prepare_pod_data_dir: >-
+    cloud_prepare_remote_pod_data_dir: >-
       {{
         cloud_prepare_pod.flat | default(false) | bool | ternary(
-          cloud_prepare_node_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname,
-          cloud_prepare_pod_base_dir + '/data'
+          cloud_prepare_remote_node_base_dir + '/cloud/data/' + cloud_prepare_pod_dirname,
+          cloud_prepare_remote_pod_base_dir + '/data'
         )
       }}
   tags: ["no_print"]
@@ -109,12 +110,12 @@
       set_fact:
         cloud_prepare_env_vars:
           - name: "BASE_DIR"
-            value: "{{ cloud_prepare_pod_base_dir }}"
+            value: "{{ cloud_prepare_remote_pod_base_dir }}"
             when: "{{ cloud_prepare_pod.flat | default(false) | bool | ternary(false, true) }}"
           - name: "MAIN_DIR"
             value: "{{ cloud_prepare_main_repo_location }}"
           - name: "DATA_DIR"
-            value: "{{ cloud_prepare_pod_data_dir }}"
+            value: "{{ cloud_prepare_remote_pod_data_dir }}"
       when: not (cloud_prepare_node_local | bool)
       tags: ["no_print"]
 

@@ -6,8 +6,8 @@
     cloud_node_key: >-
       {{
         cloud_node_info.key |
-        default(cloud_node_info.name) |
-        default(cloud_node_info)
+        default(cloud_node_info.name, true) |
+        default(cloud_node_info, true)
       }}
     cloud_node_item_title: >-
       {{ cloud_node_title }} - node [{{ cloud_node_name }}{{

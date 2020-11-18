@@ -21,7 +21,7 @@
     host_test_node_info_aux: "{{ host_test_item }}"
     host_test_node_name_aux: >-
       {{ host_test_node_info_aux.name | default(host_test_node_info_aux) }}
-  loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+  loop: "{{ env_ctx.nodes | default([]) | list }}"
   loop_control:
     loop_var: host_test_item
     label: "{{ host_test_node_name_aux }}"

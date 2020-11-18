@@ -1,9 +1,10 @@
 # Validation & Node
 
-- name: "{{ cloud_prepare_node_title }} - verify if the node exists"
-  fail:
-    msg: "Invalid node: {{ cloud_prepare_node_key }}"
-  when: cloud_prepare_node_key not in (env.nodes | default({}))
+- name: "{{ cloud_prepare_node_title }} - validate (outer)"
+  include_tasks: "tasks/nodes/node_validate.yml"
+  vars:
+    node_validate_title: "{{ cloud_prepare_node_title }} - validate"
+    node_validate_info: "{{ cloud_prepare_node_info }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_prepare_node_title }} - cloud_prepare_node"
@@ -11,22 +12,14 @@
     cloud_prepare_node: "{{ env.nodes[cloud_prepare_node_key] }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_node_title }} - verify if the node credential exists"
-  fail:
-    msg: "Invalid credential: {{ cloud_prepare_node.credential }}"
-  when: >-
-    ((cloud_prepare_node.credential | default('')) != '')
-    and
-    (cloud_prepare_node.credential not in (env.credentials | default({})))
-  tags: ["no_print_skipped"]
-
 - name: "{{ cloud_prepare_node_title }} - cloud_prepare_node_credential"
   set_fact:
     cloud_prepare_node_credential: >-
       {{
         env.credentials[cloud_prepare_node.credential | default('')] | default({})
       }}
-    cloud_prepare_node_base_dir: "{{ cloud_prepare_node.base_dir }}"
+    cloud_prepare_remote_node_base_dir: >-
+      {{ cloud_prepare_node.base_dir | default('') }}
   tags: ["no_print"]
 
 # Dependencies
@@ -102,10 +95,10 @@
       {{ cloud_prepare_node_title }} - pod[{{ cloud_prepare_pod_name }}]
     cloud_prepare_pod_dirname: >-
       {{ cloud_prepare_pod.base_dir | default(cloud_prepare_pod_name, true) }}
-    cloud_prepare_pod_base_dir: >-
-      {{ cloud_prepare_node_base_dir }}/{{ cloud_prepare_pod_dirname }}
+    cloud_prepare_remote_pod_base_dir: >-
+      {{ cloud_prepare_remote_node_base_dir }}/{{ cloud_prepare_pod_dirname }}
     cloud_prepare_pod_identifier: >-
-      {{ env.name }}/{{ env_ctx }}/{{ cloud_prepare_pod_name }}
+      {{ env.name }}/{{ env_ctx_name }}/{{ cloud_prepare_pod_name }}
     cloud_prepare_host_user: "{{ cloud_prepare_node_credential.host_user }}"
     cloud_prepare_host_group: "{{ cloud_prepare_node_credential.host_user }}"
     cloud_prepare_local_pod_default_repo_dir: >-

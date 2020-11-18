@@ -1,9 +1,11 @@
 - name: Cloud - Prepare Context
   hosts: main
   tasks:
-    - include_tasks: "tasks/util/env.yml"
+    - name: "[cloud - ctx - prepare] - load env"
+      include_tasks: "tasks/util/env.yml"
       vars:
         env_stage_title: "prepare"
+        env_validate: true
 
     # project hosts file (inventory)
 
@@ -11,13 +13,13 @@
       set_fact:
         project_hosts_file_src: >-
           {{
-            env_ctx_params.hosts_file | default('')
+            ((env_ctx_params.hosts_file | default('')) != '')
             | ternary(env_vars.env_dir + '/'
             + (env_ctx_params.hosts_file | default('')), '')
           }}
         project_hosts_template_src: >-
           {{
-            env_ctx_params.hosts_template | default('')
+            ((env_ctx_params.hosts_template | default('')) != '')
             | ternary(env_vars.env_dir + '/'
             + (env_ctx_params.hosts_template | default('')), '')
           }}
@@ -184,8 +186,8 @@
       vars:
         prepare_repos_title: "{{ project_ctx_run_title }} - prepare repos"
         prepare_repos_repos_dict: "{{ env.repos | default({}) }}"
-        prepare_repos_ctx_extra_repos: "{{ env.main[env_ctx].extra_repos | default([]) }}"
-        prepare_repos_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
+        prepare_repos_ctx_extra_repos: "{{ env_ctx.extra_repos | default([]) }}"
+        prepare_repos_nodes: "{{ env_ctx.nodes | default([]) }}"
         prepare_repos_nodes_dict: "{{ env.nodes | default({}) }}"
         prepare_repos_pods_dict: "{{ env.pods | default({}) }}"
         prepare_repos_env_path_map: "{{ env_path_map }}"

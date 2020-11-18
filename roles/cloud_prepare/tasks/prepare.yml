@@ -19,7 +19,7 @@
     repo_dev: "{{ env_dev and (cloud_prepare_node_local | bool) }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_repo_location"
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_repo_dir"
   set_fact:
     cloud_prepare_repo_dir: "{{ repo_dir }}"
     cloud_prepare_git_result: "{{ repo_git_result }}"
@@ -194,14 +194,19 @@
   when: (cloud_prepare_node_info_pod_params | dict2items | length) > 0
   tags: ["no_print_skipped"]
 
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_data_dir"
+  set_fact:
+    cloud_prepare_pod_data_dir: "{{ cloud_prepare_remote_pod_data_dir }}"
+    cloud_prepare_pod_extra_repos_dir: ""
+  tags: ["no_print"]
+
 - name: "{{ cloud_prepare_inner_title }} - cloud_prepare_base_dir_rel"
   set_fact:
     cloud_prepare_base_dir_rel: >-
       {{ env_dev_repos_dir | relpath(cloud_prepare_repo_dir) }}
-    cloud_prepare_pod_extra_repos_dir: ""
   tags: ["no_print"]
 
-- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_data_dir"
+- name: "{{ cloud_prepare_inner_title }} - cloud_prepare_pod_data_dir (local)"
   set_fact:
     cloud_prepare_pod_data_dir: >-
       {{ cloud_prepare_base_dir_rel + '/data/' + cloud_prepare_pod_identifier }}
@@ -230,7 +235,7 @@
   set_fact:
     cloud_prepare_vars_full:
       env_name: "{{ env.name }}"
-      ctx_name: "{{ env_ctx }}"
+      ctx_name: "{{ env_ctx_name }}"
       main: "{{ cloud_prepare_inner_params }}"
       pod: "{{ cloud_prepare_params_pod }}"
       credentials: "{{ cloud_prepare_inner_credentials }}"

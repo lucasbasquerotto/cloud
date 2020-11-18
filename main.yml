@@ -35,7 +35,7 @@
     - name: "{{ env_title }} - initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ env.main[env_ctx].initial_services | default([]) | list }}"
+        main_tmp_services: "{{ env_ctx.initial_services | default([]) | list }}"
         cloud_service_title: "{{ env_title }} - initial services"
         cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_top: true
@@ -85,7 +85,7 @@
 #         cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
 #         cloud_main_env_ctx_params: "{{ env_ctx_params }}"
 #         cloud_main_state: "present"
-#       loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+#       loop: "{{ env_ctx.clouds | default([]) | list }}"
 #       loop_control:
 #         loop_var: main_item
 #       tags: ["no_print_skipped"]
@@ -130,7 +130,7 @@
 #         cloud_dns_data_list: "{{ main_item.data_list }}"
 #         cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
 #         cloud_dns_state: "present"
-#       loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
+#       loop: "{{ env_ctx.dns | default([]) | list }}"
 #       loop_control:
 #         loop_var: main_item
 #         label: "{{ main_item.name }}"
@@ -171,7 +171,7 @@
 #         main_bucket_name: "{{ main_item.name | default(main_item) }}"
 #         main_bucket: "{{ env.buckets[main_bucket_name] }}"
 #         main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-#       loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
+#       loop: "{{ (env_ctx.buckets | default([])) }}"
 #       loop_control:
 #         loop_var: main_item
 #         label: "{{ main_bucket_name }}"
@@ -207,7 +207,7 @@
     - name: "{{ env_title }} - nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        main_tmp_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
+        main_tmp_nodes: "{{ env_ctx.nodes | default([]) }}"
         cloud_node_title: "{{ env_title }} - nodes"
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
@@ -248,7 +248,7 @@
     #       {{ env_ctx_dir }}/cloud/node/{{ cloud_node_cloud_name }}
     #     cloud_node_hosts_file: "{{ inventory_file }}"
     #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
-    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #   loop: "{{ env_ctx.nodes | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ cloud_node_node_name }}"
@@ -341,7 +341,7 @@
       include_role:
         name: "cloud_prepare"
       vars:
-        main_tmp_nodes: "{{ env.main[env_ctx].nodes | default([]) }}"
+        main_tmp_nodes: "{{ env_ctx.nodes | default([]) }}"
         cloud_prepare_title: "{{ env_title }} - prepare pods"
         cloud_prepare_node_list: "{{ main_tmp_nodes }}"
         cloud_prepare_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
@@ -382,7 +382,7 @@
     #     cloud_prepare_dev_repos_dir: "{{ env_dev_repos_dir }}"
     #     cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
     #     cloud_prepare_meta: "{{ env_ctx_params.meta | default({}) }}"
-    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #   loop: "{{ env_ctx.nodes | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ cloud_prepare_node_name }}"
@@ -441,7 +441,7 @@
       include_tasks: "tasks/nodes/cron.yml"
       vars:
         cron_title: "{{ env_title }} - cron - instance [{{ instance_type | default('') }}]"
-        cron_node_list: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+        cron_node_list: "{{ env_ctx.nodes | default([]) | list }}"
         cron_tmp_dir: "{{ cron_node.base_dir }}/tmp/nodes"
 
     - name: "{{ env_title }}"
@@ -476,7 +476,7 @@
     - name: "{{ env_title }} - final services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ env.main[env_ctx].final_services | default([]) | list }}"
+        main_tmp_services: "{{ env_ctx.final_services | default([]) | list }}"
         cloud_service_title: "{{ env_title }} - final services"
         cloud_service_list: "{{ main_tmp_services }}"
         cloud_service_top: true
@@ -516,7 +516,7 @@
       vars:
         main_tmp_services: >-
           {{
-            env.main[env_ctx].final_services | default([])
+            env_ctx.final_services | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
@@ -534,7 +534,7 @@
       vars:
         main_tmp_nodes: >-
           {{
-            env.main[env_ctx].nodes | default([])
+            env_ctx.nodes | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
@@ -580,8 +580,8 @@
     #     cloud_node_hosts_file: "{{ inventory_file }}"
     #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_node_shutdown: true
-    #     cloud_node_allow_destroy_dns: "{{ env.main[env_ctx].destroy.node_dns | default(false) | bool }}"
-    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #     cloud_node_allow_destroy_dns: "{{ env_ctx.destroy.node_dns | default(false) | bool }}"
+    #   loop: "{{ env_ctx.nodes | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ cloud_node_node_name }}"
@@ -604,7 +604,7 @@
     #     main_bucket_name: "{{ main_item.name | default(main_item) }}"
     #     main_bucket: "{{ env.buckets[main_bucket_name] }}"
     #     main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-    #   loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
+    #   loop: "{{ (env_ctx.buckets | default([])) }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_bucket_name }}"
@@ -627,7 +627,7 @@
     #     cloud_dns_data_list: []
     #     cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_dns_state: "absent"
-    #   loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
+    #   loop: "{{ env_ctx.dns | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_item.name }}"
@@ -650,7 +650,7 @@
     #     cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_cloud_name }}"
     #     cloud_main_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_main_state: "absent"
-    #   loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+    #   loop: "{{ env_ctx.clouds | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_cloud_name }}"
@@ -662,7 +662,7 @@
       vars:
         main_tmp_services: >-
           {{
-            env.main[env_ctx].initial_services | default([])
+            env_ctx.initial_services | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
@@ -705,7 +705,7 @@
       vars:
         main_tmp_services: >-
           {{
-            env.main[env_ctx].final_services | default([])
+            env_ctx.final_services | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
@@ -723,7 +723,7 @@
       vars:
         main_tmp_nodes: >-
           {{
-            env.main[env_ctx].nodes | default([])
+            env_ctx.nodes | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
@@ -769,13 +769,13 @@
     #     cloud_node_hosts_file: "{{ inventory_file }}"
     #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_node_shutdown: true
-    #     cloud_node_allow_destroy_dns: "{{ env.main[env_ctx].destroy.node_dns | default(false) | bool }}"
-    #   loop: "{{ env.main[env_ctx].nodes | default([]) | list }}"
+    #     cloud_node_allow_destroy_dns: "{{ env_ctx.destroy.node_dns | default(false) | bool }}"
+    #   loop: "{{ env_ctx.nodes | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ cloud_node_node_name }}"
     #   when: >-
-    #     (env.main[env_ctx].destroy.nodes | default(false) | bool)
+    #     (env_ctx.destroy.nodes | default(false) | bool)
     #     and
     #     (not (cloud_node_node_info.external | default(false) | bool))
     #   tags: ["no_print_skipped"]
@@ -791,11 +791,11 @@
     #     main_bucket_name: "{{ main_item.name | default(main_item) }}"
     #     main_bucket: "{{ env.buckets[main_bucket_name] }}"
     #     main_credentials: "{{ env.credentials[main_bucket.credentials] }}"
-    #   loop: "{{ (env.main[env_ctx].buckets | default([])) }}"
+    #   loop: "{{ (env_ctx.buckets | default([])) }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_bucket_name }}"
-    #   when: env.main[env_ctx].destroy.buckets | default(false) | bool
+    #   when: env_ctx.destroy.buckets | default(false) | bool
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
@@ -814,11 +814,11 @@
     #     cloud_dns_data_list: []
     #     cloud_dns_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_dns_state: "absent"
-    #   loop: "{{ env.main[env_ctx].dns | default([]) | list }}"
+    #   loop: "{{ env_ctx.dns | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_item.name }}"
-    #   when: env.main[env_ctx].destroy.dns | default(false) | bool
+    #   when: env_ctx.destroy.dns | default(false) | bool
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
@@ -836,10 +836,10 @@
     #     cloud_main_tmp_dir: "{{ env_ctx_dir }}/cloud/main/{{ main_item }}"
     #     cloud_main_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_main_state: "absent"
-    #   loop: "{{ env.main[env_ctx].clouds | default([]) | list }}"
+    #   loop: "{{ env_ctx.clouds | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
-    #   when: env.main[env_ctx].destroy.clouds | default(false) | bool
+    #   when: env_ctx.destroy.clouds | default(false) | bool
     #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy] initial services (outer)"
@@ -847,7 +847,7 @@
       vars:
         main_tmp_services: >-
           {{
-            env.main[env_ctx].initial_services | default([])
+            env_ctx.initial_services | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list

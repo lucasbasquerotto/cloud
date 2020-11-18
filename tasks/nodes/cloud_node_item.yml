@@ -10,127 +10,25 @@
   failed_when: cloud_node_conf is failed
   tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+- name: >-
+    {{ cloud_node_item_title }} -
+    ensure the inventory contains {{ '[' + cloud_node_name + ']' }}
   fail:
     msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_name + ']' }}"
   when: cloud_node_conf is changed
   tags: ["no_print"]
 
-- name: "{{ cloud_service_inner_title }} - cloud_node_item_info_map"
-  set_fact:
-    cloud_node_item_info_map: >-
-      {{ (cloud_node_info is mapping) | ternary(cloud_node_info, {}) }}
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_info_allowed_props"
-  set_fact:
-    cloud_node_info_allowed_props:
-      - "name"
-      - "key"
-      - "external"
-      - "hostname"
-      - "amount"
-      - "max_amount"
-      - "tmp"
-      - "can_destroy"
-      - "params"
-      - "group_params"
-      - "shared_params"
-      - "shared_group_params"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node info props"
-  fail:
-    msg: |
-      Invalid property defined for node info
-      Property: {{ tmp_item.key }}
-      Allowed:
-      {{ cloud_node_info_allowed_props | to_nice_yaml }}
-      Item:
-      {{ cloud_node_item_info_map | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_info_allowed_props
-  loop: "{{ cloud_node_item_info_map | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - verify if the node exists"
-  fail:
-    msg: "Invalid node: {{ cloud_node_key }}"
-  when: cloud_node_key not in (env.nodes | default({}))
+- name: "{{ cloud_node_item_title }} - validate (outer)"
+  include_tasks: "tasks/nodes/node_validate.yml"
+  vars:
+    node_validate_title: "{{ cloud_node_item_title }} - validate"
+    node_validate_info: "{{ cloud_node_info }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_item_title }} - cloud_node_node"
   set_fact:
     cloud_node_node: "{{ env.nodes[cloud_node_key] }}"
   tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_allowed_props"
-  set_fact:
-    cloud_node_allowed_props:
-      - "service"
-      - "dns_service"
-      - "credential"
-      - "params"
-      - "group_params"
-      - "shared_params"
-      - "shared_group_params"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node props"
-  fail:
-    msg: |
-      Invalid property defined for node
-      Property: {{ tmp_item.key }}
-      Allowed:
-      {{ cloud_node_allowed_props | to_nice_yaml }}
-      Item:
-      {{ cloud_node_node | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_allowed_props
-  loop: "{{ cloud_node_node | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_required_props"
-  set_fact:
-    cloud_node_required_props:
-      - "service"
-      - "credential"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_required_props (external)"
-  set_fact:
-    cloud_node_required_props: []
-  when: cloud_node_info.external | default(false) | bool
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node props"
-  fail:
-    msg: |
-      Required property not defined for node
-      Property: {{ tmp_item.key }}
-      Required:
-      {{ cloud_node_required_props | to_nice_yaml }}
-      Item:
-      {{ cloud_node_node | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_node
-  loop: "{{ cloud_node_required_props | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - verify if the node credential exists"
-  fail:
-    msg: "Invalid credential: {{ cloud_node_node.credential }}"
-  when: >-
-    ((cloud_node_node.credential | default('')) != '')
-    and
-    (cloud_node_node.credential not in (env.credentials | default({})))
-  tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_item_title }} - cloud_node_credential"
   set_fact:
@@ -139,73 +37,6 @@
         env.credentials[cloud_node_node.credential | default('')] | default({})
       }}
   tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_credential_allowed_props"
-  set_fact:
-    cloud_node_credential_allowed_props:
-      - "ssh_file"
-      - "ssh_file_encrypted"
-      - "host_user"
-      - "host_pass"
-      - "host_ssh_public_keys_path"
-      - "user_data"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node credential allowed props"
-  fail:
-    msg: |
-      Invalid property defined for node credential
-      Property: {{ tmp_item.key }}
-      Allowed:
-      {{ cloud_node_credential_allowed_props | to_nice_yaml }}
-      Item Keys:
-      {{ cloud_node_credential | dict2items | list | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_credential_allowed_props
-  loop: "{{ cloud_node_credential | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_credential_required_props"
-  set_fact:
-    cloud_node_credential_required_props:
-      - "host_user"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node credential required props"
-  fail:
-    msg: |
-      Required property not defined for node credential
-      Property: {{ tmp_item.key }}
-      Required:
-      {{ cloud_node_credential_required_props | to_nice_yaml }}
-      Item Keys:
-      {{ cloud_node_credential | dict2items | list | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_credential
-  loop: "{{ cloud_node_credential_required_props | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - verify if the node main service exists"
-  fail:
-    msg: "Invalid service: {{ cloud_node_node.service }}"
-  when: >-
-    ((cloud_node_node.service | default('')) != '')
-    and
-    (cloud_node_node.service not in (env.services | default({})))
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - verify if the node dns service exists"
-  fail:
-    msg: "Invalid service (dns): {{ cloud_node_node.service }}"
-  when: >-
-    ((cloud_node_node.dns_service | default('')) != '')
-    and
-    (cloud_node_node.dns_service not in (env.services | default({})))
-  tags: ["no_print_skipped"]
 
 ### Cloud Node Params ###
 

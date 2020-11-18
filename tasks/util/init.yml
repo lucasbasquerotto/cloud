@@ -5,4 +5,5 @@
 - include_tasks: "env.yml"
   vars:
     env_stage_title: "main"
+  when: env is not defined
   tags: ["no_print"]
