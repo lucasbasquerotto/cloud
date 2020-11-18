@@ -1,0 +1,20 @@
+- name: "{{ validate_title }} - load the schema"
+  include_vars:
+    file: "{{ validate_schema_file }}"
+    name: validate_schema_wrapper
+
+- name: "{{ validate_title }} - validate_schema_list"
+  set_fact:
+    validate_schema_list: "{{ [validate_schema_info] }}"
+    validate_schema_idx: 0
+  vars:
+    validate_schema_info:
+      root: "{{ validate_schema_wrapper.root }}"
+      schemas: "{{ validate_schema_wrapper.schemas }}"
+      item: "{{ validate_dict }}"
+      ctx: ""
+  tags: ["no_print"]
+
+- name: "{{ validate_title }} - validate (recursive)"
+  include_tasks: "tasks/validate/recursive.yml"
+  tags: ["no_print"]

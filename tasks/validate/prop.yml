@@ -1,0 +1,19 @@
+- name: "{{ validate_prop_title }} - add the prop schema"
+  set_fact:
+    validate_schema_recursive_next_list: >-
+      {{ validate_schema_recursive_next_list + [tmp_info_item] }}
+  vars:
+    tmp_info_item:
+      root: "{{ validate_recursive_schema.schema }}"
+      schemas: "{{ validate_schema_info.schemas }}"
+      item: "{{ tmp_item }}"
+      ctx: "{{ validate_schema_info.ctx }}[{{ loop_index }}]"
+  when: >-
+    (validate_recursive_type == 'list')
+    and
+    ((validate_recursive_schema.schema | default('')) != '')
+  loop: "{{ validate_prop_list }}"
+  loop_control:
+    loop_index: tmp_idx
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"

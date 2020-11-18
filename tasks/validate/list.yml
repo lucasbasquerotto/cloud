@@ -1,0 +1,39 @@
+- name: "{{ validate_list_title }} - validate the values with elem_type (valid type)"
+  fail:
+    msg: |
+      List value has an invalid element type
+      Element type: {{ validate_list_elem_type }}
+      Valid types: {{ tmp_valid | to_json }}
+  vars:
+    tmp_valid: ['string', 'primitive'])
+  when: >-
+    (validate_list_elem_type != '')
+    and
+    (validate_list_elem_type not in tmp_valid)
+  tags: ["no_print_skipped"]
+
+- name: "{{ validate_list_title }} - validate the values with schemas (valid type)"
+  fail:
+    msg: "List value has a schema and a primitive element type (choose only one)"
+  when: >-
+    (validate_list_elem_type != '')
+    and
+    (validate_list_elem_schema != '')
+  tags: ["no_print_skipped"]
+
+- name: "{{ validate_list_title }} - validate the list values (outer)"
+  include_tasks: "tasks/validate/elem.yml"
+  vars:
+    validate_inner_prop: "{{ validate_inner_schema[tmp_item] }}"
+    validate_elem_title: >-
+      {{ validate_inner_title }} - validate the list item
+      {{ validate_list_ctx[{{ validate_list_idx }}] }}
+    validate_elem_type: "{{ validate_list_elem_type }}"
+    validate_elem_value: "{{ validate_list_item }}"
+    validate_elem_schema: "{{ validate_list_elem_schema }}"
+  when: validate_list_elem_type != ''
+  loop: "{{ validate_list_elems }}"
+  loop_control:
+    loop_index: validate_list_idx
+    loop_var: validate_list_item
+    label: "{{ validate_list_ctx[{{ validate_list_idx }}] }}"
