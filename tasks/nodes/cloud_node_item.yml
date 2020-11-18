@@ -18,13 +18,6 @@
   when: cloud_node_conf is changed
   tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - validate (outer)"
-  include_tasks: "tasks/nodes/node_validate.yml"
-  vars:
-    node_validate_title: "{{ cloud_node_item_title }} - validate"
-    node_validate_info: "{{ cloud_node_info }}"
-  tags: ["no_print_skipped"]
-
 - name: "{{ cloud_node_item_title }} - cloud_node_node"
   set_fact:
     cloud_node_node: "{{ env.nodes[cloud_node_key] }}"
@@ -52,57 +45,6 @@
   set_fact:
     cloud_node_params: "{{ node_params }}"
   tags: ["no_print"]
-
-# Validate Params
-
-- name: "{{ cloud_node_item_title }} - cloud_node_params_allowed_props"
-  set_fact:
-    cloud_node_params_allowed_props:
-      - "service_params"
-      - "dns_service_params"
-      - "user_data_file"
-      - "user_data_params"
-      - "host_test"
-      - "cron"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node credential allowed props"
-  fail:
-    msg: |
-      Invalid property defined for node parameter
-      Property: {{ tmp_item.key }}
-      Allowed:
-      {{ cloud_node_params_allowed_props | to_nice_yaml }}
-      Item Keys:
-      {{ cloud_node_params | dict2items | list | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_params_allowed_props
-  loop: "{{ cloud_node_params | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_params_required_props"
-  set_fact:
-    cloud_node_params_required_props:
-      - "host_test"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - validate the node credential required props"
-  fail:
-    msg: |
-      Required property not defined for node parameter
-      Property: {{ tmp_item.key }}
-      Required:
-      {{ cloud_node_params_required_props | to_nice_yaml }}
-      Item Keys:
-      {{ cloud_node_params | dict2items | list | to_nice_yaml }}
-  when: tmp_item.key not in cloud_node_params
-  loop: "{{ cloud_node_params_required_props | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print_skipped"]
 
 ### User Data ###
 

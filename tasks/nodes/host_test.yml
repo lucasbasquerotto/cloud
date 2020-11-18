@@ -73,69 +73,75 @@
     host_test_vars: "{{ host_test_node_params.host_test }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }} - host_test_log_file"
-  set_fact:
-    host_test_log_file: "{{ host_test_vars.log_file }}"
-    host_test_setup_finished_log_regex: "{{ host_test_vars.setup_finished_log_regex }}"
-    host_test_setup_finished_log_last_line: >-
-      {{ host_test_vars.setup_finished_log_last_line | default('') }}
-    host_test_initial_connection_timeout: >-
-      {{ host_test_vars.initial_connection_timeout }}
-    host_test_setup_finished_timeout: >-
-      {{ host_test_vars.setup_finished_timeout }}
-  tags: ["no_print"]
-
-# Wait Host
-
-- name: >
-    {{ host_test_title }} - wait {{ host_test_initial_connection_timeout }}
-    seconds for target connection to become reachable/usable
-  wait_for_connection:
-    delay: 0
-    sleep: 1
-    timeout: "{{ host_test_initial_connection_timeout }}"
-
-- name: "{{ host_test_title }} - Gathering facts"
-  setup:
-
-# Wait Setup
-
-- name: >
-    {{ host_test_title }} - make sure the file "{{ host_test_log_file }}"
-    has "{{ host_test_setup_finished_log_regex }}" in it
-    (wait {{ host_test_setup_finished_timeout }} seconds)
-  wait_for:
-    delay: 0
-    sleep: 1
-    timeout: "{{ host_test_setup_finished_timeout }}"
-    path: "{{ host_test_log_file }}"
-    search_regex: "{{ host_test_setup_finished_log_regex }}"
-    msg: >
-      Timeout to find "{{ host_test_setup_finished_log_regex }}"
-      inside file "{{ host_test_log_file }}"
-
-# Verify Successful Setup
-
-- name: "{{ host_test_title }} - block - verify last line"
+- name: "{{ host_test_title }} - host_test_vars"
   block:
-    - name: "{{ host_test_title }} - retrieve last line of {{ host_test_log_file }}"
-      shell: tail -n 1 "{{ host_test_log_file }}"
-      register: host_test_last_line_var
-      changed_when: False
+    # Inner Params
 
-    - name: "{{ host_test_title }} - host_test_last_line"
+    - name: "{{ host_test_title }} - host_test_log_file"
       set_fact:
-        host_test_last_line: "{{ host_test_last_line_var.stdout }}"
+        host_test_log_file: "{{ host_test_vars.log_file }}"
+        host_test_setup_finished_log_regex: "{{ host_test_vars.setup_finished_log_regex }}"
+        host_test_setup_finished_log_last_line: >-
+          {{ host_test_vars.setup_finished_log_last_line | default('') }}
+        host_test_initial_connection_timeout: >-
+          {{ host_test_vars.initial_connection_timeout }}
+        host_test_setup_finished_timeout: >-
+          {{ host_test_vars.setup_finished_timeout }}
       tags: ["no_print"]
 
-    - debug:
-        msg: "last_line='{{ host_test_last_line }}'"
+    # Wait Host
 
-    - name: "{{ host_test_title }} - verify if the setup was finished successfully"
-      fail:
+    - name: >
+        {{ host_test_title }} - wait {{ host_test_initial_connection_timeout }}
+        seconds for target connection to become reachable/usable
+      wait_for_connection:
+        delay: 0
+        sleep: 1
+        timeout: "{{ host_test_initial_connection_timeout }}"
+
+    - name: "{{ host_test_title }} - Gathering facts"
+      setup:
+
+    # Wait Setup
+
+    - name: >
+        {{ host_test_title }} - make sure the file "{{ host_test_log_file }}"
+        has "{{ host_test_setup_finished_log_regex }}" in it
+        (wait {{ host_test_setup_finished_timeout }} seconds)
+      wait_for:
+        delay: 0
+        sleep: 1
+        timeout: "{{ host_test_setup_finished_timeout }}"
+        path: "{{ host_test_log_file }}"
+        search_regex: "{{ host_test_setup_finished_log_regex }}"
         msg: >
-          Variable '{{ host_test_last_line }}' should be equal to
-          '{{ host_test_setup_finished_log_last_line }}'
-      when: host_test_last_line != host_test_setup_finished_log_last_line
+          Timeout to find "{{ host_test_setup_finished_log_regex }}"
+          inside file "{{ host_test_log_file }}"
 
-  when: host_test_setup_finished_log_last_line != ''
+    # Verify Successful Setup
+
+    - name: "{{ host_test_title }} - block - verify last line"
+      block:
+        - name: "{{ host_test_title }} - retrieve last line of {{ host_test_log_file }}"
+          shell: tail -n 1 "{{ host_test_log_file }}"
+          register: host_test_last_line_var
+          changed_when: False
+
+        - name: "{{ host_test_title }} - host_test_last_line"
+          set_fact:
+            host_test_last_line: "{{ host_test_last_line_var.stdout }}"
+          tags: ["no_print"]
+
+        - debug:
+            msg: "last_line='{{ host_test_last_line }}'"
+
+        - name: "{{ host_test_title }} - verify if the setup was finished successfully"
+          fail:
+            msg: >
+              Variable '{{ host_test_last_line }}' should be equal to
+              '{{ host_test_setup_finished_log_last_line }}'
+          when: host_test_last_line != host_test_setup_finished_log_last_line
+
+      when: host_test_setup_finished_log_last_line != ''
+
+  when: not (host_test_vars.skip | default(false) | bool)

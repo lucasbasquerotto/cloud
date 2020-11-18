@@ -1,11 +1,4 @@
-# Validation & Node
-
-- name: "{{ cloud_prepare_node_title }} - validate (outer)"
-  include_tasks: "tasks/nodes/node_validate.yml"
-  vars:
-    node_validate_title: "{{ cloud_prepare_node_title }} - validate"
-    node_validate_info: "{{ cloud_prepare_node_info }}"
-  tags: ["no_print_skipped"]
+# Node Vars
 
 - name: "{{ cloud_prepare_node_title }} - cloud_prepare_node"
   set_fact:

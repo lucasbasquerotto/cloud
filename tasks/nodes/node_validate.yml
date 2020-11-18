@@ -1,10 +1,12 @@
+# Node Info
+
 - name: "{{ node_validate_title }} - verify if the node info is defined"
   fail:
     msg: "node_validate_info not defined"
   when: node_validate_info is not defined
   tags: ["no_print_skipped"]
 
-- name: "{{ node_validate_title }} - verify if the node exists"
+- name: "{{ node_validate_title }} - node_validate_key"
   set_fact:
     node_validate_key: >-
       {{
@@ -12,10 +14,6 @@
         default(node_validate_info.name, true) |
         default(node_validate_info, true)
       }}
-  tags: ["no_print_skipped"]
-
-- name: "{{ node_validate_title }} - node_validate_info_map"
-  set_fact:
     node_validate_info_map: >-
       {{ (node_validate_info is mapping) | ternary(node_validate_info, {}) }}
   tags: ["no_print"]
@@ -50,11 +48,78 @@
       Item:
       {{ node_validate_info_map | to_nice_yaml }}
   when: tmp_item not in node_validate_info_allowed_props
-  loop: "{{ node_validate_info_map | dict2items | map(attribute='key') | list }}"
+  loop: "{{ node_validate_info_map | dict2items | map(attribute='key') | sort | list }}"
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item }}"
   tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_info_str_props"
+  set_fact:
+    node_validate_info_str_props:
+      - "name"
+      - "key"
+      - "hostname"
+      - "shared_group_params"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node info string props"
+  fail:
+    msg: "Node info property should be a string: {{ tmp_item }}"
+  when: >-
+    (node_validate_info_map[tmp_item] is defined)
+    and not (node_validate_info_map[tmp_item] is string)
+  loop: "{{ node_validate_info_str_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_info_list_props"
+  set_fact:
+    node_validate_info_list_props:
+      - "dependencies"
+      - "shared_params"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node info list props"
+  fail:
+    msg: "Node info property should be a list: {{ tmp_item }}"
+  when: >-
+    (node_validate_info_map[tmp_item] is defined) and not (
+      (node_validate_info_map[tmp_item] is not mapping)
+      and
+      (node_validate_info_map[tmp_item] is iterable)
+      and
+      (node_validate_info_map[tmp_item] is not string)
+    )
+  loop: "{{ node_validate_info_list_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_info_dict_props"
+  set_fact:
+    node_validate_info_dict_props:
+      - "pods"
+      - "params"
+      - "group_params"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node info dictionary props"
+  fail:
+    msg: "Node info property should be a dictionary: {{ tmp_item }}"
+  when: >-
+    (node_validate_info_map[tmp_item] is defined) and
+    not (node_validate_info_map[tmp_item] is mapping)
+  loop: "{{ node_validate_info_dict_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+# Node
 
 - name: "{{ node_validate_title }} - verify if the node exists"
   fail:
@@ -91,7 +156,7 @@
       Item:
       {{ node_validate_node | to_nice_yaml }}
   when: tmp_item not in node_validate_allowed_props
-  loop: "{{ node_validate_node | dict2items | map(attribute='key') | list }}"
+  loop: "{{ node_validate_node | dict2items | map(attribute='key') | sort | list }}"
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item }}"
@@ -129,6 +194,73 @@
     loop_var: tmp_item
     label: "{{ tmp_item }}"
   tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_str_props"
+  set_fact:
+    node_validate_str_props:
+      - "service"
+      - "dns_service"
+      - "base_dir"
+      - "credential"
+      - "shared_group_params"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node string props"
+  fail:
+    msg: "Node property should be a string: {{ tmp_item }}"
+  when: >-
+    (node_validate_node[tmp_item] is defined)
+    and not (node_validate_node[tmp_item] is string)
+  loop: "{{ node_validate_str_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_list_props"
+  set_fact:
+    node_validate_list_props:
+      - "pods"
+      - "shared_params"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node list props"
+  fail:
+    msg: "Node property should be a list: {{ tmp_item }}"
+  when: >-
+    (node_validate_node[tmp_item] is defined) and not (
+      (node_validate_node[tmp_item] is not mapping)
+      and
+      (node_validate_node[tmp_item] is iterable)
+      and
+      (node_validate_node[tmp_item] is not string)
+    )
+  loop: "{{ node_validate_list_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_dict_props"
+  set_fact:
+    node_validate_dict_props:
+      - "params"
+      - "group_params"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node dictionary props"
+  fail:
+    msg: "Node property should be a dictionary: {{ tmp_item }}"
+  when: >-
+    (node_validate_node[tmp_item] is defined)
+    and not (node_validate_node[tmp_item] is mapping)
+  loop: "{{ node_validate_dict_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+# Node Credential
 
 - name: "{{ node_validate_title }} - verify if the node credential exists"
   fail:
@@ -172,7 +304,7 @@
         | to_nice_yaml
       }}
   when: tmp_item not in node_validate_credential_allowed_props
-  loop: "{{ node_validate_credential | dict2items | map(attribute='key') | list }}"
+  loop: "{{ node_validate_credential | dict2items | map(attribute='key') | sort | list }}"
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item }}"
@@ -204,6 +336,179 @@
     label: "{{ tmp_item }}"
   tags: ["no_print_skipped"]
 
+- name: "{{ node_validate_title }} - node_validate_credential_str_props"
+  set_fact:
+    node_validate_credential_str_props:
+      - "ssh_file"
+      - "host_user"
+      - "host_pass"
+      - "host_ssh_public_keys_path"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node credential string props"
+  fail:
+    msg: "Node credential property should be a string: {{ tmp_item }}"
+  when: >-
+    (node_validate_credential[tmp_item] is defined)
+    and not (node_validate_credential[tmp_item] is string)
+  loop: "{{ node_validate_credential_str_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_credential_dict_props"
+  set_fact:
+    node_validate_credential_dict_props:
+      - "user_data"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node credential dictionary props"
+  fail:
+    msg: "Node credential property should be a dictionary: {{ tmp_item }}"
+  when: >-
+    (node_validate_credential[tmp_item] is defined)
+    and not (node_validate_credential[tmp_item] is mapping)
+  loop: "{{ node_validate_credential_dict_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+# Node Params
+
+- name: "{{ node_validate_title }} - node params (outer)"
+  include_tasks: "tasks/nodes/node_params.yml"
+  vars:
+    node_params_title: "{{ node_validate_title }} - node params"
+    node_params_node: "{{ node_validate_node }}"
+    node_params_info: "{{ node_validate_info }}"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - node_validate_node_params"
+  set_fact:
+    node_validate_node_params: "{{ node_params }}"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - node_validate_params_allowed_props"
+  set_fact:
+    node_validate_params_allowed_props:
+      - "service_params"
+      - "dns_service_params"
+      - "user_data_file"
+      - "user_data_params"
+      - "host_test"
+      - "cron"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node params allowed props"
+  fail:
+    msg: |
+      Invalid property defined for node params
+      Property: {{ tmp_item }}
+      Allowed:
+      {{ node_validate_params_allowed_props | to_nice_yaml }}
+      Item Keys:
+      {{ node_validate_node_params | to_nice_yaml }}
+  when: tmp_item not in node_validate_params_allowed_props
+  loop: "{{ node_validate_node_params | dict2items | map(attribute='key') | sort | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_params_required_props"
+  set_fact:
+    node_validate_params_required_props:
+      - "host_test"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - node_validate_params_required_props (local)"
+  set_fact:
+    node_validate_params_required_props: []
+  when: node_validate_info.local | default(false) | bool
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node params required props"
+  fail:
+    msg: |
+      Required property not defined for node params
+      Property: {{ tmp_item }}
+      Required:
+      {{ node_validate_params_required_props | to_nice_yaml }}
+      Item Keys:
+      {{ node_validate_node_params | to_nice_yaml }}
+  when: tmp_item not in node_validate_node_params
+  loop: "{{ node_validate_params_required_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_params_str_props"
+  set_fact:
+    node_validate_params_str_props:
+      - "user_data_file"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node param string props"
+  fail:
+    msg: "Node parameter property should be a string: {{ tmp_item }}"
+  when: >-
+    (node_validate_node_params[tmp_item] is defined)
+    and not (node_validate_node_params[tmp_item] is string)
+  loop: "{{ node_validate_params_str_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_params_list_props"
+  set_fact:
+    node_validate_params_list_props:
+      - "cron"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node param list props"
+  fail:
+    msg: "Node parameter property should be a list: {{ tmp_item }}"
+  when: >-
+    (node_validate_node_params[tmp_item] is defined) and not (
+      (node_validate_node_params[tmp_item] is not mapping)
+      and
+      (node_validate_node_params[tmp_item] is iterable)
+      and
+      (node_validate_node_params[tmp_item] is not string)
+    )
+  loop: "{{ node_validate_params_list_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ node_validate_title }} - node_validate_params_dict_props"
+  set_fact:
+    node_validate_params_dict_props:
+      - "service_params"
+      - "dns_service_params"
+      - "user_data_params"
+      - "host_test"
+  tags: ["no_print"]
+
+- name: "{{ node_validate_title }} - validate the node param dictionary props"
+  fail:
+    msg: "Node parameter property should be a dictionary: {{ tmp_item }}"
+  when: >-
+    (node_validate_node_params[tmp_item] is defined)
+    and not (node_validate_node_params[tmp_item] is mapping)
+  loop: "{{ node_validate_params_dict_props }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
+
+# Node Services
+
 - name: "{{ node_validate_title }} - verify if the node main service exists"
   fail:
     msg: "Invalid service: {{ node_validate_node.service }}"
@@ -221,6 +526,8 @@
     and
     (node_validate_node.dns_service not in (env.services | default({})))
   tags: ["no_print_skipped"]
+
+# Other Validations
 
 - name: "{{ node_validate_title }} - verify if the base dir is not empty"
   fail:
