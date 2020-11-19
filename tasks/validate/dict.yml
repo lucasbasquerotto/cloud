@@ -1,6 +1,9 @@
 - name: "{{ validate_dict_title }} - undefined dictionary value"
-  fail:
-    msg: >-
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: >-
       Value of <{{ validate_dict_ctx }}> is not defined
   when: validate_dict_value is not defined
   tags: ["no_print_skipped"]
@@ -11,14 +14,20 @@
   tags: ["no_print"]
 
 - name: "{{ validate_dict_title }} - wrong type (dict expected)"
-  fail:
-    msg: "Type of <{{ validate_dict_ctx }}> should be a dict (no type found)"
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: "Type of <{{ validate_dict_ctx }}> should be a dict (no type found)"
   when: validate_dict_type == ''
   tags: ["no_print_skipped"]
 
 - name: "{{ validate_dict_title }} - wrong type (dict expected)"
-  fail:
-    msg: >-
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: >-
       Type of <{{ validate_dict_ctx }}> should be a dict
       (<{{ validate_dict_type }}> found)
   when: not (validate_dict_type in ['dict', 'string_or_dict'])
@@ -28,13 +37,16 @@
   set_fact:
     validate_dict_allowed_props:
       - "type"
-      - "any_props"
       - "props"
+      - "non_empty"
   tags: ["no_print"]
 
 - name: "{{ validate_dict_title }} - validate the dict allowed schema props"
-  fail:
-    msg: |
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: |
       Invalid property defined for the schema (type dict).
       Property: {{ tmp_item }}
       Allowed: {{
@@ -57,13 +69,15 @@
   set_fact:
     validate_dict_required_props:
       - "type"
-      - "any_props"
       - "props"
   tags: ["no_print"]
 
 - name: "{{ validate_dict_title }} - validate the dict required props"
-  fail:
-    msg: "Required propert at <validate_dict_ctx> not defined: {{ tmp_item }}"
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: "Required propert at <validate_dict_ctx> not defined: {{ tmp_item }}"
   vars:
     tmp_schema_info: validate_dict_schema_info.props[tmp_item]
   when: >-
@@ -82,17 +96,6 @@
     label: "{{ tmp_item }}"
   tags: ["no_print_skipped"]
 
-- name: "{{ validate_dict_title }} - validate the dict schema props"
-  fail:
-    msg: >-
-      Schema has any_props (= true) and any_props properties
-      (choose only one)
-  when: >-
-    (validate_dict_schema_info.any_props | default(false) | bool)
-    and
-    (validate_dict_schema_info.props is defined)
-  tags: ["no_print_skipped"]
-
 - name: "{{ validate_dict_title }} - validate the dictionary"
   include_tasks: "tasks/validate/elem.yml"
   vars:
@@ -103,6 +106,7 @@
     validate_elem_type: "{{ validate_dict_type }}"
     validate_elem_schema: ""
     validate_elem_value: "{{ validate_dict_value }}"
+    validate_elem_non_empty: "{{ validate_dict_schema_info.non_empty | default(false) }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ validate_dict_title }} - validate_dict_prop_value_dict"
@@ -113,10 +117,7 @@
 - name: "{{ validate_dict_title }} - validate_dict_prop_value_dict"
   set_fact:
     validate_dict_prop_value_dict: "{{ validate_dict_prop_value }}"
-  when: >-
-    (validate_dict_prop_value is mapping)
-    and
-    (not (validate_dict_schema_info.any_props | default(false) | bool))
+  when: validate_dict_prop_value is mapping
   tags: ["no_print"]
 
 - name: "{{ validate_dict_title }} - validate the props"

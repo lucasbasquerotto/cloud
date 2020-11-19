@@ -1,6 +1,9 @@
 - name: "{{ validate_list_title }} - wrong type (list expected)"
-  fail:
-    msg: "Value <{{ validate_list_ctx }}> should be a list"
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: "Value <{{ validate_list_ctx }}> should be a list"
   when: validate_list_type != 'list'
   tags: ["no_print_skipped"]
 
@@ -10,11 +13,15 @@
       - "type"
       - "elem_type"
       - "elem_schema"
+      - "non_empty"
   tags: ["no_print"]
 
 - name: "{{ validate_list_title }} - validate the list allowed schema props"
-  fail:
-    msg: |
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: |
       Invalid property defined for the schema (type list).
       Context: {{ validate_list_ctx }}
       Property: {{ tmp_item }}
@@ -27,8 +34,11 @@
   tags: ["no_print_skipped"]
 
 - name: "{{ validate_list_title }} - validate the allowed schema props"
-  fail:
-    msg: >-
+  set_fact:
+    validate_schema_recursive_error_msgs: >-
+      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+  vars:
+    tmp_msg: >-
       Schema for <{{ validate_list_ctx }}> has elem_type and elem_schema
       properties (choose only one)
   when: >-
@@ -45,6 +55,7 @@
     validate_elem_type: "{{ validate_list_type }}"
     validate_elem_schema: ""
     validate_elem_value: "{{ validate_list_value }}"
+    validate_elem_non_empty: "{{ validate_list_schema_info.non_empty | default(false) }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ validate_list_title }} - validate the list items"

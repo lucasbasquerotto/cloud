@@ -26,11 +26,16 @@
         validate_prop_allowed_props:
           - "type"
           - "schema"
+          - "non_empty"
+          - "values"
       tags: ["no_print"]
 
     - name: "{{ validate_prop_title }} - validate the allowed schema props"
-      fail:
-        msg: |
+      set_fact:
+        validate_schema_recursive_error_msgs: >-
+          {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: |
           Invalid property defined for the schema (type <{{ validate_prop_type }}>).
           Property: {{ tmp_item }}
           Allowed: {{ validate_prop_allowed_props | to_json }}
@@ -50,6 +55,8 @@
     validate_elem_type: "{{ validate_prop_type }}"
     validate_elem_schema: "{{ validate_prop_schema_info_new.schema | default('') }}"
     validate_elem_value: "{{ validate_prop_value }}"
+    validate_elem_non_empty: "{{ validate_prop_schema_info_new.non_empty | default(false) }}"
+    validate_elem_allowed_values: "{{ validate_prop_schema_info_new.values | default([]) }}"
   when: validate_prop_type != 'list'
   tags: ["no_print_skipped"]
 
