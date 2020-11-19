@@ -99,12 +99,12 @@
 
 - name: "{{ validate_elem_title }} - add schema to the next iteration"
   set_fact:
-    validate_schema_recursive_next_list: >-
-      {{ validate_schema_recursive_next_list + [tmp_info_item] }}
+    validate_schema_list: >-
+      {{ validate_schema_list + [tmp_info_item] }}
   vars:
     tmp_info_item:
       schema: "{{ validate_elem_schema }}"
       value: "{{ validate_elem_value }}"
       ctx: "{{ validate_elem_ctx }}"
   when: validate_elem_schema != ''
-  tags: ["no_print_skipped"]
+  tags: ["no_print"]
