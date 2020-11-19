@@ -1,0 +1,48 @@
+root: "schema_wrapper"
+schemas:
+  schema_wrapper:
+    type: "dict"
+    props:
+      root:
+        required: true
+        type: "string"
+      schemas:
+        required: true
+        type: "map"
+        elem_schema: "schema"
+  schema:
+    type: "dict"
+    props:
+      type:
+        required: true
+        type: "string"
+      elem_type:
+        type: "string"
+      elem_schema:
+        type: "string"
+      non_empty:
+        type: "bool"
+      props:
+        type: "map"
+        elem_schema: "prop"
+      values:
+        type: "list"
+        elem_type: "string"
+  prop:
+    type: "dict"
+    prop:
+      type:
+        type: "string"
+      schema:
+        type: "string"
+      elem_type:
+        type: "string"
+      elem_schema:
+        type: "string"
+      required:
+        type: "bool"
+      non_empty:
+        type: "bool"
+      values:
+        type: "list"
+        elem_type: "string"
