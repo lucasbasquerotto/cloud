@@ -32,7 +32,7 @@
 
     - name: "{{ validate_recursive_title }} - validate_recursive_type"
       set_fact:
-        validate_recursive_is_list: "{{ validate_recursive_type == 'list' }}"
+        validate_recursive_is_group: "{{ validate_recursive_type in ['map', 'list'] }}"
         validate_recursive_is_dict: >-
           {{
             (validate_recursive_type == 'dict')
@@ -40,13 +40,7 @@
             (validate_recursive_type == 'string_or_dict')
           }}
         validate_recursive_is_primitive: >-
-          {{
-            (validate_recursive_type != 'list')
-            and
-            (validate_recursive_type != 'dict')
-            and
-            (validate_recursive_type != 'string_or_dict')
-          }}
+          {{ validate_recursive_type not in ['map', 'list', 'dict', 'string_or_dict'] }}
       tags: ["no_print"]
 
     # Validate Props
@@ -60,39 +54,16 @@
       when: validate_recursive_type == ''
       tags: ["no_print_skipped"]
 
-    - name: "{{ validate_recursive_title }} - validate the schema type"
-      set_fact:
-        validate_schema_recursive_error_msgs: >-
-          {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
+    - name: "{{ validate_recursive_title }} - validate group (outer)"
+      include_tasks: "tasks/validate/group.yml"
       vars:
-        tmp_valid:
-          - "unknown"
-          - "primitive"
-          - "string"
-          - "bool"
-          - "int"
-          - "float"
-          - "dict"
-          - "map"
-          - "list"
-        tmp_msg: |
-          Invalid schema type: {{ validate_recursive_type }}
-          Allowed: {{ tmp_valid | to_json }}
-          Schema: {{ validate_recursive_schema_name }}
-          Context: {{ validate_recursive_ctx }}
-      when: validate_recursive_type not in tmp_valid
-      tags: ["no_print_skipped"]
-
-    - name: "{{ validate_recursive_title }} - validate list (outer)"
-      include_tasks: "tasks/validate/list.yml"
-      vars:
-        validate_list_title: >-
-          {{ validate_recursive_title }} - current element - list
+        validate_group_title: >-
+          {{ validate_recursive_title }} - current element - group
           - schema [{{ validate_recursive_schema_name }}]
-        validate_list_ctx: "{{ validate_recursive_ctx }}"
-        validate_list_value: "{{ validate_recursive_value }}"
-        validate_list_schema_info: "{{ validate_recursive_schema_info }}"
-      when: validate_recursive_is_list | bool
+        validate_group_ctx: "{{ validate_recursive_ctx }}"
+        validate_group_value: "{{ validate_recursive_value }}"
+        validate_group_schema_info: "{{ validate_recursive_schema_info }}"
+      when: validate_recursive_is_group | bool
       tags: ["no_print_skipped"]
 
     - name: "{{ validate_recursive_title }} - validate dict (outer)"
@@ -139,7 +110,7 @@
       include_tasks: "tasks/validate/elem.yml"
       vars:
         validate_elem_title: >-
-          {{ validate_recursive_title }} - current element
+          {{ validate_recursive_title }} - current element - primitive
           - schema [{{ validate_recursive_schema_name }}]
         validate_elem_ctx: "{{ validate_recursive_ctx }}"
         validate_elem_type: "{{ validate_recursive_type }}"

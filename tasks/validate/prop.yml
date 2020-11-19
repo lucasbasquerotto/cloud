@@ -19,7 +19,7 @@
     label: "{{ tmp_item.key }}"
   tags: ["no_print"]
 
-- name: "{{ validate_prop_title }} - validate non-list prop (block)"
+- name: "{{ validate_prop_title }} - validate non-group prop (block)"
   block:
     - name: "{{ validate_prop_title }} - validate_prop_allowed_props"
       set_fact:
@@ -45,9 +45,9 @@
         loop_var: tmp_item
         label: "{{ tmp_item }}"
       tags: ["no_print_skipped"]
-  when: validate_prop_type != 'list'
+  when: validate_prop_type not in ['map', 'list']
 
-- name: "{{ validate_prop_title }} - validate the non-list property"
+- name: "{{ validate_prop_title }} - validate the non-group property"
   include_tasks: "tasks/validate/elem.yml"
   vars:
     validate_elem_title: "{{ validate_prop_title }}"
@@ -57,15 +57,15 @@
     validate_elem_value: "{{ validate_prop_value }}"
     validate_elem_non_empty: "{{ validate_prop_schema_info_new.non_empty | default(false) }}"
     validate_elem_allowed_values: "{{ validate_prop_schema_info_new.values | default([]) }}"
-  when: validate_prop_type != 'list'
+  when: validate_prop_type not in ['map', 'list']
   tags: ["no_print_skipped"]
 
-- name: "{{ validate_prop_title }} - validate list property (outer)"
-  include_tasks: "tasks/validate/list.yml"
+- name: "{{ validate_prop_title }} - validate group property (outer)"
+  include_tasks: "tasks/validate/group.yml"
   vars:
-    validate_list_title: "{{ validate_prop_title }} - list"
-    validate_list_ctx: "{{ validate_prop_ctx }}"
-    validate_list_value: "{{ validate_prop_value }}"
-    validate_list_schema_info: "{{ validate_prop_schema_info_new }}"
-  when: validate_prop_type == 'list'
+    validate_group_title: "{{ validate_prop_title }} - group"
+    validate_group_ctx: "{{ validate_prop_ctx }}"
+    validate_group_value: "{{ validate_prop_value }}"
+    validate_group_schema_info: "{{ validate_prop_schema_info_new }}"
+  when: validate_prop_type in ['map', 'list']
   tags: ["no_print_skipped"]

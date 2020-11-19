@@ -56,11 +56,20 @@
       {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
   vars:
     tmp_msg: |
-      Value <{{ validate_elem_ctx }}> has a schema but hasn't a valid type
+      Value <{{ validate_elem_ctx }}> hasn't a valid type
       Type: {{ validate_elem_type }}
       Valid types: {{ tmp_valid | to_json }}
   vars:
-    tmp_valid: ["unknown", "list", "dict", "string_or_dict"]
+    tmp_valid:
+      - "unknown"
+      - "primitive"
+      - "string"
+      - "bool"
+      - "int"
+      - "float"
+      - "dict"
+      - "map"
+      - "list"
   when: >-
     (validate_elem_type != '')
     and
