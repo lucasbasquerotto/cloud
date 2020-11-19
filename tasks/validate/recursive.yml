@@ -12,10 +12,10 @@
 
 - name: "{{ validate_recursive_title }} - validate_recursive_schema"
   set_fact:
-    validate_recursive_item: "{{ validate_schema_info.item }}"
+    validate_recursive_value: "{{ validate_schema_info.value }}"
     validate_recursive_ctx: "{{ validate_schema_info.ctx }}"
-    validate_recursive_schema: >-
-      {{ validate_schema_info.schemas[validate_schema_info.root] }}
+    validate_recursive_schema_name: "{{ validate_schema_info.schema }}"
+    validate_recursive_schema: "{{ validate_schema_dict[validate_schema_info.schema] }}"
   tags: ["no_print"]
 
 - name: "{{ validate_recursive_title }} - validate_recursive_type"
@@ -25,173 +25,126 @@
 
 # Validate Props
 
-- name: "{{ validate_recursive_title }} - validate the current prop (string)"
+- name: "{{ validate_recursive_title }} - validate the allowed schema props"
   fail:
-    msg: "Current property is not a string ({{ validate_recursive_ctx }})"
-  when: >-
-    (validate_recursive_type == 'string')
-    and
-    (validate_recursive_item is not string)
+    msg: "[{{ validate_recursive_schema_name }}] Schema type not defined"
+  when: validate_recursive_type == ''
   tags: ["no_print_skipped"]
 
-- name: "{{ validate_recursive_title }} - validate the current prop (primitive)"
-  fail:
-    msg: "Current property is not a primitive ({{ validate_recursive_ctx }})"
-  when: >-
-    (validate_recursive_type == 'primitive')
-    and
-    (
-      (validate_recursive_item is mapping)
-      or
-      (
-        (validate_recursive_item is iterable)
-        and
-        (validate_recursive_item is not string)
-      )
-    )
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_recursive_title }} - validate the current prop (list)"
-  fail:
-    msg: "Current property is not a list ({{ validate_recursive_ctx }})"
-  when: >-
-    (validate_recursive_type == 'list')
-    and
-    (not (
-      (validate_recursive_item is not mapping)
-      and
-      (validate_recursive_item is iterable)
-      and
-      (validate_recursive_item is not string)
-    ))
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_recursive_title }} - validate the current prop (dictionary)"
-  fail:
-    msg: "Current property is not a dictionary ({{ validate_recursive_ctx }})"
-  when: >-
-    (validate_recursive_type == 'dict')
-    and
-    (validate_recursive_item is not mapping)
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_recursive_title }} - validate the current prop (string or dictionary)"
-  fail:
-    msg: "Current property is not a string or dictionary ({{ validate_recursive_ctx }})"
-  when: >-
-    (validate_recursive_type == 'string_or_dict')
-    and
-    (validate_recursive_item is not string)
-    and
-    (validate_recursive_item is not mapping)
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_recursive_title }} - validate dict props (outer)"
-  include_tasks: "tasks/validate/inner.yml"
-  vars:
-    validate_inner_title: "{{ validate_recursive_item }} - validate props"
-    validate_inner_ctx: "{{ validate_recursive_ctx }}"
-    validate_inner_dict: "{{ validate_recursive_item }}"
-    validate_inner_type: "{{ validate_recursive_type }}"
-    validate_inner_schema: "{{ validate_recursive_schema.props | default({}) }}"
-  when: >-
-    (validate_inner_type in ['dict', 'string_or_dict'])
-    and
-    (
-      (validate_recursive_item is mapping)
-      or
-      (validate_inner_type != 'string_or_dict')
-    )
+- name: "{{ validate_recursive_title }} - validate_recursive_allowed_props"
+  set_fact:
+    validate_recursive_allowed_props:
+      - "type"
   tags: ["no_print"]
 
-- name: "{{ validate_recursive_title }} - validate the list items with elem_type (valid type)"
+- name: "{{ validate_recursive_title }} - validate_recursive_allowed_props"
+  set_fact:
+    validate_recursive_allowed_props:
+      - "type"
+      - "elem_type"
+      - "elem_schema"
+  when: validate_recursive_type == 'list'
+  tags: ["no_print"]
+
+- name: "{{ validate_recursive_title }} - validate_recursive_allowed_props"
+  set_fact:
+    validate_recursive_allowed_props:
+      - "type"
+      - "any_props"
+      - "props"
+  when: validate_recursive_type in ['dict', 'string_or_dict']
+  tags: ["no_print"]
+
+- name: "{{ validate_recursive_title }} - validate the allowed schema props"
   fail:
     msg: |
-      Current list has an invalid element type
-      Element type: {{ validate_inner_prop.elem_type | default('') }}
-      Valid types: {{ tmp_valid | to_json }}
-  vars:
-    tmp_valid: ['string', 'primitive'])
-    validate_inner_prop: "{{ validate_inner_schema[tmp_item] }}"
-  when: >-
-    (validate_inner_dict[tmp_item] is defined)
-    and
-    ((validate_inner_prop.type | default('')) == 'list')
-    and
-    ((validate_inner_prop.elem_type | default('')) != '')
-    and
-    ((validate_inner_prop.elem_type | default('')) not in tmp_valid)
-  loop: "{{ validate_inner_allowed_props }}"
+      Invalid property defined for the schema (type {{ validate_recursive_type }}).
+      Schema: {{ validate_recursive_schema_name }}
+      Property: {{ tmp_item }}
+      Allowed: {{ validate_recursive_allowed_props | to_json }}
+  when: tmp_item not in validate_recursive_allowed_props
+  loop: "{{ validate_recursive_schema | dict2items | map(attribute='key') | sort | list }}"
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item }}"
+  tags: ["no_print_skipped"]
 
-- name: "{{ validate_inner_title }} - validate the props with schemas (valid type)"
+- name: "{{ validate_recursive_title }} - validate the allowed schema props"
   fail:
     msg: >-
-      List property has a schema and a primitive element type: {{ tmp_item }}
-      (choose one)
-  vars:
-    validate_inner_prop: "{{ validate_inner_schema[tmp_item] }}"
+      [{{ validate_recursive_schema_name }}] Schema has elem_type
+      and elem_schema properties (choose only one)"
   when: >-
-    (validate_inner_dict[tmp_item] is defined)
+    (validate_recursive_schema.elem_type is defined)
     and
-    ((validate_inner_prop.type | default('')) == 'list')
-    and
-    ((validate_inner_prop.elem_type | default('')) != '')
-    and
-    ((validate_inner_prop.elem_schema | default('')) != '')
-  loop: "{{ validate_inner_allowed_props }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item }}"
+    (validate_recursive_schema.elem_schema is defined)
+  tags: ["no_print_skipped"]
 
-# Prepare next schemas to validate
-
-- name: "{{ validate_recursive_title }} - validate_schema"
-  set_fact:
-    validate_schema_recursive_next_list: []
-  tags: ["no_print"]
-
-- name: "{{ validate_recursive_title }} - add the list items schemas"
-  set_fact:
-    validate_schema_recursive_next_list: >-
-      {{ validate_schema_recursive_next_list + [tmp_info_item] }}
-  vars:
-    tmp_info_item:
-      root: "{{ validate_recursive_schema.schema }}"
-      schemas: "{{ validate_schema_info.schemas }}"
-      item: "{{ tmp_item }}"
-      ctx: "{{ validate_schema_info.ctx }}[{{ loop_index }}]"
-  when: >-
-    (validate_recursive_type == 'list')
-    and
-    ((validate_recursive_schema.schema | default('')) != '')
-  loop: "{{ validate_recursive_item }}"
-  loop_control:
-    loop_index: tmp_idx
-    loop_var: tmp_item
-    label: "{{ tmp_item }}"
-
-- name: "{{ validate_recursive_title }} - validate the dictionary props"
+- name: "{{ validate_recursive_title }} - validate the allowed schema props"
   fail:
-    msg: "Property should be a dictionary: {{ tmp_item }}"
-  vars:
-    validate_recursive_prop: "{{ validate_recursive_schema[tmp_item] }}"
+    msg: >-
+      [{{ validate_recursive_schema_name }}] Schema has any_props (= true)
+      and any_props properties (choose only one)"
   when: >-
-    (validate_recursive_item[tmp_item] is defined)
+    (validate_recursive_schema.any_props | default(false) | bool)
     and
-    ((validate_recursive_prop.type | default('')) == 'dict')
-    and
-    ((validate_recursive_prop.schema | default('')) != '')
-  loop: "{{ validate_recursive_allowed_props }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item }}"
+    (validate_recursive_schema.props is defined)
+  tags: ["no_print_skipped"]
 
-- name: "{{ validate_title }} - validate_schema"
+- name: "{{ validate_recursive_title }} - validate the current element"
+  include_tasks: "tasks/validate/elem.yml"
+  vars:
+    validate_elem_title: >-
+      {{ validate_recursive_title }} - current element
+      - schema [{{ validate_recursive_schema_name }}]
+    validate_elem_ctx: "{{ validate_recursive_ctx }}"
+    validate_elem_type: "{{ validate_recursive_type }}"
+    validate_elem_schema: ""
+    validate_elem_value: "{{ validate_recursive_value }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ validate_recursive_title }} - validate_recursive_allowed_props"
   set_fact:
-    validate_schema: >-
-      {{ validate_schema_wrapper.schemas[validate_schema_wrapper.root] }}
-    validate_schemas: "{{ validate_schema_wrapper.schemas }}"
+    validate_recursive_value_list: []
   tags: ["no_print"]
+
+- name: "{{ validate_recursive_title }} - validate_recursive_allowed_props"
+  set_fact:
+    validate_recursive_value_list: "{{ validate_recursive_value }}"
+  when: validate_recursive_type == 'list'
+  tags: ["no_print"]
+
+- name: "{{ validate_recursive_title }} - validate the list items"
+  include_tasks: "tasks/validate/elem.yml"
+  vars:
+    validate_elem_title: >-
+      {{ validate_recursive_title }} - list item
+      - list schema [{{ validate_recursive_schema_name }}]
+    validate_elem_ctx: "{{ validate_recursive_ctx }}[{{ validate_recursive_idx }}]"
+    validate_elem_type: "{{ validate_recursive_item.elem_type | default('') }}"
+    validate_elem_schema: "{{ validate_recursive_item.elem_schema | default('') }}"
+    validate_elem_value: "{{ validate_recursive_item }}"
+  loop: "{{ validate_recursive_value_list }}"
+  loop_control:
+    loop_index: validate_recursive_idx
+    loop_var: validate_recursive_item
+    label: "{{ validate_recursive_idx }}"
+
+# TODO
+
+- name: "{{ validate_recursive_title }} - validate the list items"
+  include_tasks: "tasks/validate/dict.yml"
+  vars:
+    validate_dict_title: >-
+      {{ validate_recursive_title }}
+      - dict schema [{{ validate_recursive_schema_name }}]
+    validate_dict_ctx: "{{ validate_recursive_ctx }}"
+    validate_dict_props: "{{ validate_recursive_item.props | default({}) }}"
+    validate_elem_schema: "{{ validate_recursive_item.elem_schema | default('') }}"
+    validate_elem_value: "{{ validate_recursive_item }}"
+  when: (validate_recursive_value is mapping) and (not (validate_recursive_item.any_props | default(false) | bool))
+  loop: "{{ validate_recursive_value.props | default({}) }}"
+  loop_control:
+    loop_index: validate_recursive_idx
+    loop_var: validate_recursive_item
+    label: "{{ validate_recursive_idx }}"

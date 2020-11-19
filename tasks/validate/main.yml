@@ -3,15 +3,15 @@
     file: "{{ validate_schema_file }}"
     name: validate_schema_wrapper
 
-- name: "{{ validate_title }} - validate_schema_list"
+- name: "{{ validate_title }} - validate_schema_dict"
   set_fact:
+    validate_schema_dict: "{{ validate_schema_wrapper.schemas }}"
     validate_schema_list: "{{ [validate_schema_info] }}"
     validate_schema_idx: 0
   vars:
     validate_schema_info:
-      root: "{{ validate_schema_wrapper.root }}"
-      schemas: "{{ validate_schema_wrapper.schemas }}"
-      item: "{{ validate_dict }}"
+      schema: "{{ validate_schema_wrapper.root }}"
+      value: "{{ validate_value }}"
       ctx: ""
   tags: ["no_print"]
 

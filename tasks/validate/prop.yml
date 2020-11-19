@@ -4,8 +4,7 @@
       {{ validate_schema_recursive_next_list + [tmp_info_item] }}
   vars:
     tmp_info_item:
-      root: "{{ validate_recursive_schema.schema }}"
-      schemas: "{{ validate_schema_info.schemas }}"
+      schema: "{{ validate_recursive_schema.schema }}"
       item: "{{ tmp_item }}"
       ctx: "{{ validate_schema_info.ctx }}[{{ loop_index }}]"
   when: >-
