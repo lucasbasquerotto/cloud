@@ -1,0 +1,161 @@
+- name: "{{ validate_group_title }} - validate_group_error_msgs"
+  set_fact:
+    validate_group_error_msgs: []
+  tags: ["no_print"]
+
+- name: "{{ validate_group_title }} - validate_group_error_msgs - block"
+  block:
+    - name: "{{ validate_group_title }} - undefined group value"
+      set_fact:
+        validate_group_error_msgs: >-
+          {{ validate_group_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: >-
+          Value of <{{ validate_group_ctx }}> is not defined
+      when: validate_group_value is not defined
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate_group_type"
+      set_fact:
+        validate_group_type: "{{ validate_group_schema_info.type | default('') }}"
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - wrong type (group type expected)"
+      set_fact:
+        validate_group_error_msgs: >-
+          {{ validate_group_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_valid: ["map", "list"]
+        tmp_msg: |
+          Value <{{ validate_group_ctx }}> type invalid
+          Type: {{ validate_group_type }}
+          Expected: {{ tmp_valid | to_json }}"
+      when: validate_group_type not in tmp_valid
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate_group_allowed_props"
+      set_fact:
+        validate_group_allowed_props:
+          - "type"
+          - "elem_type"
+          - "elem_schema"
+          - "non_empty"
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - validate the group allowed schema props"
+      set_fact:
+        validate_group_error_msgs: >-
+          {{ validate_group_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: |
+          Invalid property defined for the schema
+          Type: {{ validate_group_type }}
+          Context: {{ validate_group_ctx }}
+          Property: {{ tmp_item }}
+          Allowed: {{ validate_group_allowed_props | to_json }}
+      when: tmp_item not in validate_group_allowed_props
+      loop: "{{ validate_group_schema_info | dict2items | map(attribute='key') | sort | list }}"
+      loop_control:
+        loop_var: tmp_item
+        label: "{{ tmp_item }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate the allowed schema props"
+      set_fact:
+        validate_group_error_msgs: >-
+          {{ validate_group_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: >-
+          Schema for <{{ validate_group_ctx }}> has elem_type and elem_schema
+          properties (choose only one)
+      when: >-
+        (validate_group_schema_info.elem_type is defined)
+        and
+        (validate_group_schema_info.elem_schema is defined)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate_elem_error_msgs - initial"
+      set_fact:
+        validate_elem_error_msgs: []
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - validate the group"
+      include_tasks: "tasks/validate/elem.yml"
+      vars:
+        validate_elem_title: "{{ validate_group_title }}"
+        validate_elem_ctx: "{{ validate_group_ctx }}"
+        validate_elem_type: "{{ validate_group_type }}"
+        validate_elem_schema: ""
+        validate_elem_value: "{{ validate_group_value }}"
+        validate_elem_non_empty: "{{ validate_group_schema_info.non_empty | default(false) }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate_group_error_msgs - elem"
+      set_fact:
+        validate_group_error_msgs: >-
+          {{ validate_group_error_msgs + validate_elem_error_msgs }}
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - initial items"
+      set_fact:
+        validate_group_list: []
+        validate_group_map: {}
+        validate_group_map_keys: []
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - validate_group_list"
+      set_fact:
+        validate_group_list: "{{ validate_group_value }}"
+      when: validate_group_value is not mapping
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - validate_group_map"
+      set_fact:
+        validate_group_map: "{{ validate_group_value }}"
+        validate_group_map_keys: >-
+          {{ validate_group_value | dict2items | map(attribute='key') | sort | list }}
+      when: validate_group_value is mapping
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - validate_elem_error_msgs_cumulative"
+      set_fact:
+        validate_elem_error_msgs_cumulative: []
+      tags: ["no_print"]
+
+    - name: "{{ validate_group_title }} - validate the list items"
+      include_tasks: "tasks/validate/elem.yml"
+      vars:
+        validate_elem_title: "{{ validate_group_title }} - list item"
+        validate_elem_ctx: "{{ validate_group_ctx }}[{{ validate_group_idx }}]"
+        validate_elem_type: "{{ validate_group_schema_info.elem_type | default('') }}"
+        validate_elem_schema: "{{ validate_group_schema_info.elem_schema | default('') }}"
+        validate_elem_value: "{{ validate_group_item }}"
+        validate_elem_non_empty: "{{ validate_group_schema_info.non_empty | default(false) }}"
+      loop: "{{ validate_group_list }}"
+      loop_control:
+        index_var: validate_group_idx
+        loop_var: validate_group_item
+        label: "{{ validate_group_idx }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate the map items"
+      include_tasks: "tasks/validate/elem.yml"
+      vars:
+        validate_elem_title: "{{ validate_group_title }} - map item"
+        validate_elem_ctx: "{{ validate_group_ctx }}[{{ validate_group_item }}]"
+        validate_elem_type: "{{ validate_group_schema_info.elem_type | default('') }}"
+        validate_elem_schema: "{{ validate_group_schema_info.elem_schema | default('') }}"
+        validate_elem_value: "{{ validate_group_map[validate_group_item] }}"
+        validate_elem_non_empty: "{{ validate_group_schema_info.non_empty | default(false) }}"
+      loop: "{{ validate_group_map_keys }}"
+      loop_control:
+        loop_var: validate_group_item
+        label: "{{ validate_group_item }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_group_title }} - validate_group_error_msgs - elems"
+      set_fact:
+        validate_group_error_msgs: >-
+          {{ validate_group_error_msgs + validate_elem_error_msgs_cumulative }}
+      tags: ["no_print"]
+  when: (validate_group_error_msgs | length) == 0

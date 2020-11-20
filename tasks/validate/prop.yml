@@ -1,71 +1,113 @@
-- name: "{{ validate_prop_title }} - validate_prop_type"
+- name: "{{ validate_prop_title }} - validate_prop_error_msgs"
   set_fact:
-    validate_prop_type: "{{ validate_prop_schema_info.type | default('') }}"
+    validate_prop_error_msgs: []
   tags: ["no_print"]
 
-- name: "{{ validate_prop_title }} - define the schema without unneeded props - initial"
-  set_fact:
-    validate_prop_schema_info_new: {}
-  tags: ["no_print"]
-
-- name: "{{ validate_prop_title }} - define the schema without unneeded props - fill"
-  set_fact:
-    validate_prop_schema_info_new: >-
-      {{ validate_prop_schema_info_new | combine({ tmp_item.key: tmp_item.value }) }}
-  when: tmp_item.key not in ["required"]
-  loop: "{{ validate_prop_schema_info | dict2items | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.key }}"
-  tags: ["no_print"]
-
-- name: "{{ validate_prop_title }} - validate non-group prop (block)"
+- name: "{{ validate_prop_title }} - validate_prop_error_msgs - block"
   block:
-    - name: "{{ validate_prop_title }} - validate_prop_allowed_props"
+    - name: "{{ validate_prop_title }} - validate_prop_type"
       set_fact:
-        validate_prop_allowed_props:
-          - "type"
-          - "schema"
-          - "non_empty"
-          - "values"
+        validate_prop_type: "{{ validate_prop_schema_info.type | default('') }}"
       tags: ["no_print"]
 
-    - name: "{{ validate_prop_title }} - validate the allowed schema props"
+    - name: "{{ validate_prop_title }} - define the schema without unneeded props - initial"
       set_fact:
-        validate_schema_recursive_error_msgs: >-
-          {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-      vars:
-        tmp_msg: |
-          Invalid property defined for the schema (type <{{ validate_prop_type }}>).
-          Property: {{ tmp_item }}
-          Allowed: {{ validate_prop_allowed_props | to_json }}
-      when: tmp_item not in validate_prop_allowed_props
-      loop: "{{ validate_prop_schema_info_new | dict2items | map(attribute='key') | sort | list }}"
+        validate_prop_schema_info_new: {}
+      tags: ["no_print"]
+
+    - name: "{{ validate_prop_title }} - define the schema without unneeded props - fill"
+      set_fact:
+        validate_prop_schema_info_new: >-
+          {{ validate_prop_schema_info_new | combine({ tmp_item.key: tmp_item.value }) }}
+      when: tmp_item.key not in ["required"]
+      loop: "{{ validate_prop_schema_info | dict2items | list }}"
       loop_control:
         loop_var: tmp_item
-        label: "{{ tmp_item }}"
+        label: "{{ tmp_item.key }}"
+      tags: ["no_print"]
+
+    - name: "{{ validate_prop_title }} - validate non-group prop (block)"
+      block:
+        - name: "{{ validate_prop_title }} - validate_prop_allowed_props"
+          set_fact:
+            validate_prop_allowed_props:
+              - "type"
+              - "schema"
+              - "non_empty"
+              - "allowed_values"
+          tags: ["no_print"]
+
+        - name: "{{ validate_prop_title }} - validate the allowed schema props"
+          set_fact:
+            validate_prop_error_msgs: >-
+              {{ validate_prop_error_msgs + [tmp_msg] }}
+          vars:
+            tmp_msg: |
+              Invalid property defined for the schema (dict property).
+              Type: {{ validate_prop_type }}
+              Context: {{ validate_prop_ctx }}
+              Property: {{ tmp_item }}
+              Allowed: {{ validate_prop_allowed_props | to_json }}
+          when: tmp_item not in validate_prop_allowed_props
+          loop: "{{ validate_prop_schema_info_new | dict2items | map(attribute='key') | sort | list }}"
+          loop_control:
+            loop_var: tmp_item
+            label: "{{ tmp_item }}"
+          tags: ["no_print_skipped"]
+      when: validate_prop_type not in ['map', 'list']
+
+    - name: "{{ validate_prop_title }} - validate_elem_error_msgs - initial"
+      set_fact:
+        validate_elem_error_msgs: []
+      tags: ["no_print"]
+
+    - name: "{{ validate_prop_title }} - validate the non-group property"
+      include_tasks: "tasks/validate/elem.yml"
+      vars:
+        validate_elem_title: "{{ validate_prop_title }}"
+        validate_elem_ctx: "{{ validate_prop_ctx }}"
+        validate_elem_type: "{{ validate_prop_type }}"
+        validate_elem_schema: "{{ validate_prop_schema_info_new.schema | default('') }}"
+        validate_elem_value: "{{ validate_prop_value }}"
+        validate_elem_non_empty: "{{ validate_prop_schema_info_new.non_empty | default(false) }}"
+        validate_elem_allowed_values: "{{ validate_prop_schema_info_new.allowed_values | default([]) }}"
+      when: validate_prop_type not in ['map', 'list']
       tags: ["no_print_skipped"]
-  when: validate_prop_type not in ['map', 'list']
 
-- name: "{{ validate_prop_title }} - validate the non-group property"
-  include_tasks: "tasks/validate/elem.yml"
-  vars:
-    validate_elem_title: "{{ validate_prop_title }}"
-    validate_elem_ctx: "{{ validate_prop_ctx }}"
-    validate_elem_type: "{{ validate_prop_type }}"
-    validate_elem_schema: "{{ validate_prop_schema_info_new.schema | default('') }}"
-    validate_elem_value: "{{ validate_prop_value }}"
-    validate_elem_non_empty: "{{ validate_prop_schema_info_new.non_empty | default(false) }}"
-    validate_elem_allowed_values: "{{ validate_prop_schema_info_new.values | default([]) }}"
-  when: validate_prop_type not in ['map', 'list']
-  tags: ["no_print_skipped"]
+    - name: "{{ validate_prop_title }} - validate_prop_error_msgs - elem"
+      set_fact:
+        validate_prop_error_msgs: >-
+          {{ validate_prop_error_msgs + validate_elem_error_msgs }}
+      tags: ["no_print"]
 
-- name: "{{ validate_prop_title }} - validate group property (outer)"
-  include_tasks: "tasks/validate/group.yml"
-  vars:
-    validate_group_title: "{{ validate_prop_title }} - group"
-    validate_group_ctx: "{{ validate_prop_ctx }}"
-    validate_group_value: "{{ validate_prop_value }}"
-    validate_group_schema_info: "{{ validate_prop_schema_info_new }}"
-  when: validate_prop_type in ['map', 'list']
-  tags: ["no_print_skipped"]
+    - name: "{{ validate_prop_title }} - validate_group_error_msgs - initial"
+      set_fact:
+        validate_group_error_msgs: []
+      tags: ["no_print"]
+
+    - name: "{{ validate_prop_title }} - validate group property (outer)"
+      include_tasks: "tasks/validate/group.yml"
+      vars:
+        validate_group_title: "{{ validate_prop_title }} - group"
+        validate_group_ctx: "{{ validate_prop_ctx }}"
+        validate_group_value: "{{ validate_prop_value }}"
+        validate_group_schema_info: "{{ validate_prop_schema_info_new }}"
+      when: validate_prop_type in ['map', 'list']
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_prop_title }} - validate_prop_error_msgs - group"
+      set_fact:
+        validate_prop_error_msgs: >-
+          {{ validate_prop_error_msgs + validate_group_error_msgs }}
+      tags: ["no_print"]
+
+  when: (validate_prop_error_msgs | length) == 0
+
+- name: "{{ validate_prop_title }} - validate_prop_error_msgs_cumulative"
+  set_fact:
+    validate_prop_error_msgs_cumulative: >-
+      {{
+        (validate_prop_error_msgs_cumulative | default([]))
+        + validate_prop_error_msgs
+      }}
+  tags: ["no_print"]

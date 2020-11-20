@@ -30,7 +30,7 @@ schemas:
         elem_type: "string"
   prop:
     type: "dict"
-    prop:
+    props:
       type:
         type: "string"
       schema:

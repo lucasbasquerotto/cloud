@@ -1,213 +1,232 @@
-# Validate the schema properties
-
-- name: "{{ validate_elem_title }} - validate_elem_type"
+- name: "{{ validate_elem_title }} - validate_elem_error_msgs"
   set_fact:
-    validate_elem_is_list: >-
-      {{
-        (validate_elem_value is not mapping)
-        and
-        (validate_elem_value is iterable)
-        and
-        (validate_elem_value is not string)
-      }}
-    validate_elem_is_primitive: >-
-      {{
-        not (
-          (validate_elem_value is mapping)
-          or
-          (
+    validate_elem_error_msgs: []
+  tags: ["no_print"]
+
+- name: "{{ validate_elem_title }} - validate_elem_error_msgs - block"
+  block:
+    # Validate the schema properties
+
+    - name: "{{ validate_elem_title }} - validate_elem_type"
+      set_fact:
+        validate_elem_is_list: >-
+          {{
+            (validate_elem_value is not mapping)
+            and
             (validate_elem_value is iterable)
             and
             (validate_elem_value is not string)
-          )
-        )
+          }}
+        validate_elem_is_primitive: >-
+          {{
+            not (
+              (validate_elem_value is mapping)
+              or
+              (
+                (validate_elem_value is iterable)
+                and
+                (validate_elem_value is not string)
+              )
+            )
+          }}
+      tags: ["no_print"]
+
+    - name: "{{ validate_elem_title }} - validate the type and schema (required)"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> hasn't a schema and a type (should have one)"
+      when: >-
+        (validate_elem_type == '')
+        and
+        (validate_elem_schema == '')
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - validate the type and schema (only one)"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> has a schema and a type (should have only one)"
+      when: >-
+        (validate_elem_type != '')
+        and
+        (validate_elem_schema != '')
+      tags: ["no_print_skipped"]
+
+    # Validate the type
+
+    - name: "{{ validate_elem_title }} - validate the type"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: |
+          Value <{{ validate_elem_ctx }}> hasn't a valid type
+          Type: {{ validate_elem_type }}
+          Valid types: {{ tmp_valid | to_json }}
+        tmp_valid:
+          - "unknown"
+          - "primitive"
+          - "string"
+          - "bool"
+          - "int"
+          - "float"
+          - "dict"
+          - "map"
+          - "list"
+      when: >-
+        (validate_elem_type != '')
+        and
+        (validate_elem_type not in tmp_valid)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - validate the string values"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> should be a string"
+      when: >-
+        (validate_elem_type == 'string')
+        and
+        (not (validate_elem_value is string))
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - validate the primitive values"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> should be a primitive"
+      when: >-
+        (validate_elem_type in ['primitive', 'bool', 'int', 'float'])
+        and
+        (not (validate_elem_is_primitive | bool))
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - validate the list values"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> should be a list"
+      when: >-
+        (validate_elem_type == 'list')
+        and
+        (not (validate_elem_is_list | bool))
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - validate the dictionary values"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> should be a dictionary"
+      when: >-
+        (validate_elem_type == 'dict')
+        and
+        (validate_elem_value is not mapping)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - validate the string or dictionary values"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> should be a dictionary"
+      when: >-
+        (validate_elem_type == 'string_or_dict')
+        and
+        (validate_elem_value is not mapping)
+        and
+        (validate_elem_value is not string)
+      tags: ["no_print_skipped"]
+
+    # Validate non empty
+
+    - name: "{{ validate_elem_title }} - non empty - list"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "List <{{ validate_elem_ctx }}> should not be empty"
+      when: >-
+        (validate_elem_is_list | bool)
+        and
+        (validate_elem_non_empty | default(false) | bool)
+        and
+        ((validate_elem_value | length) == 0)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - non empty - dictionary"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Dictionary <{{ validate_elem_ctx }}> should not be empty"
+      when: >-
+        (validate_elem_value is mapping)
+        and
+        (validate_elem_non_empty | default(false) | bool)
+        and
+        ((validate_elem_value | dict2items | length) == 0)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ validate_elem_title }} - non empty - primitive"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: "Value <{{ validate_elem_ctx }}> should not be empty"
+      when: >-
+        (validate_elem_is_primitive | bool)
+        and
+        (validate_elem_non_empty | default(false) | bool)
+        and
+        ((validate_elem_value | string | length) == 0)
+      tags: ["no_print_skipped"]
+
+    # Allowed values
+
+    - name: "{{ validate_elem_title }} - allowed values (primitive)"
+      set_fact:
+        validate_elem_error_msgs: >-
+          {{ validate_elem_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: |
+          Value <{{ validate_elem_ctx }}> is invalid
+          Allowed: {{ validate_elem_allowed_values | default([]) | list | to_json }}
+      when: >-
+        (validate_elem_is_primitive | bool)
+        and
+        ((validate_elem_allowed_values | default([]) | length) > 0)
+        and
+        (validate_elem_value not in (validate_elem_allowed_values | default([])))
+      tags: ["no_print_skipped"]
+
+    # Add schema to the next iteration
+
+    - name: "{{ validate_elem_title }} - add schema to the next iteration"
+      set_fact:
+        validate_schema_list: >-
+          {{ validate_schema_list + [tmp_info_item] }}
+      vars:
+        tmp_info_item:
+          schema: "{{ validate_elem_schema }}"
+          value: "{{ validate_elem_value }}"
+          ctx: "{{ validate_elem_ctx }}"
+      when: validate_elem_schema != ''
+      tags: ["no_print"]
+
+  when: (validate_elem_error_msgs | length) == 0
+
+- name: "{{ validate_elem_title }} - validate_elem_error_msgs_cumulative"
+  set_fact:
+    validate_elem_error_msgs_cumulative: >-
+      {{
+        (validate_elem_error_msgs_cumulative | default([]))
+        + validate_elem_error_msgs
       }}
-  tags: ["no_print"]
-
-- name: "{{ validate_elem_title }} - validate the type and schema (required)"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> hasn't a schema and a type (should have one)"
-  when: >-
-    (validate_elem_type == '')
-    and
-    (validate_elem_schema == '')
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - validate the type and schema (only one)"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> has a schema and a type (should have only one)"
-  when: >-
-    (validate_elem_type != '')
-    and
-    (validate_elem_schema != '')
-  tags: ["no_print_skipped"]
-
-# Validate the type
-
-- name: "{{ validate_elem_title }} - validate the type"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: |
-      Value <{{ validate_elem_ctx }}> hasn't a valid type
-      Type: {{ validate_elem_type }}
-      Valid types: {{ tmp_valid | to_json }}
-  vars:
-    tmp_valid:
-      - "unknown"
-      - "primitive"
-      - "string"
-      - "bool"
-      - "int"
-      - "float"
-      - "dict"
-      - "map"
-      - "list"
-  when: >-
-    (validate_elem_type != '')
-    and
-    (validate_elem_type not in tmp_valid)
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - validate the string values"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should be a string"
-  when: >-
-    (validate_elem_type == 'string')
-    and
-    (not (validate_elem_value is string))
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - validate the primitive values"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should be a primitive"
-  when: >-
-    (validate_elem_type in ['primitive', 'bool', 'int', 'float'])
-    and
-    (not (validate_elem_is_primitive | bool))
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - validate the list values"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should be a list"
-  when: >-
-    (validate_elem_type == 'list')
-    and
-    (not (validate_elem_is_list | bool))
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - validate the dictionary values"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should be a dictionary"
-  when: >-
-    (validate_elem_type == 'dict')
-    and
-    (validate_elem_value is not mapping)
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - validate the string or dictionary values"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should be a dictionary"
-  when: >-
-    (validate_elem_type == 'string_or_dict')
-    and
-    (validate_elem_value is not mapping)
-    and
-    (validate_elem_value is not string)
-  tags: ["no_print_skipped"]
-
-# Validate non empty
-
-- name: "{{ validate_elem_title }} - non empty - list"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "List <{{ validate_elem_ctx }}> should not be empty"
-  when: >-
-    (validate_elem_is_list | bool)
-    and
-    (validate_elem_non_empty | default(false) | bool)
-    and
-    ((validate_elem_value | length) == 0)
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - non empty - dictionary"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Dictionary <{{ validate_elem_ctx }}> should not be empty"
-  when: >-
-    (validate_elem_value is mapping)
-    and
-    (validate_elem_non_empty | default(false) | bool)
-    and
-    ((validate_elem_value | dict2items | length) == 0)
-  tags: ["no_print_skipped"]
-
-- name: "{{ validate_elem_title }} - non empty - primitive"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should not be empty"
-  when: >-
-    (validate_elem_is_primitive | bool)
-    and
-    (validate_elem_non_empty | default(false) | bool)
-    and
-    ((validate_elem_value | string | length) == 0)
-  tags: ["no_print_skipped"]
-
-# Allowed values
-
-- name: "{{ validate_elem_title }} - allowed values (primitive)"
-  set_fact:
-    validate_schema_recursive_error_msgs: >-
-      {{ validate_schema_recursive_error_msgs + [tmp_msg] }}
-  vars:
-    tmp_msg: "Value <{{ validate_elem_ctx }}> should not be empty"
-  when: >-
-    (validate_elem_is_primitive | bool)
-    and
-    ((validate_elem_allowed_values | default([]) | length) > 0)
-    and
-    (validate_elem_value not in validate_elem_allowed_values)
-  tags: ["no_print_skipped"]
-
-# Add schema to the next iteration
-
-- name: "{{ validate_elem_title }} - add schema to the next iteration"
-  set_fact:
-    validate_schema_list: >-
-      {{ validate_schema_list + [tmp_info_item] }}
-  vars:
-    tmp_info_item:
-      schema: "{{ validate_elem_schema }}"
-      value: "{{ validate_elem_value }}"
-      ctx: "{{ validate_elem_ctx }}"
-  when: validate_elem_schema != ''
   tags: ["no_print"]
