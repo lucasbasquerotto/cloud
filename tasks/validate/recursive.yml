@@ -17,6 +17,17 @@
         validate_recursive_new_title: "{{ validate_recursive_title }} - ctx [{{ validate_schema_info.ctx }}]"
       tags: ["no_print"]
 
+    - name: "{{ validate_recursive_new_title }} - validate the allowed schema props"
+      set_fact:
+        validate_recursive_error_msgs: >-
+          {{ validate_recursive_error_msgs + [tmp_msg] }}
+      vars:
+        tmp_msg: >-
+          [{{ validate_schema_info.schema | default('') }}] Schema not defined
+          (at <{{ validate_recursive_ctx }}>)
+      when: (validate_schema_info.schema | default('')) not in (validate_schema_dict | default({}))
+      tags: ["no_print_skipped"]
+
     - name: "{{ validate_recursive_new_title }} - validate_recursive_schema_info"
       set_fact:
         validate_recursive_value: "{{ validate_schema_info.value }}"
