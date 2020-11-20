@@ -25,7 +25,7 @@ schemas:
       props:
         type: "map"
         elem_schema: "prop"
-      values:
+      choices:
         type: "list"
         elem_type: "string"
   prop:

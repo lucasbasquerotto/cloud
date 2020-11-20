@@ -197,13 +197,13 @@
       vars:
         tmp_msg: |
           Value <{{ validate_elem_ctx }}> is invalid
-          Allowed: {{ validate_elem_allowed_values | default([]) | list | to_json }}
+          Allowed: {{ validate_elem_choices | default([]) | list | to_json }}
       when: >-
         (validate_elem_is_primitive | bool)
         and
-        ((validate_elem_allowed_values | default([]) | length) > 0)
+        ((validate_elem_choices | default([]) | length) > 0)
         and
-        (validate_elem_value not in (validate_elem_allowed_values | default([])))
+        (validate_elem_value not in (validate_elem_choices | default([])))
       tags: ["no_print_skipped"]
 
     # Add schema to the next iteration

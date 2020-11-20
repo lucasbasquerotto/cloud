@@ -34,7 +34,7 @@
               - "type"
               - "schema"
               - "non_empty"
-              - "allowed_values"
+              - "choices"
           tags: ["no_print"]
 
         - name: "{{ validate_prop_title }} - validate the allowed schema props"
@@ -70,7 +70,7 @@
         validate_elem_schema: "{{ validate_prop_schema_info_new.schema | default('') }}"
         validate_elem_value: "{{ validate_prop_value }}"
         validate_elem_non_empty: "{{ validate_prop_schema_info_new.non_empty | default(false) }}"
-        validate_elem_allowed_values: "{{ validate_prop_schema_info_new.allowed_values | default([]) }}"
+        validate_elem_choices: "{{ validate_prop_schema_info_new.choices | default([]) }}"
       when: validate_prop_type not in ['map', 'list']
       tags: ["no_print_skipped"]
 
