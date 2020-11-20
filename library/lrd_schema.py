@@ -142,22 +142,6 @@ EXAMPLES = """
       prop2: ["value", "another_value"]
 """
 
-import datetime
-import json
-import re
-import string
-import sys
-import yaml
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils._text import to_text
-
-try:
-  from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-  from yaml import Loader, Dumper
-
 SCHEMA_BASE="""
 root: "schema_wrapper"
 schemas:
@@ -210,14 +194,125 @@ schemas:
 
 """
 
+import datetime
+import json
+import re
+import string
+import sys
+import yaml
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+
+try:
+  from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+  from yaml import Loader, Dumper
+
+def validate_next_value(schema_name, schema_ctx, value, schema_info_dict, error_msgs):
+  schema_info=schema_info_dict.get(schema_name)
+
+  if schema_info is None:
+    error_msgs+=[
+      'at: ' + (schema_ctx or '<root>'),
+      'msg: schema <' + schema_name + '> is not defined'
+    ]
+    return error_msgs
+
+
+  if schema_info.get('required') or schema_info.get('non_empty'):
+    if value is None:
+      error_msgs+=[
+        'at: ' + (schema_ctx or '<root>'),
+        'msg: value is not defined'
+      ]
+      return error_msgs
+
+  if schema_info.get('non_empty'):
+    if isinstance(value, list):
+      if not len(value):
+        error_msgs+=[
+          'at: ' + (schema_ctx or '<root>'),
+          'msg: list is empty'
+        ]
+        return error_msgs
+    elif isinstance(value, collections.Mapping):
+      if not len(value):
+        error_msgs+=[
+          'at: ' + (schema_ctx or '<root>'),
+          'msg: dict is empty'
+        ]
+        return error_msgs
+    else:
+      if not str(value):
+        error_msgs+=[
+          'at: ' + (schema_ctx or '<root>'),
+          'msg: value is empty'
+        ]
+        return error_msgs
+
+  if value is not None:
+    value_type=schema_info.get('type')
+
+    if not value_type:
+      error_msgs+=[
+        'at: ' + (schema_ctx or '<root>'),
+        'msg: type is not defined'
+      ]
+      return error_msgs
+
+    allowed_types=[
+      'unknown',
+      'primitive',
+      'string',
+      'bool',
+      'int',
+      'float',
+      'dict',
+      'map',
+      'list'
+    ]
+
+    if value_type not in allowed_types:
+      error_msgs+=[
+        'at: ' + (schema_ctx or '<root>'),
+        'msg: type is invalid',
+        'valid_types:',
+        allowed_types
+      ]
+      return error_msgs
+
+    if value_type in allowed_types:
+      error_msgs+=[
+        'at: ' + (schema_ctx or '<root>'),
+        'msg: type is valid',
+        'valid_types:',
+        allowed_types
+      ]
+      return error_msgs
+
+  error_msgs+=[
+    'at: ' + schema_ctx,
+    'msg: test'
+  ]
+
+  return error_msgs
+
 def validate_value(schema, value):
-  schema_name=schema.root
-  schema_dict=schema.schemas
+  if schema is None:
+    return ['main schema is not defined']
+
+  schema_name=schema.get('root')
+  schema_info_dict=schema.get('schemas')
   schema_ctx=''
-  return ["test error", "", "details...", "more details..."]
+  error_msgs=[]
+
+  error_msgs=validate_next_value(schema_name, schema_ctx, value, schema_info_dict, error_msgs)
+
+  return error_msgs
 
 def output_text(output):
-  return to_text(yaml.dump(output, allow_unicode=True, width=100, Dumper=Dumper, default_flow_style=False))
+  return to_text(yaml.dump(output, Dumper=Dumper, default_flow_style=False))
 
 # ===========================================
 # Module execution.
@@ -237,18 +332,15 @@ def main():
 
     if validate_schema:
       schema_base=yaml.load(SCHEMA_BASE, Loader=Loader)
-
-      module.fail_json(msg='Error(s) when validating schema:\n\n' + output_text(schema_base))
-
       error_msgs=validate_value(schema_base, schema)
 
       if error_msgs:
-        module.fail_json(msg='Error(s) when validating schema:\n\n' + to_native(error_msgs))
+        module.fail_json(msg='Error(s) when validating schema:\n\n' + output_text(error_msgs))
 
     error_msgs=validate_value(schema, value)
 
     if error_msgs:
-      module.fail_json(msg='Error(s) when validating value:\n\n' + to_native(error_msgs))
+      module.fail_json(msg='Error(s) when validating value:\n\n' + output_text(error_msgs))
 
     module.exit_json(changed=False)
 
