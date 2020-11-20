@@ -46,108 +46,117 @@ EXAMPLES = """
 # Example with a successful validation of the schema and value
 - lrd_schema:
     schema:
-			root: "schema_root"
-			schemas:
-				schema_root:
-					type: dict
-					props:
-						prop1:
-							required: true
-							type: str
-						prop2:
-							schema: schema_child
-				schema_child:
-					type: list
-					elem_type: str
+      root: "schema_root"
+      schemas:
+        schema_root:
+          type: dict
+          props:
+            prop1:
+              required: true
+              type: str
+            prop2:
+              schema: schema_child
+        schema_child:
+          type: list
+          elem_type: str
     value:
-			prop1: "value1"
-			prop2: ["value", "another_value"]
+      prop1: "value1"
+      prop2: ["value", "another_value"]
 
 # Example with an unsuccessful validation of the value
 - lrd_schema:
     schema:
-			root: "schema_root"
-			schemas:
-				schema_root:
-					type: dict
-					props:
-						prop1:
-							required: true
-							type: str
-						prop2:
-							schema: schema_child
-				schema_child:
-					type: list
-					elem_type: str
+      root: "schema_root"
+      schemas:
+        schema_root:
+          type: dict
+          props:
+            prop1:
+              required: true
+              type: str
+            prop2:
+              schema: schema_child
+        schema_child:
+          type: list
+          elem_type: str
     value:
-			prop2: ["value", "another_value"]
+      prop2: ["value", "another_value"]
 
 # Another example with an unsuccessful validation of the value
 - lrd_schema:
     schema:
-			root: "schema_root"
-			schemas:
-				schema_root:
-					type: dict
-					props:
-						prop1:
-							required: true
-							type: str
-						prop2:
-							schema: schema_child
-				schema_child:
-					type: list
-					elem_type: str
+      root: "schema_root"
+      schemas:
+        schema_root:
+          type: dict
+          props:
+            prop1:
+              required: true
+              type: str
+            prop2:
+              schema: schema_child
+        schema_child:
+          type: list
+          elem_type: str
     value:
-			prop1: "value1"
-			prop2: "value2"
+      prop1: "value1"
+      prop2: "value2"
 
 # Yet another example with an unsuccessful validation of the value
 - lrd_schema:
     schema:
-			root: "schema_root"
-			schemas:
-				schema_root:
-					type: dict
-					props:
-						prop1:
-							required: true
-							type: str
-						prop2:
-							schema: schema_child
-				schema_child:
-					type: list
-					elem_type: str
+      root: "schema_root"
+      schemas:
+        schema_root:
+          type: dict
+          props:
+            prop1:
+              required: true
+              type: str
+            prop2:
+              schema: schema_child
+        schema_child:
+          type: list
+          elem_type: str
     value:
-			prop1: "value1"
-			prop3: ["value", "another_value"]
+      prop1: "value1"
+      prop3: ["value", "another_value"]
 
 # Example with an unsuccessful validation of the schema
 - lrd_schema:
     schema:
-			root: "schema_root"
-			schemas:
-				schema_root:
-					typo: dict
-					props:
-						prop1:
-							required: true
-							type: str
-						prop2:
-							schema: schema_child
-				schema_child:
-					type: list
-					elem_type: str
+      root: "schema_root"
+      schemas:
+        schema_root:
+          typo: dict
+          props:
+            prop1:
+              required: true
+              type: str
+            prop2:
+              schema: schema_child
+        schema_child:
+          type: list
+          elem_type: str
     value:
-			prop2: ["value", "another_value"]
+      prop2: ["value", "another_value"]
 """
 
+import datetime
+import json
 import re
 import string
-import traceback
+import sys
 import yaml
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text
+
+try:
+  from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+  from yaml import Loader, Dumper
 
 SCHEMA_BASE="""
 root: "schema_wrapper"
@@ -202,10 +211,13 @@ schemas:
 """
 
 def validate_value(schema, value):
-	schema_name=schema.root
-	schema_dict=schema.schemas
-	schema_ctx=''
+  schema_name=schema.root
+  schema_dict=schema.schemas
+  schema_ctx=''
+  return ["test error", "", "details...", "more details..."]
 
+def output_text(output):
+  return to_text(yaml.dump(output, allow_unicode=True, width=100, Dumper=Dumper, default_flow_style=False))
 
 # ===========================================
 # Module execution.
@@ -223,17 +235,20 @@ def main():
     value = module.params['value']
     validate_schema = module.boolean(module.params['validate_schema'])
 
-		if validate_schema:
-			schema_base=yaml.load(SCHEMA_BASE)
-			error_msgs=validate_value(schema_base, schema)
+    if validate_schema:
+      schema_base=yaml.load(SCHEMA_BASE, Loader=Loader)
 
-			if error_msgs:
-        module.fail_json(msg='Error when validating schema\n\n' + to_native(error_msgs))
+      module.fail_json(msg='Error(s) when validating schema:\n\n' + output_text(schema_base))
 
-		error_msgs=validate_value(schema, value)
+      error_msgs=validate_value(schema_base, schema)
 
-		if error_msgs:
-			module.fail_json(msg='Error when validating value\n\n' + to_native(error_msgs))
+      if error_msgs:
+        module.fail_json(msg='Error(s) when validating schema:\n\n' + to_native(error_msgs))
+
+    error_msgs=validate_value(schema, value)
+
+    if error_msgs:
+      module.fail_json(msg='Error(s) when validating value:\n\n' + to_native(error_msgs))
 
     module.exit_json(changed=False)
 

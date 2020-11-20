@@ -1,5 +1,7 @@
 FROM lucasbasquerotto/ansible:0.0.2
 
+RUN pip3 install pyyaml
+
 COPY container/run.sh /usr/local/bin/run
 COPY container/ansible /usr/main/ansible
 COPY tasks/util /usr/main/ansible/external-tasks/util
