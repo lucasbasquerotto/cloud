@@ -221,45 +221,45 @@ def validate_next_value(schema_data, value, error_msgs):
   required=schema_data.get('required')
 
   if schema_info is None:
-    error_msgs+=[
+    error_msgs+=[[
       'at: ' + (schema_ctx or '<root>'),
       'schema_name: ' + schema_name,
       'msg: schema is not defined'
-    ]
+    ]]
     return error_msgs
 
   if required or schema_info.get('non_empty'):
     if value is None:
-      error_msgs+=[
+      error_msgs+=[[
         'at: ' + (schema_ctx or '<root>'),
         'schema_name: ' + schema_name,
         'msg: value is not defined'
-      ]
+      ]]
       return error_msgs
 
   value_type=schema_info.get('type')
   next_schema=schema_info.get('schema')
 
   if (not is_subelement) and ('schema' in schema_info):
-      error_msgs+=[
+      error_msgs+=[[
         'at: ' + (schema_ctx or '<root>'),
         'schema_name: ' + schema_name,
         'msg: a schema definition shouldn\'t have a schema property'
-      ]
+      ]]
       return error_msgs
   elif (not value_type) and (not next_schema):
-    error_msgs+=[
+    error_msgs+=[[
       'at: ' + (schema_ctx or '<root>'),
       'schema_name: ' + schema_name,
       'msg: a definition should have either a type or schema property'
-    ]
+    ]]
     return error_msgs
   elif value_type and next_schema:
-    error_msgs+=[
+    error_msgs+=[[
       'at: ' + (schema_ctx or '<root>'),
       'schema_name: ' + schema_name,
       'msg: a definition shouldn\'t have both type and schema properties'
-    ]
+    ]]
     return error_msgs
 
   if next_schema:
@@ -274,7 +274,7 @@ def validate_next_value(schema_data, value, error_msgs):
       required=True
     )
 
-    error_msgs=validate_next_value(new_schema_data, value, error_msgs)
+    return validate_next_value(new_schema_data, value, error_msgs)
 
   is_list=isinstance(value, list)
   is_dict=isinstance(value, dict)
@@ -283,36 +283,36 @@ def validate_next_value(schema_data, value, error_msgs):
   if schema_info.get('non_empty'):
     if is_list:
       if not len(value):
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: list is empty'
-        ]
+        ]]
         return error_msgs
     elif is_dict:
       if not len(value):
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: dict is empty'
-        ]
+        ]]
         return error_msgs
     else:
       if not str(value):
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: value is empty'
-        ]
+        ]]
         return error_msgs
 
   if value is not None:
     if not value_type:
-      error_msgs+=[
+      error_msgs+=[[
         'at: ' + (schema_ctx or '<root>'),
         'schema_name: ' + schema_name,
         'msg: type is not defined'
-      ]
+      ]]
       return error_msgs
 
     allowed_types=[
@@ -329,78 +329,78 @@ def validate_next_value(schema_data, value, error_msgs):
     ]
 
     if value_type not in allowed_types:
-      error_msgs+=[
+      error_msgs+=[[
         'at: ' + (schema_ctx or '<root>'),
         'schema_name: ' + schema_name,
         'type: ' + value_type,
         'msg: type is invalid',
         'valid_types:',
         allowed_types
-      ]
+      ]]
       return error_msgs
 
     if value_type in ['list']:
       if not is_dict:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'type: ' + value_type,
           'msg: value expected to be a list'
-        ]
+        ]]
         return error_msgs
     elif value_type in ['dict', 'map']:
       if not is_dict:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'type: ' + value_type,
           'msg: value expected to be a dictionary'
-        ]
+        ]]
         return error_msgs
     elif value_type == 'str_or_dict':
       if (not is_string) and (not is_dict):
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'type: ' + value_type,
           'msg: value expected to be a string or dictionary'
-        ]
+        ]]
         return error_msgs
     elif value_type == 'str':
       if not is_string:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'type: ' + value_type,
           'msg: value expected to be a string'
-        ]
+        ]]
         return error_msgs
     elif value_type != 'unknown':
       if is_list or is_dict:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'type: ' + value_type,
           'msg: value expected to be a primitive'
-        ]
+        ]]
         return error_msgs
 
     new_type=schema_info.get('type')
     new_schema_name=schema_info.get('schema')
 
     if (not new_type) and (not new_schema_name):
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: a property definition should have either a type or schema property'
-        ]
+        ]]
         return error_msgs
     elif new_type and new_schema_name:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: a property definition shouldn\'t have both type and schema properties'
-        ]
+        ]]
         return error_msgs
 
     elem_type=schema_info.get('elem_type')
@@ -408,38 +408,57 @@ def validate_next_value(schema_data, value, error_msgs):
 
     if value_type not in ['map', 'list']:
       if elem_type:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: a definition should have elem_type only for lists and maps'
-        ]
+        ]]
         return error_msgs
       elif elem_schema_name:
-        error_msgs+=[
+        error_msgs+=[[
           'at: ' + (schema_ctx or '<root>'),
           'schema_name: ' + schema_name,
           'msg: a definition should have elem_schema only for lists and maps'
-        ]
+        ]]
         return error_msgs
 
     if value_type in ['map', 'list']:
       if (not elem_type) and (not elem_schema_name):
-          error_msgs+=[
-            'at: ' + (schema_ctx or '<root>'),
-            'schema_name: ' + schema_name,
-            'msg: a property definition for a <' + value_type
-              + '> should have either a elem_type or elem_schema property'
-          ]
-          return error_msgs
+        error_msgs+=[[
+          'at: ' + (schema_ctx or '<root>'),
+          'schema_name: ' + schema_name,
+          'msg: a property definition for a <' + value_type
+            + '> should have either a elem_type or elem_schema property'
+        ]]
+        return error_msgs
       elif elem_type and elem_schema_name:
-          error_msgs+=[
-            'at: ' + (schema_ctx or '<root>'),
-            'schema_name: ' + schema_name,
-            'msg: a property definition for a <' + value_type
-              + '> shouldn\'t have both elem_type and elem_schema properties'
-          ]
-          return error_msgs
+        error_msgs+=[[
+          'at: ' + (schema_ctx or '<root>'),
+          'schema_name: ' + schema_name,
+          'msg: a property definition for a <' + value_type
+            + '> shouldn\'t have both elem_type and elem_schema properties'
+        ]]
+        return error_msgs
 
+    props=schema_info.get('props')
+
+    if (not props) and (not is_subelement) and (value_type in ['dict', 'str_or_dict']):
+        error_msgs+=[[
+          'at: ' + (schema_ctx or '<root>'),
+          'schema_name: ' + schema_name,
+          'type: ' + value_type,
+          'msg: props not defined for schema'
+        ]]
+        return error_msgs
+    elif props and (value_type not in ['dict', 'str_or_dict']):
+        error_msgs+=[[
+          'at: ' + (schema_ctx or '<root>'),
+          'schema_name: ' + schema_name,
+          'type: ' + value_type,
+          'msg: props should not be defined for a schema of this type'
+        ]]
+        return error_msgs
+          
     if is_list:
       for idx, elem_value in enumerate(value):
         new_schema_info=dict(
@@ -460,21 +479,34 @@ def validate_next_value(schema_data, value, error_msgs):
 
         error_msgs=validate_next_value(new_schema_data, elem_value, error_msgs)
     elif is_dict:
-      for key, elem_value in sorted(list(value.items()), key=by_value):
+      for key in sorted(list(value.keys())):
+        elem_value=value[key]
+
         if value_type in ['dict', 'str_or_dict']:
-          props=schema_info.get('props')
-          new_schema_info=props.get(key)
+          if props:
+            if key not in props:
+              error_msgs+=[[
+                'at: ' + (schema_ctx or '<root>'),
+                'schema_name: ' + schema_name,
+                'property: ' + key,
+                'msg: property not defined in schema',
+                'allowed: ',
+                sorted(props.keys())
+              ]]
+              return error_msgs
 
-          new_schema_data=dict(
-            name=schema_name,
-            ctx=schema_ctx + (schema_ctx and '.') + key,
-            info=new_schema_info,
-            dict=schema_info_dict,
-            subelement=True,
-            required=new_schema_info.get('required')
-          )
+            new_schema_info=props.get(key)
 
-          error_msgs=validate_next_value(new_schema_data, elem_value, error_msgs)
+            new_schema_data=dict(
+              name=schema_name,
+              ctx=schema_ctx + (schema_ctx and '.') + key,
+              info=new_schema_info,
+              dict=schema_info_dict,
+              subelement=True,
+              required=new_schema_info.get('required')
+            )
+
+            error_msgs=validate_next_value(new_schema_data, elem_value, error_msgs)
         else:
           new_schema_info=dict(
             type=elem_type,
@@ -520,6 +552,15 @@ def validate_value(schema, value):
 
   return error_msgs
 
+def prepare_error_msgs(error_msgs):
+  new_error_msgs=[]
+  separator="---------------------------------"
+
+  for value in error_msgs:
+    new_error_msgs+=[value, separator]
+
+  return output_text(new_error_msgs)
+
 def output_text(output):
   return to_text(yaml.dump(output, Dumper=Dumper, default_flow_style=False))
 
@@ -544,12 +585,12 @@ def main():
       error_msgs=validate_value(schema_base, schema)
 
       if error_msgs:
-        module.fail_json(msg='Error(s) when validating schema:\n\n' + output_text(error_msgs))
+        module.fail_json(msg='Error(s) when validating schema:\n\n' + prepare_error_msgs(error_msgs))
 
     error_msgs=validate_value(schema, value)
 
     if error_msgs:
-      module.fail_json(msg='Error(s) when validating value:\n\n' + output_text(error_msgs))
+      module.fail_json(msg='Error(s) when validating value:\n\n' + prepare_error_msgs(error_msgs))
 
     module.exit_json(changed=False)
 
