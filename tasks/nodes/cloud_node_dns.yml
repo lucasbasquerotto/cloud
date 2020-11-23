@@ -1,0 +1,42 @@
+- name: "{{ cloud_node_item_title }} - cloud_node_dns_services - fill"
+  set_fact:
+    cloud_node_dns_services: >-
+      {{
+        cloud_node_dns_services + [{
+          'name': 'cloud-node-dns-service-' + tmp_item.name,
+          'key': cloud_node_node.dns_service,
+          'params': cloud_node_dns_item | combine(tmp_params)
+        }]
+      }}
+  vars:
+    tmp_params:
+      dns_type: "{{ tmp_item.dns_type }}"
+      data_list:
+        - "{{ tmp_item.dns_value }}"
+  loop:
+    - name: "ipv4"
+      dns_type: "A"
+      dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
+    - name: "ipv6"
+      dns_type: "AAAA"
+      dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
+  loop_control:
+    loop_var: tmp_item
+  when: >-
+    ((cloud_node_state | default('')) != 'absent')
+    and
+    ((cloud_node_active_hosts | length) = 1)
+    and
+    (tmp_item.dns_value != '')
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - dns service (outer)"
+  include_tasks: "tasks/services/cloud_service.yml"
+  vars:
+    cloud_service_title: "{{ cloud_node_item_title }} - dns service"
+    cloud_service_list: "{{ cloud_node_dns_services }}"
+    cloud_service_top: true
+    cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
+    cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+  when: (cloud_node_dns_services | length) > 0
+  tags: ["no_print_skipped"]

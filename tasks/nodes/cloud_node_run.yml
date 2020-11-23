@@ -91,65 +91,21 @@
 
 # DNS
 
-- name: "{{ cloud_node_item_title }} - dns - block"
-  block:
-    - name: "{{ cloud_node_item_title }} - cloud_node_dns_service_params_base"
-      set_fact:
-        cloud_node_dns_service_params_base: >-
-          {{ cloud_node_params.dns_service_params | default({}) }}
-        cloud_node_dns_services: []
-      tags: ["no_print"]
-
-    - name: "{{ cloud_node_item_title }} - cloud_node_dns_services - fill"
-      set_fact:
-        cloud_node_dns_services: >-
-          {{
-            cloud_node_dns_services + [{
-              'name': 'cloud-node-dns-service-' + tmp_item.name,
-              'key': cloud_node_node.dns_service,
-              'params': cloud_node_dns_service_params_base | combine(tmp_params)
-            }]
-          }}
-      vars:
-        tmp_params:
-          dns_type: "{{ tmp_item.dns_type }}"
-          data_list:
-            - "{{ tmp_item.dns_value }}"
-      loop:
-        - name: "ipv4"
-          dns_type: "A"
-          dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
-        - name: "ipv6"
-          dns_type: "AAAA"
-          dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
-      loop_control:
-        loop_var: tmp_item
-      when: >-
-        ((cloud_node_state | default('')) != 'absent')
-        and
-        ((cloud_node_active_hosts | length) = 1)
-        and
-        (tmp_item.dns_value != '')
-      tags: ["no_print"]
-
-    - name: "{{ cloud_node_item_title }} - dns service (outer)"
-      include_tasks: "tasks/services/cloud_service.yml"
-      vars:
-        cloud_service_title: "{{ cloud_node_item_title }} - dns service"
-        cloud_service_list: "{{ cloud_node_dns_services }}"
-        cloud_service_top: true
-        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
-        cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
-      when: (cloud_node_dns_services | length) > 0
-      tags: ["no_print_skipped"]
-
+- name: "{{ cloud_node_item_title }} - dns (outer)"
+  include_tasks: "cloud_node_dns.yml"
+  loop: "{{ cloud_node_params.dns_service_params_list | default([]) }}"
+  loop_control:
+    loop_var: cloud_node_dns_item
+    label: "{{ cloud_node_dns_item.record | default('') }}"
   when: >-
     (cloud_node_node.dns_service | default('') != '')
+    and
+    ((cloud_node_active_hosts | length) = 1)
     and
     (
       ((cloud_node_state | default('present', true)) == 'present')
       or
-      (cloud_node_dns_service_params_base.can_destroy | default(false) | bool)
+      (cloud_node_dns_item.can_destroy | default(false) | bool)
     )
   tags: ["no_print_skipped"]
 
