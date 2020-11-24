@@ -1,0 +1,48 @@
+root: "node_params"
+schemas:
+  node_params:
+    type: "dict"
+    props:
+      service_params:
+        type: "dict"
+      dns_service_params:
+        type: "dict"
+      user_data_file:
+        type: "str"
+      user_data_params:
+        type: "dict"
+      host_test:
+        type: "dict"
+        schema: "host_test"
+      cron:
+        type: "list"
+        elem_schema: "cron"
+      cron_start:
+        type: "bool"
+  host_test:
+    type: "dict"
+    props:
+      host_test_log_file:
+        type: "str"
+        required: true
+      setup_finished_log_regex:
+        type: "str"
+        required: true
+      setup_finished_log_last_line:
+        type: "str"
+      initial_connection_timeout:
+        type: "int"
+      setup_finished_timeout:
+        type: "int"
+  cron:
+    type: "dict"
+    props:
+      user:
+        type: "str"
+        required: true
+      src_file:
+        type: "str"
+        required: true
+      dest_dir:
+        type: "str"
+        required: true

@@ -45,3 +45,6 @@ def error_text(error_msgs):
   error = yaml.dump(new_error_msgs, Dumper=Dumper, default_flow_style=False)
 
   return error
+
+def default(value, default_value):
+  return default_value if value is None else value

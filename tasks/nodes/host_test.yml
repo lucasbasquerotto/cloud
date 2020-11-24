@@ -84,9 +84,9 @@
         host_test_setup_finished_log_last_line: >-
           {{ host_test_vars.setup_finished_log_last_line | default('') }}
         host_test_initial_connection_timeout: >-
-          {{ host_test_vars.initial_connection_timeout }}
+          {{ host_test_vars.initial_connection_timeout | default(300) }}
         host_test_setup_finished_timeout: >-
-          {{ host_test_vars.setup_finished_timeout }}
+          {{ host_test_vars.setup_finished_timeout | default(300) }}
       tags: ["no_print"]
 
     # Wait Host

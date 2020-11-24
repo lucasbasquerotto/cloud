@@ -49,7 +49,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, error_text
+from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, error_text, default
 from ansible.module_utils.lrd_util_params_mixer import mix
 from ansible.module_utils.lrd_util_schema import validate
 
@@ -57,13 +57,17 @@ def prepare_service(service_info, env, validate_ctx):
   result = dict()
   error_msgs = []
 
-  service_name = service_info.get('name') if isinstance(service_info, dict) else service_info
-  service_key = (service_info.get('key')
-      if (isinstance(service_info, dict) and ('key' in service_info))
-      else service_name)
+  service_info_dict = service_info if isinstance(service_info, dict) else dict()
+
+  service_name = default(service_info_dict.get('name'), service_info)
+  service_key = default(service_info_dict.get('key'), service_name)
   service_description = ((service_name + ' (' + service_key + ')')
-      if service_name != service_key
-      else service_name)
+                         if service_name != service_key
+                         else service_name)
+
+  if not service_name:
+    error_msgs += [['msg: service name not specified']]
+    return dict(result=result, error_msgs=error_msgs)
 
   result['name'] = service_name
   result['key'] = service_key
@@ -73,11 +77,11 @@ def prepare_service(service_info, env, validate_ctx):
 
   if service_key not in services_dict:
     error_msgs += [[
-      'name: ' + service_name,
-      'key: ' + service_key,
-      'existing_keys:',
-      sorted(list(services_dict.keys())),
-      'msg: no service specified for the environment'
+        'name: ' + service_name,
+        'key: ' + service_key,
+        'existing_keys:',
+        sorted(list(services_dict.keys())),
+        'msg: no service specified for the environment'
     ]]
   else:
     service = services_dict.get(service_key)
@@ -94,13 +98,13 @@ def prepare_service(service_info, env, validate_ctx):
 
     if isinstance(service_info, dict):
       params_args = dict(
-        params=service_info.get('params'),
-        group_params=service_info.get('group_params'),
-        shared_params=service_info.get('shared_params'),
-        shared_group_params=service_info.get('shared_group_params'),
-        shared_group_params_dict=env.get('service_shared_group_params'),
-        shared_params_dict=env.get('service_shared_params'),
-        group_params_dict=env.get('service_group_params'),
+          params=service_info_dict.get('params'),
+          group_params=service_info_dict.get('group_params'),
+          shared_params=service_info_dict.get('shared_params'),
+          shared_group_params=service_info_dict.get('shared_group_params'),
+          shared_group_params_dict=env.get('service_shared_group_params'),
+          shared_params_dict=env.get('service_shared_params'),
+          group_params_dict=env.get('service_group_params'),
       )
 
       service_params_info = mix(params_args)
@@ -113,13 +117,13 @@ def prepare_service(service_info, env, validate_ctx):
         error_msgs_aux += [new_value]
 
     params_args = dict(
-      params=service.get('params'),
-      group_params=service.get('group_params'),
-      shared_params=service.get('shared_params'),
-      shared_group_params=service.get('shared_group_params'),
-      shared_group_params_dict=env.get('service_shared_group_params'),
-      shared_params_dict=env.get('service_shared_params'),
-      group_params_dict=env.get('service_group_params'),
+        params=service.get('params'),
+        group_params=service.get('group_params'),
+        shared_params=service.get('shared_params'),
+        shared_group_params=service.get('shared_group_params'),
+        shared_group_params_dict=env.get('service_shared_group_params'),
+        shared_params_dict=env.get('service_shared_params'),
+        group_params_dict=env.get('service_group_params'),
     )
 
     service_params_info = mix(params_args)
@@ -150,8 +154,8 @@ def prepare_service(service_info, env, validate_ctx):
             error_msgs_aux += [['schema file not found: ' + schema_file]]
 
     params_args = dict(
-      group_params=service.get('credentials'),
-      group_params_dict=env.get('credentials'),
+        group_params=service.get('credentials'),
+        group_params_dict=env.get('credentials'),
     )
 
     service_params_info = mix(params_args)
@@ -175,6 +179,7 @@ def prepare_service(service_info, env, validate_ctx):
 def prepare_services(services, env, validate_ctx):
   result = []
   error_msgs = []
+  service_names = set()
 
   if services:
     services_dict = env.get('services')
@@ -191,7 +196,16 @@ def prepare_services(services, env, validate_ctx):
         if error_msgs_aux:
           error_msgs += error_msgs_aux
         else:
-          result += [result_aux]
+          service_name = result_aux.get('name')
+
+          if service_name in service_names:
+            error_msgs += [[
+                'service_name: ' + service_name,
+                'msg: duplicate service name',
+            ]]
+          else:
+            service_names.add(service_name)
+            result += [result_aux]
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -199,11 +213,15 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
   result = dict()
   error_msgs = []
 
-  pod_name = pod_info.get('name') if isinstance(pod_info, dict) else pod_info
-  pod_key = (pod_info.get('key')
-      if (isinstance(pod_info, dict) and ('key' in pod_info))
-      else pod_name)
+  pod_info_dict = pod_info if isinstance(pod_info, dict) else dict()
+
+  pod_name = default(pod_info_dict.get('name'), pod_info)
+  pod_key = default(pod_info_dict.get('key'), pod_name)
   pod_description = (pod_name + ' (' + pod_key + ')') if pod_name != pod_key else pod_name
+
+  if not pod_name:
+    error_msgs += [['msg: pod name not specified']]
+    return dict(result=result, error_msgs=error_msgs)
 
   result['name'] = pod_name
   result['key'] = pod_key
@@ -213,11 +231,11 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
 
   if pod_key not in pods_dict:
     error_msgs += [[
-      'name: ' + pod_name,
-      'key: ' + pod_key,
-      'existing_keys:',
-      sorted(list(pods_dict.keys())),
-      'msg: no pod specified for the environment'
+        'name: ' + pod_name,
+        'key: ' + pod_key,
+        'existing_keys:',
+        sorted(list(pods_dict.keys())),
+        'msg: no pod specified for the environment'
     ]]
   else:
     pod = pods_dict.get(pod_key)
@@ -236,13 +254,13 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
 
     if pod_ctx_info:
       params_args = dict(
-        params=pod_ctx_info.get('params'),
-        group_params=pod_ctx_info.get('group_params'),
-        shared_params=pod_ctx_info.get('shared_params'),
-        shared_group_params=pod_ctx_info.get('shared_group_params'),
-        shared_group_params_dict=env.get('pod_shared_group_params'),
-        shared_params_dict=env.get('pod_shared_params'),
-        group_params_dict=env.get('pod_group_params'),
+          params=pod_ctx_info.get('params'),
+          group_params=pod_ctx_info.get('group_params'),
+          shared_params=pod_ctx_info.get('shared_params'),
+          shared_group_params=pod_ctx_info.get('shared_group_params'),
+          shared_group_params_dict=env.get('pod_shared_group_params'),
+          shared_params_dict=env.get('pod_shared_params'),
+          group_params_dict=env.get('pod_group_params'),
       )
 
       pod_params_info = mix(params_args)
@@ -256,13 +274,13 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
 
     if isinstance(pod_info, dict):
       params_args = dict(
-        params=pod_info.get('params'),
-        group_params=pod_info.get('group_params'),
-        shared_params=pod_info.get('shared_params'),
-        shared_group_params=pod_info.get('shared_group_params'),
-        shared_group_params_dict=env.get('pod_shared_group_params'),
-        shared_params_dict=env.get('pod_shared_params'),
-        group_params_dict=env.get('pod_group_params'),
+          params=pod_info.get('params'),
+          group_params=pod_info.get('group_params'),
+          shared_params=pod_info.get('shared_params'),
+          shared_group_params=pod_info.get('shared_group_params'),
+          shared_group_params_dict=env.get('pod_shared_group_params'),
+          shared_params_dict=env.get('pod_shared_params'),
+          group_params_dict=env.get('pod_group_params'),
       )
 
       pod_params_info = mix(params_args)
@@ -275,13 +293,13 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
         error_msgs_aux += [new_value]
 
     params_args = dict(
-      params=pod.get('params'),
-      group_params=pod.get('group_params'),
-      shared_params=pod.get('shared_params'),
-      shared_group_params=pod.get('shared_group_params'),
-      shared_group_params_dict=env.get('pod_shared_group_params'),
-      shared_params_dict=env.get('pod_shared_params'),
-      group_params_dict=env.get('pod_group_params'),
+        params=pod.get('params'),
+        group_params=pod.get('group_params'),
+        shared_params=pod.get('shared_params'),
+        shared_group_params=pod.get('shared_group_params'),
+        shared_group_params_dict=env.get('pod_shared_group_params'),
+        shared_params_dict=env.get('pod_shared_params'),
+        group_params_dict=env.get('pod_group_params'),
     )
 
     pod_params_info = mix(params_args)
@@ -312,8 +330,8 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
             error_msgs_aux += [['schema file not found: ' + schema_file]]
 
     params_args = dict(
-      group_params=pod.get('credentials'),
-      group_params_dict=env.get('credentials'),
+        group_params=pod.get('credentials'),
+        group_params_dict=env.get('credentials'),
     )
 
     pod_params_info = mix(params_args)
@@ -337,6 +355,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
 def prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx):
   result = []
   error_msgs = []
+  pod_names = set()
 
   if pods:
     pods_dict = env.get('pods')
@@ -353,7 +372,16 @@ def prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx):
         if error_msgs_aux:
           error_msgs += error_msgs_aux
         else:
-          result += [result_aux]
+          pod_name = result_aux.get('name')
+
+          if pod_name in pod_names:
+            error_msgs += [[
+                'pod_name: ' + pod_name,
+                'msg: duplicate pod name',
+            ]]
+          else:
+            pod_names.add(pod_name)
+            result += [result_aux]
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -361,11 +389,15 @@ def prepare_node(node_info, env, validate_ctx):
   result = dict()
   error_msgs = []
 
-  node_name = node_info.get('name') if isinstance(node_info, dict) else node_info
-  node_key = (node_info.get('key')
-      if (isinstance(node_info, dict) and ('key' in node_info))
-      else node_name)
+  node_info_dict = node_info if isinstance(node_info, dict) else dict()
+
+  node_name = default(node_info_dict.get('name'), node_info)
+  node_key = default(node_info_dict.get('key'), node_name)
   node_description = (node_name + ' (' + node_key + ')') if node_name != node_key else node_name
+
+  if not node_name:
+    error_msgs += [['msg: node name not specified']]
+    return dict(result=result, error_msgs=error_msgs)
 
   result['name'] = node_name
   result['key'] = node_key
@@ -375,11 +407,11 @@ def prepare_node(node_info, env, validate_ctx):
 
   if node_key not in nodes_dict:
     error_msgs += [[
-      'name: ' + node_name,
-      'key: ' + node_key,
-      'existing_keys:',
-      sorted(list(nodes_dict.keys())),
-      'msg: no node specified for the environment'
+        'name: ' + node_name,
+        'key: ' + node_key,
+        'existing_keys:',
+        sorted(list(nodes_dict.keys())),
+        'msg: no node specified for the environment'
     ]]
   else:
     node = nodes_dict.get(node_key)
@@ -396,13 +428,13 @@ def prepare_node(node_info, env, validate_ctx):
 
     if isinstance(node_info, dict):
       params_args = dict(
-        params=node_info.get('params'),
-        group_params=node_info.get('group_params'),
-        shared_params=node_info.get('shared_params'),
-        shared_group_params=node_info.get('shared_group_params'),
-        shared_group_params_dict=env.get('node_shared_group_params'),
-        shared_params_dict=env.get('node_shared_params'),
-        group_params_dict=env.get('node_group_params'),
+          params=node_info_dict.get('params'),
+          group_params=node_info_dict.get('group_params'),
+          shared_params=node_info_dict.get('shared_params'),
+          shared_group_params=node_info_dict.get('shared_group_params'),
+          shared_group_params_dict=env.get('node_shared_group_params'),
+          shared_params_dict=env.get('node_shared_params'),
+          group_params_dict=env.get('node_group_params'),
       )
 
       node_params_info = mix(params_args)
@@ -415,13 +447,13 @@ def prepare_node(node_info, env, validate_ctx):
         error_msgs_aux += [new_value]
 
     params_args = dict(
-      params=node.get('params'),
-      group_params=node.get('group_params'),
-      shared_params=node.get('shared_params'),
-      shared_group_params=node.get('shared_group_params'),
-      shared_group_params_dict=env.get('node_shared_group_params'),
-      shared_params_dict=env.get('node_shared_params'),
-      group_params_dict=env.get('node_group_params'),
+        params=node.get('params'),
+        group_params=node.get('group_params'),
+        shared_params=node.get('shared_params'),
+        shared_group_params=node.get('shared_group_params'),
+        shared_group_params_dict=env.get('node_shared_group_params'),
+        shared_params_dict=env.get('node_shared_params'),
+        group_params_dict=env.get('node_group_params'),
     )
 
     node_params_info = mix(params_args)
@@ -454,8 +486,8 @@ def prepare_node(node_info, env, validate_ctx):
 
     if credential:
       params_args = dict(
-        group_params=dict(credential=credential),
-        group_params_dict=env.get('credentials'),
+          group_params=dict(credential=credential),
+          group_params_dict=env.get('credentials'),
       )
 
       node_params_info = mix(params_args)
@@ -468,10 +500,24 @@ def prepare_node(node_info, env, validate_ctx):
         error_msgs_aux += [new_value]
 
       if not error_msgs_aux_credential:
-        result['credential'] = result_aux_credential.get('credential')
+        credential = result_aux_credential.get('credential')
+        result['credential'] = credential
+
+        if validate_ctx:
+          schema_file = 'schemas/node_credential.schema.yml'
+
+          if os.path.exists(schema_file):
+            schema = load_yaml_file(schema_file)
+            error_msgs_aux_validate = validate(schema, credential)
+
+            for value in (error_msgs_aux_validate or []):
+              new_value = ['context: validate credentials'] + value
+              error_msgs_aux += [new_value]
+          else:
+            error_msgs_aux += [['schema file not found: ' + schema_file]]
 
     pods = node.get('pods')
-    pod_ctx_info_dict = node_info.get('pods')
+    pod_ctx_info_dict = node_info_dict.get('pods')
 
     if pods:
       pods_info = prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx)
@@ -493,6 +539,7 @@ def prepare_node(node_info, env, validate_ctx):
 def prepare_nodes(nodes, env, validate_ctx):
   result = []
   error_msgs = []
+  node_names = set()
 
   if nodes:
     nodes_dict = env.get('nodes')
@@ -509,7 +556,16 @@ def prepare_nodes(nodes, env, validate_ctx):
         if error_msgs_aux:
           error_msgs += error_msgs_aux
         else:
-          result += [result_aux]
+          node_name = result_aux.get('name')
+
+          if node_name in node_names:
+            error_msgs += [[
+                'node_name: ' + node_name,
+                'msg: duplicate node name',
+            ]]
+          else:
+            node_names.add(node_name)
+            result += [result_aux]
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -541,13 +597,13 @@ def prepare_ctx(ctx_name, env, validate_ctx):
       result['ctx'] = ctx_result
 
       params_args = dict(
-        params=ctx.get('params'),
-        group_params=ctx.get('group_params'),
-        shared_params=ctx.get('shared_params'),
-        shared_group_params=ctx.get('shared_group_params'),
-        shared_group_params_dict=env.get('main_shared_group_params'),
-        shared_params_dict=env.get('main_shared_params'),
-        group_params_dict=env.get('main_group_params'),
+          params=ctx.get('params'),
+          group_params=ctx.get('group_params'),
+          shared_params=ctx.get('shared_params'),
+          shared_group_params=ctx.get('shared_group_params'),
+          shared_group_params_dict=env.get('main_shared_group_params'),
+          shared_params_dict=env.get('main_shared_params'),
+          group_params_dict=env.get('main_group_params'),
       )
 
       ctx_params_info = mix(params_args)
@@ -584,9 +640,11 @@ def prepare_ctx(ctx_name, env, validate_ctx):
         result_aux = services_info.get('result')
         error_msgs_aux = services_info.get('error_msgs')
 
-        if error_msgs_aux:
-          error_msgs += error_msgs_aux
-        else:
+        for value in (error_msgs_aux or []):
+          new_value = ['service context: initial services'] + value
+          error_msgs += [new_value]
+
+        if not error_msgs_aux:
           result['initial_services'] = result_aux
 
       ctx_nodes = ctx.get('nodes')
@@ -610,9 +668,11 @@ def prepare_ctx(ctx_name, env, validate_ctx):
         result_aux = services_info.get('result')
         error_msgs_aux = services_info.get('error_msgs')
 
-        if error_msgs_aux:
-          error_msgs += error_msgs_aux
-        else:
+        for value in (error_msgs_aux or []):
+          new_value = ['service context: final services'] + value
+          error_msgs += [new_value]
+
+        if not error_msgs_aux:
           result['final_services'] = result_aux
 
   return dict(result=result, error_msgs=error_msgs)

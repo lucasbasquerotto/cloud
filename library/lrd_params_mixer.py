@@ -81,13 +81,13 @@ def main():
   )
 
   params_args = dict(
-    params=module.params['params'],
-    group_params=module.params['group_params'],
-    shared_params=module.params['shared_params'],
-    shared_group_params=module.params['shared_group_params'],
-    shared_group_params_dict=module.params['shared_group_params_dict'],
-    shared_params_dict=module.params['shared_params_dict'],
-    group_params_dict=module.params['group_params_dict'],
+      params=module.params['params'],
+      group_params=module.params['group_params'],
+      shared_params=module.params['shared_params'],
+      shared_group_params=module.params['shared_group_params'],
+      shared_group_params_dict=module.params['shared_group_params_dict'],
+      shared_params_dict=module.params['shared_params_dict'],
+      group_params_dict=module.params['group_params_dict'],
   )
 
   info = mix(params_args)
