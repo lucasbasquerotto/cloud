@@ -118,8 +118,8 @@
     params_mixer_params: >-
       {{
       params_mixer_shared_group_params | default({}) |
-      combine(params_mixer_mixed_shared_params | default({}), recursive=True) |
-      combine(params_mixer_group_params | default({}), recursive=True) |
-      combine(params_mixer_main_params | default({}), recursive=True)
+      combine(params_mixer_mixed_shared_params | default({})) |
+      combine(params_mixer_group_params | default({})) |
+      combine(params_mixer_main_params | default({}))
       }}
   tags: ["no_print"]

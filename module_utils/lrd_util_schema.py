@@ -12,9 +12,9 @@ __metaclass__ = type # pylint: disable=invalid-name
 import yaml
 
 try:
-  from yaml import CLoader as Loader, CDumper as Dumper
+  from yaml import CLoader as Loader
 except ImportError:
-  from yaml import Loader, Dumper
+  from yaml import Loader
 
 SCHEMA_BASE = """
 root: "schema_wrapper"
@@ -479,14 +479,3 @@ def validate(schema, value, validate_schema=True):
     return error_msgs
 
   return []
-
-def error_text(error_msgs):
-  separator = "-------------------------------------------"
-  new_error_msgs = [separator]
-
-  for value in error_msgs:
-    new_error_msgs += [value, separator]
-
-  error = yaml.dump(new_error_msgs, Dumper=Dumper, default_flow_style=False)
-
-  return error

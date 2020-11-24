@@ -21,8 +21,8 @@ DOCUMENTATION = '''
 module: lrd_schema
 short_description: Validate a value according to a specified schema.
 description:
-   - Adds or removes a user from a MySQL database.
-version_added: "0.6"
+   - Validate a value according to a specified schema.
+version_added: "2.8"
 options:
   schema:
     description:
@@ -147,7 +147,8 @@ EXAMPLES = """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.lrd_validate import validate, error_text
+from ansible.module_utils.lrd_utils import error_text
+from ansible.module_utils.lrd_util_schema import validate
 
 # ===========================================
 # Module execution.
@@ -172,7 +173,6 @@ def main():
     module.fail_json(msg=to_text(error_text(error_msgs)))
 
   module.exit_json(changed=False)
-
 
 if __name__ == '__main__':
   main()
