@@ -5,16 +5,12 @@
 
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
+# pylint: disable=import-error
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type # pylint: disable=invalid-name
 
-import yaml
-
-try:
-  from yaml import CLoader as Loader
-except ImportError:
-  from yaml import Loader
+from ansible.module_utils.lrd_utils import load_yaml
 
 SCHEMA_BASE = """
 root: "schema_wrapper"
@@ -440,7 +436,7 @@ def validate_next_value(schema_data, value):
 
 def validate_value(schema, value):
   if schema is None:
-    return [['main schema is not defined']]
+    return [['msg: main schema is not defined']]
 
   schema_name = schema.get('root')
   schema_info_dict = schema.get('schemas')
@@ -463,7 +459,7 @@ def validate_value(schema, value):
 
 def validate(schema, value, validate_schema=True):
   if validate_schema:
-    schema_base = yaml.load(SCHEMA_BASE, Loader=Loader)
+    schema_base = load_yaml(SCHEMA_BASE)
     error_msgs = validate_value(schema_base, schema)
 
     if error_msgs:

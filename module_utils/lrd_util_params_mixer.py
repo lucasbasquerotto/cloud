@@ -5,14 +5,12 @@
 
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
+# pylint: disable=import-error
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type # pylint: disable=invalid-name
 
-def merge_dicts(dict1, dict2):
-  new_dict = dict1.copy()   # start with dict1's keys and values
-  new_dict.update(dict2)    # modifies new_dict with dict2's keys and values & returns None
-  return new_dict
+from ansible.module_utils.lrd_utils import merge_dicts
 
 def expand_group_params(group_params, group_params_dict, ctx_name=None):
   result = dict()

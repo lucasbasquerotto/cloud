@@ -12,9 +12,27 @@ __metaclass__ = type # pylint: disable=invalid-name
 import yaml
 
 try:
-  from yaml import CDumper as Dumper
+  from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
-  from yaml import Dumper
+  from yaml import Loader, Dumper
+
+def merge_dicts(*args):
+  new_dict = None
+
+  for current_dict in (args or []):
+    if not new_dict:
+      new_dict = current_dict.copy()
+    else:
+      new_dict.update(current_dict)
+
+  return new_dict
+
+def load_yaml(text):
+  return yaml.load(text, Loader=Loader)
+
+def load_yaml_file(file_path):
+  content = open(file_path, 'r').read()
+  return load_yaml(content)
 
 def error_text(error_msgs):
   separator = "-------------------------------------------"

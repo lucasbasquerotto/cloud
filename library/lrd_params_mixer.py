@@ -24,7 +24,6 @@ description:
    - Mix parameters to create a resulting parameter dictionary.
 version_added: "2.8"
 options:
-
   params:
     description:
       - main parameters (overrides every other parameter)
