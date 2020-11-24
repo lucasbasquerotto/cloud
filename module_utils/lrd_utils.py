@@ -31,8 +31,9 @@ def load_yaml(text):
   return yaml.load(text, Loader=Loader)
 
 def load_yaml_file(file_path):
-  content = open(file_path, 'r').read()
-  return load_yaml(content)
+  with open(file_path, 'rb') as file:
+    content = file.read().decode('utf-8-sig')
+    return load_yaml(content)
 
 def error_text(error_msgs):
   separator = "-------------------------------------------"

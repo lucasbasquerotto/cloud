@@ -45,6 +45,8 @@ notes:
 author: "Lucas Basquerotto (@lucasbasquerotto)"
 '''
 
+import os
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, error_text
@@ -137,12 +139,15 @@ def prepare_service(service_info, env, validate_ctx):
         schema_file = service.get('schema')
 
         if schema_file:
-          schema = load_yaml_file(schema_file)
-          error_msgs_aux_validate = validate(schema, service_params)
+          if os.path.exists(schema_file):
+            schema = load_yaml_file(schema_file)
+            error_msgs_aux_validate = validate(schema, service_params)
 
-          for value in (error_msgs_aux_validate or []):
-            new_value = ['context: validate service params'] + value
-            error_msgs_aux += [new_value]
+            for value in (error_msgs_aux_validate or []):
+              new_value = ['context: validate service params'] + value
+              error_msgs_aux += [new_value]
+          else:
+            error_msgs_aux += [['schema file not found: ' + schema_file]]
 
     params_args = dict(
       group_params=service.get('credentials'),
@@ -296,12 +301,15 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
         schema_file = pod.get('schema')
 
         if schema_file:
-          schema = load_yaml_file(schema_file)
-          error_msgs_aux_validate = validate(schema, pod_params)
+          if os.path.exists(schema_file):
+            schema = load_yaml_file(schema_file)
+            error_msgs_aux_validate = validate(schema, pod_params)
 
-          for value in (error_msgs_aux_validate or []):
-            new_value = ['context: validate pod params'] + value
-            error_msgs_aux += [new_value]
+            for value in (error_msgs_aux_validate or []):
+              new_value = ['context: validate pod params'] + value
+              error_msgs_aux += [new_value]
+          else:
+            error_msgs_aux += [['schema file not found: ' + schema_file]]
 
     params_args = dict(
       group_params=pod.get('credentials'),
@@ -430,12 +438,17 @@ def prepare_node(node_info, env, validate_ctx):
       result['node_params'] = node_params
 
       if validate_ctx:
-        schema = load_yaml_file('schemas/node_params.yml')
-        error_msgs_aux_validate = validate(schema, node_params)
+        schema_file = 'schemas/node_params.schema.yml'
 
-        for value in (error_msgs_aux_validate or []):
-          new_value = ['context: validate node params'] + value
-          error_msgs_aux += [new_value]
+        if os.path.exists(schema_file):
+          schema = load_yaml_file(schema_file)
+          error_msgs_aux_validate = validate(schema, node_params)
+
+          for value in (error_msgs_aux_validate or []):
+            new_value = ['context: validate node params'] + value
+            error_msgs_aux += [new_value]
+        else:
+          error_msgs_aux += [['schema file not found: ' + schema_file]]
 
     credential = node.get('credential')
 
@@ -551,12 +564,17 @@ def prepare_ctx(ctx_name, env, validate_ctx):
         result['ctx_params'] = ctx_params
 
         if validate_ctx:
-          schema = load_yaml_file('schemas/ctx_params.yml')
-          error_msgs_aux = validate(schema, ctx_params)
+          schema_file = 'schemas/ctx_params.schema.yml'
 
-          for value in (error_msgs_aux or []):
-            new_value = ['context: validate ctx params'] + value
-            error_msgs += [new_value]
+          if os.path.exists(schema_file):
+            schema = load_yaml_file(schema_file)
+            error_msgs_aux = validate(schema, ctx_params)
+
+            for value in (error_msgs_aux or []):
+              new_value = ['context: validate ctx params'] + value
+              error_msgs += [new_value]
+          else:
+            error_msgs_aux += [['schema file not found: ' + schema_file]]
 
       ctx_initial_services = ctx.get('initial_services')
 
