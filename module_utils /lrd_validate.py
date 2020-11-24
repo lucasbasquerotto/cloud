@@ -9,9 +9,9 @@
 import yaml
 
 try:
-  from yaml import CLoader as Loader
+  from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
-  from yaml import Loader
+  from yaml import Loader, Dumper
 
 SCHEMA_BASE = """
 root: "schema_wrapper"
@@ -466,3 +466,14 @@ def validate(schema, value, validate_schema=True):
     return error_msgs
 
   return []
+
+def error_text(error_msgs):
+  new_error_msgs = []
+  separator = "---------------------------------"
+
+  for value in error_msgs:
+    new_error_msgs += [value, separator]
+
+  error = yaml.dump(new_error_msgs, Dumper=Dumper, default_flow_style=False)
+
+  return error
