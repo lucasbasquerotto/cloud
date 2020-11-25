@@ -76,12 +76,12 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
   else:
     service = services_dict.get(service_key)
     service_result = service.copy()
-    service_result['services'] = None
-    service_result['credentials'] = None
-    service_result['params'] = None
-    service_result['group_params'] = None
-    service_result['shared_params'] = None
-    service_result['shared_group_params'] = None
+    service_result.pop('services', None)
+    service_result.pop('credentials', None)
+    service_result.pop('params', None)
+    service_result.pop('group_params', None)
+    service_result.pop('shared_params', None)
+    service_result.pop('shared_group_params', None)
     result['service'] = service_result
 
     result_aux_info = dict()
@@ -350,11 +350,11 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
   else:
     pod = pods_dict.get(pod_key)
     pod_result = pod.copy()
-    pod_result['credentials'] = None
-    pod_result['params'] = None
-    pod_result['group_params'] = None
-    pod_result['shared_params'] = None
-    pod_result['shared_group_params'] = None
+    pod_result.pop('credentials', None)
+    pod_result.pop('params', None)
+    pod_result.pop('group_params', None)
+    pod_result.pop('shared_params', None)
+    pod_result.pop('shared_group_params', None)
     result['pod'] = pod_result
 
     pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
@@ -541,11 +541,11 @@ def prepare_node(node_info, env, validate_ctx):
   else:
     node = nodes_dict.get(node_key)
     node_result = node.copy()
-    node_result['pods'] = None
-    node_result['params'] = None
-    node_result['group_params'] = None
-    node_result['shared_params'] = None
-    node_result['shared_group_params'] = None
+    node_result.pop('pods', None)
+    node_result.pop('params', None)
+    node_result.pop('group_params', None)
+    node_result.pop('shared_params', None)
+    node_result.pop('shared_group_params', None)
     result['node'] = node_result
 
     result_aux_info = dict()
@@ -712,13 +712,13 @@ def prepare_ctx(ctx_name, env, validate_ctx):
     else:
       ctx = main_dict.get(ctx_name)
       ctx_result = ctx.copy()
-      ctx_result['initial_services'] = None
-      ctx_result['nodes'] = None
-      ctx_result['final_services'] = None
-      ctx_result['params'] = None
-      ctx_result['group_params'] = None
-      ctx_result['shared_params'] = None
-      ctx_result['shared_group_params'] = None
+      ctx_result.pop('initial_services', None)
+      ctx_result.pop('nodes', None)
+      ctx_result.pop('final_services', None)
+      ctx_result.pop('params', None)
+      ctx_result.pop('group_params', None)
+      ctx_result.pop('shared_params', None)
+      ctx_result.pop('shared_group_params', None)
       result['ctx'] = ctx_result
 
       params_args = dict(
