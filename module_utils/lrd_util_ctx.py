@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 import os
 
-from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, default
+from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, default, is_empty
 from ansible.module_utils.lrd_util_params_mixer import mix
 from ansible.module_utils.lrd_util_schema import validate
 
@@ -346,8 +346,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
 
   if pod_key not in pods_dict:
     error_msgs += [[
-        'name: ' + pod_name,
-        'key: ' + pod_key,
+        'pod: ' + pod_description,
         'existing_keys:',
         sorted(list(pods_dict.keys())),
         'msg: no pod specified for the environment'
@@ -542,8 +541,7 @@ def prepare_node(node_info, env, validate_ctx):
 
   if node_key not in nodes_dict:
     error_msgs += [[
-        'name: ' + node_name,
-        'key: ' + node_key,
+        'node: ' + node_description,
         'existing_keys:',
         sorted(list(nodes_dict.keys())),
         'msg: no node specified for the environment'
@@ -560,6 +558,24 @@ def prepare_node(node_info, env, validate_ctx):
 
     result_aux_info = dict()
     error_msgs_aux = []
+
+    local = node_info_dict.get('local')
+    external = node_info_dict.get('external')
+
+    if (not local) and (not external):
+      required_props = [
+          'service',
+          'base_dir',
+          'credential',
+      ]
+
+      for key in required_props:
+        if is_empty(node.get(key)):
+          error_msgs += [[
+              'node: ' + node_description,
+              'property: ' + key,
+              'msg: required property not found in node or is empty (non-local and non-external)'
+          ]]
 
     credential = node.get('credential')
 
@@ -640,6 +656,7 @@ def prepare_node(node_info, env, validate_ctx):
 
       if validate_ctx:
         schema_file = 'schemas/node_params.schema.yml'
+        error_msgs_aux_validate = []
 
         if os.path.exists(schema_file):
           schema = load_schema(schema_file)
@@ -650,6 +667,18 @@ def prepare_node(node_info, env, validate_ctx):
             error_msgs_aux += [new_value]
         else:
           error_msgs_aux += [['params schema file not found: ' + schema_file]]
+
+        if (not error_msgs_aux_validate) and (not local):
+          required_props = ['host_test']
+
+          for key in required_props:
+            if is_empty(node_params.get(key)):
+              error_msgs += [[
+                  'node: ' + node_description,
+                  'property: ' + key,
+                  'context: validate node params (custom)',
+                  'msg: required property not found in node params or is empty (non-local)'
+              ]]
 
     pods = node.get('pods')
     pod_ctx_info_dict = node_info_dict.get('pods')

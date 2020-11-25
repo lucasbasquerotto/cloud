@@ -56,6 +56,9 @@ def error_text(error_msgs, context = None):
 def default(value, default_value):
   return default_value if value is None else value
 
+def is_empty(value):
+  return (value is None) or (isinstance(value, str) and value == '')
+
 def is_int(str_val):
   try:
     int(str_val)

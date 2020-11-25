@@ -12,7 +12,6 @@ schemas:
       user_data_params:
         type: "dict"
       host_test:
-        type: "dict"
         schema: "host_test"
       cron:
         type: "list"
@@ -22,12 +21,12 @@ schemas:
   host_test:
     type: "dict"
     props:
-      host_test_log_file:
+      log_file:
         type: "str"
-        required: true
+        non_empty: true
       setup_finished_log_regex:
         type: "str"
-        required: true
+        non_empty: true
       setup_finished_log_last_line:
         type: "str"
       initial_connection_timeout:
@@ -39,10 +38,10 @@ schemas:
     props:
       user:
         type: "str"
-        required: true
+        non_empty: true
       src_file:
         type: "str"
-        required: true
+        non_empty: true
       dest_dir:
         type: "str"
-        required: true
+        non_empty: true
