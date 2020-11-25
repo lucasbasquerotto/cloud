@@ -48,3 +48,17 @@ def error_text(error_msgs):
 
 def default(value, default_value):
   return default_value if value is None else value
+
+def is_int(str_val):
+  try:
+    int(str_val)
+    return True
+  except ValueError:
+    return False
+
+def is_float(str_val):
+  try:
+    float(str_val)
+    return True
+  except ValueError:
+    return False

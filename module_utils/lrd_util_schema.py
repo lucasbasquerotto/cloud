@@ -10,7 +10,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type # pylint: disable=invalid-name
 
-from ansible.module_utils.lrd_utils import load_yaml
+from ansible.module_utils.lrd_utils import load_yaml, is_int, is_float
 
 SCHEMA_BASE = """
 root: "schema_wrapper"
@@ -31,6 +31,17 @@ schemas:
       type:
         required: true
         type: "str"
+        choices:
+          - "unknown"
+          - "primitive"
+          - "str"
+          - "bool"
+          - "int"
+          - "float"
+          - "str_or_dict"
+          - "dict"
+          - "map"
+          - "list"
       non_empty:
         type: "bool"
       elem_type:
@@ -52,6 +63,17 @@ schemas:
     props:
       type:
         type: "str"
+        choices:
+          - "unknown"
+          - "primitive"
+          - "str"
+          - "bool"
+          - "int"
+          - "float"
+          - "str_or_dict"
+          - "dict"
+          - "map"
+          - "list"
       schema:
         type: "str"
       required:
@@ -178,29 +200,6 @@ def validate_next_value(schema_data, value):
           'msg: type is not defined'
       ]]
 
-    allowed_types = [
-        'unknown',
-        'primitive',
-        'str',
-        'bool',
-        'int',
-        'float',
-        'str_or_dict',
-        'dict',
-        'map',
-        'list'
-    ]
-
-    if value_type not in allowed_types:
-      return [[
-          'schema_name: ' + schema_name + schema_suffix,
-          'at: ' + (schema_ctx or '<root>'),
-          'type: ' + value_type,
-          'msg: type is invalid',
-          'valid_types:',
-          allowed_types
-      ]]
-
     if value_type in ['list']:
       if not is_list:
         return [[
@@ -240,6 +239,67 @@ def validate_next_value(schema_data, value):
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
             'msg: value expected to be a primitive'
+        ]]
+
+    primitive_types = [
+        'primitive',
+        'str',
+        'bool',
+        'int',
+        'float',
+    ]
+
+    if value_type in primitive_types and (str(value) != ''):
+      if (value_type == 'bool') and (not isinstance(value, bool)):
+        valid_strs = ["True", "False", "true", "false"]
+
+        if (not isinstance(value, str)) or (value not in valid_strs):
+          return [[
+              'schema_name: ' + schema_name + schema_suffix,
+              'at: ' + (schema_ctx or '<root>'),
+              'type: ' + value_type,
+              'value type: ' + str(type(value)),
+              'msg: value should be a boolean',
+          ]]
+      elif (value_type == 'int') and (
+          isinstance(value, bool) or not isinstance(value, int)):
+        if (not isinstance(value, str)) or (not is_int(value)):
+          return [[
+              'schema_name: ' + schema_name + schema_suffix,
+              'at: ' + (schema_ctx or '<root>'),
+              'type: ' + value_type,
+              'value type: ' + str(type(value)),
+              'msg: value should be an integer',
+          ]]
+      elif (value_type == 'float') and (not isinstance(value, float)):
+        if (not isinstance(value, str)) or (not is_float(value)):
+          return [[
+              'schema_name: ' + schema_name + schema_suffix,
+              'at: ' + (schema_ctx or '<root>'),
+              'type: ' + value_type,
+              'value type: ' + str(type(value)),
+              'msg: value should be a float',
+          ]]
+
+    choices = schema_info.get('choices')
+
+    if choices:
+      if value_type not in primitive_types:
+        return [[
+            'schema_name: ' + schema_name + schema_suffix,
+            'at: ' + (schema_ctx or '<root>'),
+            'type: ' + value_type,
+            'msg: value type is not primitive but has choices',
+        ]]
+      elif value not in choices:
+        return [[
+            'schema_name: ' + schema_name + schema_suffix,
+            'at: ' + (schema_ctx or '<root>'),
+            'type: ' + value_type,
+            'value: ' + value,
+            'msg: value is invalid',
+            'valid choices:',
+            choices
         ]]
 
     new_type = schema_info.get('type')
