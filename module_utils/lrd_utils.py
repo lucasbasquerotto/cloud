@@ -35,7 +35,14 @@ def load_yaml_file(file_path):
     content = file.read().decode('utf-8-sig')
     return load_yaml(content)
 
-def error_text(error_msgs):
+def error_text(error_msgs, context = None):
+  if not error_msgs:
+    return ''
+
+  if context:
+    msg = '[' + context + '] ' + str(len(error_msgs)) + ' error(s)'
+    error_msgs = [[msg]] + error_msgs + [[msg]]
+
   separator = "-------------------------------------------"
   new_error_msgs = [separator]
 

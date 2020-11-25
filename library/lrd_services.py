@@ -24,10 +24,10 @@ description:
    - Return the context variables from the environment.
 version_added: "2.8"
 options:
-  ctx_name:
+  services:
     description:
-      - the context name
-    type: str
+      - the services information
+    type: list
     required: true
   env:
     description:
@@ -48,7 +48,7 @@ author: "Lucas Basquerotto (@lucasbasquerotto)"
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.lrd_utils import error_text
-from ansible.module_utils.lrd_util_ctx import prepare_ctx
+from ansible.module_utils.lrd_util_ctx import prepare_services
 
 # ===========================================
 # Module execution.
@@ -57,24 +57,23 @@ from ansible.module_utils.lrd_util_ctx import prepare_ctx
 def main():
   module = AnsibleModule(
       argument_spec=dict(
-          ctx_name=dict(type='str', required=True),
+          services=dict(type='list', required=True),
           env=dict(type='dict', required=True),
           validate=dict(type='bool', default=True),
       )
   )
 
-  ctx_name = module.params['ctx_name']
+  services = module.params['services']
   env = module.params['env']
   validate_ctx = module.boolean(module.params['validate'])
 
-  info = prepare_ctx(ctx_name, env, validate_ctx)
+  info = prepare_services(services, env, validate_ctx, top=True)
 
   result = info.get('result')
   error_msgs = info.get('error_msgs')
 
   if error_msgs:
-    context = "ctx validation"
-    module.fail_json(msg=to_text(error_text(error_msgs, context)))
+    module.fail_json(msg=to_text(error_text(error_msgs)))
 
   module.exit_json(changed=False, data=result)
 

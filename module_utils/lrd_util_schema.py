@@ -523,14 +523,14 @@ def validate(schema, value, validate_schema=True):
     error_msgs = validate_value(schema_base, schema)
 
     if error_msgs:
-      msg = str(len(error_msgs)) + ' error(s) when validating schema'
+      msg = str(len(error_msgs)) + ' error(s) when validating the schema itself'
       error_msgs = [[msg]] + error_msgs + [[msg]]
       return error_msgs
 
   error_msgs = validate_value(schema, value)
 
   if error_msgs:
-    msg = str(len(error_msgs)) + ' error(s) when validating value'
+    msg = str(len(error_msgs)) + ' error(s) when validating the schema value'
     error_msgs = [[msg]] + error_msgs + [[msg]]
     return error_msgs
 
