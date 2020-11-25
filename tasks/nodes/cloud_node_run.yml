@@ -28,14 +28,16 @@
           'name': 'cloud-node-service-' + tmp_item,
           'key': cloud_node_node.service,
           'single': 'true',
-          'state':
-            (
-              ((tmp_item | int) <= (cloud_node_instance_count | int))
-              and
-              ((cloud_node_state | default('')) != 'absent')
-            )
-            | ternary('present', 'absent')
-          'params': cloud_node_service_params_base | combine({ 'name': tmp_name })
+          'params': cloud_node_service_params_base | combine({
+            'name': tmp_name,
+            'state':
+              (
+                ((tmp_item | int) <= (cloud_node_instance_count | int))
+                and
+                ((cloud_node_state | default('')) != 'absent')
+              )
+              | ternary('present', 'absent')
+          })
         }]
       }}
   var:

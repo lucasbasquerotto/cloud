@@ -11,11 +11,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type # pylint: disable=invalid-name
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-
 import os
 
 from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, default, is_empty
@@ -576,6 +571,22 @@ def prepare_node(node_info, env, validate_ctx):
               'property: ' + key,
               'msg: required property not found in node or is empty (non-local and non-external)'
           ]]
+
+    service = node.get('service')
+
+    if service:
+      service_info = dict(name=service + '-1', key=service, single=True, state='present')
+      service_result_info = prepare_services([service_info], env, validate_ctx, True)
+
+      result_aux_service = service_result_info.get('result')
+      error_msgs_aux_service = service_result_info.get('error_msgs')
+
+      for value in (error_msgs_aux_service or []):
+        new_value = ['context: node service'] + value
+        error_msgs_aux += [new_value]
+
+      if not error_msgs_aux_service:
+        result['services'] = result_aux_service
 
     credential = node.get('credential')
 
