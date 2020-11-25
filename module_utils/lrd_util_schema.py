@@ -44,6 +44,9 @@ schemas:
           - "list"
       non_empty:
         type: "bool"
+      choices:
+        type: "list"
+        elem_type: "primitive"
       elem_type:
         type: "str"
       elem_schema:
@@ -52,12 +55,12 @@ schemas:
         type: "bool"
       elem_non_empty:
         type: "bool"
+      elem_choices:
+        type: "list"
+        elem_type: "primitive"
       props:
         type: "map"
         elem_schema: "prop"
-      choices:
-        type: "list"
-        elem_type: "str"
   prop:
     type: "dict"
     props:
@@ -80,6 +83,9 @@ schemas:
         type: "bool"
       non_empty:
         type: "bool"
+      choices:
+        type: "list"
+        elem_type: "primitive"
       elem_type:
         type: "str"
       elem_schema:
@@ -88,6 +94,9 @@ schemas:
         type: "bool"
       elem_non_empty:
         type: "bool"
+      elem_choices:
+        type: "list"
+        elem_type: "primitive"
       values:
         type: "list"
         elem_type: "str"
@@ -210,6 +219,7 @@ def validate_next_value(schema_data, value):
             'schema_name: ' + schema_name + schema_suffix,
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
+            'value type: ' + str(type(value)),
             'msg: value expected to be a list',
         ]]
     elif value_type in ['dict', 'map']:
@@ -218,6 +228,7 @@ def validate_next_value(schema_data, value):
             'schema_name: ' + schema_name + schema_suffix,
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
+            'value type: ' + str(type(value)),
             'msg: value expected to be a dictionary'
         ]]
     elif value_type == 'str_or_dict':
@@ -226,6 +237,7 @@ def validate_next_value(schema_data, value):
             'schema_name: ' + schema_name + schema_suffix,
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
+            'value type: ' + str(type(value)),
             'msg: value expected to be a string or dictionary'
         ]]
     elif value_type == 'str':
@@ -234,6 +246,7 @@ def validate_next_value(schema_data, value):
             'schema_name: ' + schema_name + schema_suffix,
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
+            'value type: ' + str(type(value)),
             'msg: value expected to be a string'
         ]]
     elif value_type != 'unknown':
@@ -242,6 +255,7 @@ def validate_next_value(schema_data, value):
             'schema_name: ' + schema_name + schema_suffix,
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
+            'value type: ' + str(type(value)),
             'msg: value expected to be a primitive'
         ]]
 
@@ -326,6 +340,7 @@ def validate_next_value(schema_data, value):
     elem_schema_name = schema_info.get('elem_schema')
     elem_required = schema_info.get('elem_required')
     elem_non_empty = schema_info.get('elem_non_empty')
+    elem_choices = schema_info.get('elem_choices')
 
     if value_type not in ['map', 'list']:
       if elem_type:
@@ -355,6 +370,13 @@ def validate_next_value(schema_data, value):
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
             'msg: a definition should have elem_non_empty only for lists and maps'
+        ]]
+      elif elem_choices:
+        return [[
+            'schema_name: ' + schema_name + schema_suffix,
+            'at: ' + (schema_ctx or '<root>'),
+            'type: ' + value_type,
+            'msg: a definition should have elem_choices only for lists and maps'
         ]]
 
     if value_type in ['map', 'list']:
@@ -416,7 +438,8 @@ def validate_next_value(schema_data, value):
               type=elem_type,
               schema=elem_schema_name,
               required=elem_required,
-              non_empty=elem_non_empty
+              non_empty=elem_non_empty,
+              choices=elem_choices,
           )
 
           new_schema_data = dict(
@@ -476,7 +499,8 @@ def validate_next_value(schema_data, value):
                 type=elem_type,
                 schema=elem_schema_name,
                 required=elem_required,
-                non_empty=elem_non_empty
+                non_empty=elem_non_empty,
+                choices=elem_choices,
             )
 
             new_schema_data = dict(
