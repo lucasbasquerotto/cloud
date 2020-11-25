@@ -120,18 +120,22 @@ def validate_next_value(schema_data, value):
         'msg: schema is not defined'
     ]]
 
-  if required or schema_info.get('non_empty'):
+  non_empty = schema_info.get('non_empty')
+
+  if required or non_empty:
     if value is None:
+      non_empty_info = ' (' + ('non_empty' if non_empty else 'required') + ')'
+
       return [[
           'schema_name: ' + schema_name + schema_suffix,
           'at: ' + (schema_ctx or '<root>'),
-          'msg: value is not defined'
+          'msg: value is not defined' + non_empty_info
       ]]
 
   value_type = schema_info.get('type')
   next_schema = schema_info.get('schema')
 
-  if (not is_subelement) and ('schema' in schema_info):
+  if (not is_subelement) and (not is_prop) and ('schema' in schema_info):
     return [[
         'schema_name: ' + schema_name + schema_suffix,
         'at: ' + (schema_ctx or '<root>'),
@@ -169,7 +173,7 @@ def validate_next_value(schema_data, value):
   is_dict = isinstance(value, dict)
   is_string = isinstance(value, str)
 
-  if schema_info.get('non_empty'):
+  if non_empty:
     if is_list:
       if not value:
         return [[
@@ -429,15 +433,12 @@ def validate_next_value(schema_data, value):
       elif is_dict:
         keys = list(value.keys())
 
+        # required or non-empty properties
         if props and (value_type in ['dict', 'str_or_dict']):
-          # required_keys=list(filter(lambda p: props.get(p).get('required'), props.keys()))
-          # keys+=required_keys
-          # keys=set(keys)
-
           for key in list(props.keys()):
             prop_value = props.get(key)
 
-            if prop_value and prop_value.get('required'):
+            if prop_value and (prop_value.get('required') or prop_value.get('non_empty')):
               keys += [key]
 
           keys = list(set(keys))
@@ -518,20 +519,26 @@ def validate_value(schema, value):
   return error_msgs
 
 def validate(schema, value, validate_schema=True):
+  error_msgs = []
+
   if validate_schema:
     schema_base = load_yaml(SCHEMA_BASE)
-    error_msgs = validate_value(schema_base, schema)
+    error_msgs_aux = validate_value(schema_base, schema)
 
-    if error_msgs:
-      msg = str(len(error_msgs)) + ' error(s) when validating the schema itself'
-      error_msgs = [[msg]] + error_msgs + [[msg]]
+    if error_msgs_aux:
+      for value in (error_msgs_aux or []):
+        new_value = ['schema context: schema'] + value
+        error_msgs += [new_value]
+
       return error_msgs
 
-  error_msgs = validate_value(schema, value)
+  error_msgs_aux = validate_value(schema, value)
 
-  if error_msgs:
-    msg = str(len(error_msgs)) + ' error(s) when validating the schema value'
-    error_msgs = [[msg]] + error_msgs + [[msg]]
+  if error_msgs_aux:
+    for value in (error_msgs_aux or []):
+      new_value = ['schema context: value'] + value
+      error_msgs += [new_value]
+
     return error_msgs
 
   return []

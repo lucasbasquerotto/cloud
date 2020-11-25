@@ -174,6 +174,7 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
       error_msgs += [new_value]
 
     error_msgs_aux = []
+    base_dir_prefix = service.get('base_dir') + '/' if service.get('base_dir') else ''
 
     if not is_list:
       params_args = dict(
@@ -198,6 +199,8 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
           schema_file = service.get('credentials_schema')
 
           if schema_file:
+            schema_file = base_dir_prefix + schema_file
+
             if os.path.exists(schema_file):
               schema = load_schema(schema_file)
               error_msgs_aux_validate = validate(schema, credentials)
@@ -255,6 +258,8 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
           schema_file = service.get('params_schema')
 
           if schema_file:
+            schema_file = base_dir_prefix + schema_file
+
             if os.path.exists(schema_file):
               schema = load_schema(schema_file)
               error_msgs_aux_validate = validate(schema, service_params)
@@ -357,6 +362,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
     pod_result.pop('shared_group_params', None)
     result['pod'] = pod_result
 
+    base_dir_prefix = pod.get('base_dir') + '/' if pod.get('base_dir') else ''
     pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
     result_aux_ctx_info = dict()
     result_aux_info = dict()
@@ -384,6 +390,8 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
         schema_file = pod.get('credentials_schema')
 
         if schema_file:
+          schema_file = base_dir_prefix + schema_file
+
           if os.path.exists(schema_file):
             schema = load_schema(schema_file)
             error_msgs_aux_validate = validate(schema, credentials)
@@ -461,6 +469,8 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
         schema_file = pod.get('params_schema')
 
         if schema_file:
+          schema_file = base_dir_prefix + schema_file
+
           if os.path.exists(schema_file):
             schema = load_schema(schema_file)
             error_msgs_aux_validate = validate(schema, pod_params)

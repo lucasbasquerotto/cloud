@@ -169,8 +169,10 @@ def main():
 
   error_msgs = validate(schema, value, validate_schema)
 
+
   if error_msgs:
-    module.fail_json(msg=to_text(error_text(error_msgs)))
+    context = "schema validation"
+    module.fail_json(msg=to_text(error_text(error_msgs, context)))
 
   module.exit_json(changed=False)
 
