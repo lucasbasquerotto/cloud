@@ -296,7 +296,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
       if single:
         error_msgs_aux += [[
-          'msg: service shouldn\'t be a list (single)' + schema_file,
+          'msg: service should not be a list (single)',
         ]]
 
       for value in (error_msgs_aux or []):

@@ -148,7 +148,7 @@ def validate_next_value(schema_data, value):
     return [[
         'schema_name: ' + schema_name + schema_suffix,
         'at: ' + (schema_ctx or '<root>'),
-        'msg: a schema definition shouldn\'t have a schema property'
+        'msg: a schema definition should not have a schema property'
     ]]
   elif (not value_type) and (not next_schema):
     return [[
@@ -160,7 +160,7 @@ def validate_next_value(schema_data, value):
     return [[
         'schema_name: ' + schema_name + schema_suffix,
         'at: ' + (schema_ctx or '<root>'),
-        'msg: a definition shouldn\'t have both type and schema properties'
+        'msg: a definition should not have both type and schema properties'
     ]]
 
   if next_schema:
@@ -333,7 +333,7 @@ def validate_next_value(schema_data, value):
       return [[
           'schema_name: ' + schema_name + schema_suffix,
           'at: ' + (schema_ctx or '<root>'),
-          'msg: a property definition shouldn\'t have both type and schema properties'
+          'msg: a property definition should not have both type and schema properties'
       ]]
 
     elem_type = schema_info.get('elem_type')
@@ -394,7 +394,7 @@ def validate_next_value(schema_data, value):
             'at: ' + (schema_ctx or '<root>'),
             'type: ' + value_type,
             'msg: a property definition for a <' + value_type
-            + '> shouldn\'t have both elem_type and elem_schema properties'
+            + '> should not have both elem_type and elem_schema properties'
         ]]
 
     props = schema_info.get('props')
