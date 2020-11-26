@@ -13,7 +13,7 @@
 - name: "{{ env_title }} - env_ctx"
   set_fact:
     env_ctx: "{{ ctx_data.ctx }}"
-    env_ctx_params: "{{ ctx_data.ctx_params }}"
+    env_ctx_params: "{{ ctx_data.params }}"
   tags: ["no_print"]
 
 # - fail:
@@ -22,3 +22,8 @@
 
 - debug:
     var: ctx_data_result
+
+- name: "{{ env_title }} - env_ctx (old)"
+  set_fact:
+    env_ctx: "{{ env_ctx_raw }}"
+  tags: ["no_print"]

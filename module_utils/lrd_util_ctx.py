@@ -6,6 +6,7 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
 # pylint: disable=import-error
+# pylint: disable=too-many-lines
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type # pylint: disable=invalid-name
@@ -70,14 +71,6 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
     ]]
   else:
     service = services_dict.get(service_key)
-    service_result = service.copy()
-    service_result.pop('services', None)
-    service_result.pop('credentials', None)
-    service_result.pop('params', None)
-    service_result.pop('group_params', None)
-    service_result.pop('shared_params', None)
-    service_result.pop('shared_group_params', None)
-    result['service'] = service_result
 
     result_aux_info = dict()
     error_msgs_aux = []
@@ -85,9 +78,11 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
     is_list = service.get('list')
 
     if top:
+      result['absent'] = service_info_dict.get('absent')
+      service_info_dict.pop('absent', None)
       result['tmp'] = service_info_dict.get('tmp')
-      result['can_destroy'] = service_info_dict.get('can_destroy')
       service_info_dict.pop('tmp', None)
+      result['can_destroy'] = service_info_dict.get('can_destroy')
       service_info_dict.pop('can_destroy', None)
 
     if is_list:
@@ -109,7 +104,6 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
       allowed_keys = [
           'list',
           'flat_list',
-          'inverse_destroy',
           'services',
       ]
 
@@ -144,7 +138,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
       allowed_keys = [
           'list',
           'base_dir',
-          'type',
+          'task',
           'namespace',
           'credentials',
           'credentials_schema',
@@ -169,9 +163,28 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
       error_msgs += [new_value]
 
     error_msgs_aux = []
-    base_dir_prefix = service.get('base_dir') + '/' if service.get('base_dir') else ''
 
     if not is_list:
+      task = service.get('task')
+      result['task'] = task
+      result['namespace'] = service.get('namespace')
+
+      base_dir_prefix = service.get('base_dir') + '/' if service.get('base_dir') else ''
+      result['base_dir'] = service.get('base_dir')
+      result['base_dir_prefix'] = base_dir_prefix
+
+      if not task:
+        error_msgs_aux += [[
+            'property: task',
+            'msg: property not defined',
+        ]]
+
+      if validate_ctx:
+        task_file = base_dir_prefix + task
+
+        if not os.path.exists(task_file):
+          error_msgs_aux += [['task file not found: ' + task_file]]
+
       params_args = dict(
           group_params=service.get('credentials'),
           group_params_dict=env.get('credentials'),
@@ -254,7 +267,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
       if not error_msgs_aux_params:
         service_params = merge_dicts(result_aux_service, result_aux_info)
-        result['service_params'] = service_params
+        result['params'] = service_params
 
         if validate_ctx:
           schema_file = service.get('params_schema')
@@ -279,9 +292,28 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
         new_value = ['service: ' + service_description] + value
         error_msgs += [new_value]
     else:
+      single = service_info_dict.get('single')
+
+      if single:
+        error_msgs_aux += [[
+          'msg: service shouldn\'t be a list (single)' + schema_file,
+        ]]
+
+      for value in (error_msgs_aux or []):
+        new_value = ['service: ' + service_description] + value
+        error_msgs += [new_value]
+
+      flat_list = service.get('flat_list')
       services = service.get('services')
 
       if services:
+        if flat_list:
+          for idx, service_info_aux in enumerate(services):
+            if isinstance(service_info_aux, dict):
+              service_info_aux['single'] = True
+            else:
+              services[idx] = dict(name=service_info_aux, single=True)
+
         info_children = prepare_services(
             services, env_data, validate_ctx, top=False, service_names=service_names)
 
@@ -489,7 +521,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
 
     if not error_msgs_aux_params:
       pod_params = merge_dicts(result_aux_pod, result_aux_info, result_aux_ctx_info)
-      result['pod_params'] = pod_params
+      result['params'] = pod_params
 
       if validate_ctx:
         schema_file = pod.get('params_schema')
@@ -587,6 +619,13 @@ def prepare_node(node_info, env_data, validate_ctx):
     node_result.pop('shared_params', None)
     node_result.pop('shared_group_params', None)
     result['node'] = node_result
+
+    result['absent'] = node_info_dict.get('absent')
+    node_info_dict.pop('absent', None)
+    result['tmp'] = node_info_dict.get('tmp')
+    node_info_dict.pop('tmp', None)
+    result['can_destroy'] = node_info_dict.get('can_destroy')
+    node_info_dict.pop('can_destroy', None)
 
     result_aux_info = dict()
     error_msgs_aux = []
@@ -697,7 +736,7 @@ def prepare_node(node_info, env_data, validate_ctx):
 
     if not error_msgs_aux_params:
       node_params = merge_dicts(result_aux_node, result_aux_info)
-      result['node_params'] = node_params
+      result['params'] = node_params
 
       if validate_ctx:
         schema_file = 'schemas/node_params.schema.yml'
@@ -765,7 +804,7 @@ def prepare_node(node_info, env_data, validate_ctx):
         services_info += [service_info]
 
       if services_info:
-        result['services_info'] = services_info.copy()
+        result['prepared_services'] = services_info.copy()
 
         if validate_ctx:
           service_result_info = prepare_services(services_info, env_data, validate_ctx, True)
@@ -811,7 +850,7 @@ def prepare_node(node_info, env_data, validate_ctx):
             services_info += [service_info]
 
         if services_info:
-          result['dns_services_info'] = services_info.copy()
+          result['prepared_dns_services'] = services_info.copy()
 
           if validate_ctx:
             service_result_info = prepare_services(services_info, env_data, validate_ctx, True)
@@ -929,7 +968,7 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
 
       if not error_msgs_aux:
         ctx_params = result_aux
-        result['ctx_params'] = ctx_params
+        result['params'] = ctx_params
 
         if validate_ctx:
           schema_file = 'schemas/ctx_params.schema.yml'
@@ -960,7 +999,7 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
           error_msgs += [new_value]
 
         if not error_msgs_aux:
-          result['initial_services'] = result_aux
+          result['prepared_initial_services'] = result_aux
 
       ctx_nodes = ctx.get('nodes')
 
@@ -988,6 +1027,6 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
           error_msgs += [new_value]
 
         if not error_msgs_aux:
-          result['final_services'] = result_aux
+          result['prepared_final_services'] = result_aux
 
   return dict(result=result, error_msgs=error_msgs)
