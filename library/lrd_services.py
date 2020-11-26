@@ -29,11 +29,27 @@ options:
       - the services information
     type: list
     required: true
-  env:
+  env_data:
     description:
-      - the environment dictionary.
+      - the environment data (vars, env type, ctx dir)
     type: dict
     required: true
+    suboptions:
+      env:
+        description:
+          - the environment dictionary.
+        type: dict
+        required: true
+      dev:
+        description:
+          - specifies if it's a development environment
+        type: bool
+        required: true
+      ctx_dir:
+        description:
+          - specifies the context directory
+        type: str
+        required: true
   validate:
     description:
       - specifies if the schemas should be validated
@@ -54,20 +70,26 @@ from ansible.module_utils.lrd_util_ctx import prepare_services
 # Module execution.
 #
 
+env_data_spec = dict(
+    env=dict(type='dict', required=True),
+    dev=dict(type='bool', required=True),
+    ctx_dir=dict(type='str', required=True),
+)
+
 def main():
   module = AnsibleModule(
       argument_spec=dict(
           services=dict(type='list', required=True),
-          env=dict(type='dict', required=True),
+          env_data=dict(type='dict', required=True, options=env_data_spec),
           validate=dict(type='bool', default=True),
       )
   )
 
   services = module.params['services']
-  env = module.params['env']
+  env_data = module.params['env_data']
   validate_ctx = module.boolean(module.params['validate'])
 
-  info = prepare_services(services, env, validate_ctx, top=True)
+  info = prepare_services(services, env_data, validate_ctx, top=True)
 
   result = info.get('result')
   error_msgs = info.get('error_msgs')

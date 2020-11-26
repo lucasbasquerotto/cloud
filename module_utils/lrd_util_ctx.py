@@ -27,9 +27,10 @@ def load_schema(schema_file):
 
   return schema
 
-def prepare_service(service_info, service_names, env, validate_ctx, top):
+def prepare_service(service_info, service_names, env_data, validate_ctx, top):
   result = dict()
   error_msgs = []
+  env = env_data.get('env')
 
   service_info_dict = service_info if isinstance(service_info, dict) else dict()
 
@@ -272,7 +273,7 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
 
       if services:
         info_children = prepare_services(
-            services, env, validate_ctx, top=False, service_names=service_names)
+            services, env_data, validate_ctx, top=False, service_names=service_names)
 
         result_children = info_children.get('result')
         error_msgs_children = info_children.get('error_msgs')
@@ -287,10 +288,11 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_services(services, env, validate_ctx, top=False, service_names=None):
+def prepare_services(services, env_data, validate_ctx, top=False, service_names=None):
   result = []
   error_msgs = []
   service_names = service_names if service_names is not None else set()
+  env = env_data.get('env')
 
   if services:
     services_dict = env.get('services')
@@ -299,7 +301,7 @@ def prepare_services(services, env, validate_ctx, top=False, service_names=None)
       error_msgs += [['msg: no service specified for the environment']]
     else:
       for service_info in services:
-        info = prepare_service(service_info, service_names, env, validate_ctx, top)
+        info = prepare_service(service_info, service_names, env_data, validate_ctx, top)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs')
@@ -318,9 +320,11 @@ def prepare_services(services, env, validate_ctx, top=False, service_names=None)
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
+def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
   result = dict()
   error_msgs = []
+  env = env_data.get('env')
+  ctx_dir = env_data.get('ctx_dir')
 
   pod_info_dict = pod_info if isinstance(pod_info, dict) else dict()
 
@@ -332,9 +336,12 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
     error_msgs += [['msg: pod name not specified']]
     return dict(result=result, error_msgs=error_msgs)
 
+  local_dir = ctx_dir + '/pods/' + pod_name
+
   result['name'] = pod_name
   result['key'] = pod_key
   result['description'] = pod_description
+  result['local_dir'] = local_dir
 
   pods_dict = env.get('pods')
 
@@ -355,11 +362,20 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
     pod_result.pop('shared_group_params', None)
     result['pod'] = pod_result
 
-    base_dir_prefix = pod.get('base_dir') + '/' if pod.get('base_dir') else ''
+    base_dir_prefix = local_dir + '/'
     pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
     result_aux_ctx_info = dict()
     result_aux_info = dict()
     error_msgs_aux = []
+
+    if validate_ctx:
+      pod_ctx_file = pod.get('ctx')
+
+      if pod_ctx_file:
+        pod_ctx_file_full = base_dir_prefix + pod_ctx_file
+
+        if not os.path.exists(pod_ctx_file_full):
+          error_msgs_aux += [['pod ctx file not found: ' + pod_ctx_file]]
 
     params_args = dict(
         group_params=pod.get('credentials'),
@@ -383,10 +399,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
         schema_file = pod.get('credentials_schema')
 
         if schema_file:
-          schema_file = base_dir_prefix + schema_file
+          schema_file_full = base_dir_prefix + schema_file
 
-          if os.path.exists(schema_file):
-            schema = load_schema(schema_file)
+          if os.path.exists(schema_file_full):
+            schema = load_schema(schema_file_full)
             error_msgs_aux_validate = validate(schema, credentials)
 
             for value in (error_msgs_aux_validate or []):
@@ -462,10 +478,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
         schema_file = pod.get('params_schema')
 
         if schema_file:
-          schema_file = base_dir_prefix + schema_file
+          schema_file_full = base_dir_prefix + schema_file
 
-          if os.path.exists(schema_file):
-            schema = load_schema(schema_file)
+          if os.path.exists(schema_file_full):
+            schema = load_schema(schema_file_full)
             error_msgs_aux_validate = validate(schema, pod_params)
 
             for value in (error_msgs_aux_validate or []):
@@ -480,10 +496,11 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx):
+def prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx):
   result = []
   error_msgs = []
   pod_names = set()
+  env = env_data.get('env')
 
   if pods:
     pods_dict = env.get('pods')
@@ -492,7 +509,7 @@ def prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx):
       error_msgs += [['msg: no pod specified for the environment']]
     else:
       for pod_info in pods:
-        info = prepare_pod(pod_info, pod_ctx_info_dict, env, validate_ctx)
+        info = prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs')
@@ -513,9 +530,10 @@ def prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_node(node_info, env, validate_ctx):
+def prepare_node(node_info, env_data, validate_ctx):
   result = dict()
   error_msgs = []
+  env = env_data.get('env')
 
   node_info_dict = node_info if isinstance(node_info, dict) else dict()
 
@@ -570,6 +588,12 @@ def prepare_node(node_info, env, validate_ctx):
               'property: ' + key,
               'msg: required property not found in node or is empty (non-local and non-external)'
           ]]
+
+    if local and not env_data.get('dev'):
+      error_msgs += [[
+          'node: ' + node_description,
+          'msg: local node should be defined only in development environments'
+      ]]
 
     credential = node.get('credential')
 
@@ -714,7 +738,7 @@ def prepare_node(node_info, env, validate_ctx):
         result['services_info'] = services_info.copy()
 
         if validate_ctx:
-          service_result_info = prepare_services(services_info, env, validate_ctx, True)
+          service_result_info = prepare_services(services_info, env_data, validate_ctx, True)
 
           error_msgs_aux_service = service_result_info.get('error_msgs')
 
@@ -760,7 +784,7 @@ def prepare_node(node_info, env, validate_ctx):
           result['dns_services_info'] = services_info.copy()
 
           if validate_ctx:
-            service_result_info = prepare_services(services_info, env, validate_ctx, True)
+            service_result_info = prepare_services(services_info, env_data, validate_ctx, True)
             error_msgs_aux_service = service_result_info.get('error_msgs')
 
             for value in (error_msgs_aux_service or []):
@@ -771,7 +795,7 @@ def prepare_node(node_info, env, validate_ctx):
     pod_ctx_info_dict = node_info_dict.get('pods')
 
     if pods:
-      pods_info = prepare_pods(pods, pod_ctx_info_dict, env, validate_ctx)
+      pods_info = prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx)
 
       result_aux_pods = pods_info.get('result')
       error_msgs_aux_pods = pods_info.get('error_msgs')
@@ -787,10 +811,11 @@ def prepare_node(node_info, env, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_nodes(nodes, env, validate_ctx):
+def prepare_nodes(nodes, env_data, validate_ctx):
   result = []
   error_msgs = []
   node_names = set()
+  env = env_data.get('env')
 
   if nodes:
     nodes_dict = env.get('nodes')
@@ -799,7 +824,7 @@ def prepare_nodes(nodes, env, validate_ctx):
       error_msgs += [['msg: no node specified for the environment']]
     else:
       for node_info in nodes:
-        info = prepare_node(node_info, env, validate_ctx)
+        info = prepare_node(node_info, env_data, validate_ctx)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs')
@@ -820,9 +845,15 @@ def prepare_nodes(nodes, env, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_ctx(ctx_name, env, validate_ctx):
+def prepare_ctx(ctx_name, env_data, validate_ctx):
   result = dict()
   error_msgs = []
+
+  if not env_data:
+    error_msgs += [['msg: env_data property not specified']]
+    return dict(result=result, error_msgs=error_msgs)
+
+  env = env_data.get('env')
 
   if not env:
     error_msgs += [['msg: environment dictionary not specified']]
@@ -886,7 +917,7 @@ def prepare_ctx(ctx_name, env, validate_ctx):
       ctx_initial_services = ctx.get('initial_services')
 
       if ctx_initial_services:
-        services_info = prepare_services(ctx_initial_services, env, validate_ctx, top=True)
+        services_info = prepare_services(ctx_initial_services, env_data, validate_ctx, top=True)
 
         result_aux = services_info.get('result')
         error_msgs_aux = services_info.get('error_msgs')
@@ -901,7 +932,7 @@ def prepare_ctx(ctx_name, env, validate_ctx):
       ctx_nodes = ctx.get('nodes')
 
       if ctx_nodes:
-        nodes_info = prepare_nodes(ctx_nodes, env, validate_ctx)
+        nodes_info = prepare_nodes(ctx_nodes, env_data, validate_ctx)
 
         result_aux = nodes_info.get('result')
         error_msgs_aux = nodes_info.get('error_msgs')
@@ -914,7 +945,7 @@ def prepare_ctx(ctx_name, env, validate_ctx):
       ctx_final_services = ctx.get('final_services')
 
       if ctx_final_services:
-        services_info = prepare_services(ctx_final_services, env, validate_ctx, top=True)
+        services_info = prepare_services(ctx_final_services, env_data, validate_ctx, top=True)
 
         result_aux = services_info.get('result')
         error_msgs_aux = services_info.get('error_msgs')
