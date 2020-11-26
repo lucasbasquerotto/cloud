@@ -675,8 +675,24 @@ def prepare_node(node_info, env, validate_ctx):
               ]]
 
     service = node.get('service')
+    dns_service = node.get('dns_service')
+    dns_service_params_list = node_params.get('dns_service_params_list')
 
-    if service:
+    if not service:
+      if dns_service:
+        error_msgs += [[
+            'node: ' + node_description,
+            'context: validate node (custom)',
+            'msg: dns_service is defined, but service is undefined'
+        ]]
+
+      if dns_service_params_list:
+        error_msgs += [[
+            'node: ' + node_description,
+            'context: validate node (custom)',
+            'msg: dns_service_params_list is defined, but service is undefined'
+        ]]
+    else:
       instance_amount = int(node_info_dict.get('amount') or 1)
       instance_max_amount = int(node_info_dict.get('max_amount') or instance_amount)
       services_info = []
@@ -690,39 +706,40 @@ def prepare_node(node_info, env, validate_ctx):
             params=dict(
                 name=(node_info_dict.get('hostname') or node_name) + name_suffix,
                 state=None if idx <= instance_amount else 'absent',
-                # TODO user_data
-                user_data=None,
             )
         )
         services_info += [service_info]
 
       if services_info:
-        service_result_info = prepare_services(services_info, env, validate_ctx, True)
+        result['services_info'] = services_info.copy()
 
-        result_aux_service = service_result_info.get('result')
-        error_msgs_aux_service = service_result_info.get('error_msgs')
+        if validate_ctx:
+          service_result_info = prepare_services(services_info, env, validate_ctx, True)
 
-        for value in (error_msgs_aux_service or []):
-          new_value = ['context: node service'] + value
-          error_msgs_aux += [new_value]
+          error_msgs_aux_service = service_result_info.get('error_msgs')
 
-        if not error_msgs_aux_service:
-          result['services'] = result_aux_service
+          for value in (error_msgs_aux_service or []):
+            new_value = ['context: node service'] + value
+            error_msgs_aux += [new_value]
 
-      dns_service = node.get('dns_service')
-      dns_service_params_list = node_params.get('dns_service_params_list')
-
-      if dns_service and (instance_amount > 1):
+      if not dns_service:
+        if dns_service_params_list:
+          error_msgs += [[
+              'node: ' + node_description,
+              'context: validate node (custom)',
+              'msg: dns_service_params_list is defined, but dns_service is undefined'
+          ]]
+      elif instance_amount > 1:
         error_msgs += [[
             'node: ' + node_description,
             'msg: dns service defined for node with more than 1 replica'
         ]]
-      elif dns_service and (not dns_service_params_list):
+      elif not dns_service_params_list:
         error_msgs += [[
             'node: ' + node_description,
             'msg: dns service defined for node with dns_service_params_list undefined or empty'
         ]]
-      elif dns_service:
+      else:
         services_info = []
 
         for idx, dns_service_params in enumerate(dns_service_params_list, start=1):
@@ -740,17 +757,15 @@ def prepare_node(node_info, env, validate_ctx):
             services_info += [service_info]
 
         if services_info:
-          service_result_info = prepare_services(services_info, env, validate_ctx, True)
+          result['dns_services_info'] = services_info.copy()
 
-          result_aux_service = service_result_info.get('result')
-          error_msgs_aux_service = service_result_info.get('error_msgs')
+          if validate_ctx:
+            service_result_info = prepare_services(services_info, env, validate_ctx, True)
+            error_msgs_aux_service = service_result_info.get('error_msgs')
 
-          for value in (error_msgs_aux_service or []):
-            new_value = ['context: node dns service'] + value
-            error_msgs_aux += [new_value]
-
-          if not error_msgs_aux_service:
-            result['dns_services'] = result_aux_service
+            for value in (error_msgs_aux_service or []):
+              new_value = ['context: node dns service'] + value
+              error_msgs_aux += [new_value]
 
     pods = node.get('pods')
     pod_ctx_info_dict = node_info_dict.get('pods')
