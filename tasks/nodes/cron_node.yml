@@ -18,15 +18,15 @@
 - name: "{{ cron_node_title }} - cron list (outer)"
   include_tasks: "cron_item.yml"
   vars:
-    cron_inner_title: "{{ cron_node_title }} - {{ cron_inner_item.user }} - {{ cron_inner_item.src_file }}"
-    cron_src_file: "{{ env_dir }}/{{ cron_inner_item.src_file }}"
-    cron_become: "{{ cron_inner_item.user == 'root' }}"
-    cron_dest_dir: "{{ cron_inner_item.dest_dir }}"
-    cron_user: "{{ cron_inner_item.user }}"
+    cron_inner_title: "{{ cron_node_title }} - {{ cron_item.user }} - {{ cron_item.src_file }}"
+    cron_src_file: "{{ env_dir }}/{{ cron_item.src_file }}"
+    cron_become: "{{ cron_item.user == 'root' }}"
+    cron_dest_dir: "{{ cron_item.dest_dir }}"
+    cron_user: "{{ cron_item.user }}"
     cron_inner_start: "{{ cron_node_params.cron_start | default(true) }}"
   loop: "{{ cron_node_params.cron | default([]) | list }}"
   loop_control:
-    loop_var: cron_inner_item
+    loop_var: cron_item
   tags: ["no_print"]
 
 # Cron - Start

@@ -33,15 +33,15 @@ while getopts ':fp-:' OPT; do
 	esac
 done
 
-if [ -z "${project_dir:-}" ]; then
-	error "[error] project-dir not specified"
-fi
-
 if [ "$last_index" != "$OPTIND" ]; then
 	args+=( "--" );
 fi
 
 shift $((OPTIND-1))
+
+if [ -z "${project_dir:-}" ]; then
+	error "[error] project-dir not specified"
+fi
 
 if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project (fast)..."

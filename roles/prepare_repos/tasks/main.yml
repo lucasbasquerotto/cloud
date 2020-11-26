@@ -31,11 +31,13 @@
 
 # Pods Repos (Local)
 
-- set_fact:
+- name: "{{ prepare_repos_title }} - prepare_repos_pods_list - init"
+  set_fact:
     prepare_repos_pods_list: []
   tags: ["no_print"]
 
-- set_fact:
+- name: "{{ prepare_repos_title }} - prepare_repos_pods_list - fill"
+  set_fact:
     prepare_repos_pods_list: "{{ prepare_repos_pods_list + (prepare_repos_node.pods | default([])) }}"
   vars:
     prepare_repos_node_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name) | default(prepare_repos_item) }}"
