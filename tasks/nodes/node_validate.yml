@@ -291,7 +291,7 @@
   set_fact:
     node_validate_params_allowed_props:
       - "service_params"
-      - "dns_service_params"
+      - "dns_service_params_list"
       - "user_data_file"
       - "user_data_params"
       - "host_test"
@@ -363,6 +363,7 @@
 - name: "{{ node_validate_title }} - node_validate_params_list_props"
   set_fact:
     node_validate_params_list_props:
+      - "dns_service_params_list"
       - "cron"
   tags: ["no_print"]
 
@@ -387,7 +388,6 @@
   set_fact:
     node_validate_params_dict_props:
       - "service_params"
-      - "dns_service_params"
       - "user_data_params"
       - "host_test"
   tags: ["no_print"]

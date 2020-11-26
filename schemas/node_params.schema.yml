@@ -5,8 +5,9 @@ schemas:
     props:
       service_params:
         type: "dict"
-      dns_service_params:
-        type: "dict"
+      dns_service_params_list:
+        type: "list"
+        elem_schema: "dns"
       user_data_file:
         type: "str"
       user_data_params:
@@ -45,3 +46,11 @@ schemas:
       dest_dir:
         type: "str"
         non_empty: true
+  dns:
+    type: "dict"
+    props:
+      record:
+        type: "str"
+        non_empty: true
+      ttl:
+        type: "int"

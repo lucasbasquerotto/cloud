@@ -5,7 +5,6 @@
 
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
-# pylint: disable=wrong-import-position
 # pylint: disable=import-error
 
 from __future__ import absolute_import, division, print_function
@@ -107,10 +106,10 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
           ]]
 
       allowed_keys = [
-        'list',
-        'flat_list',
-        'inverse_destroy',
-        'services',
+          'list',
+          'flat_list',
+          'inverse_destroy',
+          'services',
       ]
 
       for key in sorted(list(service.keys())):
@@ -123,13 +122,13 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
           ]]
     else:
       allowed_keys = [
-        'name',
-        'key',
-        'single',
-        'params',
-        'group_params',
-        'shared_params',
-        'shared_group_params',
+          'name',
+          'key',
+          'single',
+          'params',
+          'group_params',
+          'shared_params',
+          'shared_group_params',
       ]
 
       for key in sorted(list(service_info_dict.keys())):
@@ -288,7 +287,7 @@ def prepare_service(service_info, service_names, env, validate_ctx, top):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_services(services, env, validate_ctx, top = False, service_names = None):
+def prepare_services(services, env, validate_ctx, top=False, service_names=None):
   result = []
   error_msgs = []
   service_names = service_names if service_names is not None else set()
@@ -572,22 +571,6 @@ def prepare_node(node_info, env, validate_ctx):
               'msg: required property not found in node or is empty (non-local and non-external)'
           ]]
 
-    service = node.get('service')
-
-    if service:
-      service_info = dict(name=service + '-1', key=service, single=True, state='present')
-      service_result_info = prepare_services([service_info], env, validate_ctx, True)
-
-      result_aux_service = service_result_info.get('result')
-      error_msgs_aux_service = service_result_info.get('error_msgs')
-
-      for value in (error_msgs_aux_service or []):
-        new_value = ['context: node service'] + value
-        error_msgs_aux += [new_value]
-
-      if not error_msgs_aux_service:
-        result['services'] = result_aux_service
-
     credential = node.get('credential')
 
     if credential:
@@ -690,6 +673,84 @@ def prepare_node(node_info, env, validate_ctx):
                   'context: validate node params (custom)',
                   'msg: required property not found in node params or is empty (non-local)'
               ]]
+
+    service = node.get('service')
+
+    if service:
+      instance_amount = int(node_info_dict.get('amount') or 1)
+      instance_max_amount = int(node_info_dict.get('max_amount') or instance_amount)
+      services_info = []
+
+      for idx in range(1, instance_max_amount + 1):
+        name_suffix = ('-' + str(idx)) if idx > 1 else ''
+        service_info = dict(
+            name=service + name_suffix,
+            key=service,
+            single=True,
+            params=dict(
+                name=(node_info_dict.get('hostname') or node_name) + name_suffix,
+                state=None if idx <= instance_amount else 'absent',
+                # TODO user_data
+                user_data=None,
+            )
+        )
+        services_info += [service_info]
+
+      if services_info:
+        service_result_info = prepare_services(services_info, env, validate_ctx, True)
+
+        result_aux_service = service_result_info.get('result')
+        error_msgs_aux_service = service_result_info.get('error_msgs')
+
+        for value in (error_msgs_aux_service or []):
+          new_value = ['context: node service'] + value
+          error_msgs_aux += [new_value]
+
+        if not error_msgs_aux_service:
+          result['services'] = result_aux_service
+
+      dns_service = node.get('dns_service')
+      dns_service_params_list = node_params.get('dns_service_params_list')
+
+      if dns_service and (instance_amount > 1):
+        error_msgs += [[
+            'node: ' + node_description,
+            'msg: dns service defined for node with more than 1 replica'
+        ]]
+      elif dns_service and (not dns_service_params_list):
+        error_msgs += [[
+            'node: ' + node_description,
+            'msg: dns service defined for node with dns_service_params_list undefined or empty'
+        ]]
+      elif dns_service:
+        services_info = []
+
+        for idx, dns_service_params in enumerate(dns_service_params_list, start=1):
+          for dns_type_name in ['ipv4', 'ipv6']:
+            name_suffix = '-' + dns_type_name + (('-' + str(idx)) if idx > 1 else '')
+            service_info = dict(
+                name=dns_service + name_suffix,
+                key=dns_service,
+                params=dict(
+                    record=dns_service_params.get('record'),
+                    ttl=dns_service_params.get('ttl'),
+                    dns_type='A' if dns_type_name == 'ipv4' else 'AAAA',
+                )
+            )
+            services_info += [service_info]
+
+        if services_info:
+          service_result_info = prepare_services(services_info, env, validate_ctx, True)
+
+          result_aux_service = service_result_info.get('result')
+          error_msgs_aux_service = service_result_info.get('error_msgs')
+
+          for value in (error_msgs_aux_service or []):
+            new_value = ['context: node dns service'] + value
+            error_msgs_aux += [new_value]
+
+          if not error_msgs_aux_service:
+            result['dns_services'] = result_aux_service
 
     pods = node.get('pods')
     pod_ctx_info_dict = node_info_dict.get('pods')
