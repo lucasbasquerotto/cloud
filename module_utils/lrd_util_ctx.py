@@ -204,7 +204,12 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
                 new_value = ['context: validate service credentials'] + value
                 error_msgs_aux += [new_value]
             else:
-              error_msgs_aux += [['credentials schema file not found: ' + schema_file]]
+              error_msgs_aux += [[
+                'context: validate service credentials',
+                'credentials schema file not found: ' + schema_file,
+              ]]
+
+      error_msgs_aux_params = []
 
       if isinstance(service_info, dict):
         params_args = dict(
@@ -224,7 +229,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
         for value in (error_msgs_aux_info or []):
           new_value = ['context: service info params'] + value
-          error_msgs_aux += [new_value]
+          error_msgs_aux_params += [new_value]
 
       params_args = dict(
           params=service.get('params'),
@@ -243,9 +248,11 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
       for value in (error_msgs_aux_service or []):
         new_value = ['context: service params'] + value
-        error_msgs_aux += [new_value]
+        error_msgs_aux_params += [new_value]
 
-      if not error_msgs_aux:
+      error_msgs_aux += error_msgs_aux_params
+
+      if not error_msgs_aux_params:
         service_params = merge_dicts(result_aux_service, result_aux_info)
         result['service_params'] = service_params
 
@@ -263,7 +270,10 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
                 new_value = ['context: validate service params'] + value
                 error_msgs_aux += [new_value]
             else:
-              error_msgs_aux += [['params schema file not found: ' + schema_file]]
+              error_msgs_aux += [[
+                'context: validate service params',
+                'params schema file not found: ' + schema_file,
+              ]]
 
       for value in (error_msgs_aux or []):
         new_value = ['service: ' + service_description] + value
@@ -409,7 +419,12 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
               new_value = ['context: validate pod credentials'] + value
               error_msgs_aux += [new_value]
           else:
-            error_msgs_aux += [['credentials schema file not found: ' + schema_file]]
+            error_msgs_aux += [[
+              'context: validate pod credentials',
+              'credentials schema file not found: ' + schema_file,
+            ]]
+
+    error_msgs_aux_params = []
 
     if pod_ctx_info:
       params_args = dict(
@@ -429,7 +444,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
 
       for value in (error_msgs_aux_ctx_info or []):
         new_value = ['context: pod ctx info params'] + value
-        error_msgs_aux += [new_value]
+        error_msgs_aux_params += [new_value]
 
     if isinstance(pod_info, dict):
       params_args = dict(
@@ -449,7 +464,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
 
       for value in (error_msgs_aux_info or []):
         new_value = ['context: pod info params'] + value
-        error_msgs_aux += [new_value]
+        error_msgs_aux_params += [new_value]
 
     params_args = dict(
         params=pod.get('params'),
@@ -468,9 +483,11 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
 
     for value in (error_msgs_aux_pod or []):
       new_value = ['context: pod params'] + value
-      error_msgs_aux += [new_value]
+      error_msgs_aux_params += [new_value]
 
-    if not error_msgs_aux:
+    error_msgs_aux += error_msgs_aux_params
+
+    if not error_msgs_aux_params:
       pod_params = merge_dicts(result_aux_pod, result_aux_info, result_aux_ctx_info)
       result['pod_params'] = pod_params
 
@@ -488,7 +505,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
               new_value = ['context: validate pod params'] + value
               error_msgs_aux += [new_value]
           else:
-            error_msgs_aux += [['params schema file not found: ' + schema_file]]
+            error_msgs_aux += [[
+              'context: validate pod params',
+              'params schema file not found: ' + schema_file,
+            ]]
 
     for value in (error_msgs_aux or []):
       new_value = ['pod: ' + pod_description] + value
@@ -624,10 +644,15 @@ def prepare_node(node_info, env_data, validate_ctx):
             error_msgs_aux_validate = validate(schema, credential)
 
             for value in (error_msgs_aux_validate or []):
-              new_value = ['context: validate credentials'] + value
+              new_value = ['context: validate node credentials'] + value
               error_msgs_aux += [new_value]
           else:
-            error_msgs_aux += [['credential schema file not found: ' + schema_file]]
+            error_msgs_aux += [[
+              'context: validate node credentials',
+              'credentials schema file not found: ' + schema_file,
+            ]]
+
+    error_msgs_aux_params = []
 
     if isinstance(node_info, dict):
       params_args = dict(
@@ -647,7 +672,7 @@ def prepare_node(node_info, env_data, validate_ctx):
 
       for value in (error_msgs_aux_info or []):
         new_value = ['context: node info params'] + value
-        error_msgs_aux += [new_value]
+        error_msgs_aux_params += [new_value]
 
     params_args = dict(
         params=node.get('params'),
@@ -666,9 +691,11 @@ def prepare_node(node_info, env_data, validate_ctx):
 
     for value in (error_msgs_aux_node or []):
       new_value = ['context: node params'] + value
-      error_msgs_aux += [new_value]
+      error_msgs_aux_params += [new_value]
 
-    if not error_msgs_aux:
+    error_msgs_aux += error_msgs_aux_params
+
+    if not error_msgs_aux_params:
       node_params = merge_dicts(result_aux_node, result_aux_info)
       result['node_params'] = node_params
 
@@ -684,7 +711,10 @@ def prepare_node(node_info, env_data, validate_ctx):
             new_value = ['context: validate node params'] + value
             error_msgs_aux += [new_value]
         else:
-          error_msgs_aux += [['params schema file not found: ' + schema_file]]
+          error_msgs_aux += [[
+            'context: validate node params',
+            'params schema file not found: ' + schema_file,
+          ]]
 
         if (not error_msgs_aux_validate) and (not local):
           required_props = ['host_test']
@@ -912,7 +942,10 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
               new_value = ['context: validate ctx params'] + value
               error_msgs += [new_value]
           else:
-            error_msgs_aux += [['schema file not found: ' + schema_file]]
+            error_msgs_aux += [[
+              'context: validate ctx params',
+              'params schema file not found: ' + schema_file,
+            ]]
 
       ctx_initial_services = ctx.get('initial_services')
 

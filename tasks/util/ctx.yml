@@ -1,0 +1,24 @@
+- name: "{{ env_title }} - generate the context vars"
+  lrd_ctx:
+    ctx_name: "{{ env_ctx_name }}"
+    env_data: "{{ env_data }}"
+    validate: "{{ ctx_validate | default(false) | bool }}"
+  register: ctx_data_result
+
+- name: "{{ env_title }} - ctx_data"
+  set_fact:
+    ctx_data: "{{ ctx_data_result.data }}"
+  tags: ["no_print"]
+
+- name: "{{ env_title }} - env_ctx"
+  set_fact:
+    env_ctx: "{{ ctx_data.ctx }}"
+    env_ctx_params: "{{ ctx_data.ctx_params }}"
+  tags: ["no_print"]
+
+# - fail:
+#     msg: test
+#   when: true
+
+- debug:
+    var: ctx_data_result

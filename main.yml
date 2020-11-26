@@ -276,9 +276,9 @@
     - wait
   gather_facts: no
   tasks:
-    - include_tasks: "tasks/util/env.yml"
+    - include_tasks: "tasks/util/init.yml"
       vars:
-        env_stage_title: "main"
+        init_skip_setup: true
       tags: ["no_print"]
 
     - name: "{{ env_title }}"

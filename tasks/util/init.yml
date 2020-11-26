@@ -1,9 +1,16 @@
-- name: Gathering facts
+- name: "{{ env_title | default('[env]') }} gathering facts"
   setup:
+  when: "{{ not (init_skip_setup | default(false) | bool) }}"
   tags: ["no_print_skipped"]
 
-- include_tasks: "env.yml"
+- name: "env (outer)"
+  include_tasks: "env.yml"
   vars:
     env_stage_title: "main"
   when: env is not defined
+  tags: ["no_print"]
+
+- name: "{{ env_title }} - ctx (outer)"
+  include_tasks: "ctx.yml"
+  when: ctx is not defined
   tags: ["no_print"]
