@@ -77,9 +77,11 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
     is_list = service.get('list')
 
+    absent = service_info_dict.get('absent')
+    result['absent'] = absent
+    service_info_dict.pop('absent', None)
+
     if top:
-      result['absent'] = service_info_dict.get('absent')
-      service_info_dict.pop('absent', None)
       result['tmp'] = service_info_dict.get('tmp')
       service_info_dict.pop('tmp', None)
       result['can_destroy'] = service_info_dict.get('can_destroy')
@@ -90,6 +92,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
           'name',
           'key',
           'single',
+          'absent',
       ]
 
       for key in sorted(list(service_info_dict.keys())):
@@ -103,7 +106,6 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
       allowed_keys = [
           'list',
-          'flat_list',
           'services',
       ]
 
@@ -120,6 +122,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
           'name',
           'key',
           'single',
+          'absent',
           'params',
           'group_params',
           'shared_params',
@@ -303,16 +306,15 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
         new_value = ['service: ' + service_description] + value
         error_msgs += [new_value]
 
-      flat_list = service.get('flat_list')
       services = service.get('services')
 
       if services:
-        if flat_list:
+        if absent:
           for idx, service_info_aux in enumerate(services):
             if isinstance(service_info_aux, dict):
-              service_info_aux['single'] = True
+              service_info_aux['absent'] = True
             else:
-              services[idx] = dict(name=service_info_aux, single=True)
+              services[idx] = dict(name=service_info_aux, absent=True)
 
         info_children = prepare_services(
             services, env_data, validate_ctx, top=False, service_names=service_names)

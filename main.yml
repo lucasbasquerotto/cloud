@@ -35,9 +35,9 @@
     - name: "{{ env_title }} - initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ env_ctx.initial_services | default([]) | list }}"
+        main_tmp_services: "{{ ctx_data.prepared_initial_services | default([]) }}"
         cloud_service_title: "{{ env_title }} - initial services"
-        cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_prepared_list: "{{ main_tmp_services }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
@@ -476,9 +476,9 @@
     - name: "{{ env_title }} - final services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ env_ctx.final_services | default([]) | list }}"
+        main_tmp_services: "{{ ctx_data.prepared_final_services | default([]) }}"
         cloud_service_title: "{{ env_title }} - final services"
-        cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_prepared_list: "{{ main_tmp_services }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
@@ -516,13 +516,13 @@
       vars:
         main_tmp_services: >-
           {{
-            env_ctx.final_services | default([])
+            ctx_data.prepared_final_services | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
           }}
         cloud_service_title: "{{ env_title }} - [destroy (tmp)] final services"
-        cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_prepared_list: "{{ main_tmp_services }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
@@ -662,13 +662,13 @@
       vars:
         main_tmp_services: >-
           {{
-            env_ctx.initial_services | default([])
+            ctx_data.prepared_initial_services | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
           }}
         cloud_service_title: "{{ env_title }} - [destroy (tmp)] initial services"
-        cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_prepared_list: "{{ main_tmp_services }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
@@ -705,13 +705,13 @@
       vars:
         main_tmp_services: >-
           {{
-            env_ctx.final_services | default([])
+            ctx_data.prepared_final_services | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
           }}
         cloud_service_title: "{{ env_title }} - [destroy] final services"
-        cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_prepared_list: "{{ main_tmp_services }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
@@ -847,13 +847,13 @@
       vars:
         main_tmp_services: >-
           {{
-            env_ctx.initial_services | default([])
+            ctx_data.prepared_initial_services | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
           }}
         cloud_service_title: "{{ env_title }} - [destroy] initial services"
-        cloud_service_list: "{{ main_tmp_services }}"
+        cloud_service_prepared_list: "{{ main_tmp_services }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
