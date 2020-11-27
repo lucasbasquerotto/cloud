@@ -14,20 +14,3 @@
     repo_dev_path: "{{ env_path_map[pod_prepare_item.repo] | default('') }}"
     repo_dev: "{{ env_dev and (pod_node_local | bool) }}"
   tags: ["no_print"]
-
-- name: "{{ pod_prepare_title }} - pod_git_result"
-  set_fact:
-    pod_git_result: "{{ repo_git_result }}"
-  tags: ["no_print"]
-
-- name: "{{ pod_prepare_title }} - pod_env_repos_commits"
-  set_fact:
-    pod_env_repos_commits: >-
-      {{
-        pod_env_repos_commits +
-        [{
-          'repo': pod_prepare_item.repo,
-          'commit': pod_git_result.after
-        }]
-      }}
-  tags: ["no_print"]

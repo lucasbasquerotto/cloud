@@ -15,15 +15,6 @@
 
 - name: "{{ pod_vars_title }} - pod_vars_volumes"
   set_fact:
-    pod_vars_volumes: []
-    pod_vars_files: []
-    pod_vars_templates: []
-    pod_vars_env_files: []
-    pod_vars_env_templates: []
-  tags: ["no_print"]
-
-- name: "{{ pod_vars_title }} - pod_vars_volumes"
-  set_fact:
     pod_vars_volumes: >-
       {{ pod_vars_volumes + (pod_vars.volumes | default([], true)) }}
     pod_vars_files: >-

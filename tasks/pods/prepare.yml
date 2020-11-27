@@ -4,8 +4,6 @@
   set_fact:
     pod_prepare_repo: >-
       {{ env.repos[pod_item.repo] }}
-    pod_env_repos_commits: []
-    pod_git_commit: ""
   tags: ["no_print"]
 
 - name: "{{ pod_prepare_title }} - repos"
@@ -20,11 +18,6 @@
         repo_default_dir: "{{ pod_repo_dir }}"
         repo_dev_base_dir: "{{ env_dev_repos_dir }}"
         repo_dev: "{{ (env_dev | bool) and (pod_node_local | bool) }}"
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }} - pod_git_commit"
-      set_fact:
-        pod_git_commit: "{{ repo_git_result.after }}"
       tags: ["no_print"]
 
     ### Create the environment pod repositories in the env folders (when defined) ###
@@ -88,70 +81,6 @@
   tags: ["no_print"]
 
 - block:
-    - name: "{{ pod_prepare_title }} - pod_vars_full"
-      set_fact:
-        pod_backup_dir: "{{ tmp_backup_dir }}"
-        pod_backup_file: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}"
-        pod_backup_file_tmp: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}.tmp"
-        pod_vars_full:
-          pod: "{{ pod_item }}"
-          vars: "{{ pod_vars }}"
-          git_commit: "{{ pod_git_commit }}"
-          env_repos_commits: "{{ pod_env_repos_commits }}"
-          repo_dir: "{{ pod_repo_dir }}"
-      vars:
-        tmp_backup_dir: "{{ pod_tmp_base_dir }}/env"
-        tmp_backup_file: "pod.vars.yml"
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }} - create the backup directory"
-      become: "{{ pod_item.root }}"
-      file:
-        path: "{{ pod_backup_dir }}"
-        state: directory
-        mode: "{{ (pod_node_local | bool) | ternary(0777, 0755) }}"
-      tags: ["no_print_skipped"]
-
-    - name: "{{ pod_prepare_title }} - create the temporary file to verify if there was a change"
-      become: "{{ pod_item.root }}"
-      copy:
-        content: "{{ pod_vars_full | to_nice_yaml }}"
-        dest: "{{ pod_backup_file_tmp }}"
-        owner: "{{ pod_host_user }}"
-        group: "{{ pod_host_group }}"
-        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
-      tags: ["no_print_skipped"]
-
-    - name: >-
-        {{ pod_prepare_title }} - create the file to verify if there was a change,
-        if it was not created before
-      become: "{{ pod_item.root }}"
-      copy:
-        force: no
-        content: ""
-        dest: "{{ pod_backup_file }}"
-        owner: "{{ pod_host_user }}"
-        group: "{{ pod_host_group }}"
-        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
-      tags: ["no_print_skipped"]
-
-    - name: "{{ pod_prepare_title }} - get the difference of the 2 files (old and current)"
-      become: "{{ pod_item.root }}"
-      command: "diff {{ pod_backup_file_tmp }} {{ pod_backup_file }}"
-      register: pod_diff
-      failed_when: pod_diff.rc > 1
-      changed_when: pod_diff.rc == 1
-      tags: ["no_print_skipped"]
-
-  when: >-
-    (pod_skip_unchanged | bool)
-    and
-    ((pod_fast | bool) != (pod_prepare_tmp | default(false, true) | bool))
-  tags: ["no_print_skipped"]
-
-### Continue the preparation only when changed from the previous ###
-
-- block:
     ### Copy the specified pod env files and templates ###
 
     - name: "{{ pod_prepare_title }}"
@@ -193,9 +122,6 @@
       when: (pod_item.ctx | default('')) != ''
       tags: ["no_print_skipped"]
 
-    - debug:
-        var: pod_vars_files
-
     - name: "{{ pod_prepare_title }}"
       include_tasks: "tasks/pods/transfer.yml"
       vars:
@@ -210,27 +136,3 @@
 
   when: pod_diff.changed | default(true) | bool
   tags: ["no_print_skipped"]
-
-- block:
-
-    - name: "{{ pod_prepare_title }} - variables state"
-      debug:
-        msg: "variables unchanged"
-      when: (not (pod_diff.changed | default(true) | bool))
-      tags: ["no_print_skipped"]
-
-    - name: >-
-        {{ pod_prepare_title }} -
-        update the file to verify if there was a change (for newer runs)
-      become: "{{ pod_item.root }}"
-      copy:
-        remote_src: yes
-        src: "{{ pod_backup_file_tmp }}"
-        dest: "{{ pod_backup_file }}"
-        owner: "{{ pod_host_user }}"
-        group: "{{ pod_host_group }}"
-        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
-      when: not (pod_prepare_tmp | default(false, true) | bool)
-      tags: ["no_print_skipped"]
-
-  when: pod_skip_unchanged | bool

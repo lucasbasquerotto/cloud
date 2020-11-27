@@ -103,10 +103,11 @@
     state: directory
     mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
 
-- name: "{{ project_ctx_title }} - project_ctx_params"
+- name: "{{ project_ctx_title }} - project_ctx_params (define)"
   set_fact:
     project_ctx_params:
       project: "{{ project_env_init.key }}"
+      commit: "{{ project_env_commit }}"
       ctx: "{{ project_ctx_key }}"
       env_dev: "{{ env_dev | bool | ternary('true', 'false') }}"
       ctx_dir: "{{ project_ctx_base_dir }}"
@@ -133,22 +134,26 @@
     dest: "{{ project_ctx_base_dir }}/vars.yml"
     mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
 
-- name: "{{ project_ctx_title }} - project_ctx_params"
+- name: "{{ project_ctx_title }} - project_ctx_params_list - init"
   set_fact:
     project_ctx_params_list: ["#!/bin/bash"]
   tags: ["no_print"]
 
-- name: "{{ project_ctx_title }} - project_ctx_params"
+- name: "{{ project_ctx_title }} - project_ctx_params - fill"
   set_fact:
     project_ctx_params_list: >-
       {{
         project_ctx_params_list
-        + ['export ' + project_ctx_item.key + '=' + (project_ctx_item.value | quote)]
+        + [
+          'export ' + project_ctx_item +
+          '=' +
+          (project_ctx_params[project_ctx_item] | quote)
+        ]
       }}
-  loop: "{{ project_ctx_params | dict2items }}"
+  loop: "{{ project_ctx_params | dict2items | map(attribute='key') | sort }}"
   loop_control:
     loop_var: project_ctx_item
-    label: "{{ project_ctx_item.key }}"
+    label: "{{ project_ctx_item }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.sh)"

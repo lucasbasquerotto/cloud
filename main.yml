@@ -357,13 +357,6 @@
         ((env_ctx_params.hooks.before_prepare | default('')) != '')
       tags: ["no_print"]
 
-    - debug:
-        var: main_item | validate_connection(env_info)
-      loop: "{{ ctx_data.nodes | default([]) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ main_item.description }}"
-
     - name: "{{ env_title }} - prepare pods (outer)"
       include_tasks: "tasks/pods/main.yml"
       vars:

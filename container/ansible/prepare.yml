@@ -67,6 +67,7 @@
     - name: "{{ project_base_title }} - project_env_dir"
       set_fact:
         project_env_dir: "{{ repo_dir }}"
+        project_env_commit: "{{ repo_git_result.after }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - set_fact - project_env_file"
@@ -254,7 +255,7 @@
         mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
 
     - name: "{{ project_ctxs_title }} (main)"
-      include_tasks: "tasks/ctx.yml"
+      include_tasks: "ctx.yml"
       vars:
         project_ctx_title: "{{ project_ctxs_title }} [{{ project_ctx_key }}]"
       loop: "{{ project_env.ctxs }}"

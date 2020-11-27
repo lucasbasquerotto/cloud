@@ -40,6 +40,11 @@ options:
           - the environment dictionary.
         type: dict
         required: true
+      commit:
+        description:
+          - the current commit of the environment repository
+        type: str
+        required: true
       dev:
         description:
           - specifies if it's a development environment
@@ -82,6 +87,7 @@ from ansible.module_utils.lrd_util_ctx import prepare_ctx
 
 env_data_spec = dict(
     env=dict(type='dict', required=True),
+    commit=dict(type='str', required=True),
     dev=dict(type='bool', required=True),
     dev_repos_dir=dict(type='str', required=True),
     path_map=dict(type='dict', required=True),
