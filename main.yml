@@ -357,11 +357,17 @@
         ((env_ctx_params.hooks.before_prepare | default('')) != '')
       tags: ["no_print"]
 
+    - debug:
+        var: main_item | validate_connection(env_info)
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ main_item.description }}"
+
     - name: "{{ env_title }} - prepare pods (outer)"
       include_tasks: "tasks/pods/main.yml"
       vars:
         pod_node: "{{ main_item }}"
-        pod_node_name: "{{ pod_node.name }}"
         pod_title: "{{ env_title }} - prepare pod - node [{{ pod_node.description }}]"
         pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         pod_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"

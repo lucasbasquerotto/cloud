@@ -25,21 +25,21 @@
 - name: "{{ pod_vars_title }} - pod_vars_volumes"
   set_fact:
     pod_vars_volumes: >-
-      {{ pod_vars_volumes + (pod_vars.volumes | default([])) }}
+      {{ pod_vars_volumes + (pod_vars.volumes | default([], true)) }}
     pod_vars_files: >-
-      {{ pod_vars_files + (pod_vars.files | default([])) }}
+      {{ pod_vars_files + (pod_vars.files | default([], true)) }}
     pod_vars_templates: >-
-      {{ pod_vars_templates + (pod_vars.templates | default([])) }}
+      {{ pod_vars_templates + (pod_vars.templates | default([], true)) }}
     pod_vars_env_files: >-
-      {{ pod_vars_env_files + (pod_vars.env_files | default([])) }}
+      {{ pod_vars_env_files + (pod_vars.env_files | default([], true)) }}
     pod_vars_env_templates: >-
-      {{ pod_vars_env_templates + (pod_vars.env_templates | default([])) }}
+      {{ pod_vars_env_templates + (pod_vars.env_templates | default([], true)) }}
   tags: ["no_print"]
 
 - name: "{{ pod_vars_title }} - pod_vars_ctxs"
   set_fact:
     pod_vars_ctxs: "{{ pod_vars_ctxs + [pod_vars_item] }}"
-  loop: "{{ pod_vars.children | default([]) }}"
+  loop: "{{ pod_vars.children | default([], true) }}"
   loop_control:
     loop_var: pod_vars_item
     label: "{{ pod_vars_item.name }}"

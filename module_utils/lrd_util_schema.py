@@ -10,7 +10,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type # pylint: disable=invalid-name
 
-from ansible.module_utils.lrd_utils import load_yaml, is_int, is_float
+from ansible.module_utils.lrd_utils import load_yaml, is_int, is_float, is_bool
 
 SCHEMA_BASE = """
 root: "schema_wrapper"
@@ -269,9 +269,7 @@ def validate_next_value(schema_data, value):
 
     if value_type in primitive_types and (str(value) != ''):
       if (value_type == 'bool') and (not isinstance(value, bool)):
-        valid_strs = ["True", "False", "true", "false"]
-
-        if (not isinstance(value, str)) or (value not in valid_strs):
+        if not is_bool(value):
           return [[
               'schema_name: ' + schema_name + schema_suffix,
               'at: ' + (schema_ctx or '<root>'),

@@ -45,6 +45,16 @@ options:
           - specifies if it's a development environment
         type: bool
         required: true
+      dev_repos_dir:
+        description:
+          - specifies the shared directory used during development
+        type: str
+        required: true
+      path_map:
+        description:
+          - the environment dictionary.
+        type: dict
+        required: true
       ctx_dir:
         description:
           - specifies the context directory
@@ -73,6 +83,8 @@ from ansible.module_utils.lrd_util_ctx import prepare_ctx
 env_data_spec = dict(
     env=dict(type='dict', required=True),
     dev=dict(type='bool', required=True),
+    dev_repos_dir=dict(type='str', required=True),
+    path_map=dict(type='dict', required=True),
     ctx_dir=dict(type='str', required=True),
 )
 

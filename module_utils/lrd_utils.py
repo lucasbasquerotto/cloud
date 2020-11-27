@@ -72,3 +72,25 @@ def is_float(str_val):
     return True
   except ValueError:
     return False
+
+def is_bool(str_val):
+  return to_bool(str_val) is not None
+
+def to_bool(value):
+  if value is None:
+    return None
+
+  if isinstance(value, bool):
+    return value
+
+  if isinstance(value, str):
+    valid_strs_true = ['True', 'true', 'Yes', 'yes']
+    valid_strs_false = ['False', 'false', 'No', 'no']
+
+    if value in valid_strs_true:
+      return True
+
+    if value in valid_strs_false:
+      return False
+
+  return None

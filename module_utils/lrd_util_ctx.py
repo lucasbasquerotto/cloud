@@ -13,7 +13,7 @@ __metaclass__ = type # pylint: disable=invalid-name
 
 import os
 
-from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, default, is_empty
+from ansible.module_utils.lrd_utils import merge_dicts, load_yaml_file, default, is_empty, to_bool
 from ansible.module_utils.lrd_util_params_mixer import mix
 from ansible.module_utils.lrd_util_schema import validate
 
@@ -77,14 +77,14 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
     is_list = service.get('list')
 
-    absent = service_info_dict.get('absent')
+    absent = to_bool(service_info_dict.get('absent'))
     result['absent'] = absent
     service_info_dict.pop('absent', None)
 
     if top:
-      result['tmp'] = service_info_dict.get('tmp')
+      result['tmp'] = to_bool(service_info_dict.get('tmp'))
       service_info_dict.pop('tmp', None)
-      result['can_destroy'] = service_info_dict.get('can_destroy')
+      result['can_destroy'] = to_bool(service_info_dict.get('can_destroy'))
       service_info_dict.pop('can_destroy', None)
 
     if is_list:
@@ -406,9 +406,9 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     result['data_dir'] = pod.get('data_dir')
     result['tmp_dir'] = pod.get('tmp_dir')
     result['ctx'] = pod.get('ctx')
-    result['root'] = pod.get('root')
-    result['flat'] = pod.get('flat')
-    result['fast_prepare'] = pod.get('fast_prepare')
+    result['root'] = to_bool(pod.get('root'))
+    result['flat'] = to_bool(pod.get('flat'))
+    result['fast_prepare'] = to_bool(pod.get('fast_prepare'))
 
     local_dir = ctx_dir + '/pods/' + pod_name
 
@@ -637,15 +637,15 @@ def prepare_node(node_info, env_data, validate_ctx):
     node_result.pop('shared_group_params', None)
     result['node'] = node_result
 
-    result['tmp'] = node_info_dict.get('tmp')
+    result['tmp'] = to_bool(node_info_dict.get('tmp'))
     node_info_dict.pop('tmp', None)
-    result['can_destroy'] = node_info_dict.get('can_destroy')
+    result['can_destroy'] = to_bool(node_info_dict.get('can_destroy'))
     node_info_dict.pop('can_destroy', None)
 
-    result['absent'] = node_info_dict.get('absent')
-    local = node_info_dict.get('local')
+    result['absent'] = to_bool(node_info_dict.get('absent'))
+    local = to_bool(node_info_dict.get('local'))
     result['local'] = local
-    external = node_info_dict.get('external')
+    external = to_bool(node_info_dict.get('external'))
     result['external'] = external
 
     result_aux_info = dict()
@@ -955,15 +955,8 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
       error_msgs += [['msg: context not in the main environment dictionary']]
     else:
       ctx = main_dict.get(ctx_name)
-      ctx_result = ctx.copy()
-      ctx_result.pop('initial_services', None)
-      ctx_result.pop('nodes', None)
-      ctx_result.pop('final_services', None)
-      ctx_result.pop('params', None)
-      ctx_result.pop('group_params', None)
-      ctx_result.pop('shared_params', None)
-      ctx_result.pop('shared_group_params', None)
-      result['ctx'] = ctx_result
+      result['repo'] = ctx.get('repo')
+      result['env_repos'] = ctx.get('env_repos')
 
       params_args = dict(
           params=ctx.get('params'),

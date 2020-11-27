@@ -12,8 +12,8 @@
 
 - name: "{{ env_title }} - env_ctx"
   set_fact:
-    env_ctx: "{{ ctx_data.ctx }}"
-    env_ctx_params: "{{ ctx_data.params }}"
+    env_ctx: "{{ ctx_data }}"
+    env_ctx_params: "{{ ctx_data.params | default({}) }}"
   tags: ["no_print"]
 
 # - fail:

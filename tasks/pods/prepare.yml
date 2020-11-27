@@ -18,7 +18,8 @@
         repo_ssh_src_dir: "{{ env_dir }}"
         repo_secrets_dir: "{{ pod_secrets_repos_dir }}/{{ pod_item.repo }}"
         repo_default_dir: "{{ pod_repo_dir }}"
-        repo_dev: false
+        repo_dev_base_dir: "{{ env_dev_repos_dir }}"
+        repo_dev: "{{ (env_dev | bool) and (pod_node_local | bool) }}"
       tags: ["no_print"]
 
     - name: "{{ pod_prepare_title }} - pod_git_commit"
@@ -34,12 +35,12 @@
         pod_prepare_env_repo_name: "{{ pod_prepare_item.repo }}"
         pod_prepare_env_repo: >-
           {{ env.repos[pod_prepare_item.repo] }}
-      loop: "{{ pod_item.env_repos | default([]) }}"
+      loop: "{{ pod_item.env_repos | default([], true) }}"
       loop_control:
         loop_var: pod_prepare_item
         label: "{{ pod_prepare_item.repo }}"
       tags: ["no_print"]
-  when: not (pod_node_local | bool)
+  when: (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false, true) | bool)
 
 ### Generate the environment pod context variables ###
 
@@ -49,10 +50,10 @@
     pod_inner_credentials: "{{ pod_item.credentials | default({}) }}"
   tags: ["no_print"]
 
-- name: "{{ pod_prepare_title }} - pod_pod_data_dir"
+- name: "{{ pod_prepare_title }} - pod_data_dir"
   set_fact:
-    pod_pod_data_dir: "{{ pod_remote_data_dir }}"
-    pod_pod_extra_repos_dir: ""
+    pod_data_dir: "{{ pod_remote_data_dir }}"
+    pod_extra_repos_dir: ""
   tags: ["no_print"]
 
 - name: "{{ pod_prepare_title }} - pod_base_dir_rel"
@@ -61,11 +62,11 @@
       {{ env_dev_repos_dir | relpath(pod_repo_dir) }}
   tags: ["no_print"]
 
-- name: "{{ pod_prepare_title }} - pod_pod_data_dir (local)"
+- name: "{{ pod_prepare_title }} - pod_data_dir (local)"
   set_fact:
-    pod_pod_data_dir: >-
+    pod_data_dir: >-
       {{ pod_base_dir_rel + '/data/' + pod_identifier }}
-    pod_pod_extra_repos_dir: >-
+    pod_extra_repos_dir: >-
       {{ env_dev_extra_repos_dir | relpath(pod_repo_dir) }}
   when: pod_node_local | bool
   tags: ["no_print"]
@@ -74,14 +75,13 @@
   set_fact:
     pod_params_pod:
       identifier: "{{ pod_identifier }}"
-      name: "{{ pod_pod_name }}"
-      pod: "{{ pod_pod }}"
+      name: "{{ pod_name }}"
       git_commit: "{{ pod_git_commit }}"
       env_repos_commits: "{{ pod_env_repos_commits }}"
-      repo_location: "{{ pod_repo_dir }}"
+      repo_dir: "{{ pod_repo_dir }}"
       base_dir_rel: "{{ pod_base_dir_rel }}"
-      data_dir: "{{ pod_pod_data_dir }}"
-      extra_repos_dir: "{{ pod_pod_extra_repos_dir }}"
+      data_dir: "{{ pod_data_dir }}"
+      extra_repos_dir: "{{ pod_extra_repos_dir }}"
   tags: ["no_print"]
 
 ### Generate a file with the environment variables and state (for idempotence) ###
@@ -127,83 +127,11 @@
     ### Copy the specified pod env files and templates ###
 
     - name: "{{ pod_prepare_title }}"
-      fail:
-        msg: >-
-          env_files is defined in the pod as well as in the node
-          (it should be in 1 only)
-      when: >-
-        (pod_item.env_files is defined) and
-        (pod_pod_info.env_files is defined)
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }}"
-      fail:
-        msg: >-
-          env_files is defined in the pod as well as in the context
-          (it should be in 1 only)
-      when: >-
-        (pod_item.env_files is defined) and
-        (pod_node_info_pod_params.env_files is defined)
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }}"
-      fail:
-        msg: >-
-          env_files is defined in the node as well as in the context
-          (it should be in 1 only)
-      when: >-
-        (pod_pod_info.env_files is defined) and
-        (pod_node_info_pod_params.env_files is defined)
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }}"
-      fail:
-        msg: >-
-          env_templates is defined in the pod as well as in the node
-          (it should be in 1 only)
-      when: >-
-        (pod_item.env_templates is defined) and
-        (pod_pod_info.env_templates is defined)
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }}"
-      fail:
-        msg: >-
-          env_templates is defined in the pod as well as in the context
-          (it should be in 1 only)
-      when: >-
-        (pod_item.env_templates is defined) and
-        (pod_node_info_pod_params.env_templates is defined)
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }}"
-      fail:
-        msg: >-
-          env_templates is defined in the node as well as in the context
-          (it should be in 1 only)
-      when: >-
-        (pod_pod_info.env_templates is defined) and
-        (pod_node_info_pod_params.env_templates is defined)
-      tags: ["no_print"]
-
-    - name: "{{ pod_prepare_title }}"
       include_tasks: "tasks/pods/transfer.yml"
       vars:
         pod_transfer_title: "{{ pod_prepare_title }} - pod env"
-        pod_transfer_src_env_files: >-
-          {{
-          pod_node_info_pod_params.env_files
-          | default(pod_pod_info.env_files)
-          | default(pod_item.env_files)
-          | default([])
-          }}
-        pod_transfer_src_env_templates: >-
-          {{
-          pod_node_info_pod_params.env_templates
-          | default(pod_pod_info.env_templates)
-          | default(pod_item.env_templates)
-          | default([])
-          }}
+        pod_transfer_src_env_files: "{{ pod_item.env_files | default([], true) }}"
+        pod_transfer_src_env_templates: "{{ pod_item.env_templates | default([], true) }}"
       tags: ["no_print"]
 
     ### Generate the environment pod expanded variables ###
@@ -241,12 +169,12 @@
       include_tasks: "tasks/pods/transfer.yml"
       vars:
         pod_transfer_title: "{{ pod_prepare_title }} - ctx"
-        pod_transfer_src_volumes: "{{ pod_vars_volumes | default([]) }}"
-        pod_transfer_src_dir_list: "{{ pod_dir_list | default([]) }}"
-        pod_transfer_src_repo_files: "{{ pod_vars_files | default([]) }}"
-        pod_transfer_src_env_files: "{{ pod_vars_env_files | default([]) }}"
-        pod_transfer_src_repo_templates: "{{ pod_vars_templates | default([]) }}"
-        pod_transfer_src_env_templates: "{{ (pod_vars_env_templates | default([])) }}"
+        pod_transfer_src_volumes: "{{ pod_vars_volumes | default([], true) }}"
+        pod_transfer_src_dir_list: "{{ pod_dir_list | default([], true) }}"
+        pod_transfer_src_repo_files: "{{ pod_vars_files | default([], true) }}"
+        pod_transfer_src_env_files: "{{ pod_vars_env_files | default([], true) }}"
+        pod_transfer_src_repo_templates: "{{ pod_vars_templates | default([], true) }}"
+        pod_transfer_src_env_templates: "{{ (pod_vars_env_templates | default([], true)) }}"
       tags: ["no_print"]
 
   when: (pod_diff.changed | default(true) | bool) or (pod_node_local | bool)

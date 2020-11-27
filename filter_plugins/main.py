@@ -18,9 +18,7 @@ class FilterModule(object):
               ((not local_node) and (not local_connection) and (node_name == instance_type))
           )
           and
-          ((env_node_name == '') or (env_node_name == node_name))
-          and
-          ((not local_node) or (env_node_name == node_name))
+          ((not (env_node_name)) or (env_node_name == node_name))
       )
 
       return valid

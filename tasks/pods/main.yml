@@ -2,8 +2,10 @@
 
 - name: "{{ pod_title }} - pod_node_credential"
   set_fact:
+    pod_node_name: "{{ pod_node.name }}"
     pod_node_local: "{{ pod_node.local | default(false, true) | bool }}"
     pod_node_credential: "{{ pod_node.credential | default({}) }}"
+    pod_node_base_dir: "{{ pod_node.base_dir | default('') }}"
   tags: ["no_print"]
 
 # Dependencies
@@ -34,7 +36,7 @@
         groups[pod_dependency_node]
         | map('extract', hostvars, [pod_dependency_field]) | list
       }}
-  loop: "{{ pod_node.dependencies | default([]) | list }}"
+  loop: "{{ pod_node.dependencies | default([], true) | list }}"
   loop_control:
     loop_var: pod_node_item
   when: not (pod_node_local | bool)
@@ -66,23 +68,18 @@
     pod_node_local: "{{ pod_node.local | default(false, true) }}"
     pod_host_user: "{{ pod_node_credential.host_user }}"
     pod_host_group: "{{ pod_node_credential.host_group | default(pod_host_user, true) }}"
-    pod_fast: >-
-      {{
-        (pod_item.local | default(false, true) | bool)
-        and
-        (pod_item.fast_prepare | default(false, true) | bool)
-      }}
+    pod_fast: "{{ pod_item.fast_prepare | default(false, true) | bool }}"
     pod_dirname: >-
       {{ pod_item.base_dir | default(pod_name, true) }}
-    pod_remote_base_dir: >-
-      {{ pod_node.base_dir }}/{{ pod_dirname }}
+    pod_local_repo_dir: "{{ pod_item.local_dir }}"
+    pod_remote_base_dir: "{{ pod_node_base_dir }}/{{ pod_dirname }}"
     pod_remote_tmp_dir: >-
       {{
         ((pod_item.tmp_dir | default('')) != '')
         | ternary(
           pod_item.tmp_dir | default(''),
           pod_item.flat | default(false, true) | bool | ternary(
-            pod_node.base_dir + '/cloud/tmp/' + pod_dirname,
+            pod_node_base_dir + '/cloud/tmp/' + pod_dirname,
             pod_remote_base_dir + '/tmp/cloud'
           )
         )
@@ -93,12 +90,12 @@
         | ternary(
           pod_item.data_dir | default(''),
           pod_item.flat | default(false, true) | bool | ternary(
-            pod_node.base_dir + '/cloud/data/' + pod_dirname,
+            pod_node_base_dir + '/cloud/data/' + pod_dirname,
             pod_remote_base_dir + '/data'
           )
         )
       }}
-  loop: "{{ pod_node.pods | default([]) }}"
+  loop: "{{ pod_node.pods | default([], true) }}"
   loop_control:
     loop_var: pod_item
     label: "{{ pod_item.description }}"

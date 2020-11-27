@@ -1,10 +1,10 @@
 - name: >-
-    {{ pod_inner_title }} -
+    {{ pod_prepare_title }} -
     environment pod ({{ pod_prepare_env_repo_name }}) - repo (outer)
   include_tasks: "tasks/util/repo.yml"
   vars:
     repo_title: >-
-      {{ pod_inner_title }} -
+      {{ pod_prepare_title }} -
       environment pod ({{ pod_prepare_env_repo_name }}) - repo
     repo_main: "{{ pod_prepare_env_repo }}"
     repo_ssh_src_dir: "{{ env_dir }}"
@@ -15,12 +15,12 @@
     repo_dev: "{{ env_dev and (pod_node_local | bool) }}"
   tags: ["no_print"]
 
-- name: "{{ pod_inner_title }} - pod_git_result"
+- name: "{{ pod_prepare_title }} - pod_git_result"
   set_fact:
     pod_git_result: "{{ repo_git_result }}"
   tags: ["no_print"]
 
-- name: "{{ pod_inner_title }} - pod_env_repos_commits"
+- name: "{{ pod_prepare_title }} - pod_env_repos_commits"
   set_fact:
     pod_env_repos_commits: >-
       {{

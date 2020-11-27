@@ -1,6 +1,13 @@
 - name: "{{ repo_title }} - repo_dir_dev"
   set_fact:
     repo_dir_dev: "{{ (repo_dev | bool) and ((repo_dev_path | default('')) != '') }}"
+    repo_dev_base_dir: "{{ repo_dev_base_dir | default('') }}"
+  tags: ["no_print"]
+
+- name: "{{ repo_title }} - validate the git repo development base dir"
+  fail:
+    msg: "repo_dev_base_dir is not specified for dev repository"
+  when: (repo_dev_base_dir == '') and (repo_dir_dev | bool)
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - repo_dir"
@@ -23,6 +30,7 @@
     state: directory
     mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
   when: repo_dir != repo_default_dir
+  tags: ["no_print_skipped"]
 
 - name: "{{ repo_title }} - git (outer)"
   include_tasks: "tasks/util/git.yml"
@@ -47,3 +55,4 @@
     dest: "{{ repo_default_dir }}"
     state: link
   when: repo_dir != repo_default_dir
+  tags: ["no_print_skipped"]
