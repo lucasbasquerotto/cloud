@@ -213,8 +213,8 @@
   file:
     state: directory
     path: "{{ pod_transfer_item.path }}"
-    owner: "{{ pod_owner }}"
-    group: "{{ pod_group }}"
+    owner: "{{ pod_host_user }}"
+    group: "{{ pod_host_group }}"
     mode: >-
       {{
       pod_transfer_item.mode | default(
@@ -231,8 +231,8 @@
   file:
     state: directory
     path: "{{ pod_transfer_item }}"
-    owner: "{{ pod_owner }}"
-    group: "{{ pod_group }}"
+    owner: "{{ pod_host_user }}"
+    group: "{{ pod_host_group }}"
     mode: "{{ (pod_node_local | bool) | ternary(777, 751) }}"
   loop: "{{ pod_transfer_dir_list | default([]) | unique | default([]) }}"
   loop_control:
@@ -247,8 +247,8 @@
   template:
     src: "{{ pod_transfer_item.src }}"
     dest: "{{ pod_repo_dir }}/tmp/tpl/{{ pod_transfer_item.dest_rel }}"
-    owner: "{{ pod_owner }}"
-    group: "{{ pod_group }}"
+    owner: "{{ pod_host_user }}"
+    group: "{{ pod_host_group }}"
     mode: >-
       {{
       pod_transfer_item.mode | default(
@@ -296,8 +296,8 @@
     remote_src: true
     src: "{{ pod_repo_dir }}/tmp/tpl/{{ pod_transfer_item.dest_rel }}"
     dest: "{{ pod_transfer_item.dest }}"
-    owner: "{{ pod_owner }}"
-    group: "{{ pod_group }}"
+    owner: "{{ pod_host_user }}"
+    group: "{{ pod_host_group }}"
     mode: >-
       {{
       pod_transfer_item.mode | default(
@@ -315,8 +315,8 @@
     remote_src: "{{ pod_transfer_item.remote_src }}"
     src: "{{ pod_transfer_item.src }}"
     dest: "{{ pod_transfer_item.dest }}"
-    owner: "{{ pod_owner }}"
-    group: "{{ pod_group }}"
+    owner: "{{ pod_host_user }}"
+    group: "{{ pod_host_group }}"
     decrypt: "{{ pod_transfer_item.encrypted | bool }}"
     mode: >-
       {{

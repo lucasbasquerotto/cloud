@@ -2,10 +2,8 @@
 
 - name: "{{ pod_title }} - pod_node_credential"
   set_fact:
-    pod_node_local: "{{ pod_node.local | default(false) | bool }}"
+    pod_node_local: "{{ pod_node.local | default(false, true) | bool }}"
     pod_node_credential: "{{ pod_node.credential | default({}) }}"
-    pod_remote_node_base_dir: >-
-      {{ pod_node.base_dir | default('') }}
   tags: ["no_print"]
 
 # Dependencies
@@ -24,10 +22,10 @@
       {{ pod_title }} - dependency[{{ pod_node_item.host }}]
     pod_dependency_host: "{{ pod_node_item.host }}"
     pod_dependency_node: "{{ pod_node_item.node }}"
-    pod_dependency_all: "{{ pod_node_item.all | default(false) | bool }}"
+    pod_dependency_all: "{{ pod_node_item.all | default(false, true) | bool }}"
     pod_dependency_field: >-
       {{
-        pod_node_item.public | default(false) | bool
+        pod_node_item.public | default(false, true) | bool
         | ternary('instance_public_ipv4', 'instance_private_ip')
       }}
     pod_dependency_total_src_nodes: "{{ groups[pod_node_name] | length }}"
@@ -60,48 +58,49 @@
 - name: "{{ pod_title }} - pods (outer)"
   include_tasks: "tasks/pods/pod.yml"
   vars:
-    pod_pod_info: "{{ pod_node_item }}"
-    pod_pod_name: "{{ pod_node_item.name | default(pod_node_item) }}"
-    pod_pod_key: >-
-      {{
-        pod_node_item.key
-        | default(pod_node_item.name, true)
-        | default(pod_node_item, true)
-      }}
-    pod_pod_main: >-
-      {{
-        (pod_node_item.main | default(false) | bool)
-        or
-        ((pod_node.pods | default([]) | length) == 1)
-      }}
-    pod_pod: "{{ env.pods[pod_pod_key] }}"
-    pod_node_info_pod_params: >-
-      {{ pod_node_info.pods[pod_pod_name] | default({}) }}
-    pod_pod_title: >-
-      {{ pod_title }} - pod[{{ pod_pod_name }}]
-    pod_pod_dirname: >-
-      {{ pod_pod.base_dir | default(pod_pod_name, true) }}
-    pod_remote_pod_base_dir: >-
-      {{ pod_remote_node_base_dir }}/{{ pod_pod_dirname }}
-    pod_pod_identifier: >-
-      {{ env.name }}/{{ env_ctx_name }}/{{ pod_pod_name }}
+    pod_inner_title: >-
+      {{ pod_title }} - pod [{{ pod_item.description }}]
+    pod_name: "{{ pod_item.name }}"
+    pod_identifier: >-
+      {{ env.name }}/{{ env_ctx_name }}/{{ pod_name }}
+    pod_node_local: "{{ pod_node.local | default(false, true) }}"
     pod_host_user: "{{ pod_node_credential.host_user }}"
-    pod_host_group: "{{ pod_node_credential.host_user }}"
-    pod_local_pod_default_repo_dir: >-
-      {{ pod_local_pods_base_dir + '/' + pod_pod_name }}
-    pod_pod_local_tmp_dir: >-
-      {{ pod_node_tmp_dir }}/pod/{{ pod_pod_name }}
-    pod_pod_local_data_dir_inside: >-
+    pod_host_group: "{{ pod_node_credential.host_group | default(pod_host_user, true) }}"
+    pod_fast: >-
       {{
-        (pod_local_data_dir_inside | default('') != '')
+        (pod_item.local | default(false, true) | bool)
+        and
+        (pod_item.fast_prepare | default(false, true) | bool)
+      }}
+    pod_dirname: >-
+      {{ pod_item.base_dir | default(pod_name, true) }}
+    pod_remote_base_dir: >-
+      {{ pod_node.base_dir }}/{{ pod_dirname }}
+    pod_remote_tmp_dir: >-
+      {{
+        ((pod_item.tmp_dir | default('')) != '')
         | ternary(
-          pod_local_data_dir_inside
-            + '/' + pod_pod_identifier,
-          ''
+          pod_item.tmp_dir | default(''),
+          pod_item.flat | default(false, true) | bool | ternary(
+            pod_node.base_dir + '/cloud/tmp/' + pod_dirname,
+            pod_remote_base_dir + '/tmp/cloud'
+          )
+        )
+      }}
+    pod_remote_data_dir: >-
+      {{
+        ((pod_item.data_dir | default('')) != '')
+        | ternary(
+          pod_item.data_dir | default(''),
+          pod_item.flat | default(false, true) | bool | ternary(
+            pod_node.base_dir + '/cloud/data/' + pod_dirname,
+            pod_remote_base_dir + '/data'
+          )
         )
       }}
   loop: "{{ pod_node.pods | default([]) }}"
   loop_control:
-    loop_var: pod_node_item
-  when: (env_pod | default('')) in ['', pod_pod_name]
+    loop_var: pod_item
+    label: "{{ pod_item.description }}"
+  when: (env_pod | default('')) in ['', pod_name]
   tags: ["no_print_skipped"]

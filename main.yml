@@ -257,7 +257,7 @@
     #     and
     #     (cloud_node_cloud.type != 'local')
     #     and
-    #     (not (cloud_node_node_info.external | default(false) | bool))
+    #     (not (cloud_node_node_info.external | default(false, true) | bool))
     #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -304,6 +304,26 @@
       when: (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
       tags: ["no_print_skipped"]
 
+    - name: "{{ env_title }} - host test (outer)"
+      include_tasks: "tasks/nodes/host_test.yml"
+      vars:
+        host_test_node: "{{ main_item }}"
+        host_test_node_name: "{{ host_test_node.name }}"
+        host_test_title: >-
+          {{ env_title }} - host test -
+          instance [{{ instance_type }} - {{ inventory_hostname }}]
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ host_test_node.description }}"
+      when: >-
+        ((ansible_connection == 'local') or (host_test_node_name == (instance_type | default(''))))
+        and
+        (((env_node | default('')) == '') or (env_node == host_test_node_name))
+        and
+        ((ansible_connection != 'local') or (host_test_node.local_host_test | default(false, true) | bool))
+      tags: ["no_print_skipped"]
+
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_wait_nodes }}"
       when: >-
@@ -338,17 +358,34 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }} - prepare pods (outer)"
-      include_role:
-        name: "cloud_prepare"
+      include_tasks: "tasks/pods/main.yml"
       vars:
-        main_tmp_nodes: "{{ env_ctx.nodes | default([]) }}"
-        cloud_prepare_title: "{{ env_title }} - prepare pods"
-        cloud_prepare_node_list: "{{ main_tmp_nodes }}"
-        cloud_prepare_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
-        cloud_prepare_local_pods_base_dir: "{{ env_ctx_dir }}/pods"
-        cloud_prepare_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
-      when: (main_tmp_nodes | length) > 0
+        pod_node: "{{ main_item }}"
+        pod_node_name: "{{ pod_node.name }}"
+        pod_title: "{{ env_title }} - prepare pod - node [{{ pod_node.description }}]"
+        pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+        pod_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ pod_node.description }}"
+      when: >-
+        (pod_node | validate_connection(env_info))
+        and
+        ((pod_node.pods | default([]) | length) > 0)
       tags: ["no_print_skipped"]
+
+    # - name: "{{ env_title }} - prepare pods (outer)"
+    #   include_role:
+    #     name: "cloud_prepare"
+    #   vars:
+    #     main_tmp_nodes: "{{ env_ctx.nodes | default([]) }}"
+    #     pod_title: "{{ env_title }} - prepare pods"
+    #     cloud_prepare_node_list: "{{ main_tmp_nodes }}"
+    #     pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+    #     pod_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+    #   when: (main_tmp_nodes | length) > 0
+    #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
     #   include_role:
@@ -449,9 +486,7 @@
         loop_var: main_item
         label: "{{ cron_node.description }}"
       when: >-
-        ((ansible_connection == 'local') or (cron_node_name == (instance_type | default(''))))
-        and
-        (((env_node | default('')) == '') or (env_node == cron_node_name))
+        (cron_node | validate_connection(env_info))
         and
         ((cron_node.params.cron | default([]) | length) > 0)
       tags: ["no_print_skipped"]
@@ -592,17 +627,17 @@
     #     cloud_node_hosts_file: "{{ inventory_file }}"
     #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_node_shutdown: true
-    #     cloud_node_allow_destroy_dns: "{{ env_ctx.destroy.node_dns | default(false) | bool }}"
+    #     cloud_node_allow_destroy_dns: "{{ env_ctx.destroy.node_dns | default(false, true) | bool }}"
     #   loop: "{{ env_ctx.nodes | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ cloud_node_node_name }}"
     #   when: >-
-    #     (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false) | bool)
+    #     (cloud_node_node_info.tmp | default(cloud_node_node.tmp) | default(false, true) | bool)
     #     and
     #     (((env_node | default('')) == '') or (env_node == cloud_node_node_name))
     #     and
-    #     (not (cloud_node_node_info.external | default(false) | bool))
+    #     (not (cloud_node_node_info.external | default(false, true) | bool))
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }} - delete the temporary buckets"
@@ -620,7 +655,7 @@
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_bucket_name }}"
-    #   when: main_item.tmp | default(false) | bool
+    #   when: main_item.tmp | default(false, true) | bool
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
@@ -643,7 +678,7 @@
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_item.name }}"
-    #   when: main_item.tmp | default(false) | bool
+    #   when: main_item.tmp | default(false, true) | bool
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
@@ -666,7 +701,7 @@
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_cloud_name }}"
-    #   when: main_item.tmp | default(false) | bool
+    #   when: main_item.tmp | default(false, true) | bool
     #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy (tmp)] initial services (outer)"
@@ -781,15 +816,15 @@
     #     cloud_node_hosts_file: "{{ inventory_file }}"
     #     cloud_node_env_ctx_params: "{{ env_ctx_params }}"
     #     cloud_node_shutdown: true
-    #     cloud_node_allow_destroy_dns: "{{ env_ctx.destroy.node_dns | default(false) | bool }}"
+    #     cloud_node_allow_destroy_dns: "{{ env_ctx.destroy.node_dns | default(false, true) | bool }}"
     #   loop: "{{ env_ctx.nodes | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ cloud_node_node_name }}"
     #   when: >-
-    #     (env_ctx.destroy.nodes | default(false) | bool)
+    #     (env_ctx.destroy.nodes | default(false, true) | bool)
     #     and
-    #     (not (cloud_node_node_info.external | default(false) | bool))
+    #     (not (cloud_node_node_info.external | default(false, true) | bool))
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }} - delete the buckets and all their contents"
@@ -807,7 +842,7 @@
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_bucket_name }}"
-    #   when: env_ctx.destroy.buckets | default(false) | bool
+    #   when: env_ctx.destroy.buckets | default(false, true) | bool
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
@@ -830,7 +865,7 @@
     #   loop_control:
     #     loop_var: main_item
     #     label: "{{ main_item.name }}"
-    #   when: env_ctx.destroy.dns | default(false) | bool
+    #   when: env_ctx.destroy.dns | default(false, true) | bool
     #   tags: ["no_print_skipped"]
 
     # - name: "{{ env_title }}"
@@ -851,7 +886,7 @@
     #   loop: "{{ env_ctx.clouds | default([]) | list }}"
     #   loop_control:
     #     loop_var: main_item
-    #   when: env_ctx.destroy.clouds | default(false) | bool
+    #   when: env_ctx.destroy.clouds | default(false, true) | bool
     #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy] initial services (outer)"

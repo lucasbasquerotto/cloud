@@ -395,18 +395,24 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     ]]
   else:
     pod = pods_dict.get(pod_key)
-    pod_result = pod.copy()
-    pod_result.pop('credentials', None)
-    pod_result.pop('params', None)
-    pod_result.pop('group_params', None)
-    pod_result.pop('shared_params', None)
-    pod_result.pop('shared_group_params', None)
-    result['pod'] = pod_result
+
+    repo_name = pod.get('repo')
+    result['repo'] = repo_name
+
+    result['env_repos'] = pod.get('env_repos')
+    result['env_files'] = pod.get('env_files')
+    result['env_templates'] = pod.get('env_templates')
+    result['base_dir'] = pod.get('base_dir')
+    result['data_dir'] = pod.get('data_dir')
+    result['tmp_dir'] = pod.get('tmp_dir')
+    result['ctx'] = pod.get('ctx')
+    result['root'] = pod.get('root')
+    result['flat'] = pod.get('flat')
+    result['fast_prepare'] = pod.get('fast_prepare')
 
     local_dir = ctx_dir + '/pods/' + pod_name
 
     dev = env_data.get('dev')
-    repo_name = pod.get('repo')
     path_maps = env_data.get('path_map') or dict()
     dev_repo_path = path_maps.get(repo_name)
 
