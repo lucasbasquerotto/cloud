@@ -409,6 +409,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     result['root'] = to_bool(pod.get('root'))
     result['flat'] = to_bool(pod.get('flat'))
     result['fast_prepare'] = to_bool(pod.get('fast_prepare'))
+    result['skip_unchanged'] = to_bool(pod.get('skip_unchanged'))
 
     local_dir = ctx_dir + '/pods/' + pod_name
 
