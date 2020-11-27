@@ -26,7 +26,7 @@
         pod_backup_file_tmp: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}.tmp"
       vars:
         tmp_backup_dir: "{{ pod_tmp_base_dir }}/env"
-        tmp_backup_file: "pod.vars.yml"
+        tmp_backup_file: "pod.vars"
       tags: ["no_print"]
 
     - name: "{{ pod_inner_title }} - create the backup directory"
@@ -70,8 +70,7 @@
 
     - name: "{{ pod_inner_title }} - pod_skip"
       set_fact:
-        pod_skip: "{{ pod_diff.changed }}"
-      when: pod_node_local | bool
+        pod_skip: "{{ not pod_diff.changed }}"
       tags: ["no_print"]
 
   when: pod_skip_unchanged | bool
