@@ -221,8 +221,8 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
                 error_msgs_aux += [new_value]
             else:
               error_msgs_aux += [[
-                'context: validate service credentials',
-                'credentials schema file not found: ' + schema_file,
+                  'context: validate service credentials',
+                  'credentials schema file not found: ' + schema_file,
               ]]
 
       error_msgs_aux_params = []
@@ -287,8 +287,8 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
                 error_msgs_aux += [new_value]
             else:
               error_msgs_aux += [[
-                'context: validate service params',
-                'params schema file not found: ' + schema_file,
+                  'context: validate service params',
+                  'params schema file not found: ' + schema_file,
               ]]
 
       for value in (error_msgs_aux or []):
@@ -299,7 +299,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
       if single:
         error_msgs_aux += [[
-          'msg: service should not be a list (single)',
+            'msg: service should not be a list (single)',
         ]]
 
       for value in (error_msgs_aux or []):
@@ -380,12 +380,9 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     error_msgs += [['msg: pod name not specified']]
     return dict(result=result, error_msgs=error_msgs)
 
-  local_dir = ctx_dir + '/pods/' + pod_name
-
   result['name'] = pod_name
   result['key'] = pod_key
   result['description'] = pod_description
-  result['local_dir'] = local_dir
 
   pods_dict = env.get('pods')
 
@@ -405,6 +402,18 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     pod_result.pop('shared_params', None)
     pod_result.pop('shared_group_params', None)
     result['pod'] = pod_result
+
+    local_dir = ctx_dir + '/pods/' + pod_name
+
+    dev = env_data.get('dev')
+    repo_name = pod.get('repo')
+    path_maps = env_data.get('path_map') or dict()
+    dev_repo_path = path_maps.get(repo_name)
+
+    if dev and dev_repo_path:
+      local_dir = env_data.get('dev_repos_dir') + '/' + dev_repo_path
+
+    result['local_dir'] = local_dir
 
     base_dir_prefix = local_dir + '/'
     pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
@@ -454,8 +463,8 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
               error_msgs_aux += [new_value]
           else:
             error_msgs_aux += [[
-              'context: validate pod credentials',
-              'credentials schema file not found: ' + schema_file,
+                'context: validate pod credentials',
+                'credentials schema file not found: ' + schema_file,
             ]]
 
     error_msgs_aux_params = []
@@ -540,8 +549,8 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
               error_msgs_aux += [new_value]
           else:
             error_msgs_aux += [[
-              'context: validate pod params',
-              'params schema file not found: ' + schema_file,
+                'context: validate pod params',
+                'params schema file not found: ' + schema_file,
             ]]
 
     for value in (error_msgs_aux or []):
@@ -622,18 +631,19 @@ def prepare_node(node_info, env_data, validate_ctx):
     node_result.pop('shared_group_params', None)
     result['node'] = node_result
 
-    result['absent'] = node_info_dict.get('absent')
-    node_info_dict.pop('absent', None)
     result['tmp'] = node_info_dict.get('tmp')
     node_info_dict.pop('tmp', None)
     result['can_destroy'] = node_info_dict.get('can_destroy')
     node_info_dict.pop('can_destroy', None)
 
+    result['absent'] = node_info_dict.get('absent')
+    local = node_info_dict.get('local')
+    result['local'] = local
+    external = node_info_dict.get('external')
+    result['external'] = external
+
     result_aux_info = dict()
     error_msgs_aux = []
-
-    local = node_info_dict.get('local')
-    external = node_info_dict.get('external')
 
     if (not local) and (not external):
       required_props = [
@@ -689,8 +699,8 @@ def prepare_node(node_info, env_data, validate_ctx):
               error_msgs_aux += [new_value]
           else:
             error_msgs_aux += [[
-              'context: validate node credentials',
-              'credentials schema file not found: ' + schema_file,
+                'context: validate node credentials',
+                'credentials schema file not found: ' + schema_file,
             ]]
 
     error_msgs_aux_params = []
@@ -753,8 +763,8 @@ def prepare_node(node_info, env_data, validate_ctx):
             error_msgs_aux += [new_value]
         else:
           error_msgs_aux += [[
-            'context: validate node params',
-            'params schema file not found: ' + schema_file,
+              'context: validate node params',
+              'params schema file not found: ' + schema_file,
           ]]
 
         if (not error_msgs_aux_validate) and (not local):
@@ -984,8 +994,8 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
               error_msgs += [new_value]
           else:
             error_msgs_aux += [[
-              'context: validate ctx params',
-              'params schema file not found: ' + schema_file,
+                'context: validate ctx params',
+                'params schema file not found: ' + schema_file,
             ]]
 
       ctx_initial_services = ctx.get('initial_services')

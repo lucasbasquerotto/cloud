@@ -440,9 +440,21 @@
     - name: "{{ env_title }} - cron (outer)"
       include_tasks: "tasks/nodes/cron.yml"
       vars:
-        cron_title: "{{ env_title }} - cron - instance [{{ instance_type | default('') }}]"
-        cron_node_list: "{{ env_ctx.nodes | default([]) | list }}"
-        cron_tmp_dir: "{{ env_ctx_dir }}/cloud/cron/"
+        cron_node: "{{ main_item }}"
+        cron_node_name: "{{ cron_node.name }}"
+        cron_title: "{{ env_title }} - cron - node [{{ cron_node.description }}]"
+        cron_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes//{{ cron_node_name }}/cron"
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ cron_node.description }}"
+      when: >-
+        ((ansible_connection == 'local') or (cron_node_name == (instance_type | default(''))))
+        and
+        (((env_node | default('')) == '') or (env_node == cron_node_name))
+        and
+        ((cron_node.params.cron | default([]) | length) > 0)
+      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ env_ctx_params.hooks.after_cron }}"

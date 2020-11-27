@@ -1,0 +1,142 @@
+### Set vars ###
+
+- name: "{{ pod_pod_title }} - pod_local_repo_dir (local)"
+  set_fact:
+    pod_local_repo_dir: "{{ pod_pod.local_dir }}"=
+  tags: ["no_print"]
+
+- name: "{{ pod_pod_title }} - pod_remote_tmp_location"
+  set_fact:
+    pod_remote_tmp_location: >-
+      {{
+        pod_pod.flat | default(false) | bool | ternary(
+          pod_remote_node_base_dir + '/cloud/tmp/' + pod_pod_dirname,
+          pod_remote_pod_base_dir + '/tmp/cloud'
+        )
+      }}
+  tags: ["no_print"]
+
+- name: "{{ pod_pod_title }} - pod_main_repo_location"
+  set_fact:
+    pod_main_repo_location: >-
+      {{ pod_remote_pod_base_dir
+      }}{{ pod_pod.flat | default(false) | bool | ternary('', '/main') }}
+    pod_tmp_repo_location: "{{ pod_remote_tmp_location + '/main' }}"
+  tags: ["no_print"]
+
+- name: "{{ pod_pod_title }} - pod_main_repo_location (local)"
+  set_fact:
+    pod_main_repo_location: "{{ pod_local_pod_default_repo_dir }}"
+    pod_tmp_repo_location: "{{ pod_local_pod_default_repo_dir + '/tmp/pod' }}"
+  when: pod_node_local | bool
+  tags: ["no_print"]
+
+- name: "{{ pod_pod_title }} - pod_backup_file"
+  set_fact:
+    pod_backup_file: >-
+      {{ pod_remote_tmp_location }}/env/{{ pod_env_vars_relative_file_name }}
+    pod_backup_file_tmp: >-
+      {{ pod_remote_tmp_location }}/env/{{ pod_env_vars_relative_file_name }}.tmp
+  when: not (pod_node_local | bool)
+  tags: ["no_print"]
+
+- name: "{{ pod_pod_title }} - pod_owner"
+  set_fact:
+    pod_owner: "{{ pod_host_user }}"
+    pod_group: "{{ pod_host_group }}"
+    pod_remote_pod_data_dir: >-
+      {{
+        pod_pod.flat | default(false) | bool | ternary(
+          pod_remote_node_base_dir + '/cloud/data/' + pod_pod_dirname,
+          pod_remote_pod_base_dir + '/data'
+        )
+      }}
+  tags: ["no_print"]
+
+### Prepare the directories ###
+
+- name: "{{ pod_pod_title }} - create the remote directories"
+  become: "{{ pod_pod.root }}"
+  file:
+    path: "{{ pod_pod_item | dirname }}"
+    state: directory
+    mode: "{{ (pod_node_local | bool) | ternary(0777, 0755) }}"
+  loop:
+    - "{{ pod_backup_file }}"
+    - "{{ pod_backup_file_tmp }}"
+  loop_control:
+    loop_var: pod_pod_item
+    label: "{{ pod_pod_item | dirname }}"
+  when: not (pod_node_local | bool)
+  tags: ["no_print_skipped"]
+
+- name: >-
+    {{ pod_pod_title }} - create the file to verify if there was a change,
+    if it was not created before
+  become: "{{ pod_pod.root }}"
+  copy:
+    force: no
+    content: ""
+    dest: "{{ pod_backup_file }}"
+    owner: "{{ pod_owner }}"
+    group: "{{ pod_group }}"
+    mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
+  when: not (pod_node_local | bool)
+  tags: ["no_print_skipped"]
+
+### Prepare the temporary directory (to catch errors before updating the real one) ###
+
+- block:
+    - name: "{{ pod_pod_title }} - prepare the temporary directory"
+      include_tasks: "tasks/pods/prepare.yml"
+      vars:
+        pod_inner_title: "{{ pod_pod_title }} - tmp"
+        pod_repo_location: "{{ pod_tmp_repo_location }}"
+      tags: ["no_print"]
+
+    - name: "{{ pod_pod_title }} - get the difference of the 2 files (old and current)"
+      become: "{{ pod_pod.root }}"
+      command: "diff {{ pod_backup_file_tmp }} {{ pod_backup_file }}"
+      register: pod_diff
+      failed_when: pod_diff.rc > 1
+      changed_when: pod_diff.rc == 1
+      when: not (pod_node_local | bool)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ pod_pod_title }} - debug - outer"
+      debug:
+        msg: "variables unchanged"
+      when: not pod_diff.changed
+      tags: ["no_print_skipped"]
+
+  when: not (pod_pod.fast_prepare | default(false) | bool)
+  tags: ["no_print_skipped"]
+
+### Prepare the real directory ###
+
+- block:
+    - name: "{{ pod_pod_title }} - prepare the real directory"
+      include_tasks: "tasks/pods/prepare.yml"
+      vars:
+        pod_inner_title: "{{ pod_pod_title }} - real"
+        pod_repo_location: "{{ pod_main_repo_location }}"
+      tags: ["no_print"]
+
+    - name: >-
+        {{ pod_pod_title }} -
+        update the file to verify if there was a change (for newer runs)
+      become: "{{ pod_pod.root }}"
+      copy:
+        remote_src: yes
+        src: "{{ pod_backup_file_tmp }}"
+        dest: "{{ pod_backup_file }}"
+        owner: "{{ pod_owner }}"
+        group: "{{ pod_group }}"
+        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
+      when: not (pod_node_local | bool)
+      tags: ["no_print_skipped"]
+
+  when: >-
+    (pod_pod.fast_prepare | default(false) | bool) or
+    (pod_diff | default({})).changed | default(false) | bool
+  tags: ["no_print_skipped"]

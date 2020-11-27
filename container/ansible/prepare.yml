@@ -52,7 +52,7 @@
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - env - repo (outer)"
-      include_tasks: "external-tasks/util/repo.yml"
+      include_tasks: "tasks/util/repo.yml"
       vars:
         repo_title: "{{ project_env_title }} - env - repo"
         repo_main: "{{ project_env_init.repo }}"
@@ -104,7 +104,7 @@
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - env base - repo (outer)"
-          include_tasks: "external-tasks/util/repo.yml"
+          include_tasks: "tasks/util/repo.yml"
           vars:
             repo_title: "{{ project_env_title }} - env base - repo"
             repo_main: "{{ project_env.env.repo }}"

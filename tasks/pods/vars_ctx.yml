@@ -1,0 +1,31 @@
+- name: "{{ pod_inner_title }} - vars_ctx"
+  set_fact:
+    pod_inner_vars_ctx: "{{ pod_inner_vars_ctxs[pod_inner_vars_idx | int] }}"
+    pod_inner_vars_idx: "{{ (pod_inner_vars_idx | int) + 1 }}"
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_title }} - vars_ctx ({{ pod_inner_vars_ctx.name | default('') }})"
+  set_fact:
+    pod_inner_vars_title: >-
+      {{ pod_inner_title }} - vars ({{ pod_inner_vars_ctx.name }})
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }} - include_tasks - vars.yml"
+  include_tasks: "tasks/pods/vars.yml"
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }}"
+  set_fact:
+    pod_inner_vars_ctxs_completed: "{{ pod_inner_vars_ctxs_completed + [pod_inner_vars_ctx] }}"
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }} - verify number of completed contexts"
+  fail:
+    msg: "number of completed contexts is greater than the total amount of contexts"
+  when: (pod_inner_vars_ctxs_completed | length) > (pod_inner_vars_ctxs | length)
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }} - include_tasks - recursive - vars_ctx.yml"
+  include_tasks: "tasks/pods/vars_ctx.yml"
+  when: (pod_inner_vars_ctxs_completed | length) < (pod_inner_vars_ctxs | length)
+  tags: ["no_print"]

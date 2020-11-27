@@ -1,0 +1,47 @@
+- name: "{{ pod_inner_vars_title }} - pod_vars_tpl_src"
+  set_fact:
+    pod_vars_tpl_src: >-
+      {{ pod_local_repo_dir }}/{{ ''
+      }}{{ pod_inner_vars_ctx.name }}
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }} - populate vars from the template"
+  set_fact:
+    pod_inner_vars: >-
+      {{ lookup('template', pod_vars_tpl_src) | from_yaml }}
+  vars:
+    params: "{{ pod_inner_vars_ctx.params }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ pod_inner_vars_title }} - pod_inner_vars_volumes"
+  set_fact:
+    pod_inner_vars_volumes: []
+    pod_inner_vars_files: []
+    pod_inner_vars_templates: []
+    pod_inner_vars_env_files: []
+    pod_inner_vars_env_templates: []
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }} - pod_vars_volumes"
+  set_fact:
+    pod_vars_volumes: >-
+      {{ pod_vars_volumes + (pod_inner_vars.volumes | default([])) }}
+    pod_vars_files: >-
+      {{ pod_vars_files + (pod_inner_vars.files | default([])) }}
+    pod_vars_templates: >-
+      {{ pod_vars_templates + (pod_inner_vars.templates | default([])) }}
+    pod_vars_env_files: >-
+      {{ pod_vars_env_files + (pod_inner_vars.env_files | default([])) }}
+    pod_vars_env_templates: >-
+      {{ pod_vars_env_templates + (pod_inner_vars.env_templates | default([])) }}
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_vars_title }} - pod_inner_vars_ctxs"
+  set_fact:
+    pod_inner_vars_ctxs: "{{ pod_inner_vars_ctxs + [pod_inner_vars_item] }}"
+  loop: "{{ pod_inner_vars.children | default([]) }}"
+  loop_control:
+    loop_var: pod_inner_vars_item
+    label: "{{ pod_inner_vars_item.name }}"
+  when: pod_inner_vars_item.when | default(true) | bool
+  tags: ["no_print"]

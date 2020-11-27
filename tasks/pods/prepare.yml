@@ -1,0 +1,267 @@
+### Create / Update the repository ###
+
+- name: "{{ pod_inner_title }} - pod_pod_inner_repo"
+  set_fact:
+    pod_pod_inner_repo: >-
+      {{ env.repos[pod_pod.repo] }}
+    pod_env_repos_commits: []
+    pod_git_result: ""
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_title }} - repos"
+  block:
+    - name: "{{ pod_inner_title }} - pod - repo (outer)"
+      include_tasks: "tasks/util/repo.yml"
+      vars:
+        repo_title: "{{ pod_inner_title }} - pod - repo"
+        repo_main: "{{ pod_pod_inner_repo }}"
+        repo_ssh_src_dir: "{{ env_dir }}"
+        repo_secrets_dir: "{{ pod_secrets_repos_dir }}/{{ pod_pod.repo }}"
+        repo_default_dir: "{{ pod_repo_location }}"
+        repo_dev_base_dir: "{{ env_dev_repos_dir }}"
+        repo_dev_path: "{{ env_path_map[pod_pod.repo] | default('') }}"
+        repo_dev: "{{ env_dev and (pod_node_local | bool) }}"
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }} - pod_repo_dir"
+      set_fact:
+        pod_repo_dir: "{{ repo_dir }}"
+        pod_git_result: "{{ repo_git_result }}"
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }} - pod_git_commit"
+      set_fact:
+        pod_git_commit: "{{ pod_git_result.after }}"
+      tags: ["no_print"]
+
+    ### Create the environment pod repositories in the env folders (when defined) ###
+
+    - name: "{{ pod_inner_title }}"
+      include_tasks: "tasks/pods/env_repos.yml"
+      vars:
+        pod_pod_inner_env_repo_name: "{{ pod_pod_inner_item.repo }}"
+        pod_pod_inner_env_repo: >-
+          {{ env.repos[pod_pod_inner_item.repo] }}
+      loop: "{{ pod_pod.env_repos | default([]) }}"
+      loop_control:
+        loop_var: pod_pod_inner_item
+        label: "{{ pod_pod_inner_item.repo }}"
+      tags: ["no_print"]
+  when: not (pod_node_local | bool)
+
+### Generate the environment pod context variables ###
+
+- name: "{{ pod_inner_title }} - pod_params"
+  set_fact:
+    pod_params: "{{ pod_pod.params | default({}) }}"
+    pod_inner_credentials: "{{ pod_pod.credentials | default({}) }}"
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_title }} - pod_pod_data_dir"
+  set_fact:
+    pod_pod_data_dir: "{{ pod_remote_pod_data_dir }}"
+    pod_pod_extra_repos_dir: ""
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_title }} - pod_base_dir_rel"
+  set_fact:
+    pod_base_dir_rel: >-
+      {{ env_dev_repos_dir | relpath(pod_repo_dir) }}
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_title }} - pod_pod_data_dir (local)"
+  set_fact:
+    pod_pod_data_dir: >-
+      {{ pod_base_dir_rel + '/data/' + pod_pod_identifier }}
+    pod_pod_extra_repos_dir: >-
+      {{ env_dev_extra_repos_dir | relpath(pod_repo_dir) }}
+  when: pod_node_local | bool
+  tags: ["no_print"]
+
+- name: "{{ pod_inner_title }} - pod_params_pod"
+  set_fact:
+    pod_params_pod:
+      identifier: "{{ pod_pod_identifier }}"
+      name: "{{ pod_pod_name }}"
+      pod: "{{ pod_pod }}"
+      git_commit: "{{ pod_git_commit }}"
+      env_repos_commits: "{{ pod_env_repos_commits }}"
+      repo_location: "{{ pod_repo_dir }}"
+      base_dir_rel: "{{ pod_base_dir_rel }}"
+      data_dir: "{{ pod_pod_data_dir }}"
+      extra_repos_dir: "{{ pod_pod_extra_repos_dir }}"
+  tags: ["no_print"]
+
+### Generate a file with the environment variables and state (for idempotence) ###
+
+- name: "{{ pod_inner_title }} - pod_vars_full"
+  set_fact:
+    pod_vars_full:
+      env_name: "{{ env.name }}"
+      ctx_name: "{{ env_ctx_name }}"
+      main: "{{ pod_params }}"
+      pod: "{{ pod_params_pod }}"
+      credentials: "{{ pod_inner_credentials }}"
+      dependencies: "{{ pod_dependencies }}"
+      dependencies_node_ip_dict: "{{ pod_dependencies_ip_dict }}"
+      dependencies_node_ips_dict: "{{ pod_dependencies_ips_dict }}"
+  tags: ["no_print"]
+
+- block:
+    - name: "{{ pod_inner_title }} - create the temporary file to verify if there was a change"
+      become: "{{ pod_pod.root }}"
+      copy:
+        content: "{{ pod_vars_full | to_nice_yaml }}"
+        dest: "{{ pod_backup_file_tmp }}"
+        owner: "{{ pod_owner }}"
+        group: "{{ pod_group }}"
+        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ pod_inner_title }} - get the difference of the 2 files (old and current)"
+      become: "{{ pod_pod.root }}"
+      command: "diff {{ pod_backup_file_tmp }} {{ pod_backup_file }}"
+      register: pod_diff
+      failed_when: pod_diff.rc > 1
+      changed_when: pod_diff.rc == 1
+      tags: ["no_print_skipped"]
+
+  when: not (pod_node_local | bool)
+  tags: ["no_print_skipped"]
+
+### Continue the preparation only when changed from the previous ###
+
+- block:
+    ### Copy the specified pod env files and templates ###
+
+    - name: "{{ pod_inner_title }}"
+      fail:
+        msg: >-
+          env_files is defined in the pod as well as in the node
+          (it should be in 1 only)
+      when: >-
+        (pod_pod.env_files is defined) and
+        (pod_pod_info.env_files is defined)
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }}"
+      fail:
+        msg: >-
+          env_files is defined in the pod as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (pod_pod.env_files is defined) and
+        (pod_node_info_pod_params.env_files is defined)
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }}"
+      fail:
+        msg: >-
+          env_files is defined in the node as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (pod_pod_info.env_files is defined) and
+        (pod_node_info_pod_params.env_files is defined)
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }}"
+      fail:
+        msg: >-
+          env_templates is defined in the pod as well as in the node
+          (it should be in 1 only)
+      when: >-
+        (pod_pod.env_templates is defined) and
+        (pod_pod_info.env_templates is defined)
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }}"
+      fail:
+        msg: >-
+          env_templates is defined in the pod as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (pod_pod.env_templates is defined) and
+        (pod_node_info_pod_params.env_templates is defined)
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }}"
+      fail:
+        msg: >-
+          env_templates is defined in the node as well as in the context
+          (it should be in 1 only)
+      when: >-
+        (pod_pod_info.env_templates is defined) and
+        (pod_node_info_pod_params.env_templates is defined)
+      tags: ["no_print"]
+
+    - name: "{{ pod_inner_title }}"
+      include_tasks: "tasks/pods/transfer.yml"
+      vars:
+        pod_transfer_title: "{{ pod_inner_title }} - pod env"
+        pod_transfer_src_env_files: >-
+          {{
+          pod_node_info_pod_params.env_files
+          | default(pod_pod_info.env_files)
+          | default(pod_pod.env_files)
+          | default([])
+          }}
+        pod_transfer_src_env_templates: >-
+          {{
+          pod_node_info_pod_params.env_templates
+          | default(pod_pod_info.env_templates)
+          | default(pod_pod.env_templates)
+          | default([])
+          }}
+      tags: ["no_print"]
+
+    ### Generate the environment pod expanded variables ###
+
+    - name: "{{ pod_inner_title }}"
+      set_fact:
+        pod_vars_volumes: []
+        pod_vars_files: []
+        pod_vars_templates: []
+        pod_vars_env_files: []
+        pod_vars_env_templates: []
+        pod_dir_list: []
+      tags: ["no_print"]
+
+    - block:
+        - name: "{{ pod_inner_title }}"
+          set_fact:
+            pod_inner_vars_ctxs: "{{ [pod_vars_ctx] }}"
+            pod_inner_vars_idx: 0
+            pod_inner_vars_ctxs_completed: []
+          vars:
+            pod_vars_ctx:
+              name: "{{ pod_pod.ctx | default('') }}"
+              params: "{{ pod_vars_full }}"
+          tags: ["no_print"]
+
+        - name: "{{ pod_inner_title }} - include_tasks - vars_ctx.yml"
+          include_tasks: "tasks/pods/vars_ctx.yml"
+          tags: ["no_print"]
+
+      when: (pod_pod.ctx | default('')) != ''
+      tags: ["no_print_skipped"]
+
+    - name: "{{ pod_inner_title }}"
+      include_tasks: "tasks/pods/transfer.yml"
+      vars:
+        pod_transfer_title: "{{ pod_inner_title }} - ctx"
+        pod_transfer_src_volumes: "{{ pod_vars_volumes | default([]) }}"
+        pod_transfer_src_dir_list: "{{ pod_dir_list | default([]) }}"
+        pod_transfer_src_repo_files: "{{ pod_vars_files | default([]) }}"
+        pod_transfer_src_env_files: "{{ pod_vars_env_files | default([]) }}"
+        pod_transfer_src_repo_templates: "{{ pod_vars_templates | default([]) }}"
+        pod_transfer_src_env_templates: "{{ (pod_vars_env_templates | default([])) }}"
+      tags: ["no_print"]
+
+  when: (pod_diff.changed | default(true) | bool) or (pod_node_local | bool)
+  tags: ["no_print_skipped"]
+
+- name: "{{ pod_inner_title }} - debug - inner"
+  debug:
+    msg: "variables unchanged"
+  when: (not (pod_diff.changed | default(true) | bool)) and (not (pod_node_local | bool))
+  tags: ["no_print_skipped"]

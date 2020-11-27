@@ -49,7 +49,7 @@
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - cloud - repo (outer)"
-  include_tasks: "external-tasks/util/repo.yml"
+  include_tasks: "tasks/util/repo.yml"
   vars:
     repo_title: "{{ project_ctx_title }} - cloud - repo"
     repo_main: "{{ project_env.repos[project_ctx_cloud_repo_key] | default({}) }}"
@@ -67,7 +67,7 @@
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - env repos (outer)"
-  include_tasks: "external-tasks/util/repo.yml"
+  include_tasks: "tasks/util/repo.yml"
   vars:
     project_ctx_item_label: >-
       {{ project_ctx_item.dir | default('') }}

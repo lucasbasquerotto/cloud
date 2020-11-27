@@ -4,13 +4,13 @@
   tags: ["no_print_skipped"]
 
 - name: "env (outer)"
-  include_tasks: "env.yml"
+  include_tasks: "tasks/util/env.yml"
   vars:
     env_stage_title: "main"
   when: env is not defined
   tags: ["no_print"]
 
 - name: "{{ env_title }} - ctx (outer)"
-  include_tasks: "ctx.yml"
+  include_tasks: "tasks/util/ctx.yml"
   when: ctx is not defined
   tags: ["no_print"]

@@ -19,6 +19,8 @@ schemas:
         elem_schema: "cron"
       cron_start:
         type: "bool"
+      cron_start_root:
+        type: "bool"
   host_test:
     type: "dict"
     props:
