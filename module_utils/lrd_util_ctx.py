@@ -222,7 +222,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
             else:
               error_msgs_aux += [[
                   'context: validate service credentials',
-                  'credentials schema file not found: ' + schema_file,
+                  'msg: credentials schema file not found: ' + schema_file,
               ]]
 
       error_msgs_aux_params = []
@@ -288,7 +288,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
             else:
               error_msgs_aux += [[
                   'context: validate service params',
-                  'params schema file not found: ' + schema_file,
+                  'msg: params schema file not found: ' + schema_file,
               ]]
 
       for value in (error_msgs_aux or []):
@@ -395,11 +395,29 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     ]]
   else:
     pod = pods_dict.get(pod_key)
+    
+    repo =  = pod.get('repo')
+    result['repo'] = repo
+    env_repos = pod.get('env_repos')
+    result['env_repos'] = env_repos
 
-    repo_name = pod.get('repo')
-    result['repo'] = repo_name
+    repos = env.get('repos') 
 
-    result['env_repos'] = pod.get('env_repos')
+    if not repos:
+      error_msgs += [['msg: no repositories in the environment dictionary']]
+    elif not repos.get(repo):
+        error_msgs_aux += [[
+            'context: validate pod repo',
+            'msg: repository not found: ' + repo,
+        ]]
+
+    for env_repo in (env_repos or []):
+      if not repos.get(env_repo.get('repo')):
+        error_msgs_aux += [[
+            'context: validate pod env repo',
+            'msg: repository not found: ' + env_repo.get('repo'),
+        ]]
+
     result['env_files'] = pod.get('env_files')
     result['env_templates'] = pod.get('env_templates')
     result['base_dir'] = pod.get('base_dir')
@@ -415,7 +433,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
 
     dev = env_data.get('dev')
     path_maps = env_data.get('path_map') or dict()
-    dev_repo_path = path_maps.get(repo_name)
+    dev_repo_path = path_maps.get(repo)
 
     if dev and dev_repo_path:
       local_dir = env_data.get('dev_repos_dir') + '/' + dev_repo_path
@@ -471,7 +489,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
           else:
             error_msgs_aux += [[
                 'context: validate pod credentials',
-                'credentials schema file not found: ' + schema_file,
+                'msg: credentials schema file not found: ' + schema_file,
             ]]
 
     error_msgs_aux_params = []
@@ -557,7 +575,7 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
           else:
             error_msgs_aux += [[
                 'context: validate pod params',
-                'params schema file not found: ' + schema_file,
+                'msg: params schema file not found: ' + schema_file,
             ]]
 
     for value in (error_msgs_aux or []):
@@ -707,7 +725,7 @@ def prepare_node(node_info, env_data, validate_ctx):
           else:
             error_msgs_aux += [[
                 'context: validate node credentials',
-                'credentials schema file not found: ' + schema_file,
+                'msg: credentials schema file not found: ' + schema_file,
             ]]
 
     error_msgs_aux_params = []
@@ -771,7 +789,7 @@ def prepare_node(node_info, env_data, validate_ctx):
         else:
           error_msgs_aux += [[
               'context: validate node params',
-              'params schema file not found: ' + schema_file,
+              'msg: params schema file not found: ' + schema_file,
           ]]
 
         if (not error_msgs_aux_validate) and (not local):
@@ -956,8 +974,27 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
       error_msgs += [['msg: context not in the main environment dictionary']]
     else:
       ctx = main_dict.get(ctx_name)
-      result['repo'] = ctx.get('repo')
-      result['env_repos'] = ctx.get('env_repos')
+      repo =  = ctx.get('repo')
+      result['repo'] = repo
+      env_repos = ctx.get('env_repos')
+      result['env_repos'] = env_repos
+
+      repos = env.get('repos') 
+
+      if not repos:
+        error_msgs += [['msg: no repositories in the environment dictionary']]
+      elif not repos.get(repo):
+          error_msgs_aux += [[
+              'context: validate ctx repo',
+              'msg: repository not found: ' + repo,
+          ]]
+
+      for env_repo in (env_repos or []):
+        if not repos.get(env_repo.get('repo')):
+          error_msgs_aux += [[
+              'context: validate ctx env repo',
+              'msg: repository not found: ' + env_repo.get('repo'),
+          ]]
 
       params_args = dict(
           params=ctx.get('params'),
@@ -995,7 +1032,7 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
           else:
             error_msgs_aux += [[
                 'context: validate ctx params',
-                'params schema file not found: ' + schema_file,
+                'msg: params schema file not found: ' + schema_file,
             ]]
 
       ctx_initial_services = ctx.get('initial_services')
