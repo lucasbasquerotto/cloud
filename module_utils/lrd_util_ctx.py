@@ -395,21 +395,23 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     ]]
   else:
     pod = pods_dict.get(pod_key)
-    
-    repo =  = pod.get('repo')
+    error_msgs_aux = []
+
+    repo = pod.get('repo')
     result['repo'] = repo
     env_repos = pod.get('env_repos')
     result['env_repos'] = env_repos
 
-    repos = env.get('repos') 
+
+    repos = env.get('repos')
 
     if not repos:
       error_msgs += [['msg: no repositories in the environment dictionary']]
     elif not repos.get(repo):
-        error_msgs_aux += [[
-            'context: validate pod repo',
-            'msg: repository not found: ' + repo,
-        ]]
+      error_msgs_aux += [[
+          'context: validate pod repo',
+          'msg: repository not found: ' + repo,
+      ]]
 
     for env_repo in (env_repos or []):
       if not repos.get(env_repo.get('repo')):
@@ -444,7 +446,6 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
     result_aux_ctx_info = dict()
     result_aux_info = dict()
-    error_msgs_aux = []
 
     if validate_ctx:
       pod_ctx_file = pod.get('ctx')
@@ -974,24 +975,24 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
       error_msgs += [['msg: context not in the main environment dictionary']]
     else:
       ctx = main_dict.get(ctx_name)
-      repo =  = ctx.get('repo')
+      repo = ctx.get('repo')
       result['repo'] = repo
       env_repos = ctx.get('env_repos')
       result['env_repos'] = env_repos
 
-      repos = env.get('repos') 
+      repos = env.get('repos')
 
       if not repos:
         error_msgs += [['msg: no repositories in the environment dictionary']]
       elif not repos.get(repo):
-          error_msgs_aux += [[
-              'context: validate ctx repo',
-              'msg: repository not found: ' + repo,
-          ]]
+        error_msgs += [[
+            'context: validate ctx repo',
+            'msg: repository not found: ' + repo,
+        ]]
 
       for env_repo in (env_repos or []):
         if not repos.get(env_repo.get('repo')):
-          error_msgs_aux += [[
+          error_msgs += [[
               'context: validate ctx env repo',
               'msg: repository not found: ' + env_repo.get('repo'),
           ]]

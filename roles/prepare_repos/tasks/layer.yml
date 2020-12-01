@@ -1,3 +1,15 @@
+- name: "{{ prepare_repos_layer_title }} - validate repository name"
+  fail:
+    msg: "repository name not defined"
+  when: (prepare_repos_layer.repo | default('')) == ''
+  tags: ["no_print"]
+
+- name: "{{ prepare_repos_layer_title }} - validate repository"
+  fail:
+    msg: "repository {{ prepare_repos_layer.repo }} not found"
+  when: prepare_repos_repos_dict[prepare_repos_layer.repo] is not defined
+  tags: ["no_print"]
+
 - name: "{{ prepare_repos_layer_title }} - main (outer)"
   include_tasks: "tasks/util/repo.yml"
   vars:

@@ -23,7 +23,9 @@
 
 - name: "{{ project_ctx_title }} - validate - cloud repo - required"
   fail:
-    msg: "cloud repo (under 'main' in the environment file) not specified for ctx [{{ project_ctx_key }}]"
+    msg: >-
+      cloud repository (under 'main' in the environment file)
+      not specified for ctx [{{ project_ctx_key }}]
   when: (project_env.main[project_ctx_key].repo | default('')) == ''
   tags: ["no_print"]
 

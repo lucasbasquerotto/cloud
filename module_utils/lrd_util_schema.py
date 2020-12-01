@@ -61,6 +61,8 @@ schemas:
       props:
         type: "map"
         elem_schema: "prop"
+      lax:
+        type: "bool"
   prop:
     type: "dict"
     props:
@@ -470,14 +472,15 @@ def validate_next_value(schema_data, value):
           if value_type in ['dict', 'str_or_dict']:
             if props:
               if key not in props:
-                error_msgs += [[
-                    'schema_name: ' + schema_name + schema_suffix,
-                    'at: ' + (schema_ctx or '<root>'),
-                    'property: ' + key,
-                    'msg: property not defined in schema',
-                    'allowed: ',
-                    sorted(props.keys())
-                ]]
+                if not schema_info.get('lax'):
+                  error_msgs += [[
+                      'schema_name: ' + schema_name + schema_suffix,
+                      'at: ' + (schema_ctx or '<root>'),
+                      'property: ' + key,
+                      'msg: property not defined in schema',
+                      'allowed: ',
+                      sorted(props.keys())
+                  ]]
               else:
                 new_schema_info = props.get(key)
 

@@ -1,0 +1,57 @@
+root: "env"
+schemas:
+  env:
+    type: "dict"
+    lax: true
+    props:
+      name:
+        non_empty: true
+        type: "str"
+      ctxs:
+        required: true
+        type: "list"
+        elem_type: "str"
+      migration:
+        type: "str"
+      container:
+        type: "str"
+      main:
+        non_empty: true
+        type: "map"
+        elem_schema: "main"
+      repos:
+        type: "map"
+        non_empty: true
+        elem_schema: "repo"
+        elem_non_empty: true
+  main:
+    type: "dict"
+    lax: true
+    props:
+      repo:
+        non_empty: true
+        type: "str"
+      env_repos:
+        type: "list"
+        elem_schema: "repo_info"
+  repo_info:
+    type: "dict"
+    props:
+      repo:
+        non_empty: true
+        type: "str"
+      dir:
+        non_empty: true
+        type: "str"
+  repo:
+    type: "dict"
+    props:
+      src:
+        non_empty: true
+        type: "str"
+      version:
+        type: "str"
+      ssh_file:
+        type: "str"
+      ssh_file_encrypted:
+        type: "bool"

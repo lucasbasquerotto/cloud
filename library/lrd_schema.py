@@ -24,10 +24,10 @@ description:
    - Validate a value according to a specified schema.
 version_added: "2.8"
 options:
-  schema:
+  schema_file:
     description:
-      - schema object to validate the value
-    type: dict
+      - schema file to validate the value
+    type: str
     required: true
   value:
     description:
@@ -39,108 +39,76 @@ options:
       - specifies if the schema itself must be validated
     type: bool
     default: true
-notes:
-   - You can specify schema_for_schema to validate the schema, but it's not required.
 
 author: "Lucas Basquerotto (@lucasbasquerotto)"
 '''
 
 EXAMPLES = """
+# Schema File 1 (schemas/my_file_1.yml):
+
+# root: "schema_root"
+# schemas:
+#   schema_root:
+#     type: dict
+#     props:
+#       prop1:
+#         required: true
+#         type: str
+#       prop2:
+#         schema: schema_child
+#   schema_child:
+#     type: list
+#     elem_type: str
+
 # Example with a successful validation of the schema and value
 - lrd_schema:
-    schema:
-      root: "schema_root"
-      schemas:
-        schema_root:
-          type: dict
-          props:
-            prop1:
-              required: true
-              type: str
-            prop2:
-              schema: schema_child
-        schema_child:
-          type: list
-          elem_type: str
+    schema_file: "schemas/my_file_1.yml"
     value:
       prop1: "value1"
       prop2: ["value", "another_value"]
 
 # Example with an unsuccessful validation of the value
 - lrd_schema:
-    schema:
-      root: "schema_root"
-      schemas:
-        schema_root:
-          type: dict
-          props:
-            prop1:
-              required: true
-              type: str
-            prop2:
-              schema: schema_child
-        schema_child:
-          type: list
-          elem_type: str
+    schema_file: "schemas/my_file_1.yml"
     value:
       prop2: ["value", "another_value"]
 
 # Another example with an unsuccessful validation of the value
 - lrd_schema:
-    schema:
-      root: "schema_root"
-      schemas:
-        schema_root:
-          type: dict
-          props:
-            prop1:
-              required: true
-              type: str
-            prop2:
-              schema: schema_child
-        schema_child:
-          type: list
-          elem_type: str
+    schema_file: "schemas/my_file_1.yml"
     value:
       prop1: "value1"
       prop2: "value2"
 
 # Yet another example with an unsuccessful validation of the value
+# and don't validate the schema
 - lrd_schema:
-    schema:
-      root: "schema_root"
-      schemas:
-        schema_root:
-          type: dict
-          props:
-            prop1:
-              required: true
-              type: str
-            prop2:
-              schema: schema_child
-        schema_child:
-          type: list
-          elem_type: str
+    schema_file: "schemas/my_file_1.yml"
     value:
       prop1: "value1"
       prop3: ["value", "another_value"]
+    validate_schema: false
+
+# Schema File 2 (schemas/my_file_2.yml):
+# (invalid: 'typo' instead of 'type')
+
+# root: "schema_root"
+# schemas:
+#   schema_root:
+#     typo: dict
+#     props:
+#       prop1:
+#         required: true
+#         type: str
+#       prop2:
+#         schema: schema_child
+#   schema_child:
+#     type: list
+#     elem_type: str
 
 # Example with an unsuccessful validation of the schema
 - lrd_schema:
-    schema:
-      root: "schema_root"
-      schemas:
-        schema_root:
-          typo: dict
-          props:
-            prop1:
-              required: true
-              type: str
-            prop2:
-              schema: schema_child
-        schema_child:
-          type: list
-          elem_type: str
+    schema_file: "schemas/my_file_2.yml"
     value:
       prop2: ["value", "another_value"]
 """
@@ -150,6 +118,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.lrd_utils import error_text
 from ansible.module_utils.lrd_util_schema import validate
 
+from ansible.module_utils.lrd_utils import load_yaml_file
+
 # ===========================================
 # Module execution.
 #
@@ -157,18 +127,18 @@ from ansible.module_utils.lrd_util_schema import validate
 def main():
   module = AnsibleModule(
       argument_spec=dict(
-          schema=dict(type='dict', required=True),
+          schema_file=dict(type='str', required=True),
           value=dict(type='dict', required=True),
           validate_schema=dict(type='bool', default=True),
       )
   )
 
-  schema = module.params['schema']
+  schema_file = module.params['schema_file']
   value = module.params['value']
   validate_schema = module.boolean(module.params['validate_schema'])
 
+  schema = load_yaml_file(schema_file)
   error_msgs = validate(schema, value, validate_schema)
-
 
   if error_msgs:
     context = "schema validation"

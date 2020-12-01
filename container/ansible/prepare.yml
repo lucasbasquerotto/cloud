@@ -133,6 +133,11 @@
 
     # validate environment
 
+    - name: "{{ project_env_title }} - validate env (minimum)"
+      lrd_schema:
+        schema_file: "schemas/env-minimum.schema.yml"
+        value: "{{ project_env }}"
+
     - name: "{{ project_env_title }} - validate the container"
       fail:
         msg: >-
