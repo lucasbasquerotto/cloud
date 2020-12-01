@@ -301,7 +301,7 @@
         host_test_node: "{{ main_item }}"
         host_test_title: >-
           {{ env_title }} - host test -
-          instance [{{ instance_type | default('') }} -
+          instance [{{ host_test_node.description }} -
           {{ inventory_hostname }}]
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:

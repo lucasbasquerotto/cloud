@@ -30,8 +30,9 @@ schemas:
       setup_finished_log_regex:
         type: "str"
         non_empty: true
-      setup_finished_log_last_line:
+      setup_success_log_last_line:
         type: "str"
+        non_empty: true
       initial_connection_timeout:
         type: "int"
       setup_finished_timeout:

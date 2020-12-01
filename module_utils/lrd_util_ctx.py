@@ -662,7 +662,7 @@ def prepare_node(node_info, env_data, validate_ctx):
     result['external'] = external
 
     result['local_host_test'] = to_bool(node_info_dict.get('local_host_test'))
-    result['local_host_test_error'] = to_bool(node_info_dict.get('local_host_test_error'))
+    result['local_host_test_error'] = node_info_dict.get('local_host_test_error')
 
     result_aux_info = dict()
     error_msgs_aux = []
