@@ -649,13 +649,6 @@ def prepare_node(node_info, env_data, validate_ctx):
     ]]
   else:
     node = nodes_dict.get(node_key)
-    node_result = node.copy()
-    node_result.pop('pods', None)
-    node_result.pop('params', None)
-    node_result.pop('group_params', None)
-    node_result.pop('shared_params', None)
-    node_result.pop('shared_group_params', None)
-    result['node'] = node_result
 
     result['tmp'] = to_bool(node_info_dict.get('tmp'))
     node_info_dict.pop('tmp', None)
@@ -667,6 +660,9 @@ def prepare_node(node_info, env_data, validate_ctx):
     result['local'] = local
     external = to_bool(node_info_dict.get('external'))
     result['external'] = external
+
+    result['local_host_test'] = to_bool(node_info_dict.get('local_host_test'))
+    result['local_host_test_error'] = to_bool(node_info_dict.get('local_host_test_error'))
 
     result_aux_info = dict()
     error_msgs_aux = []

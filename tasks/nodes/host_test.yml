@@ -1,76 +1,37 @@
 # Vars & Validation
 
-- name: "{{ host_test_title }} - host_test_node_name - initial"
-  set_fact:
-    host_test_node_info: ""
-    host_test_node_name: ""
-    host_test_node_key: ""
-  tags: ["no_print"]
+- debug:
+    var: host_test_node
 
-- name: "{{ host_test_title }} - host_test_node_name - fill"
+- name: "{{ host_test_title }} - host_test_node_name"
   set_fact:
-    host_test_node_info: "{{ host_test_node_info_aux }}"
-    host_test_node_name: "{{ host_test_node_name_aux }}"
-    host_test_node_key: >-
-      {{
-        host_test_node_info_aux.key
-        | default(host_test_node_info_aux.name)
-        | default(host_test_node_info_aux)
-      }}
-  vars:
-    host_test_node_info_aux: "{{ host_test_item }}"
-    host_test_node_name_aux: >-
-      {{ host_test_node_info_aux.name | default(host_test_node_info_aux) }}
-  loop: "{{ env_ctx.nodes | default([]) | list }}"
-  loop_control:
-    loop_var: host_test_item
-    label: "{{ host_test_node_name_aux }}"
-  when: host_test_node_name_aux == instance_type
+    host_test_node_name: "{{ host_test_node.name }}"
   tags: ["no_print"]
 
 - name: "{{ host_test_title }} - validate instance type - exists"
   fail:
-    msg: "there is no node with the name {{ instance_type }} declared in the main context"
+    msg: "there is no node with the name [{{ instance_type | default('') }}] declared in the main context"
   when: host_test_node_name == ''
   tags: ["no_print"]
 
 - name: "{{ host_test_title }} - validate instance type - node name"
   fail:
-    msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
-  when: host_test_node_name != instance_type
-  tags: ["no_print"]
-
-- name: "{{ host_test_title }} - validate instance key"
-  fail:
-    msg: "instance_key ({{ instance_key }}) should be {{ host_test_node_key }}"
-  when: host_test_node_key != instance_key
-  tags: ["no_print"]
-
-- name: "{{ host_test_title }} - host_test_node"
-  set_fact:
-    host_test_node: "{{ env.nodes[host_test_node_key] }}"
+    msg: "instance_type ({{ instance_type | default('') }}) should be {{ host_test_node_name }}"
+  when: (host_test_node_name != (instance_type | default(''))) and (ansible_connection != 'local')
   tags: ["no_print"]
 
 # Node Params
 
-- name: "{{ host_test_title }} - node params (outer)"
-  include_tasks: "tasks/nodes/node_params.yml"
-  vars:
-    node_params_title: "{{ host_test_title }} - node params"
-    node_params_node: "{{ host_test_node }}"
-    node_params_info: "{{ host_test_node_info }}"
-  tags: ["no_print"]
-
 - name: "{{ host_test_title }} - host_test_node_params"
   set_fact:
-    host_test_node_params: "{{ node_params }}"
+    host_test_node_params: "{{ host_test_node.params | default({}) }}"
   tags: ["no_print"]
 
 # Main Params
 
 - name: "{{ host_test_title }} - host_test_vars"
   set_fact:
-    host_test_vars: "{{ host_test_node_params.host_test }}"
+    host_test_vars: "{{ host_test_node_params.host_test | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ host_test_title }} - host_test_vars"
@@ -144,4 +105,7 @@
 
       when: host_test_setup_finished_log_last_line != ''
 
-  when: not (host_test_vars.skip | default(false) | bool)
+  when: >-
+    (host_test_node_params.host_test is not defined)
+    or
+    (not (host_test_vars.skip | default(false) | bool))

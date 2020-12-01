@@ -143,16 +143,17 @@ def validate_next_value(schema_data, value):
           'msg: value is not defined' + non_empty_info
       ]]
 
-  value_type = schema_info.get('type')
-  next_schema = schema_info.get('schema')
-
   if (not is_subelement) and (not is_prop) and ('schema' in schema_info):
     return [[
         'schema_name: ' + schema_name + schema_suffix,
         'at: ' + (schema_ctx or '<root>'),
         'msg: a schema definition should not have a schema property'
     ]]
-  elif (not value_type) and (not next_schema):
+
+  value_type = schema_info.get('type')
+  next_schema = schema_info.get('schema')
+
+  if (not value_type) and (not next_schema):
     return [[
         'schema_name: ' + schema_name + schema_suffix,
         'at: ' + (schema_ctx or '<root>'),

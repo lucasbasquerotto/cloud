@@ -268,12 +268,12 @@
 ###############################################################################
 
 - name: Play 02.02 - Cloud - Nodes - Wait for the hosts to be ready
-  hosts: host
+  hosts: main,host
   tags:
     - init
     - cloud
     - nodes
-    - wait
+    - host_test
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
@@ -284,7 +284,7 @@
     - name: "{{ env_title }}"
       fail:
         msg: "instance_type is not defined in the host"
-      when: (instance_type | default('')) == ''
+      when: ((instance_type | default('')) == '') and (ansible_connection != 'local')
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
@@ -298,30 +298,23 @@
     - name: "{{ env_title }} - host test (outer)"
       include_tasks: "tasks/nodes/host_test.yml"
       vars:
-        host_test_title: >-
-          {{ env_title }} - host test -
-          instance [{{ instance_type }} - {{ inventory_hostname }}]
-      when: (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
-      tags: ["no_print_skipped"]
-
-    - name: "{{ env_title }} - host test (outer)"
-      include_tasks: "tasks/nodes/host_test.yml"
-      vars:
         host_test_node: "{{ main_item }}"
-        host_test_node_name: "{{ host_test_node.name }}"
         host_test_title: >-
           {{ env_title }} - host test -
-          instance [{{ instance_type }} - {{ inventory_hostname }}]
+          instance [{{ instance_type | default('') }} -
+          {{ inventory_hostname }}]
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:
         loop_var: main_item
         label: "{{ host_test_node.description }}"
       when: >-
-        ((ansible_connection == 'local') or (host_test_node_name == (instance_type | default(''))))
+        (host_test_node | validate_connection(env_info))
         and
-        (((env_node | default('')) == '') or (env_node == host_test_node_name))
-        and
-        ((ansible_connection != 'local') or (host_test_node.local_host_test | default(false, true) | bool))
+        (
+          (ansible_connection != 'local')
+          or
+          (host_test_node.local_host_test | default(false, true) | bool)
+        )
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
