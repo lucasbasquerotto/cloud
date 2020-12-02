@@ -35,7 +35,7 @@ def load_yaml_file(file_path):
     content = file.read().decode('utf-8-sig')
     return load_yaml(content)
 
-def error_text(error_msgs, context = None):
+def error_text(error_msgs, context=None):
   if not error_msgs:
     return ''
 
@@ -49,6 +49,7 @@ def error_text(error_msgs, context = None):
   for value in error_msgs:
     new_error_msgs += [value, separator]
 
+  Dumper.ignore_aliases = lambda self, data: True
   error = yaml.dump(new_error_msgs, Dumper=Dumper, default_flow_style=False)
 
   return error

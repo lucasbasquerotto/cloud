@@ -30,18 +30,11 @@ schemas:
     props:
       type:
         required: true
+        schema: "type"
+      alternative_type:
+        schema: "type"
+      alternative_schema:
         type: "str"
-        choices:
-          - "unknown"
-          - "primitive"
-          - "str"
-          - "bool"
-          - "int"
-          - "float"
-          - "str_or_dict"
-          - "dict"
-          - "map"
-          - "list"
       non_empty:
         type: "bool"
       choices:
@@ -67,19 +60,12 @@ schemas:
     type: "dict"
     props:
       type:
-        type: "str"
-        choices:
-          - "unknown"
-          - "primitive"
-          - "str"
-          - "bool"
-          - "int"
-          - "float"
-          - "str_or_dict"
-          - "dict"
-          - "map"
-          - "list"
+        schema: "type"
+      alternative_type:
+        schema: "type"
       schema:
+        type: "str"
+      alternative_schema:
         type: "str"
       required:
         type: "bool"
@@ -102,7 +88,21 @@ schemas:
       values:
         type: "list"
         elem_type: "str"
-
+  type:
+    type: "str"
+    choices:
+      - "unknown"
+      - "primitive"
+      - "str"
+      - "bool"
+      - "int"
+      - "float"
+      - "dict"
+      - "simple_dict"
+      - "map"
+      - "simple_map"
+      - "list"
+      - "simple_list"
 """
 
 def by_value(item):
@@ -115,6 +115,7 @@ def validate_next_value(schema_data, value):
   schema_info_dict = schema_data.get('dict')
   is_prop = schema_data.get('prop')
   is_subelement = schema_data.get('subelement')
+  is_simple = schema_data.get('simple')
   required = schema_data.get('required')
 
   schema_suffix = ''
@@ -143,7 +144,7 @@ def validate_next_value(schema_data, value):
           'msg: value is not defined' + non_empty_info
       ]]
 
-  if (not is_subelement) and (not is_prop) and ('schema' in schema_info):
+  if (not is_subelement) and (not is_prop) and (not is_simple) and ('schema' in schema_info):
     return [[
         'schema_name: ' + schema_name + schema_suffix,
         'at: ' + (schema_ctx or '<root>'),
@@ -180,6 +181,208 @@ def validate_next_value(schema_data, value):
     )
 
     return validate_next_value(new_schema_data, value)
+
+  new_type = schema_info.get('type')
+  new_schema_name = schema_info.get('schema')
+
+  if (not new_type) and (not new_schema_name):
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'msg: a property definition should have either a type or schema property'
+    ]]
+  elif new_type and new_schema_name:
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'msg: a property definition should not have both type and schema properties'
+    ]]
+
+  elem_type = schema_info.get('elem_type')
+  elem_schema_name = schema_info.get('elem_schema')
+  elem_required = schema_info.get('elem_required')
+  elem_non_empty = schema_info.get('elem_non_empty')
+  elem_choices = schema_info.get('elem_choices')
+
+  if value_type not in ['map', 'simple_map', 'list', 'simple_list']:
+    if elem_type:
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a definition should have elem_type only for lists and maps'
+      ]]
+    elif elem_schema_name:
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a definition should have elem_schema only for lists and maps'
+      ]]
+    elif elem_required:
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a definition should have elem_required only for lists and maps'
+      ]]
+    elif elem_non_empty:
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a definition should have elem_non_empty only for lists and maps'
+      ]]
+    elif elem_choices:
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a definition should have elem_choices only for lists and maps'
+      ]]
+
+  if value_type in  ['map', 'simple_map', 'list', 'simple_list']:
+    if (not elem_type) and (not elem_schema_name):
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a property definition with this type should have either a '
+          + 'elem_type or elem_schema property'
+      ]]
+    elif elem_type and elem_schema_name:
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'msg: a property definition with this type should not have '
+          + 'both elem_type and elem_schema properties'
+      ]]
+
+  alternative_type = schema_info.get('alternative_type')
+  alternative_schema = schema_info.get('alternative_schema')
+
+  if (value_type == 'simple_dict') and (not alternative_type) and (not alternative_schema):
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: a simple_dict must have an alternative type or alternative schema'
+    ]]
+  elif alternative_type and alternative_schema:
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: define only an alternative type or alternative schema, not both'
+    ]]
+  elif alternative_type and (value_type != 'simple_dict'):
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: an alternative type should be defined only for simple_dict'
+    ]]
+  elif alternative_schema and (value_type != 'simple_dict'):
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: an alternative schema should be defined only for simple_dict'
+    ]]
+
+  if value_type == 'simple_dict':
+    invalid_alternative_types = ['map', 'simple_map', 'dict', 'simple_dict']
+
+    if alternative_type and (alternative_type in invalid_alternative_types):
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'alternative_type: ' + alternative_type,
+          'msg: invalid alternative type for a ' + value_type,
+          'invalid alternative types: ',
+          invalid_alternative_types,
+      ]]
+
+    if alternative_schema:
+      schema_info_aux = schema_info_dict.get(alternative_schema)
+      schema_info_aux_type = schema_info_aux.get('type') if schema_info_aux else None
+
+      if schema_info_aux_type and (schema_info_aux_type in invalid_alternative_types):
+        return [[
+            'schema_name: ' + schema_name + schema_suffix,
+            'at: ' + (schema_ctx or '<root>'),
+            'type: ' + value_type,
+            'alternative schema type: ' + schema_info_aux_type,
+            'msg: invalid alternative schema type for a ' + value_type,
+            'invalid alternative types: ',
+            invalid_alternative_types,
+        ]]
+  elif value_type in ['simple_map', 'simple_list']:
+    invalid_elem_types = (
+        ['list', 'simple_list']
+        if (value_type == 'simple_list')
+        else ['map', 'simple_map', 'dict', 'simple_dict']
+    )
+
+    if elem_type and (elem_type in invalid_elem_types):
+      return [[
+          'schema_name: ' + schema_name + schema_suffix,
+          'at: ' + (schema_ctx or '<root>'),
+          'type: ' + value_type,
+          'element type: ' + elem_type,
+          'msg: invalid element type for a ' + value_type,
+          'invalid element types: ',
+          invalid_elem_types,
+      ]]
+
+    if elem_schema_name:
+      schema_info_aux = schema_info_dict.get(elem_schema_name)
+      schema_info_aux_type = schema_info_aux.get('type') if schema_info_aux else None
+
+      if schema_info_aux_type and (schema_info_aux_type in invalid_elem_types):
+        return [[
+            'schema_name: ' + schema_name + schema_suffix,
+            'at: ' + (schema_ctx or '<root>'),
+            'type: ' + value_type,
+            'element schema type: ' + schema_info_aux_type,
+            'msg: invalid element schema type for a ' + value_type,
+            'invalid element types: ',
+            invalid_elem_types,
+        ]]
+
+  props = schema_info.get('props')
+
+  if (
+      (not props)
+      and
+      (not is_prop)
+      and
+      (not is_subelement)
+      and
+      (value_type in ['dict', 'simple_dict'])
+  ):
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: props not defined for schema'
+    ]]
+  elif props and is_prop:
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: props should not be defined inside a property (only in schemas)'
+    ]]
+  elif props and (value_type not in ['dict', 'simple_dict']):
+    return [[
+        'schema_name: ' + schema_name + schema_suffix,
+        'at: ' + (schema_ctx or '<root>'),
+        'type: ' + value_type,
+        'msg: props should not be defined for a schema of this type'
+    ]]
 
   is_list = isinstance(value, list)
   is_dict = isinstance(value, dict)
@@ -234,15 +437,51 @@ def validate_next_value(schema_data, value):
             'value type: ' + str(type(value)),
             'msg: value expected to be a dictionary'
         ]]
-    elif value_type == 'str_or_dict':
-      if (not is_string) and (not is_dict):
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'value type: ' + str(type(value)),
-            'msg: value expected to be a string or dictionary'
-        ]]
+    elif value_type == 'simple_dict':
+      if not is_dict:
+        new_schema_info = dict(
+            type=alternative_type,
+            schema=alternative_schema,
+            required=required,
+            non_empty=non_empty,
+        )
+
+        new_schema_data = dict(
+            name=schema_name + ' (' + value_type + ')',
+            ctx=schema_ctx,
+            info=new_schema_info,
+            dict=schema_info_dict,
+            prop=is_prop,
+            subelement=is_subelement,
+            required=required,
+            simple=True,
+        )
+
+        return validate_next_value(new_schema_data, value)
+    elif value_type in ['simple_map', 'simple_list']:
+      if (((value_type == 'simple_list') and not is_list)
+          or ((value_type == 'simple_map') and not is_dict)):
+
+        new_schema_info = dict(
+            type=elem_type,
+            schema=elem_schema_name,
+            required=elem_required,
+            non_empty=elem_non_empty,
+            choices=elem_choices,
+        )
+
+        new_schema_data = dict(
+            name=schema_name + ' (' + value_type + ')',
+            ctx=schema_ctx,
+            info=new_schema_info,
+            dict=schema_info_dict,
+            prop=is_prop,
+            subelement=is_subelement,
+            required=required,
+            simple=True,
+        )
+
+        return validate_next_value(new_schema_data, value)
     elif value_type == 'str':
       if not is_string:
         return [[
@@ -321,115 +560,6 @@ def validate_next_value(schema_data, value):
             choices
         ]]
 
-    new_type = schema_info.get('type')
-    new_schema_name = schema_info.get('schema')
-
-    if (not new_type) and (not new_schema_name):
-      return [[
-          'schema_name: ' + schema_name + schema_suffix,
-          'at: ' + (schema_ctx or '<root>'),
-          'msg: a property definition should have either a type or schema property'
-      ]]
-    elif new_type and new_schema_name:
-      return [[
-          'schema_name: ' + schema_name + schema_suffix,
-          'at: ' + (schema_ctx or '<root>'),
-          'msg: a property definition should not have both type and schema properties'
-      ]]
-
-    elem_type = schema_info.get('elem_type')
-    elem_schema_name = schema_info.get('elem_schema')
-    elem_required = schema_info.get('elem_required')
-    elem_non_empty = schema_info.get('elem_non_empty')
-    elem_choices = schema_info.get('elem_choices')
-
-    if value_type not in ['map', 'list']:
-      if elem_type:
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a definition should have elem_type only for lists and maps'
-        ]]
-      elif elem_schema_name:
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a definition should have elem_schema only for lists and maps'
-        ]]
-      elif elem_required:
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a definition should have elem_required only for lists and maps'
-        ]]
-      elif elem_non_empty:
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a definition should have elem_non_empty only for lists and maps'
-        ]]
-      elif elem_choices:
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a definition should have elem_choices only for lists and maps'
-        ]]
-
-    if value_type in ['map', 'list']:
-      if (not elem_type) and (not elem_schema_name):
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a property definition for a <' + value_type
-            + '> should have either a elem_type or elem_schema property'
-        ]]
-      elif elem_type and elem_schema_name:
-        return [[
-            'schema_name: ' + schema_name + schema_suffix,
-            'at: ' + (schema_ctx or '<root>'),
-            'type: ' + value_type,
-            'msg: a property definition for a <' + value_type
-            + '> should not have both elem_type and elem_schema properties'
-        ]]
-
-    props = schema_info.get('props')
-
-    if (
-        (not props)
-        and
-        (not is_prop)
-        and
-        (not is_subelement)
-        and
-        (value_type in ['dict', 'str_or_dict'])
-    ):
-      return [[
-          'schema_name: ' + schema_name + schema_suffix,
-          'at: ' + (schema_ctx or '<root>'),
-          'type: ' + value_type,
-          'msg: props not defined for schema'
-      ]]
-    elif props and is_prop:
-      return [[
-          'schema_name: ' + schema_name + schema_suffix,
-          'at: ' + (schema_ctx or '<root>'),
-          'type: ' + value_type,
-          'msg: props should not be defined inside a property (only in schemas)'
-      ]]
-    elif props and (value_type not in ['dict', 'str_or_dict']):
-      return [[
-          'schema_name: ' + schema_name + schema_suffix,
-          'at: ' + (schema_ctx or '<root>'),
-          'type: ' + value_type,
-          'msg: props should not be defined for a schema of this type'
-      ]]
-
     if value_type != 'unknown':
       error_msgs = []
 
@@ -458,7 +588,7 @@ def validate_next_value(schema_data, value):
         keys = list(value.keys())
 
         # required or non-empty properties
-        if props and (value_type in ['dict', 'str_or_dict']):
+        if props and (value_type in ['dict', 'simple_dict']):
           for key in list(props.keys()):
             prop_value = props.get(key)
 
@@ -470,7 +600,7 @@ def validate_next_value(schema_data, value):
         for key in sorted(keys):
           elem_value = value.get(key)
 
-          if value_type in ['dict', 'str_or_dict']:
+          if value_type in ['dict', 'simple_dict']:
             if props:
               if key not in props:
                 if not schema_info.get('lax'):
