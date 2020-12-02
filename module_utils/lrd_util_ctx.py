@@ -900,13 +900,30 @@ def prepare_node(node_info, env_data, validate_ctx):
     if pods:
       pods_info = prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx)
 
-      result_aux_pods = pods_info.get('result')
+      prepared_pods = pods_info.get('result')
       error_msgs_aux_pods = pods_info.get('error_msgs')
 
       if error_msgs_aux_pods:
         error_msgs_aux += error_msgs_aux_pods
       else:
-        result['pods'] = result_aux_pods
+        pod_names = set()
+
+        for pod in (prepared_pods or []):
+          pod_names.add(pod.get('name'))
+
+        pod_ctx_info_keys = sorted(list((pod_ctx_info_dict or dict()).keys()))
+
+        for pod_ctx_info_key in pod_ctx_info_keys:
+          if pod_ctx_info_key not in pod_names:
+            error_msgs_aux += [[
+                'pod: ' + pod_ctx_info_key,
+                'msg: pod defined in the context for the node info,'
+                + ' but the node doesn\'t have a pod with such name',
+                'node pods: ',
+                sorted(list(pod_names)),
+            ]]
+
+        result['pods'] = prepared_pods
 
     for value in (error_msgs_aux or []):
       new_value = ['node: ' + node_description] + value
