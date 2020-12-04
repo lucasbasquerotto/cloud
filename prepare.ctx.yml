@@ -139,7 +139,8 @@
         project_ctx_run_src: "{{ env_vars.repo_dir }}/files/run.tpl.yml"
         project_ctx_run_tmp_dest: "{{ env_vars.ctx_dir }}/run.yml"
         project_ctx_run_dest: "{{ env_vars.repo_dir }}/plays/run.yml"
-        project_ctx_run_params_final: "{{ project_env | default({}) | combine({}) }}"
+        project_ctx_run_env: "{{ project_env | combine({}) }}"
+        project_ctx_run_ctx_data: "{{ ctx_data | combine({}) }}"
       tags: ["no_print"]
 
     - name: "{{ project_ctx_run_title }} - create the template directories (tmp and final)"
@@ -167,7 +168,8 @@
         variable_end_string: ">>"
         variable_start_string: "<<"
       vars:
-        params: "<< project_ctx_run_params_final >>"
+        env: "<< project_ctx_run_env >>"
+        ctx_data: "<< project_ctx_run_ctx_data >>"
         local_params:
           pods_dir: "<< env_dev_pods_dir >>"
           apps_dir: "<< env_dev_apps_dir >>"

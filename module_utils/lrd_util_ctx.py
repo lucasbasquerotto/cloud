@@ -965,6 +965,181 @@ def prepare_nodes(nodes, env_data, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
+def prepare_run_stage_task(
+    run_stage_task_info, default_name, prepared_nodes, env_data, validate_ctx):
+  result = dict()
+  error_msgs = []
+
+  env = env_data.get('env')
+
+  run_stage_task_name = None
+
+  if isinstance(run_stage_task_info, dict):
+    run_stage_task_name = default_name
+    run_stage_task = run_stage_task_info
+
+    if not run_stage_task_name:
+      error_msgs += [['msg: run stage task default name not defined']]
+      return dict(result=result, error_msgs=error_msgs)
+  else:
+    run_stage_task_name = run_stage_task_info
+
+    if not run_stage_task_name:
+      error_msgs += [['msg: run stage task name not defined']]
+      return dict(result=result, error_msgs=error_msgs)
+
+    run_stage_tasks_dict = env.get('run_stage_tasks')
+
+    if not run_stage_tasks_dict:
+      error_msgs += [[
+          'run_stage_task: ' + run_stage_task_name,
+          'msg: no run stage task specified for the environment'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
+
+    run_stage_task = run_stage_tasks_dict.get(run_stage_task_name)
+
+    if run_stage_task is None:
+      error_msgs += [[
+          'run_stage_task: ' + run_stage_task_name,
+          'msg: run stage task not specified for the environment'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
+
+  result['name'] = run_stage_task_name
+
+  task_name = run_stage_task.get('name')
+
+  if not task_name:
+    error_msgs += [[
+        'run_stage_task: ' + run_stage_task_name,
+        'msg: task name relative to the run stage task not specified'
+    ]]
+
+  result['task_name'] = task_name
+
+  tasks_dict = env.get('tasks')
+
+  if not tasks_dict:
+    error_msgs += [[
+        'run_stage_task: ' + run_stage_task_name,
+        'task_name: ' + task_name,
+        'msg: no task specified for the environment'
+    ]]
+    return dict(result=result, error_msgs=error_msgs)
+
+  task = tasks_dict.get(task_name)
+
+  if task is None:
+    error_msgs += [[
+        'run_stage_task: ' + run_stage_task_name,
+        'task_name: ' + task_name,
+        'msg: task not specified for the environment'
+    ]]
+    return dict(result=result, error_msgs=error_msgs)
+
+  return dict(result=result, error_msgs=error_msgs)
+
+def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, validate_ctx):
+  result = dict()
+  error_msgs = []
+
+  task_names = set()
+  env = env_data.get('env')
+
+  run_stage_name = None
+  run_stage_tasks = None
+
+  if isinstance(run_stage_info, dict):
+    run_stage_name = default_name
+
+    if not run_stage_name:
+      error_msgs += [['msg: run stage default name not defined']]
+      return dict(result=result, error_msgs=error_msgs)
+
+    run_stage_tasks = run_stage_info.get('tasks')
+
+    if run_stage_tasks is None:
+      error_msgs += [[
+          'run_stage: ' + run_stage_name,
+          'msg: run stage tasks not specified'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
+  else:
+    run_stage_name = run_stage_info
+
+    if not run_stage_name:
+      error_msgs += [['msg: run stage name not defined']]
+      return dict(result=result, error_msgs=error_msgs)
+
+    run_stages_dict = env.get('run_stages')
+
+    if not run_stages_dict:
+      error_msgs += [[
+          'run_stage: ' + run_stage_name,
+          'msg: no run stage specified for the environment'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
+
+    run_stage_tasks = run_stages_dict.get(run_stage_name)
+
+    if run_stage_tasks is None:
+      error_msgs += [[
+          'run_stage: ' + run_stage_name,
+          'msg: run stage not specified for the environment'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
+
+  result['name'] = run_stage_name
+
+  for idx, run_stage_task in enumerate(run_stage_tasks or []):
+    default_task_name = str(idx)
+    info = prepare_run_stage_task(
+        run_stage_task,
+        default_task_name,
+        prepared_nodes,
+        env_data,
+        validate_ctx,
+    )
+
+    result_aux = info.get('result')
+    error_msgs_aux = info.get('error_msgs')
+
+    if error_msgs_aux:
+      error_msgs += error_msgs_aux
+    else:
+      task_name = result_aux.get('name')
+
+      if task_name in task_names:
+        error_msgs += [[
+            'run_stage: ' + run_stage_name,
+            'task_name: ' + task_names,
+            'msg: duplicate task name',
+        ]]
+      else:
+        task_names.add(task_name)
+        result += [result_aux]
+
+  return dict(result=result, error_msgs=error_msgs)
+
+def prepare_run_stages(run_stages, prepared_nodes, env_data, validate_ctx):
+  result = []
+  error_msgs = []
+
+  for idx, run_stage_info in enumerate(run_stages or []):
+    default_name = str(idx)
+    info = prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, validate_ctx)
+
+    result_aux = info.get('result')
+    error_msgs_aux = info.get('error_msgs')
+
+    if error_msgs_aux:
+      error_msgs += error_msgs_aux
+    else:
+      result += [result_aux]
+
+  return dict(result=result, error_msgs=error_msgs)
+
 def prepare_ctx(ctx_name, env_data, validate_ctx):
   result = dict()
   error_msgs = []
@@ -1065,6 +1240,8 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
           result['prepared_initial_services'] = result_aux
 
       ctx_nodes = ctx.get('nodes')
+      prepared_nodes = []
+      nodes_errors = []
 
       if ctx_nodes:
         nodes_info = prepare_nodes(ctx_nodes, env_data, validate_ctx)
@@ -1073,9 +1250,11 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
         error_msgs_aux = nodes_info.get('error_msgs')
 
         if error_msgs_aux:
+          nodes_errors = error_msgs_aux
           error_msgs += error_msgs_aux
         else:
-          result['nodes'] = result_aux
+          prepared_nodes = result_aux
+          result['nodes'] = prepared_nodes
 
       ctx_final_services = ctx.get('final_services')
 
@@ -1091,5 +1270,19 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
 
         if not error_msgs_aux:
           result['prepared_final_services'] = result_aux
+
+      run_stages = ctx.get('run_stages')
+
+      if run_stages:
+        if not prepared_nodes:
+          if not nodes_errors:
+            error_msgs += [[
+                'context: ctx params - run stages',
+                'msg: no node found (at least one node is needed when run_stages is defined)',
+            ]]
+        else:
+          prepared_run_stages = prepare_run_stages(
+              run_stages, prepared_nodes, env_data, validate_ctx)
+          result['run_stages'] = prepared_run_stages
 
   return dict(result=result, error_msgs=error_msgs)
