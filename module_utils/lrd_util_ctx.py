@@ -1036,7 +1036,92 @@ def prepare_run_stage_task(
         'task_name: ' + task_name,
         'msg: task not specified for the environment'
     ]]
-    return dict(result=result, error_msgs=error_msgs)
+
+  stage_node_task = run_stage_task.get('node_task')
+  stage_pod_task = run_stage_task.get('pod_task')
+
+  if (not stage_node_task) and (not stage_pod_task):
+    error_msgs += [[
+        'run_stage_task: ' + run_stage_task_name,
+        'task_name: ' + task_name,
+        'msg: please, specify if the task is for the nodes and/or pods'
+    ]]
+
+  node_map = dict()
+  all_nodes = []
+
+  for node in (prepared_nodes or []):
+    node_name = node.get('name')
+    pods_aux = []
+
+    for pod in (node.get('pods') or []):
+      pod_name = pod.get('name')
+      pods_aux += [pod_name]
+
+    node_aux = dict(name=node_name, pods=pods_aux)
+    node_map[node_name] = node
+    all_nodes += [node_aux]
+
+  all_nodes = run_stage_task.get('all_nodes')
+  nodes_to_run = []
+
+  if all_nodes:
+    nodes_to_run = all_nodes
+  else:
+    node_info_list = run_stage_task.get('nodes')
+
+    for node_info in (node_info_list or []):
+      node_name = node_info if isinstance(node_info, dict) else node_info.get('name')
+
+      node = node_map.get(node_name)
+
+      if not node:
+        error_msgs += [[
+            'run_stage_task: ' + run_stage_task_name,
+            'task_name: ' + task_name,
+            'node_name: ' + node_name,
+            'msg: not not found in the environment'
+        ]]
+      elif isinstance(node_info, str):
+        nodes_to_run += [node]
+      else:
+        all_pods = node_info.get('all_pods')
+        pods_names = node_info.get('pods')
+
+        if (not all_pods) and (pods_names is None):
+          error_msgs += [[
+              'run_stage_task: ' + run_stage_task_name,
+              'task_name: ' + task_name,
+              'node_name: ' + node_name,
+              'msg: all_pods must be true or pods must be defined'
+          ]]
+        elif (all_pods is not None) and (pods_names is not None):
+          error_msgs += [[
+              'run_stage_task: ' + run_stage_task_name,
+              'task_name: ' + task_name,
+              'node_name: ' + node_name,
+              'msg: pods and all_pods specified for the node (specify only one)'
+          ]]
+        elif all_pods:
+          nodes_to_run += [node]
+        else:
+          all_node_pods_names = node.get('pods')
+
+          for pod_name in (pods_names or []):
+            if pod_name not in all_node_pods_names:
+              error_msgs += [[
+                  'run_stage_task: ' + run_stage_task_name,
+                  'task_name: ' + task_name,
+                  'node_name: ' + node_name,
+                  'pod_name: ' + pod_name,
+                  'msg: pod specified for the node task, but not specified in the node itself'
+              ]]
+
+          nodes_to_run += [dict(name=node_name, pods=(pods_names or []))]
+
+  if task is not None:
+    #TODO
+    todo = True
 
   return dict(result=result, error_msgs=error_msgs)
 
