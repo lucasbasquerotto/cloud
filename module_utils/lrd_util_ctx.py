@@ -965,6 +965,154 @@ def prepare_nodes(nodes, env_data, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
+def prepare_task(task_info, env_data, validate_ctx):
+  result = dict()
+  error_msgs = []
+
+  task_name = task_info.get('name')
+
+  if not task_name:
+    error_msgs += [[
+        'msg: task name relative not specified'
+    ]]
+    return dict(result=result, error_msgs=error_msgs)
+  
+  env = env_data.get('env')
+  tasks_dict = env.get('tasks')
+
+  if not tasks_dict:
+    error_msgs += [[
+        'task_name: ' + task_name,
+        'msg: no task specified for the environment'
+    ]]
+    return dict(result=result, error_msgs=error_msgs)
+
+  task = tasks_dict.get(task_name)
+
+  if task is None:
+    error_msgs += [[
+        'task_name: ' + task_name,
+        'msg: task not specified for the environment'
+    ]]
+    return dict(result=result, error_msgs=error_msgs)
+
+  task_file = task.get('file')
+
+  if task.get('type') == 'task':
+    if not os.path.exists(task_file):
+      error_msgs_aux += [[
+          'task_name: ' + task_name,
+          'msg: task file not found: ' + task_file,
+      ]]   
+
+  result['name'] = task_name 
+  result['file'] = task_file 
+  result['root'] = to_bool(task.get('root')) 
+    
+  result_aux_info = dict()
+  error_msgs_aux = []
+
+  params_args = dict(
+      group_params=task.get('credentials'),
+      group_params_dict=env.get('credentials'),
+  )
+
+  task_params_info = mix(params_args)
+
+  result_aux_credentials = task_params_info.get('result')
+  error_msgs_aux_credentials = task_params_info.get('error_msgs')
+
+  for value in (error_msgs_aux_credentials or []):
+    new_value = ['context: task credentials'] + value
+    error_msgs_aux += [new_value]
+
+  if not error_msgs_aux_credentials:
+    credentials = result_aux_credentials
+    result['credentials'] = credentials
+
+    if validate_ctx:
+      schema_file = task.get('credentials_schema')
+
+      if schema_file:
+        if os.path.exists(schema_file):
+          schema = load_schema(schema_file)
+          error_msgs_aux_validate = validate(schema, credentials)
+
+          for value in (error_msgs_aux_validate or []):
+            new_value = ['context: validate task credentials'] + value
+            error_msgs_aux += [new_value]
+        else:
+          error_msgs_aux += [[
+              'context: validate task credentials',
+              'msg: credentials schema file not found: ' + schema_file,
+          ]]
+          
+  error_msgs_aux_params = []
+
+  if isinstance(task_info, dict):
+    params_args = dict(
+        params=task_info_dict.get('params'),
+        group_params=task_info_dict.get('group_params'),
+        shared_params=task_info_dict.get('shared_params'),
+        shared_group_params=task_info_dict.get('shared_group_params'),
+        shared_group_params_dict=env.get('task_shared_group_params'),
+        shared_params_dict=env.get('task_shared_params'),
+        group_params_dict=env.get('task_group_params'),
+    )
+
+    task_params_info = mix(params_args)
+
+    result_aux_info = task_params_info.get('result')
+    error_msgs_aux_info = task_params_info.get('error_msgs')
+
+    for value in (error_msgs_aux_info or []):
+      new_value = ['context: task info params'] + value
+      error_msgs_aux_params += [new_value]
+
+  params_args = dict(
+      params=task.get('params'),
+      group_params=task.get('group_params'),
+      shared_params=task.get('shared_params'),
+      shared_group_params=task.get('shared_group_params'),
+      shared_group_params_dict=env.get('task_shared_group_params'),
+      shared_params_dict=env.get('task_shared_params'),
+      group_params_dict=env.get('task_group_params'),
+  )
+
+  task_params_info = mix(params_args)
+
+  result_aux_task = task_params_info.get('result')
+  error_msgs_aux_task = task_params_info.get('error_msgs')
+
+  for value in (error_msgs_aux_task or []):
+    new_value = ['context: task params'] + value
+    error_msgs_aux_params += [new_value]
+
+  error_msgs_aux += error_msgs_aux_params
+
+  if not error_msgs_aux_params:
+    task_params = merge_dicts(result_aux_task, result_aux_info)
+    result['params'] = task_params
+
+    if validate_ctx:
+      schema_file = task.get('params_schema')
+
+      if schema_file:
+        if os.path.exists(schema_file):
+          schema = load_schema(schema_file)
+          error_msgs_aux_validate = validate(schema, task_params)
+
+          for value in (error_msgs_aux_validate or []):
+            new_value = ['context: validate task params'] + value
+            error_msgs_aux += [new_value]
+        else:
+          error_msgs_aux += [[
+              'context: validate task params',
+              'msg: params schema file not found: ' + schema_file,
+          ]]
+    
+  return dict(result=result, error_msgs=error_msgs)
+
 def prepare_run_stage_task(
     run_stage_task_info, default_name, prepared_nodes, env_data, validate_ctx):
   result = dict()
@@ -1017,25 +1165,6 @@ def prepare_run_stage_task(
     ]]
 
   result['task_name'] = task_name
-
-  tasks_dict = env.get('tasks')
-
-  if not tasks_dict:
-    error_msgs += [[
-        'run_stage_task: ' + run_stage_task_name,
-        'task_name: ' + task_name,
-        'msg: no task specified for the environment'
-    ]]
-    return dict(result=result, error_msgs=error_msgs)
-
-  task = tasks_dict.get(task_name)
-
-  if task is None:
-    error_msgs += [[
-        'run_stage_task: ' + run_stage_task_name,
-        'task_name: ' + task_name,
-        'msg: task not specified for the environment'
-    ]]
 
   stage_node_task = run_stage_task.get('node_task')
   stage_pod_task = run_stage_task.get('pod_task')
@@ -1119,9 +1248,18 @@ def prepare_run_stage_task(
 
           nodes_to_run += [dict(name=node_name, pods=(pods_names or []))]
 
-  if task is not None:
-    #TODO
-    todo = True
+  if task_name:
+    info = prepare_task(run_stage_task, env_data, validate_ctx)
+
+    result_aux = info.get('result')
+    error_msgs_aux = info.get('error_msgs')
+
+    if error_msgs_aux:
+      for value in error_msgs_aux:
+        new_value = ['run_stage_task: ' + run_stage_task_name] + value
+        error_msgs += [new_value]
+    else:
+      result['task'] = result_aux
 
   return dict(result=result, error_msgs=error_msgs)
 
