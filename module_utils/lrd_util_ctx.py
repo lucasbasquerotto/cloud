@@ -402,7 +402,6 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
     env_repos = pod.get('env_repos')
     result['env_repos'] = env_repos
 
-
     repos = env.get('repos')
 
     if not repos:
@@ -661,16 +660,29 @@ def prepare_node(node_info, env_data, validate_ctx):
     external = to_bool(node_info_dict.get('external'))
     result['external'] = external
 
+    result['base_dir'] = node.get('base_dir')
+    node_dir = node.get('node_dir') or '.node'
+    result['node_dir'] = node_dir
     result['local_host_test'] = to_bool(node_info_dict.get('local_host_test'))
     result['local_host_test_error'] = node_info_dict.get('local_host_test_error')
 
     result_aux_info = dict()
     error_msgs_aux = []
 
+    if not local:
+      required_props = ['base_dir']
+
+      for key in required_props:
+        if is_empty(node.get(key)):
+          error_msgs += [[
+              'node: ' + node_description,
+              'property: ' + key,
+              'msg: required property not found in node or is empty (non-local)'
+          ]]
+
     if (not local) and (not external):
       required_props = [
           'service',
-          'base_dir',
           'credential',
       ]
 
@@ -922,6 +934,13 @@ def prepare_node(node_info, env_data, validate_ctx):
                 'node pods: ',
                 sorted(list(pod_names)),
             ]]
+
+        if node_dir in pod_names:
+          error_msgs_aux += [[
+              'pod: ' + pod_ctx_info_key,
+              'node_dir: ' + node_dir,
+              'msg: there is a pod with the same name as the node directory',
+          ]]
 
         result['pods'] = prepared_pods
 
