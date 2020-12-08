@@ -109,7 +109,7 @@
       vars:
         params:
           ctx: "{{ env_vars.ctx }}"
-          env: "{{ project_env }}"
+          env: "{{ env }}"
       register: project_diff_hosts
       when: project_hosts_template_src != ''
       tags: ["no_print_skipped"]
@@ -139,7 +139,7 @@
         project_ctx_run_src: "{{ env_vars.repo_dir }}/files/run.tpl.yml"
         project_ctx_run_tmp_dest: "{{ env_vars.ctx_dir }}/run.yml"
         project_ctx_run_dest: "{{ env_vars.repo_dir }}/plays/run.yml"
-        project_ctx_run_env: "{{ project_env | combine({}) }}"
+        project_ctx_run_env: "{{ env | combine({}) }}"
         project_ctx_run_ctx_data: "{{ ctx_data | combine({}) }}"
       tags: ["no_print"]
 

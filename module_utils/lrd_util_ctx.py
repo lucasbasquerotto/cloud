@@ -193,10 +193,10 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
           group_params_dict=env.get('credentials'),
       )
 
-      service_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux_credentials = service_params_info.get('result')
-      error_msgs_aux_credentials = service_params_info.get('error_msgs')
+      result_aux_credentials = info.get('result')
+      error_msgs_aux_credentials = info.get('error_msgs')
 
       for value in (error_msgs_aux_credentials or []):
         new_value = ['context: service credentials'] + value
@@ -238,10 +238,10 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
             group_params_dict=env.get('service_group_params'),
         )
 
-        service_params_info = mix(params_args)
+        info = mix(params_args)
 
-        result_aux_info = service_params_info.get('result')
-        error_msgs_aux_info = service_params_info.get('error_msgs')
+        result_aux_info = info.get('result')
+        error_msgs_aux_info = info.get('error_msgs')
 
         for value in (error_msgs_aux_info or []):
           new_value = ['context: service info params'] + value
@@ -257,10 +257,10 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
           group_params_dict=env.get('service_group_params'),
       )
 
-      service_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux_service = service_params_info.get('result')
-      error_msgs_aux_service = service_params_info.get('error_msgs')
+      result_aux_service = info.get('result')
+      error_msgs_aux_service = info.get('error_msgs')
 
       for value in (error_msgs_aux_service or []):
         new_value = ['context: service params'] + value
@@ -316,11 +316,11 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
             else:
               services[idx] = dict(name=service_info_aux, absent=True)
 
-        info_children = prepare_services(
+        info = prepare_services(
             services, env_data, validate_ctx, top=False, service_names=service_names)
 
-        result_children = info_children.get('result')
-        error_msgs_children = info_children.get('error_msgs')
+        result_children = info.get('result')
+        error_msgs_children = info.get('error_msgs')
 
         for value in (error_msgs_children or []):
           new_value = ['service (parent): ' + service_description] + value
@@ -461,10 +461,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
         group_params_dict=env.get('credentials'),
     )
 
-    pod_params_info = mix(params_args)
+    info = mix(params_args)
 
-    result_aux_credentials = pod_params_info.get('result')
-    error_msgs_aux_credentials = pod_params_info.get('error_msgs')
+    result_aux_credentials = info.get('result')
+    error_msgs_aux_credentials = info.get('error_msgs')
 
     for value in (error_msgs_aux_credentials or []):
       new_value = ['context: pod credentials'] + value
@@ -506,10 +506,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
           group_params_dict=env.get('pod_group_params'),
       )
 
-      pod_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux_ctx_info = pod_params_info.get('result')
-      error_msgs_aux_ctx_info = pod_params_info.get('error_msgs')
+      result_aux_ctx_info = info.get('result')
+      error_msgs_aux_ctx_info = info.get('error_msgs')
 
       for value in (error_msgs_aux_ctx_info or []):
         new_value = ['context: pod ctx info params'] + value
@@ -526,10 +526,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
           group_params_dict=env.get('pod_group_params'),
       )
 
-      pod_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux_info = pod_params_info.get('result')
-      error_msgs_aux_info = pod_params_info.get('error_msgs')
+      result_aux_info = info.get('result')
+      error_msgs_aux_info = info.get('error_msgs')
 
       for value in (error_msgs_aux_info or []):
         new_value = ['context: pod info params'] + value
@@ -545,10 +545,10 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
         group_params_dict=env.get('pod_group_params'),
     )
 
-    pod_params_info = mix(params_args)
+    info = mix(params_args)
 
-    result_aux_pod = pod_params_info.get('result')
-    error_msgs_aux_pod = pod_params_info.get('error_msgs')
+    result_aux_pod = info.get('result')
+    error_msgs_aux_pod = info.get('error_msgs')
 
     for value in (error_msgs_aux_pod or []):
       new_value = ['context: pod params'] + value
@@ -696,10 +696,10 @@ def prepare_node(node_info, env_data, validate_ctx):
           group_params_dict=env.get('credentials'),
       )
 
-      node_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux_credential = node_params_info.get('result')
-      error_msgs_aux_credential = node_params_info.get('error_msgs')
+      result_aux_credential = info.get('result')
+      error_msgs_aux_credential = info.get('error_msgs')
 
       for value in (error_msgs_aux_credential or []):
         new_value = ['context: node credential'] + value
@@ -738,10 +738,10 @@ def prepare_node(node_info, env_data, validate_ctx):
           group_params_dict=env.get('node_group_params'),
       )
 
-      node_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux_info = node_params_info.get('result')
-      error_msgs_aux_info = node_params_info.get('error_msgs')
+      result_aux_info = info.get('result')
+      error_msgs_aux_info = info.get('error_msgs')
 
       for value in (error_msgs_aux_info or []):
         new_value = ['context: node info params'] + value
@@ -757,10 +757,10 @@ def prepare_node(node_info, env_data, validate_ctx):
         group_params_dict=env.get('node_group_params'),
     )
 
-    node_params_info = mix(params_args)
+    info = mix(params_args)
 
-    result_aux_node = node_params_info.get('result')
-    error_msgs_aux_node = node_params_info.get('error_msgs')
+    result_aux_node = info.get('result')
+    error_msgs_aux_node = info.get('error_msgs')
 
     for value in (error_msgs_aux_node or []):
       new_value = ['context: node params'] + value
@@ -841,9 +841,9 @@ def prepare_node(node_info, env_data, validate_ctx):
         result['prepared_services'] = services_info.copy()
 
         if validate_ctx:
-          service_result_info = prepare_services(services_info, env_data, validate_ctx, True)
+          info = prepare_services(services_info, env_data, validate_ctx, True)
 
-          error_msgs_aux_service = service_result_info.get('error_msgs')
+          error_msgs_aux_service = info.get('error_msgs')
 
           for value in (error_msgs_aux_service or []):
             new_value = ['context: node service'] + value
@@ -887,8 +887,8 @@ def prepare_node(node_info, env_data, validate_ctx):
           result['prepared_dns_services'] = services_info.copy()
 
           if validate_ctx:
-            service_result_info = prepare_services(services_info, env_data, validate_ctx, True)
-            error_msgs_aux_service = service_result_info.get('error_msgs')
+            info = prepare_services(services_info, env_data, validate_ctx, True)
+            error_msgs_aux_service = info.get('error_msgs')
 
             for value in (error_msgs_aux_service or []):
               new_value = ['context: node dns service'] + value
@@ -898,10 +898,10 @@ def prepare_node(node_info, env_data, validate_ctx):
     pod_ctx_info_dict = node_info_dict.get('pods')
 
     if pods:
-      pods_info = prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx)
+      info = prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx)
 
-      prepared_pods = pods_info.get('result')
-      error_msgs_aux_pods = pods_info.get('error_msgs')
+      prepared_pods = info.get('result')
+      error_msgs_aux_pods = info.get('error_msgs')
 
       if error_msgs_aux_pods:
         error_msgs_aux += error_msgs_aux_pods
@@ -965,18 +965,18 @@ def prepare_nodes(nodes, env_data, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_task(task_info, env_data, validate_ctx):
+def prepare_task(task_info_dict, env_data, validate_ctx):
   result = dict()
   error_msgs = []
 
-  task_name = task_info.get('name')
+  task_name = task_info_dict.get('name')
 
   if not task_name:
     error_msgs += [[
         'msg: task name relative not specified'
     ]]
     return dict(result=result, error_msgs=error_msgs)
-  
+
   env = env_data.get('env')
   tasks_dict = env.get('tasks')
 
@@ -996,31 +996,30 @@ def prepare_task(task_info, env_data, validate_ctx):
     ]]
     return dict(result=result, error_msgs=error_msgs)
 
+  result_aux_info = dict()
+  error_msgs_aux = []
+
   task_file = task.get('file')
 
   if task.get('type') == 'task':
     if not os.path.exists(task_file):
       error_msgs_aux += [[
-          'task_name: ' + task_name,
           'msg: task file not found: ' + task_file,
-      ]]   
+      ]]
 
-  result['name'] = task_name 
-  result['file'] = task_file 
-  result['root'] = to_bool(task.get('root')) 
-    
-  result_aux_info = dict()
-  error_msgs_aux = []
+  result['name'] = task_name
+  result['file'] = task_file
+  result['root'] = to_bool(task.get('root'))
 
   params_args = dict(
       group_params=task.get('credentials'),
       group_params_dict=env.get('credentials'),
   )
 
-  task_params_info = mix(params_args)
+  info = mix(params_args)
 
-  result_aux_credentials = task_params_info.get('result')
-  error_msgs_aux_credentials = task_params_info.get('error_msgs')
+  result_aux_credentials = info.get('result')
+  error_msgs_aux_credentials = info.get('error_msgs')
 
   for value in (error_msgs_aux_credentials or []):
     new_value = ['context: task credentials'] + value
@@ -1046,10 +1045,10 @@ def prepare_task(task_info, env_data, validate_ctx):
               'context: validate task credentials',
               'msg: credentials schema file not found: ' + schema_file,
           ]]
-          
+
   error_msgs_aux_params = []
 
-  if isinstance(task_info, dict):
+  if isinstance(task_info_dict, dict):
     params_args = dict(
         params=task_info_dict.get('params'),
         group_params=task_info_dict.get('group_params'),
@@ -1060,10 +1059,10 @@ def prepare_task(task_info, env_data, validate_ctx):
         group_params_dict=env.get('task_group_params'),
     )
 
-    task_params_info = mix(params_args)
+    info = mix(params_args)
 
-    result_aux_info = task_params_info.get('result')
-    error_msgs_aux_info = task_params_info.get('error_msgs')
+    result_aux_info = info.get('result')
+    error_msgs_aux_info = info.get('error_msgs')
 
     for value in (error_msgs_aux_info or []):
       new_value = ['context: task info params'] + value
@@ -1079,10 +1078,10 @@ def prepare_task(task_info, env_data, validate_ctx):
       group_params_dict=env.get('task_group_params'),
   )
 
-  task_params_info = mix(params_args)
+  info = mix(params_args)
 
-  result_aux_task = task_params_info.get('result')
-  error_msgs_aux_task = task_params_info.get('error_msgs')
+  result_aux_task = info.get('result')
+  error_msgs_aux_task = info.get('error_msgs')
 
   for value in (error_msgs_aux_task or []):
     new_value = ['context: task params'] + value
@@ -1110,7 +1109,11 @@ def prepare_task(task_info, env_data, validate_ctx):
               'context: validate task params',
               'msg: params schema file not found: ' + schema_file,
           ]]
-    
+
+  for value in (error_msgs_aux or []):
+    new_value = ['task_name: ' + task_name] + value
+    error_msgs += [new_value]
+
   return dict(result=result, error_msgs=error_msgs)
 
 def prepare_run_stage_task(
@@ -1181,20 +1184,21 @@ def prepare_run_stage_task(
 
   for node in (prepared_nodes or []):
     node_name = node.get('name')
+    local = node.get('local')
     pods_aux = []
 
     for pod in (node.get('pods') or []):
       pod_name = pod.get('name')
       pods_aux += [pod_name]
 
-    node_aux = dict(name=node_name, pods=pods_aux)
-    node_map[node_name] = node
+    node_aux = dict(name=node_name, local=local, pods=pods_aux)
+    node_map[node_name] = node_aux
     all_nodes += [node_aux]
 
-  all_nodes = run_stage_task.get('all_nodes')
+  is_all_nodes = run_stage_task.get('all_nodes')
   nodes_to_run = []
 
-  if all_nodes:
+  if is_all_nodes:
     nodes_to_run = all_nodes
   else:
     node_info_list = run_stage_task.get('nodes')
@@ -1246,7 +1250,10 @@ def prepare_run_stage_task(
                   'msg: pod specified for the node task, but not specified in the node itself'
               ]]
 
-          nodes_to_run += [dict(name=node_name, pods=(pods_names or []))]
+          node_to_add = dict(name=node_name, local=node.get('local'), pods=(pods_names or []))
+          nodes_to_run += [node_to_add]
+
+  result['nodes'] = nodes_to_run
 
   if task_name:
     info = prepare_task(run_stage_task, env_data, validate_ctx)
@@ -1266,6 +1273,9 @@ def prepare_run_stage_task(
 def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, validate_ctx):
   result = dict()
   error_msgs = []
+
+  hosts = set()
+  tasks = []
 
   task_names = set()
   env = env_data.get('env')
@@ -1329,9 +1339,12 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
     error_msgs_aux = info.get('error_msgs')
 
     if error_msgs_aux:
-      error_msgs += error_msgs_aux
+      for value in (error_msgs_aux or []):
+        new_value = ['run_stage: ' + run_stage_name] + value
+        error_msgs += [new_value]
     else:
-      task_name = result_aux.get('name')
+      task = result_aux
+      task_name = task.get('name')
 
       if task_name in task_names:
         error_msgs += [[
@@ -1340,8 +1353,13 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
             'msg: duplicate task name',
         ]]
       else:
+        nodes = task.get('nodes')
+        hosts.update(map(lambda n: 'main' if n.get('local') else n.get('name'), nodes or []))
         task_names.add(task_name)
-        result += [result_aux]
+        tasks += [task]
+
+  result['hosts'] = sorted(list(hosts))
+  result['tasks'] = tasks
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -1418,10 +1436,10 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
           group_params_dict=env.get('main_group_params'),
       )
 
-      ctx_params_info = mix(params_args)
+      info = mix(params_args)
 
-      result_aux = ctx_params_info.get('result')
-      error_msgs_aux = ctx_params_info.get('error_msgs')
+      result_aux = info.get('result')
+      error_msgs_aux = info.get('error_msgs')
 
       for value in (error_msgs_aux or []):
         new_value = ['context: ctx params'] + value
@@ -1450,10 +1468,10 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
       ctx_initial_services = ctx.get('initial_services')
 
       if ctx_initial_services:
-        services_info = prepare_services(ctx_initial_services, env_data, validate_ctx, top=True)
+        info = prepare_services(ctx_initial_services, env_data, validate_ctx, top=True)
 
-        result_aux = services_info.get('result')
-        error_msgs_aux = services_info.get('error_msgs')
+        result_aux = info.get('result')
+        error_msgs_aux = info.get('error_msgs')
 
         for value in (error_msgs_aux or []):
           new_value = ['service context: initial services'] + value
@@ -1467,10 +1485,10 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
       nodes_errors = []
 
       if ctx_nodes:
-        nodes_info = prepare_nodes(ctx_nodes, env_data, validate_ctx)
+        info = prepare_nodes(ctx_nodes, env_data, validate_ctx)
 
-        result_aux = nodes_info.get('result')
-        error_msgs_aux = nodes_info.get('error_msgs')
+        result_aux = info.get('result')
+        error_msgs_aux = info.get('error_msgs')
 
         if error_msgs_aux:
           nodes_errors = error_msgs_aux
@@ -1482,10 +1500,10 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
       ctx_final_services = ctx.get('final_services')
 
       if ctx_final_services:
-        services_info = prepare_services(ctx_final_services, env_data, validate_ctx, top=True)
+        info = prepare_services(ctx_final_services, env_data, validate_ctx, top=True)
 
-        result_aux = services_info.get('result')
-        error_msgs_aux = services_info.get('error_msgs')
+        result_aux = info.get('result')
+        error_msgs_aux = info.get('error_msgs')
 
         for value in (error_msgs_aux or []):
           new_value = ['service context: final services'] + value
@@ -1504,8 +1522,15 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
                 'msg: no node found (at least one node is needed when run_stages is defined)',
             ]]
         else:
-          prepared_run_stages = prepare_run_stages(
+          info = prepare_run_stages(
               run_stages, prepared_nodes, env_data, validate_ctx)
-          result['run_stages'] = prepared_run_stages
+
+          result_aux = info.get('result')
+          error_msgs_aux = info.get('error_msgs')
+
+          if error_msgs_aux:
+            error_msgs += error_msgs_aux
+          else:
+            result['run_stages'] = result_aux
 
   return dict(result=result, error_msgs=error_msgs)
