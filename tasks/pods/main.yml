@@ -63,8 +63,7 @@
     pod_inner_title: >-
       {{ pod_title }} - pod [{{ pod_item.description }}]
     pod_name: "{{ pod_item.name }}"
-    pod_identifier: >-
-      {{ env.name }}/{{ env_ctx_name }}/{{ pod_name }}
+    pod_identifier: "{{ pod_item.identifier }}"
     pod_node_local: "{{ pod_node.local | default(false, true) }}"
     pod_host_user: "{{ pod_node_credential.host_user }}"
     pod_host_group: "{{ pod_node_credential.host_group | default(pod_host_user, true) }}"
@@ -74,28 +73,8 @@
       {{ pod_item.base_dir | default(pod_name, true) }}
     pod_local_repo_dir: "{{ pod_item.local_dir }}"
     pod_remote_base_dir: "{{ pod_node_base_dir }}/{{ pod_dirname }}"
-    pod_remote_tmp_dir: >-
-      {{
-        ((pod_item.tmp_dir | default('')) != '')
-        | ternary(
-          pod_item.tmp_dir | default(''),
-          pod_item.flat | default(false, true) | bool | ternary(
-            pod_node_base_dir + '/cloud/tmp/' + pod_dirname,
-            pod_remote_base_dir + '/tmp/cloud'
-          )
-        )
-      }}
-    pod_remote_data_dir: >-
-      {{
-        ((pod_item.data_dir | default('')) != '')
-        | ternary(
-          pod_item.data_dir | default(''),
-          pod_item.flat | default(false, true) | bool | ternary(
-            pod_node_base_dir + '/cloud/data/' + pod_dirname,
-            pod_remote_base_dir + '/data'
-          )
-        )
-      }}
+    pod_tmp_dir: "{{ pod_item.tmp_dir }}"
+    pod_data_dir: "{{ pod_item.data_dir }}"
   loop: "{{ pod_node.pods | default([], true) }}"
   loop_control:
     loop_var: pod_item

@@ -49,15 +49,16 @@
     include_role:
       name: "cloud_run"
     vars:
+      main_tmp_stage_name: "<< var_run_stage.name >>"
       main_tmp_stage_task: "{{ main_item.0 }}"
       main_tmp_task: "{{ main_tmp_stage_task.task }}"
       main_tmp_node: "{{ main_item.1 }}"
       main_tmp_label: >-
-        [stage] << var_run_stage.name >> -
+        [stage] {{ main_tmp_stage_name }} -
         [stage_task] {{ main_tmp_stage_task.name }} -
         [task] {{ main_tmp_task.name }} ({{ main_tmp_task.type }}) -
         [node] {{ main_tmp_node.description }}
-      cloud_run_stage_name: "<< var_run_stage.name >>"
+      cloud_run_stage_name: "{{ main_tmp_stage_name }}"
       cloud_run_title: "{{ main_tmp_label }}"
       cloud_run_task: "{{ main_tmp_task }}"
       cloud_run_task: "{{ main_tmp_task }}"

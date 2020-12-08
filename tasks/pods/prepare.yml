@@ -43,23 +43,10 @@
     pod_inner_credentials: "{{ pod_item.credentials | default({}) }}"
   tags: ["no_print"]
 
-- name: "{{ pod_prepare_title }} - pod_data_dir"
-  set_fact:
-    pod_data_dir: "{{ pod_remote_data_dir }}"
-    pod_extra_repos_dir: ""
-  tags: ["no_print"]
-
 - name: "{{ pod_prepare_title }} - pod_base_dir_rel"
   set_fact:
     pod_base_dir_rel: >-
       {{ env_dev_repos_dir | relpath(pod_repo_dir) }}
-  tags: ["no_print"]
-
-- name: "{{ pod_prepare_title }} - pod_data_dir (local)"
-  set_fact:
-    pod_data_dir: >-
-      {{ pod_base_dir_rel + '/data/' + pod_identifier }}
-  when: pod_node_local | bool
   tags: ["no_print"]
 
 ### Generate a file with the environment variables and state (for idempotence) ###
