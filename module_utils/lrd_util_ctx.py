@@ -419,11 +419,15 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
             'msg: repository not found: ' + env_repo.get('repo'),
         ]]
 
+    base_dir = pod.get('base_dir') or pod_name
+    pod_dir = base_dir if pod.get('flat') else (base_dir + '/main')
+
     result['env_files'] = pod.get('env_files')
     result['env_templates'] = pod.get('env_templates')
-    result['base_dir'] = pod.get('base_dir')
-    result['data_dir'] = pod.get('data_dir')
-    result['tmp_dir'] = pod.get('tmp_dir')
+    result['base_dir'] = base_dir
+    result['pod_dir'] = pod_dir
+    result['data_dir'] = pod.get('data_dir') or (base_dir + '/data')
+    result['tmp_dir'] = pod.get('tmp_dir') or (base_dir + '/tmp')
     result['ctx'] = pod.get('ctx')
     result['root'] = to_bool(pod.get('root'))
     result['flat'] = to_bool(pod.get('flat'))
@@ -660,9 +664,12 @@ def prepare_node(node_info, env_data, validate_ctx):
     external = to_bool(node_info_dict.get('external'))
     result['external'] = external
 
-    result['base_dir'] = node.get('base_dir')
+    base_dir = node.get('base_dir')
+    result['base_dir'] = base_dir
     node_dir = node.get('node_dir') or '.node'
-    result['node_dir'] = node_dir
+    node_full_dir = base_dir + '/' + node_dir
+    result['node_dir'] = node_full_dir
+    result['local_dir'] = ctx_dir + '/nodes/' + node_name
     result['local_host_test'] = to_bool(node_info_dict.get('local_host_test'))
     result['local_host_test_error'] = node_info_dict.get('local_host_test_error')
 
@@ -1018,16 +1025,20 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
   result_aux_info = dict()
   error_msgs_aux = []
 
-  task_file = task.get('file')
+  task_type = task.get('type')
+  task_origin = task.get('origin')
 
-  if task.get('type') == 'task':
-    if not os.path.exists(task_file):
-      error_msgs_aux += [[
-          'msg: task file not found: ' + task_file,
-      ]]
+  if task_origin and (task_type != 'task'):
+    error_msgs_aux += [[
+        'msg: task origin should be specified only for tasks with type equal "task"'
+    ]]
+
+  task_origin = (task_origin or 'cloud') if task_type == 'task' else None
 
   result['name'] = task_name
-  result['file'] = task_file
+  result['file'] = task.get('file')
+  result['type'] = task_type
+  result['origin'] = task_origin
   result['root'] = to_bool(task.get('root'))
 
   params_args = dict(
@@ -1135,10 +1146,14 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_run_stage_task(
-    run_stage_task_info, default_name, prepared_nodes, env_data, validate_ctx):
+def prepare_run_stage_task(run_stage_task_info, run_stage_data):
   result = dict()
   error_msgs = []
+
+  default_task_name = run_stage_data.get('default_task_name')
+  prepared_nodes = run_stage_data.get('prepared_nodes')
+  env_data = run_stage_data.get('env_data')
+  validate_ctx = run_stage_data.get('validate_ctx')
 
   env = env_data.get('env')
 
@@ -1191,28 +1206,63 @@ def prepare_run_stage_task(
   stage_node_task = run_stage_task.get('node_task')
   stage_pod_task = run_stage_task.get('pod_task')
 
+  result['node_task'] = stage_node_task
+  result['pod_task'] = stage_pod_task
+
   if (not stage_node_task) and (not stage_pod_task):
     error_msgs += [[
         'run_stage_task: ' + run_stage_task_name,
         'task_name: ' + task_name,
-        'msg: please, specify if the task is for the nodes and/or pods'
+        'msg: please, specify if the task is for the nodes or pods',
+        'additional info: node_task and pod_task are both false',
+    ]]
+  elif stage_node_task and stage_pod_task:
+    error_msgs += [[
+        'run_stage_task: ' + run_stage_task_name,
+        'task_name: ' + task_name,
+        'msg: the task must be for the nodes or pods, but not both'
+        'additional info: node_task and pod_task are both true',
     ]]
 
-  node_map = dict()
   all_nodes = []
+  node_map = dict()
+  node_pod_map = dict()
 
   for node in (prepared_nodes or []):
     node_name = node.get('name')
     local = node.get('local')
+    base_dir = node.get('base_dir')
+    local_dir = node.get('local_dir')
+    node_dir = local_dir if local else node.get('node_dir')
+
+    node_aux = dict(
+        name=node_name,
+        local=local,
+        dir=node_dir,
+        local_dir=local_dir,
+        pods=pods_aux
+    )
+
     pods_aux = []
+    pod_map = dict()
 
     for pod in (node.get('pods') or []):
       pod_name = pod.get('name')
-      pods_aux += [pod_name]
+      pod_local_dir = pod.get('local_dir')
+      pod_dir = pod_local_dir if local else pod.get('pod_dir')
 
-    node_aux = dict(name=node_name, local=local, pods=pods_aux)
-    node_map[node_name] = node_aux
+      pod_aux = dict(
+          name=pod_name,
+          pod_dir=pod_dir,
+          local_dir=local_dir,
+      )
+
+      pods_aux += [pod_aux]
+      pod_map[pod_name] = pod_aux
+
     all_nodes += [node_aux]
+    node_map[node_name] = node_aux
+    node_pod_map[node_name] = pod_map
 
   is_all_nodes = run_stage_task.get('all_nodes')
   nodes_to_run = []
@@ -1257,7 +1307,7 @@ def prepare_run_stage_task(
         elif all_pods:
           nodes_to_run += [node]
         else:
-          all_node_pods_names = node.get('pods')
+          all_node_pods_names = map(lambda p: p.get('name'), node.get('pods') or [])
 
           for pod_name in (pods_names or []):
             if pod_name not in all_node_pods_names:
@@ -1269,7 +1319,11 @@ def prepare_run_stage_task(
                   'msg: pod specified for the node task, but not specified in the node itself'
               ]]
 
-          node_to_add = dict(name=node_name, local=node.get('local'), pods=(pods_names or []))
+          pod_map = node_pod_map.get(node_name)
+          pods_to_add = map(lambda pod_name: pod_map.get(pod_name), pods_names or [])
+
+          node_to_add = node.copy()
+          node_to_add['pods'] = pods_to_add
           nodes_to_run += [node_to_add]
 
   result['nodes'] = nodes_to_run
@@ -1285,7 +1339,49 @@ def prepare_run_stage_task(
         new_value = ['run_stage_task: ' + run_stage_task_name] + value
         error_msgs += [new_value]
     else:
-      result['task'] = result_aux
+      task = result_aux
+
+      task_name = task.get('name')
+      task_type = task.get('type')
+      task_origin = task.get('origin')
+      task_file = task.get('file')
+
+      if validate_ctx and (task_type == 'task'):
+        error_msgs_aux = []
+
+        if task_origin != 'pod':
+          if not os.path.exists(task_file):
+            error_msgs_aux += [['msg: task file not found: ' + task_file]]
+        else:
+          task_file_paths = set()
+
+          if stage_node_task:
+            error_msgs_aux += [['msg: node task with pod origin: ' + task_file]]
+
+          for node in nodes_to_run:
+            for pod in node.get('pods'):
+              task_file_path = pod.get('local_dir') + '/' + task_file
+
+              if task_file_path not in task_file_paths:
+                if not os.path.exists(task_file_path):
+                  error_msgs_aux += [[
+                    'node_name: ' + node_name,
+                    'pod_name: ' + pod_name,
+                    'msg: pod task file not found: ' + task_file,
+                  ]]
+
+                task_file_paths.add(task_file_path)
+
+        for value in error_msgs_aux:
+          new_value = [
+              'run_stage_task: ' + run_stage_task_name,
+              'task_name: ' + task_name,
+              'task_type: ' + task_type,
+              'task_origin: ' + task_origin,
+          ] + value
+          error_msgs += [new_value]
+
+      result['task'] = task
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -1346,12 +1442,15 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
 
   for idx, run_stage_task in enumerate(run_stage_tasks or []):
     default_task_name = str(idx)
+    run_stage_data = dict(
+        default_task_name=default_task_name,
+        prepared_nodes=prepared_nodes,
+        env_data=env_data,
+        validate_ctx=validate_ctx,
+    )
     info = prepare_run_stage_task(
         run_stage_task,
-        default_task_name,
-        prepared_nodes,
-        env_data,
-        validate_ctx,
+        run_stage_data,
     )
 
     result_aux = info.get('result')
