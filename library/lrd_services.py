@@ -40,6 +40,11 @@ options:
           - the environment dictionary.
         type: dict
         required: true
+      ctx_name:
+        description:
+          - the context name
+        type: str
+        required: true
       commit:
         description:
           - the current commit of the environment repository
@@ -87,6 +92,7 @@ from ansible.module_utils.lrd_util_ctx import prepare_services
 
 env_data_spec = dict(
     env=dict(type='dict', required=True),
+    ctx_name=dict(type='str', required=True),
     commit=dict(type='str', required=True),
     dev=dict(type='bool', required=True),
     dev_repos_dir=dict(type='str', required=True),

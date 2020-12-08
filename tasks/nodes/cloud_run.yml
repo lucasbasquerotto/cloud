@@ -1,0 +1,87 @@
+- name: "{{ cloud_run_title }} - run node task file (outer)"
+  include_tasks: "{{ cloud_run_task.file }}"
+  vars:
+    params:
+      title: "{{ cloud_run_title }} - run node file [{{ cloud_run_task.file }}]"
+      task: "{{ cloud_run_task }}"
+      chdir: "{{ cloud_run_node.node_dir }}"
+      tmp_dir: "{{ cloud_run_node.tmp_dir }}"
+  when: (cloud_run_task.type == 'task') and (main_tmp_stage_task.node_task | default(false) | bool)
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_run_title }} - run pod task file (outer)"
+  include_tasks: "{{ cloud_run_task.file }}"
+  vars:
+    params:
+      title: >-
+        {{ cloud_run_title }} -
+        [pod] {{ cloud_run_pod.description }} -
+        run pod file [{{ cloud_run_task.file }}]
+      task: "{{ cloud_run_task }}"
+      chdir: "{{ cloud_run_pod.pod_dir }}"
+      tmp_dir: "{{ cloud_run_pod.tmp_dir + '/run' }}"
+  loop: "{{ cloud_run_node.pods | default([], true) }}"
+  loop_control:
+    loop_var: cloud_run_pod
+    label: "{{ cloud_run_pod.description }}"
+  when: (cloud_run_task.type == 'task') and (main_tmp_stage_task.pod_task | default(false) | bool)
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_run_title }} - run node shell command (outer)"
+  include_role:
+    name: "long_run"
+  vars:
+    long_run_title: "{{ cloud_run_title }} - run node shell command"
+    long_run_become: "{{ cloud_run_task.root | default(false) }}"
+    long_run_output_path: "{{ cloud_run_node.tmp_dir + '/run/log' }}"
+    long_run_output_file: >-
+      {{
+        'run.stage.' + cloud_run_stage_name + '.'
+        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
+        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
+      }}
+    long_run_tmp_path: "{{ cloud_run_node.tmp_dir + '/run/tmp' }}"
+    long_run_tmp_file: >-
+      {{
+        'run.stage.' + cloud_run_stage_name + '.'
+        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
+        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.sh',
+      }}
+    long_run_path: "{{ cloud_run_node.node_dir }}"
+    long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
+    long_run_cmd: "{{ cloud_run_task.cmd }}"
+  when: (cloud_run_task.type == 'shell') and (main_tmp_stage_task.node_task | default(false) | bool)
+  tags: ["no_print_skipped"]
+
+- name: "{{ cloud_run_title }} - run pod shell command (outer)"
+  include_role:
+    name: "long_run"
+  vars:
+    long_run_title: >-
+        {{ cloud_run_title }} -
+        [pod] {{ cloud_run_pod.description }} -
+        run pod shell command
+    long_run_become: "{{ cloud_run_task.root | default(false) }}"
+    long_run_output_path: "{{ cloud_run_pod.tmp_dir + '/run/log' }}"
+    long_run_output_file: >-
+      {{
+        'run.stage.' + cloud_run_stage_name + '.'
+        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
+        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
+      }}
+    long_run_tmp_path: "{{ cloud_run_pod.tmp_dir + '/run/tmp' }}"
+    long_run_tmp_file: >-
+      {{
+        'run.stage.' + cloud_run_stage_name + '.'
+        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
+        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.sh',
+      }}
+    long_run_path: "{{ cloud_run_pod.pod_dir }}"
+    long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
+    long_run_cmd: "{{ cloud_run_task.cmd }}"
+  loop: "{{ cloud_run_node.pods | default([], true) }}"
+  loop_control:
+    loop_var: cloud_run_pod
+    label: "{{ cloud_run_pod.description }}"
+  when: (cloud_run_task.type == 'shell') and (main_tmp_stage_task.pod_task | default(false) | bool)
+  tags: ["no_print_skipped"]

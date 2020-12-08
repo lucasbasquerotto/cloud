@@ -330,6 +330,12 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
           result['is_list'] = True
           result['services'] = result_children
 
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
+
   return dict(result=result, error_msgs=error_msgs)
 
 def prepare_services(services, env_data, validate_ctx, top=False, service_names=None):
@@ -364,9 +370,16 @@ def prepare_services(services, env_data, validate_ctx, top=False, service_names=
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
+def prepare_pod(pod_info, node_data):
   result = dict()
   error_msgs = []
+
+  pod_ctx_info_dict = node_data.get('pod_ctx_info_dict')
+  local = node_data.get('local')
+  node_base_dir = node_data.get('base_dir')
+  env_data = node_data.get('env_data')
+  validate_ctx = node_data.get('validate_ctx')
+
   env = env_data.get('env')
   ctx_dir = env_data.get('ctx_dir')
 
@@ -419,20 +432,8 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
             'msg: repository not found: ' + env_repo.get('repo'),
         ]]
 
-    base_dir = pod.get('base_dir') or pod_name
-    pod_dir = base_dir if pod.get('flat') else (base_dir + '/main')
-
-    result['env_files'] = pod.get('env_files')
-    result['env_templates'] = pod.get('env_templates')
-    result['base_dir'] = base_dir
-    result['pod_dir'] = pod_dir
-    result['data_dir'] = pod.get('data_dir') or (base_dir + '/data')
-    result['tmp_dir'] = pod.get('tmp_dir') or (base_dir + '/tmp')
-    result['ctx'] = pod.get('ctx')
-    result['root'] = to_bool(pod.get('root'))
-    result['flat'] = to_bool(pod.get('flat'))
-    result['fast_prepare'] = to_bool(pod.get('fast_prepare'))
-    result['skip_unchanged'] = to_bool(pod.get('skip_unchanged'))
+    pod_identifier = env.get('name') + '-' + env_data.get('ctx_name') + '-' + pod_name
+    result['identifier'] = pod_identifier
 
     local_dir = ctx_dir + '/pods/' + pod_name
 
@@ -444,6 +445,50 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
       local_dir = env_data.get('dev_repos_dir') + '/' + dev_repo_path
 
     result['local_dir'] = local_dir
+
+    dev_repos_dir = env_data.get('dev_repos_dir')
+    local_base_dir_relpath = os.path.relpath(dev_repos_dir, local_dir)
+
+    flat = pod.get('flat')
+    base_dir = pod.get('base_dir') or pod_name
+    pod_dir = base_dir if flat else (base_dir + '/main')
+    pod_dir = local_dir if local else (node_base_dir + '/' + pod_dir)
+    tmp_dir = (
+        (dev_repos_dir + '/tmp/pods/' + pod_identifier)
+        if local
+        else (
+            pod.get('tmp_dir')
+            or (
+                (node_base_dir + '/.pods/' + pod_name + '/tmp')
+                if flat
+                else (node_base_dir + '/' + base_dir + '/tmp')
+            )
+        )
+    )
+    data_dir = (
+        (local_base_dir_relpath + '/data/' + pod_identifier)
+        if local
+        else (
+            pod.get('data_dir')
+            or (
+                (node_base_dir + '/.pods/' + pod_name + '/data')
+                if flat
+                else (node_base_dir + '/' + base_dir + '/data')
+            )
+        )
+    )
+
+    result['env_files'] = pod.get('env_files')
+    result['env_templates'] = pod.get('env_templates')
+    result['base_dir'] = base_dir
+    result['pod_dir'] = pod_dir
+    result['tmp_dir'] = tmp_dir
+    result['data_dir'] = data_dir
+    result['ctx'] = pod.get('ctx')
+    result['root'] = to_bool(pod.get('root'))
+    result['flat'] = to_bool(pod.get('flat'))
+    result['fast_prepare'] = to_bool(pod.get('fast_prepare'))
+    result['skip_unchanged'] = to_bool(pod.get('skip_unchanged'))
 
     base_dir_prefix = local_dir + '/'
     pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
@@ -586,12 +631,20 @@ def prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx):
       new_value = ['pod: ' + pod_description] + value
       error_msgs += [new_value]
 
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
+
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx):
+def prepare_pods(pods, node_data):
   result = []
   error_msgs = []
   pod_names = set()
+
+  env_data = node_data.get('env_data')
   env = env_data.get('env')
 
   if pods:
@@ -601,7 +654,7 @@ def prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx):
       error_msgs += [['msg: no pod specified for the environment']]
     else:
       for pod_info in pods:
-        info = prepare_pod(pod_info, pod_ctx_info_dict, env_data, validate_ctx)
+        info = prepare_pod(pod_info, node_data)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs')
@@ -664,14 +717,7 @@ def prepare_node(node_info, env_data, validate_ctx):
     external = to_bool(node_info_dict.get('external'))
     result['external'] = external
 
-    base_dir = node.get('base_dir')
-    result['base_dir'] = base_dir
-    node_dir = node.get('node_dir') or '.node'
-    node_full_dir = base_dir + '/' + node_dir
-    result['node_dir'] = node_full_dir
-    result['local_dir'] = ctx_dir + '/nodes/' + node_name
-    result['local_host_test'] = to_bool(node_info_dict.get('local_host_test'))
-    result['local_host_test_error'] = node_info_dict.get('local_host_test_error')
+    ctx_dir = env_data.get('ctx_dir')
 
     result_aux_info = dict()
     error_msgs_aux = []
@@ -706,6 +752,28 @@ def prepare_node(node_info, env_data, validate_ctx):
           'node: ' + node_description,
           'msg: local node should be defined only in development environments'
       ]]
+
+    local_dir = ctx_dir + '/nodes/' + node_name
+    result['local_dir'] = local_dir
+
+    node_identifier = env.get('name') + '-' + env_data.get('ctx_name')
+    result['identifier'] = node_identifier
+
+    dev_repos_dir = env_data.get('dev_repos_dir')
+
+    base_dir = None if local else node.get('base_dir')
+    node_dir = local_dir if local else (node.get('node_dir') or (base_dir + '/.node'))
+    tmp_dir = (
+        (dev_repos_dir + '/tmp/nodes/' + node_identifier)
+        if local
+        else (node.get('tmp_dir') or (base_dir + '/.tmp'))
+    )
+
+    result['base_dir'] = base_dir
+    result['node_dir'] = node_dir
+    result['tmp_dir'] = tmp_dir
+    result['local_host_test'] = to_bool(node_info_dict.get('local_host_test'))
+    result['local_host_test_error'] = node_info_dict.get('local_host_test_error')
 
     credential = node.get('credential')
 
@@ -917,7 +985,14 @@ def prepare_node(node_info, env_data, validate_ctx):
     pod_ctx_info_dict = node_info_dict.get('pods')
 
     if pods:
-      info = prepare_pods(pods, pod_ctx_info_dict, env_data, validate_ctx)
+      node_data = dict(
+          pod_ctx_info_dict=pod_ctx_info_dict,
+          local=local,
+          base_dir=base_dir,
+          env_data=env_data,
+          validate_ctx=validate_ctx,
+      )
+      info = prepare_pods(pods, node_data)
 
       prepared_pods = info.get('result')
       error_msgs_aux_pods = info.get('error_msgs')
@@ -944,7 +1019,6 @@ def prepare_node(node_info, env_data, validate_ctx):
 
         if node_dir in pod_names:
           error_msgs_aux += [[
-              'pod: ' + pod_ctx_info_key,
               'node_dir: ' + node_dir,
               'msg: there is a pod with the same name as the node directory',
           ]]
@@ -954,6 +1028,12 @@ def prepare_node(node_info, env_data, validate_ctx):
     for value in (error_msgs_aux or []):
       new_value = ['node: ' + node_description] + value
       error_msgs += [new_value]
+
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -1036,10 +1116,34 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
   task_origin = (task_origin or 'cloud') if task_type == 'task' else None
 
   result['name'] = task_name
-  result['file'] = task.get('file')
   result['type'] = task_type
   result['origin'] = task_origin
+  result['file'] = task.get('file')
+  result['cmd'] = task.get('cmd')
+  result['poll'] = task.get('poll')
   result['root'] = to_bool(task.get('root'))
+
+  if task_type != 'skip':
+    not_allowed_props_map = dict(
+      task=list(['cmd', 'poll']),
+      shell=list(['file']),
+    )
+
+    not_allowed_props = not_allowed_props_map.get(task_type)
+
+    if not_allowed_props is None:
+      error_msgs_aux += [[
+          'task_type: ' + task_type,
+          'msg: invalid task type',
+      ]]
+    else:
+      for key in sorted(list(not_allowed_props)):
+        if task.get(key):
+          error_msgs_aux += [[
+              'task_type: ' + task_type,
+              'property: ' + key,
+              'msg: invalid property for this task type',
+          ]]
 
   params_args = dict(
       group_params=task.get('credentials'),
@@ -1144,6 +1248,12 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     new_value = ['task_name: ' + task_name] + value
     error_msgs += [new_value]
 
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
+
   return dict(result=result, error_msgs=error_msgs)
 
 def prepare_run_stage_task(run_stage_task_info, run_stage_data):
@@ -1160,7 +1270,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
   run_stage_task_name = None
 
   if isinstance(run_stage_task_info, dict):
-    run_stage_task_name = default_name
+    run_stage_task_name = default_task_name
     run_stage_task = run_stage_task_info
 
     if not run_stage_task_name:
@@ -1230,35 +1340,34 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
   for node in (prepared_nodes or []):
     node_name = node.get('name')
-    local = node.get('local')
-    base_dir = node.get('base_dir')
-    local_dir = node.get('local_dir')
-    node_dir = local_dir if local else node.get('node_dir')
-
-    node_aux = dict(
-        name=node_name,
-        local=local,
-        dir=node_dir,
-        local_dir=local_dir,
-        pods=pods_aux
-    )
 
     pods_aux = []
     pod_map = dict()
 
     for pod in (node.get('pods') or []):
       pod_name = pod.get('name')
-      pod_local_dir = pod.get('local_dir')
-      pod_dir = pod_local_dir if local else pod.get('pod_dir')
 
       pod_aux = dict(
           name=pod_name,
-          pod_dir=pod_dir,
-          local_dir=local_dir,
+          description=pod.get('description'),
+          pod_dir=pod.get('pod_dir'),
+          tmp_dir=pod.get('tmp_dir'),
+          data_dir=pod.get('data_dir'),
+          local_dir=pod.get('local_dir'),
       )
 
       pods_aux += [pod_aux]
       pod_map[pod_name] = pod_aux
+
+    node_aux = dict(
+        name=node_name,
+        description=node.get('description'),
+        local=node.get('local'),
+        node_dir=node.get('node_dir'),
+        tmp_dir=node.get('tmp_dir'),
+        local_dir=node.get('local_dir'),
+        pods=pods_aux
+    )
 
     all_nodes += [node_aux]
     node_map[node_name] = node_aux
@@ -1320,7 +1429,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
               ]]
 
           pod_map = node_pod_map.get(node_name)
-          pods_to_add = map(lambda pod_name: pod_map.get(pod_name), pods_names or [])
+          pods_to_add = [pod_map.get(pod_name) for pod_name in pods_names]
 
           node_to_add = node.copy()
           node_to_add['pods'] = pods_to_add
@@ -1382,6 +1491,12 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
           error_msgs += [new_value]
 
       result['task'] = task
+
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -1478,6 +1593,12 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
 
   result['hosts'] = sorted(list(hosts))
   result['tasks'] = tasks
+
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
 
   return dict(result=result, error_msgs=error_msgs)
 
@@ -1650,5 +1771,11 @@ def prepare_ctx(ctx_name, env_data, validate_ctx):
             error_msgs += error_msgs_aux
           else:
             result['run_stages'] = result_aux
+
+  result_keys = list(result.keys())
+
+  for key in result_keys:
+    if result.get(key) is None:
+      result.pop(key, None)
 
   return dict(result=result, error_msgs=error_msgs)

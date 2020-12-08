@@ -55,30 +55,13 @@
       main_tmp_label: >-
         [stage] << var_run_stage.name >> -
         [stage_task] {{ main_tmp_stage_task.name }} -
-        [task] {{ main_tmp_task.name }} -
-        [node] {{ main_tmp_node.name }}
-      cloud_run_title: "{{ env_title }} - run - {{ main_tmp_label }}"
+        [task] {{ main_tmp_task.name }} ({{ main_tmp_task.type }}) -
+        [node] {{ main_tmp_node.description }}
+      cloud_run_stage_name: "<< var_run_stage.name >>"
+      cloud_run_title: "{{ main_tmp_label }}"
       cloud_run_task: "{{ main_tmp_task }}"
-      cloud_run_default_output_path: "{{ main_item.output_path }}"
-      cloud_run_default_output_file: "{{ main_item.output_file }}"
-      cloud_run_default_tmp_path: "{{ main_item.tmp_path }}"
-      cloud_run_default_tmp_file: "{{ main_item.tmp_file }}"
-      cloud_run_default_chdir: "{{ main_item.chdir }}"
-      cloud_run_env: "{{ env }}"
-      cloud_run_node_item: "{{ main_item.node_item | default('') }}"
-      cloud_run_node_name: >-
-        {{ cloud_run_node_item.name | default(cloud_run_node_item) | default('') }}
-      cloud_run_node_key: >-
-        {{
-        cloud_run_node_item.key | default(cloud_run_node_item.name) |
-        default(cloud_run_node_item) | default('')
-        }}
-      cloud_run_node: "{{ env.nodes[cloud_run_node_key] | default({}) }}"
-      cloud_run_cloud_name: "{{ cloud_run_node_item.cloud | default(cloud_run_node.cloud) }}"
-      cloud_run_pod_name: "{{ main_item.pod_name | default('') }}"
-      cloud_run_pod: "{{ env.pods[cloud_run_pod_name] | default({}) }}"
-      cloud_run_cloud: "{{ env.clouds[cloud_run_cloud_name | default('')] | default({}) }}"
-      cloud_run_env_ctx_params: "{{ env_ctx_params }}"
+      cloud_run_task: "{{ main_tmp_task }}"
+      cloud_run_node: "{{ main_tmp_node }}"
     loop: >-
       {{
         ctx_data.run_stages[<< loop.index - 1 >>]
@@ -92,7 +75,7 @@
     when: >-
       (main_tmp_node | validate_connection(env_info))
       and
-      (not ((main_tmp_task.type | default('')) == 'skip'))
+      ((main_tmp_task.type | default('')) != 'skip')
     tags: ["no_print_skipped"]
 
 ###############################################################################
@@ -105,7 +88,11 @@
   - init
   - run
   gather_facts: no
-  tasks: []
+  tasks:
+
+    - name: "{{ env_title }} - wait hosts"
+      debug:
+        msg: "wait hosts..."
 
 <% endif %>
 <% endfor %>
@@ -113,7 +100,7 @@
 <% if ns_outer_run.first | bool %>
 
 - name: Play 04 - Run Stages (Empty)
-  hosts: main,host
+  hosts: main
   strategy: linear
   any_errors_fatal: true
   tags:
