@@ -60,6 +60,7 @@
       pod_name: "{{ pod_name }}"
       main: "{{ pod_params }}"
       data_dir: "{{ pod_data_dir }}"
+      dev_extra_repos_dir: "{{ env_dev_extra_repos_dir }}"
       credentials: "{{ pod_inner_credentials }}"
       dependencies: "{{ pod_dependencies }}"
       dependencies_node_ip_dict: "{{ pod_dependencies_ip_dict }}"
