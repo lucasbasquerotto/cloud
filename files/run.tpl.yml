@@ -1,26 +1,4 @@
 <% set var_run_stages = ctx_data.run_stages | default([], true) %>
-
-# 'task': var_task,
-# 'output_path': var_pod_data_dir + '/log/run',
-# 'output_file': 'run.stage.' + var_run_stage_name + '.' +
-# var_run_stage_task_name + '.' + var_task_tag + '.' +
-# ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
-# 'tmp_path': var_pod_data_dir + '/tmp/run',
-# 'tmp_file': 'run.stage.' + var_run_stage_name + '.' +
-# var_run_stage_task_name + '.' + var_task_tag + '.sh',
-# 'chdir': var_pod_repo_location,
-# 'node_item': var_node_item,
-# 'pod_name': var_pod_name
-
-# error['error.run_stage[' + var_run_stage_name +
-# '].run_stage_task[' + var_run_stage_task_name +
-# '].node[' + var_node_name +
-# '].pod[' + var_pod_name +
-# '].task_tag[' + var_task_tag +
-# '].tasks_group[' + var_tasks_group_name +
-# '].task[' + var_task_name +
-# '].type.invalid.' + var_task_type]
-
 <% set ns_outer_run = namespace(first=true) %>
 
 <% for var_run_stage in var_run_stages %>

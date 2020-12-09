@@ -1,9 +1,10 @@
 ---
 
-- set_fact:
-    watch_lines: 0
+- name: "{{ watch_title }} - watch_lines (initial)"
+  set_fact:
+    watch_lines: 1
   tags: ["no_print"]
 
-- name: "[{{ watch_title }}] - include_tasks: 'again.yml'"
-  include_tasks: 'again.yml'
+- name: "{{ watch_title }} - include_task [again.yml]"
+  include_tasks: "again.yml"
   tags: ["no_print"]

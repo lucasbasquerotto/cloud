@@ -1,28 +1,30 @@
-- set_fact:
+- name: "{{ long_run_title }} - long_run_before"
+  set_fact:
     long_run_before: "{{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
+  tags: ["no_print"]
 
-- name: '[{{ long_run_title }}] - create the needed directories'
+- name: "{{ long_run_title }} - create the needed directories"
   become: "{{ long_run_become }}"
   file:
     path: "{{ long_run_item }}"
     state: directory
     mode: 0744
-  loop: 
+  loop:
   - "{{ long_run_output_path }}"
   - "{{ long_run_tmp_path }}"
   loop_control:
     loop_var: long_run_item
 
-- name: '[{{ long_run_title }}] - clear output file before run'
+- name: "{{ long_run_title }} - clear output file before run"
   become: "{{ long_run_become }}"
-  copy: 
+  copy:
     content: ""
     dest: "{{ long_run_output_path }}/{{ long_run_output_file }}"
     mode: 0640
 
 - name: "{{ long_run_title }} - create the file to run the command"
   become: "{{ long_run_become }}"
-  copy: 
+  copy:
     content: |
       set -eou pipefail
       {{ long_run_cmd }}
@@ -30,8 +32,12 @@
     mode: 0741
 
 - name: >-
-    [{{ long_run_title }}] - {{ long_run_path }} - start the execution of 
-    "{{ long_run_cmd | trim | regex_replace('\n', ' .. ') | truncate(60, False, '...', 20) }}"
+    [{{ long_run_title }}] - {{ long_run_path }} - start the execution of
+    "{{
+      long_run_cmd | trim
+      | regex_replace('\n', ' .. ')
+      | truncate(60, False, '...', 20)
+    }}"
   become: "{{ long_run_become }}"
   shell: |
     set -eou pipefail
@@ -42,24 +48,26 @@
     chdir: "{{ long_run_path }}"
   async: "{{ long_run_timeout | int }}"
   poll: 0
-  register: 'long_run_register'
+  register: "long_run_register"
 
-- name: '[{{ long_run_title }}] - Watch "{{ long_run_output_path }}/output.log" until finishes'
+- name: >-
+    {{ long_run_title }} -
+    Watch '{{ long_run_output_path }}/{{ long_run_output_file }}'
+    until it finishes
   include_role:
-    name: 'watch'
+    name: "watch"
   vars:
     watch_title: "{{ long_run_title }}"
     watch_become: "{{ long_run_become }}"
-    watch_file: '{{ long_run_output_path }}/{{ long_run_output_file }}'
-    watch_job: 'long_run_register'
+    watch_file: "{{ long_run_output_path }}/{{ long_run_output_file }}"
+    watch_job: "long_run_register"
     watch_timeout: "{{ long_run_timeout | int }}"
     watch_poll: "{{ long_run_poll | int }}"
-  tags: ["no_print"]
 
-- name: '[{{ long_run_title }}]'
-  debug: 
+- name: "{{ long_run_title }} - time before execution"
+  debug:
     msg: "before: {{ long_run_before }}"
 
-- name: '[{{ long_run_title }}]'
-  debug: 
+- name: "{{ long_run_title }} - time after execution"
+  debug:
     msg: "after: {{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
