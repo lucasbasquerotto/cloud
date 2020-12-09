@@ -1686,7 +1686,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
   task_names = set()
 
   for idx, run_stage_task in enumerate(run_stage_tasks_input or []):
-    default_task_name = str(idx)
+    default_task_name = str(idx + 1)
     run_stage_data = dict(
         default_task_name=default_task_name,
         prepared_nodes=prepared_nodes,
@@ -1749,7 +1749,7 @@ def prepare_run_stages(run_stages, prepared_nodes, env_data, validate_ctx):
   error_msgs = []
 
   for idx, run_stage_info in enumerate(run_stages or []):
-    default_name = str(idx)
+    default_name = str(idx + 1)
     info = prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, validate_ctx)
 
     result_aux = info.get('result')

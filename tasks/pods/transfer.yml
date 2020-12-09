@@ -226,7 +226,7 @@
     label: "{{ pod_transfer_item.path }}"
   tags: ["no_print_skipped"]
 
-- name: "{{ pod_transfer_title }} - create the other directories"
+- name: "{{ pod_transfer_title }} - create the needed directories"
   become: "{{ pod_item.root }}"
   file:
     state: directory

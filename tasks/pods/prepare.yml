@@ -93,11 +93,11 @@
     - block:
         - name: "{{ pod_prepare_title }}"
           set_fact:
-            pod_vars_ctxs: "{{ [pod_vars_ctx] }}"
+            pod_vars_ctxs: "{{ [tmp_ctx] }}"
             pod_vars_idx: 0
             pod_vars_ctxs_completed: []
           vars:
-            pod_vars_ctx:
+            tmp_ctx:
               name: "{{ pod_item.ctx | default('') }}"
               params: "{{ pod_vars }}"
           tags: ["no_print"]
@@ -108,6 +108,8 @@
 
       when: (pod_item.ctx | default('')) != ''
       tags: ["no_print_skipped"]
+
+    ### Transfer the pod artifacts (defined previously) ###
 
     - name: "{{ pod_prepare_title }}"
       include_tasks: "tasks/pods/transfer.yml"
