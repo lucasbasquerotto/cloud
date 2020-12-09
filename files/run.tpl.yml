@@ -33,7 +33,7 @@
 
 <% set ns_outer_run.first = false %>
 
-- name: Play 04.<< loop.index >> - Run (<< var_run_stage.name >>)
+- name: Play 04.<< loop.index >> - Run Stage (<< var_run_stage.name >>)
   hosts: << var_run_stage.hosts | join(',') >>
   strategy: free
   tags:
@@ -45,9 +45,8 @@
     when: ansible_connection != 'local'
     tags: ["no_print"]
 
-  - name: "{{ env_title }}"
-    include_role:
-      name: "cloud_run"
+  - name: "{{ env_title }} - run stage [<< var_run_stage.name >>]"
+    include_tasks: "tasks/nodes/cloud_run.yml"
     vars:
       main_tmp_stage_name: "<< var_run_stage.name >>"
       main_tmp_stage_task: "{{ main_item.0 }}"
@@ -56,20 +55,16 @@
       main_tmp_label: >-
         [stage] {{ main_tmp_stage_name }} -
         [stage_task] {{ main_tmp_stage_task.name }} -
-        [task] {{ main_tmp_task.name }} ({{ main_tmp_task.type }}) -
+        [task] {{ main_tmp_task.name }} (type: {{ main_tmp_task.type }}) -
         [node] {{ main_tmp_node.description }}
       cloud_run_stage_name: "{{ main_tmp_stage_name }}"
       cloud_run_title: "{{ main_tmp_label }}"
       cloud_run_task: "{{ main_tmp_task }}"
-      cloud_run_task: "{{ main_tmp_task }}"
       cloud_run_node: "{{ main_tmp_node }}"
+      cloud_run_node_task: "{{ main_tmp_stage_task.node_task | default(false) }}"
+      cloud_run_pod_task: "{{ main_tmp_stage_task.pod_task | default(false) }}"
     loop: >-
-      {{
-        ctx_data.run_stages[<< loop.index - 1 >>]
-        | map(attribute='tasks')
-        | default[]
-        | subelements('nodes')
-      }}
+      {{ ctx_data.run_stages[<< loop.index - 1 >>].tasks | default([]) | subelements('nodes') }}
     loop_control:
       loop_var: main_item
       label: "{{ main_tmp_label }}"
@@ -81,7 +76,7 @@
 
 ###############################################################################
 
-- name: Play 04.<< loop.index >> - Wait (<< var_run_stage.name >>)
+- name: Play 04.<< loop.index >> - Wait Stage (<< var_run_stage.name >>)
   hosts: main,host
   strategy: linear
   any_errors_fatal: true

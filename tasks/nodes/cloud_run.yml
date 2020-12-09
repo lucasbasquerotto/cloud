@@ -6,7 +6,7 @@
       task: "{{ cloud_run_task }}"
       chdir: "{{ cloud_run_node.node_dir }}"
       tmp_dir: "{{ cloud_run_node.tmp_dir }}"
-  when: (cloud_run_task.type == 'task') and (main_tmp_stage_task.node_task | default(false) | bool)
+  when: (cloud_run_task.type == 'task') and (cloud_run_node_task | default(false) | bool)
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_title }} - run pod task file (outer)"
@@ -24,7 +24,7 @@
   loop_control:
     loop_var: cloud_run_pod
     label: "{{ cloud_run_pod.description }}"
-  when: (cloud_run_task.type == 'task') and (main_tmp_stage_task.pod_task | default(false) | bool)
+  when: (cloud_run_task.type == 'task') and (cloud_run_pod_task | default(false) | bool)
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_title }} - run node shell command (outer)"
@@ -50,7 +50,7 @@
     long_run_path: "{{ cloud_run_node.node_dir }}"
     long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
     long_run_cmd: "{{ cloud_run_task.cmd }}"
-  when: (cloud_run_task.type == 'shell') and (main_tmp_stage_task.node_task | default(false) | bool)
+  when: (cloud_run_task.type == 'shell') and (cloud_run_node_task | default(false) | bool)
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_title }} - run pod shell command (outer)"
@@ -83,5 +83,5 @@
   loop_control:
     loop_var: cloud_run_pod
     label: "{{ cloud_run_pod.description }}"
-  when: (cloud_run_task.type == 'shell') and (main_tmp_stage_task.pod_task | default(false) | bool)
+  when: (cloud_run_task.type == 'shell') and (cloud_run_pod_task | default(false) | bool)
   tags: ["no_print_skipped"]

@@ -441,7 +441,7 @@
 
 # Play 04
 
-- import_playbook: plays/run.yml
+- import_playbook: "run.yml"
 
 ###############################################################################
 ##################          DEFINE THE CRON JOBS           ####################
