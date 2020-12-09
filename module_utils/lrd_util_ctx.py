@@ -1079,26 +1079,29 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
 
   if not task_name:
     error_msgs += [[
-        'msg: task name relative not specified'
+        'msg: task name not specified'
     ]]
     return dict(result=result, error_msgs=error_msgs)
+
+  task_key = task_info_dict.get('key') or task_name
+  task_description = task_name if (task_name == task_key) else task_name + ' (' + task_key + ')'
 
   env = env_data.get('env')
   tasks_dict = env.get('tasks')
 
   if not tasks_dict:
     error_msgs += [[
-        'task_name: ' + task_name,
+        'task: ' + task_description,
         'msg: no task specified for the environment'
     ]]
     return dict(result=result, error_msgs=error_msgs)
 
-  task = tasks_dict.get(task_name)
+  task = tasks_dict.get(task_key)
 
   if task is None:
     error_msgs += [[
-        'task_name: ' + task_name,
-        'msg: task not specified for the environment'
+        'task: ' + task_description,
+        'msg: task not specified in the environment dictionary'
     ]]
     return dict(result=result, error_msgs=error_msgs)
 
@@ -1108,14 +1111,11 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
   task_type = task.get('type')
   task_origin = task.get('origin')
 
-  if task_origin and (task_type != 'task'):
-    error_msgs_aux += [[
-        'msg: task origin should be specified only for tasks with type equal "task"'
-    ]]
-
   task_origin = (task_origin or 'cloud') if task_type == 'task' else None
 
   result['name'] = task_name
+  result['key'] = task_key
+  result['description'] = task_description
   result['type'] = task_type
   result['origin'] = task_origin
   result['file'] = task.get('file')
@@ -1123,27 +1123,67 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
   result['poll'] = task.get('poll')
   result['root'] = to_bool(task.get('root'))
 
-  if task_type != 'skip':
-    not_allowed_props_map = dict(
-      task=list(['cmd', 'poll']),
-      shell=list(['file']),
+  valid_task_types = ['skip', 'task', 'shell']
+
+  if task_type not in valid_task_types:
+    error_msgs_aux += [[
+        'task_type: ' + task_type,
+        'msg: invalid task type',
+        'valid task types:',
+        valid_task_types,
+    ]]
+  else:
+    allowed_props_map = dict(
+      task=list([
+          'type',
+          'origin',
+          'file',
+          'root',
+          'params_schema',
+          'credentials_schema',
+          'credentials',
+          'params',
+          'group_params',
+          'shared_params',
+          'shared_group_params',
+      ]),
+      shell=list(['type', 'cmd', 'root', 'poll']),
+      skip=list(['type']),
     )
 
-    not_allowed_props = not_allowed_props_map.get(task_type)
+    allowed_props = allowed_props_map.get(task_type)
 
-    if not_allowed_props is None:
-      error_msgs_aux += [[
-          'task_type: ' + task_type,
-          'msg: invalid task type',
-      ]]
-    else:
-      for key in sorted(list(not_allowed_props)):
-        if task.get(key):
-          error_msgs_aux += [[
-              'task_type: ' + task_type,
-              'property: ' + key,
-              'msg: invalid property for this task type',
-          ]]
+    for key in sorted(list(task.keys())):
+      if key not in allowed_props:
+        error_msgs_aux += [[
+            'task_type: ' + task_type,
+            'property: ' + key,
+            'msg: invalid property for this task type',
+            'allowed properties: ',
+            allowed_props,
+        ]]
+
+    required_props_map = dict(
+      task=list(['type', 'file']),
+      shell=list(['type', 'cmd']),
+      skip=list(['type']),
+    )
+
+    required_props = required_props_map.get(task_type)
+
+    for key in sorted(list(required_props)):
+      if task.get(key) is None:
+        error_msgs_aux += [[
+            'task_type: ' + task_type,
+            'property: ' + key,
+            'msg: required property not specified',
+        ]]
+      elif not task.get(key):
+        error_msgs_aux += [[
+            'task_type: ' + task_type,
+            'property: ' + key,
+            'msg: required property is empty',
+        ]]
 
   params_args = dict(
       group_params=task.get('credentials'),
@@ -1160,12 +1200,20 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     error_msgs_aux += [new_value]
 
   if not error_msgs_aux_credentials:
+    if task_type != 'task':
+      if result_aux_credentials:
+        error_msgs_aux += [[
+            'task_type: ' + task_type,
+            'msg: task type has no support for task credentials',
+        ]]
+
     credentials = result_aux_credentials
     result['credentials'] = credentials
 
-    if validate_ctx and task_origin in ['cloud', 'env']:
-      schema_file = task.get('credentials_schema')
+    schema_file = task.get('credentials_schema')
+    result['credentials_schema'] = schema_file
 
+    if validate_ctx and task_origin in ['cloud', 'env']:
       if schema_file:
         schema_file_full = (
             schema_file
@@ -1231,12 +1279,26 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
   error_msgs_aux += error_msgs_aux_params
 
   if not error_msgs_aux_params:
+    if task_type != 'task':
+      if result_aux_info:
+        error_msgs_aux += [[
+            'task_type: ' + task_type,
+            'msg: task type has no support for task parameters (overwrite)',
+        ]]
+
+      if result_aux_task:
+        error_msgs_aux += [[
+            'task_type: ' + task_type,
+            'msg: task type has no support for task parameters',
+        ]]
+
     task_params = merge_dicts(result_aux_task, result_aux_info)
     result['params'] = task_params
 
-    if validate_ctx and task_origin in ['cloud', 'env']:
-      schema_file = task.get('params_schema')
+    schema_file = task.get('params_schema')
+    result['params_schema'] = schema_file
 
+    if validate_ctx and task_origin in ['cloud', 'env']:
       if schema_file:
         schema_file_full = (
             schema_file
@@ -1259,7 +1321,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
           ]]
 
   for value in (error_msgs_aux or []):
-    new_value = ['task_name: ' + task_name] + value
+    new_value = ['task: ' + task_description] + value
     error_msgs += [new_value]
 
   result_keys = list(result.keys())
@@ -1325,8 +1387,6 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
         'msg: task name relative to the run stage task not specified'
     ]]
 
-  result['task_name'] = task_name
-
   stage_node_task = run_stage_task.get('node_task')
   stage_pod_task = run_stage_task.get('pod_task')
 
@@ -1358,20 +1418,21 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
     pods_aux = []
     pod_map = dict()
 
-    for pod in (node.get('pods') or []):
-      pod_name = pod.get('name')
+    if stage_pod_task:
+      for pod in (node.get('pods') or []):
+        pod_name = pod.get('name')
 
-      pod_aux = dict(
-          name=pod_name,
-          description=pod.get('description'),
-          pod_dir=pod.get('pod_dir'),
-          tmp_dir=pod.get('tmp_dir'),
-          data_dir=pod.get('data_dir'),
-          local_dir=pod.get('local_dir'),
-      )
+        pod_aux = dict(
+            name=pod_name,
+            description=pod.get('description'),
+            pod_dir=pod.get('pod_dir'),
+            tmp_dir=pod.get('tmp_dir'),
+            data_dir=pod.get('data_dir'),
+            local_dir=pod.get('local_dir'),
+        )
 
-      pods_aux += [pod_aux]
-      pod_map[pod_name] = pod_aux
+        pods_aux += [pod_aux]
+        pod_map[pod_name] = pod_aux
 
     node_aux = dict(
         name=node_name,
@@ -1452,6 +1513,8 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
   result['nodes'] = nodes_to_run
 
   if task_name:
+    result['task_name'] = task_name
+
     info = prepare_task(run_stage_task, env_data, validate_ctx)
 
     result_aux = info.get('result')
@@ -1464,7 +1527,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
     else:
       task = result_aux
 
-      task_name = task.get('name')
+      task_description = task.get('description')
       task_type = task.get('type')
       task_origin = task.get('origin')
       task_file = task.get('file')
@@ -1490,6 +1553,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
           for node in nodes_to_run:
             for pod in node.get('pods'):
               pod_local_dir = pod.get('local_dir')
+              error_msgs_aux_pod = []
 
               schema_file = task.get('credentials_schema')
 
@@ -1503,9 +1567,9 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
                   for value in (error_msgs_aux_validate or []):
                     new_value = ['context: validate pod task credentials'] + value
-                    error_msgs_aux += [new_value]
+                    error_msgs_aux_pod += [new_value]
                 else:
-                  error_msgs_aux += [[
+                  error_msgs_aux_pod += [[
                       'context: validate pod task credentials',
                       'msg: credentials schema file not found: ' + schema_file,
                   ]]
@@ -1522,9 +1586,9 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
                   for value in (error_msgs_aux_validate or []):
                     new_value = ['context: validate pod task params'] + value
-                    error_msgs_aux += [new_value]
+                    error_msgs_aux_pod += [new_value]
                 else:
-                  error_msgs_aux += [[
+                  error_msgs_aux_pod += [[
                       'context: validate pod task params',
                       'msg: params schema file not found: ' + schema_file,
                   ]]
@@ -1533,23 +1597,23 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
               if task_file_path not in task_file_paths:
                 if not os.path.exists(task_file_path):
-                  error_msgs_aux += [[
+                  error_msgs_aux_pod += [[
                     'msg: pod task file not found: ' + task_file,
                   ]]
 
                 task_file_paths.add(task_file_path)
 
-              for value in error_msgs_aux:
+              for value in error_msgs_aux_pod:
                 new_value = [
                     'node_name: ' + node_name,
                     'pod_name: ' + pod_name,
                 ] + value
-                error_msgs += [new_value]
+                error_msgs_aux += [new_value]
 
         for value in error_msgs_aux:
           new_value = [
               'run_stage_task: ' + run_stage_task_name,
-              'task_name: ' + task_name,
+              'task: ' + task_description,
               'task_type: ' + task_type,
               'task_origin: ' + task_origin,
           ] + value
@@ -1569,14 +1633,10 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
   result = dict()
   error_msgs = []
 
-  hosts = set()
-  tasks = []
-
-  task_names = set()
   env = env_data.get('env')
 
   run_stage_name = None
-  run_stage_tasks = None
+  run_stage_tasks_input = None
 
   if isinstance(run_stage_info, dict):
     run_stage_name = default_name
@@ -1585,9 +1645,9 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
       error_msgs += [['msg: run stage default name not defined']]
       return dict(result=result, error_msgs=error_msgs)
 
-    run_stage_tasks = run_stage_info.get('tasks')
+    run_stage_tasks_input = run_stage_info.get('tasks')
 
-    if run_stage_tasks is None:
+    if run_stage_tasks_input is None:
       error_msgs += [[
           'run_stage: ' + run_stage_name,
           'msg: run stage tasks not specified'
@@ -1609,9 +1669,9 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
       ]]
       return dict(result=result, error_msgs=error_msgs)
 
-    run_stage_tasks = run_stages_dict.get(run_stage_name)
+    run_stage_tasks_input = run_stages_dict.get(run_stage_name)
 
-    if run_stage_tasks is None:
+    if run_stage_tasks_input is None:
       error_msgs += [[
           'run_stage: ' + run_stage_name,
           'msg: run stage not specified for the environment'
@@ -1620,7 +1680,12 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
 
   result['name'] = run_stage_name
 
-  for idx, run_stage_task in enumerate(run_stage_tasks or []):
+  hosts = set()
+  run_stage_tasks = []
+  run_stage_task_names = set()
+  task_names = set()
+
+  for idx, run_stage_task in enumerate(run_stage_tasks_input or []):
     default_task_name = str(idx)
     run_stage_data = dict(
         default_task_name=default_task_name,
@@ -1641,23 +1706,35 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
         new_value = ['run_stage: ' + run_stage_name] + value
         error_msgs += [new_value]
     else:
-      task = result_aux
-      task_name = task.get('name')
+      run_stage_task = result_aux
+      run_stage_task_name = run_stage_task.get('name')
 
-      if task_name in task_names:
+      if run_stage_task_name in run_stage_task_names:
         error_msgs += [[
             'run_stage: ' + run_stage_name,
-            'task_name: ' + task_names,
-            'msg: duplicate task name',
+            'run_stage_task: ' + run_stage_task_name,
+            'msg: duplicate run stage task name',
         ]]
       else:
-        nodes = task.get('nodes')
+        nodes = run_stage_task.get('nodes')
         hosts.update(map(lambda n: 'main' if n.get('local') else n.get('name'), nodes or []))
-        task_names.add(task_name)
-        tasks += [task]
+        run_stage_task_names.add(run_stage_task_name)
+        run_stage_tasks += [run_stage_task]
+
+        task_name = run_stage_task.get('task_name')
+
+        if task_name and (task_name in task_names):
+          error_msgs += [[
+              'run_stage: ' + run_stage_name,
+              'run_stage_task: ' + run_stage_task_name,
+              'task_name: ' + task_name,
+              'msg: duplicate task name'
+          ]]
+        elif task_name:
+          task_names.add(task_name)
 
   result['hosts'] = sorted(list(hosts))
-  result['tasks'] = tasks
+  result['tasks'] = run_stage_tasks
 
   result_keys = list(result.keys())
 

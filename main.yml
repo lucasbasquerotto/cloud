@@ -279,6 +279,7 @@
     - include_tasks: "tasks/util/init.yml"
       vars:
         init_skip_setup: true
+      when: ansible_connection != 'local'
       tags: ["no_print"]
 
     - name: "{{ env_title }}"

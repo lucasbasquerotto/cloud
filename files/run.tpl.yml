@@ -33,7 +33,7 @@
       main_tmp_label: >-
         [stage] {{ main_tmp_stage_name }} -
         [stage_task] {{ main_tmp_stage_task.name }} -
-        [task] {{ main_tmp_task.name }} (type: {{ main_tmp_task.type }}) -
+        [task] {{ main_tmp_task.description }} -
         [node] {{ main_tmp_node.description }}
       cloud_run_stage_name: "{{ main_tmp_stage_name }}"
       cloud_run_title: "{{ main_tmp_label }}"
