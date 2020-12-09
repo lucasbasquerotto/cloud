@@ -1163,12 +1163,18 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     credentials = result_aux_credentials
     result['credentials'] = credentials
 
-    if validate_ctx:
+    if validate_ctx and task_origin in ['cloud', 'env']:
       schema_file = task.get('credentials_schema')
 
       if schema_file:
-        if os.path.exists(schema_file):
-          schema = load_schema(schema_file)
+        schema_file_full = (
+            schema_file
+            if (task_origin == 'cloud')
+            else env_data.get('env_dir') + '/' + schema_file
+        )
+
+        if os.path.exists(schema_file_full):
+          schema = load_schema(schema_file_full)
           error_msgs_aux_validate = validate(schema, credentials)
 
           for value in (error_msgs_aux_validate or []):
@@ -1177,6 +1183,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
         else:
           error_msgs_aux += [[
               'context: validate task credentials',
+              'origin: ' + task_origin,
               'msg: credentials schema file not found: ' + schema_file,
           ]]
 
@@ -1227,12 +1234,18 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     task_params = merge_dicts(result_aux_task, result_aux_info)
     result['params'] = task_params
 
-    if validate_ctx:
+    if validate_ctx and task_origin in ['cloud', 'env']:
       schema_file = task.get('params_schema')
 
       if schema_file:
-        if os.path.exists(schema_file):
-          schema = load_schema(schema_file)
+        schema_file_full = (
+            schema_file
+            if (task_origin == 'cloud')
+            else env_data.get('env_dir') + '/' + schema_file
+        )
+
+        if os.path.exists(schema_file_full):
+          schema = load_schema(schema_file_full)
           error_msgs_aux_validate = validate(schema, task_params)
 
           for value in (error_msgs_aux_validate or []):
@@ -1241,6 +1254,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
         else:
           error_msgs_aux += [[
               'context: validate task params',
+              'origin: ' + task_origin,
               'msg: params schema file not found: ' + schema_file,
           ]]
 
@@ -1382,7 +1396,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
     node_info_list = run_stage_task.get('nodes')
 
     for node_info in (node_info_list or []):
-      node_name = node_info if isinstance(node_info, dict) else node_info.get('name')
+      node_name = node_info if isinstance(node_info, str) else node_info.get('name')
 
       node = node_map.get(node_name)
 
@@ -1391,7 +1405,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
             'run_stage_task: ' + run_stage_task_name,
             'task_name: ' + task_name,
             'node_name: ' + node_name,
-            'msg: not not found in the environment'
+            'msg: node not found in the environment'
         ]]
       elif isinstance(node_info, str):
         nodes_to_run += [node]
@@ -1459,7 +1473,13 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
         error_msgs_aux = []
 
         if task_origin != 'pod':
-          if not os.path.exists(task_file):
+          task_file_full = (
+              task_file
+              if (task_origin == 'cloud')
+              else env_data.get('env_dir') + '/' + task_file
+          )
+
+          if not os.path.exists(task_file_full):
             error_msgs_aux += [['msg: task file not found: ' + task_file]]
         else:
           task_file_paths = set()
@@ -1469,17 +1489,62 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
           for node in nodes_to_run:
             for pod in node.get('pods'):
-              task_file_path = pod.get('local_dir') + '/' + task_file
+              pod_local_dir = pod.get('local_dir')
+
+              schema_file = task.get('credentials_schema')
+
+              if schema_file:
+                schema_file_full = pod_local_dir + '/' + schema_file
+                task_credentials = task.get('credentials')
+
+                if os.path.exists(schema_file_full):
+                  schema = load_schema(schema_file_full)
+                  error_msgs_aux_validate = validate(schema, task_credentials)
+
+                  for value in (error_msgs_aux_validate or []):
+                    new_value = ['context: validate pod task credentials'] + value
+                    error_msgs_aux += [new_value]
+                else:
+                  error_msgs_aux += [[
+                      'context: validate pod task credentials',
+                      'msg: credentials schema file not found: ' + schema_file,
+                  ]]
+
+              schema_file = task.get('params_schema')
+
+              if schema_file:
+                schema_file_full = pod_local_dir + '/' + schema_file
+                task_params = task.get('params')
+
+                if os.path.exists(schema_file_full):
+                  schema = load_schema(schema_file_full)
+                  error_msgs_aux_validate = validate(schema, task_params)
+
+                  for value in (error_msgs_aux_validate or []):
+                    new_value = ['context: validate pod task params'] + value
+                    error_msgs_aux += [new_value]
+                else:
+                  error_msgs_aux += [[
+                      'context: validate pod task params',
+                      'msg: params schema file not found: ' + schema_file,
+                  ]]
+
+              task_file_path = pod_local_dir + '/' + task_file
 
               if task_file_path not in task_file_paths:
                 if not os.path.exists(task_file_path):
                   error_msgs_aux += [[
-                    'node_name: ' + node_name,
-                    'pod_name: ' + pod_name,
                     'msg: pod task file not found: ' + task_file,
                   ]]
 
                 task_file_paths.add(task_file_path)
+
+              for value in error_msgs_aux:
+                new_value = [
+                    'node_name: ' + node_name,
+                    'pod_name: ' + pod_name,
+                ] + value
+                error_msgs += [new_value]
 
         for value in error_msgs_aux:
           new_value = [

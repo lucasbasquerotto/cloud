@@ -40,14 +40,19 @@ options:
           - the environment dictionary.
         type: dict
         required: true
+      env_dir:
+        description:
+          - specifies the path to the environment directory
+        type: str
+        required: true
       ctx_name:
         description:
           - the context name
         type: str
         required: true
-      commit:
+      ctx_dir:
         description:
-          - the current commit of the environment repository
+          - specifies the context directory
         type: str
         required: true
       dev:
@@ -60,15 +65,15 @@ options:
           - specifies the shared directory used during development
         type: str
         required: true
+      commit:
+        description:
+          - the current commit of the environment repository
+        type: str
+        required: true
       path_map:
         description:
           - the environment dictionary.
         type: dict
-        required: true
-      ctx_dir:
-        description:
-          - specifies the context directory
-        type: str
         required: true
   validate:
     description:
@@ -92,12 +97,13 @@ from ansible.module_utils.lrd_util_ctx import prepare_services
 
 env_data_spec = dict(
     env=dict(type='dict', required=True),
+    env_dir=dict(type='str', required=True),
     ctx_name=dict(type='str', required=True),
-    commit=dict(type='str', required=True),
+    ctx_dir=dict(type='str', required=True),
     dev=dict(type='bool', required=True),
     dev_repos_dir=dict(type='str', required=True),
+    commit=dict(type='str', required=True),
     path_map=dict(type='dict', required=True),
-    ctx_dir=dict(type='str', required=True),
 )
 
 def main():
