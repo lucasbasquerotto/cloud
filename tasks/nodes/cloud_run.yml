@@ -1,3 +1,13 @@
+- name: "{{ cloud_run_title }} - cloud_run_file_name"
+  set_fact:
+    cloud_run_file_name: >-
+      {{
+        'run.stage.' + cloud_run_stage_name + '.'
+        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
+        + ('%Y-%m-%d_%H-%M-%S' | strftime())
+      }}
+  tags: ["no_print"]
+
 - name: "{{ cloud_run_title }} - run node task file (outer)"
   include_tasks: "{{ cloud_run_task.file }}"
   vars:
@@ -34,19 +44,9 @@
     long_run_title: "{{ cloud_run_title }} - run node shell command"
     long_run_become: "{{ cloud_run_task.root | default(false) }}"
     long_run_output_path: "{{ cloud_run_node.tmp_dir + '/run/log' }}"
-    long_run_output_file: >-
-      {{
-        'run.stage.' + cloud_run_stage_name + '.'
-        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
-        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
-      }}
+    long_run_output_file: "{{ cloud_run_file_name }}.log"
     long_run_tmp_path: "{{ cloud_run_node.tmp_dir + '/run/tmp' }}"
-    long_run_tmp_file: >-
-      {{
-        'run.stage.' + cloud_run_stage_name + '.'
-        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
-        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.sh',
-      }}
+    long_run_tmp_file: "{{ cloud_run_file_name }}.sh"
     long_run_path: "{{ cloud_run_node.node_dir }}"
     long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
     long_run_cmd: "{{ cloud_run_task.cmd }}"
@@ -63,19 +63,9 @@
         run pod shell command
     long_run_become: "{{ cloud_run_task.root | default(false) }}"
     long_run_output_path: "{{ cloud_run_pod.tmp_dir + '/run/log' }}"
-    long_run_output_file: >-
-      {{
-        'run.stage.' + cloud_run_stage_name + '.'
-        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
-        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.log',
-      }}
+    long_run_output_file: "{{ cloud_run_file_name }}.log"
     long_run_tmp_path: "{{ cloud_run_pod.tmp_dir + '/run/tmp' }}"
-    long_run_tmp_file: >-
-      {{
-        'run.stage.' + cloud_run_stage_name + '.'
-        + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
-        + ('%Y-%m-%d_%H-%M-%S' | strftime()) + '.sh',
-      }}
+    long_run_tmp_file: "{{ cloud_run_file_name }}.sh"
     long_run_path: "{{ cloud_run_pod.pod_dir }}"
     long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
     long_run_cmd: "{{ cloud_run_task.cmd }}"
