@@ -43,17 +43,6 @@
     pod_inner_credentials: "{{ pod_item.credentials | default({}) }}"
   tags: ["no_print"]
 
-- name: "{{ pod_prepare_title }} - pod_base_dir_rel"
-  set_fact:
-    pod_base_dir_rel: >-
-      {{ env_dev_repos_dir | relpath(pod_repo_dir) }}
-    pod_extra_repos_dir_rel: >-
-      {{
-        (pod_node_local | bool)
-        | ternary(env_dev_extra_repos_dir | relpath(pod_repo_dir), '')
-      }}
-  tags: ["no_print"]
-
 ### Generate a file with the environment variables and state (for idempotence) ###
 
 - name: "{{ pod_prepare_title }} - pod_vars"
@@ -64,12 +53,13 @@
       ctx_name: "{{ env_ctx_name }}"
       pod_name: "{{ pod_name }}"
       main: "{{ pod_params }}"
-      data_dir: "{{ pod_data_dir }}"
-      extra_repos_dir_rel: "{{ pod_extra_repos_dir_rel }}"
       credentials: "{{ pod_inner_credentials }}"
-      dependencies: "{{ pod_dependencies }}"
-      dependencies_node_ip_dict: "{{ pod_dependencies_ip_dict }}"
-      dependencies_node_ips_dict: "{{ pod_dependencies_ips_dict }}"
+      data_dir: "{{ pod_data_dir }}"
+      extra_repos_dir_rel: "{{ pod_item.extra_repos_dir_relpath }}"
+      dependencies:
+        list: "{{ pod_dependencies }}"
+        node_ip_dict: "{{ pod_dependencies_ip_dict }}"
+        node_ips_dict: "{{ pod_dependencies_ips_dict }}"
     pod_diff: {}
   tags: ["no_print"]
 
@@ -93,7 +83,6 @@
         pod_vars_templates: []
         pod_vars_env_files: []
         pod_vars_env_templates: []
-        pod_dir_list: []
       tags: ["no_print"]
 
     - block:
@@ -122,7 +111,7 @@
       vars:
         pod_transfer_title: "{{ pod_prepare_title }} - ctx"
         pod_transfer_src_volumes: "{{ pod_vars_volumes | default([], true) }}"
-        pod_transfer_src_dir_list: "{{ pod_dir_list | default([], true) }}"
+        pod_transfer_src_dir_list: []
         pod_transfer_src_repo_files: "{{ pod_vars_files | default([], true) }}"
         pod_transfer_src_env_files: "{{ pod_vars_env_files | default([], true) }}"
         pod_transfer_src_repo_templates: "{{ pod_vars_templates | default([], true) }}"

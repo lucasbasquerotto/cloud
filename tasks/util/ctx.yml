@@ -15,3 +15,33 @@
     env_ctx: "{{ ctx_data }}"
     env_ctx_params: "{{ ctx_data.params | default({}) }}"
   tags: ["no_print"]
+
+#TODO remove the next lines
+
+# - name: "{{ env_title }} - pod_vars"
+#   debug:
+#     var: pod_vars
+#   vars:
+#     tmp_pod: "{{ tmp_item.1 }}"
+#     pod_vars: "{{ lookup('pod_vars', pod, env_data=env_data, dependencies_data={}) }}"
+#   loop: >-
+#     {{ ctx_data.nodes | default([]) | subelements('pods') }}
+#   loop_control:
+#     loop_var: tmp_item
+#     label: "{{ tmp_pod.description }}"
+
+- name: "{{ env_title }} - tmp_pod"
+  set_fact:
+    tmp_pod: "{{ ctx_data.nodes[0].pods[0] }}"
+
+- name: "{{ env_title }} - debug - tmp_pod"
+  debug:
+    var: tmp_pod | dict2items | map(attribute='key') | list
+
+- name: "{{ env_title }} - tmp_pod_vars"
+  set_fact:
+    tmp_pod_vars: "{{ lookup('pod_vars', tmp_pod, env_data=env_data, dependencies_data={}) }}"
+
+- name: "{{ env_title }} - debug - tmp_pod_vars"
+  debug:
+    var: tmp_pod_vars

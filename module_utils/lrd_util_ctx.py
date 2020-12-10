@@ -449,6 +449,9 @@ def prepare_pod(pod_info, node_data):
     dev_repos_dir = env_data.get('dev_repos_dir')
     local_base_dir_relpath = os.path.relpath(dev_repos_dir, local_dir)
 
+    dev_extra_repos_dir = env_data.get('dev_extra_repos_dir')
+    extra_repos_dir_relpath = os.path.relpath(dev_extra_repos_dir, local_dir)
+
     flat = pod.get('flat')
     base_dir = pod.get('base_dir') or pod_name
     pod_dir = base_dir if flat else (base_dir + '/main')
@@ -484,7 +487,9 @@ def prepare_pod(pod_info, node_data):
     result['pod_dir'] = pod_dir
     result['tmp_dir'] = tmp_dir
     result['data_dir'] = data_dir
+    result['extra_repos_dir_relpath'] = extra_repos_dir_relpath
     result['ctx'] = pod.get('ctx')
+    result['local'] = to_bool(local)
     result['root'] = to_bool(pod.get('root'))
     result['flat'] = to_bool(pod.get('flat'))
     result['fast_prepare'] = to_bool(pod.get('fast_prepare'))

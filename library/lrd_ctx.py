@@ -60,9 +60,19 @@ options:
           - specifies if it's a development environment
         type: bool
         required: true
+      lax:
+        description:
+          - specifies if created files and directories will have less strict permissions
+        type: bool
+        required: true
       dev_repos_dir:
         description:
           - specifies the shared directory used during development
+        type: str
+        required: true
+      dev_extra_repos_dir:
+        description:
+          - specifies the directory used for the extra repositories
         type: str
         required: true
       commit:
@@ -101,7 +111,9 @@ env_data_spec = dict(
     ctx_name=dict(type='str', required=True),
     ctx_dir=dict(type='str', required=True),
     dev=dict(type='bool', required=True),
+    lax=dict(type='bool', required=True),
     dev_repos_dir=dict(type='str', required=True),
+    dev_extra_repos_dir=dict(type='str', required=True),
     commit=dict(type='str', required=True),
     path_map=dict(type='dict', required=True),
 )
