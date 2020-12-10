@@ -101,7 +101,7 @@
 - name: "{{ pod_transfer_title }} - copy the static files to the specified locations"
   become: "{{ pod_item.root }}"
   copy:
-    remote_src: "{{ pod_transfer_item.remote_src }}"
+    remote_src: "{{ pod_transfer_item.remote_src | default(false) | bool }}"
     src: "{{ pod_transfer_item.src }}"
     dest: "{{ pod_transfer_item.dest }}"
     owner: "{{ pod_host_user }}"
