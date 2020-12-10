@@ -1109,15 +1109,15 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
   error_msgs_aux = []
 
   task_type = task.get('type')
-  task_origin = task.get('origin')
+  task_target_origin = task.get('target_origin')
 
-  task_origin = (task_origin or 'cloud') if task_type == 'task' else None
+  task_target_origin = (task_target_origin or 'cloud') if task_type == 'task' else None
 
   result['name'] = task_name
   result['key'] = task_key
   result['description'] = task_description
   result['type'] = task_type
-  result['origin'] = task_origin
+  result['target_origin'] = task_target_origin
   result['file'] = task.get('file')
   result['cmd'] = task.get('cmd')
   result['poll'] = task.get('poll')
@@ -1136,7 +1136,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     allowed_props_map = dict(
       task=list([
           'type',
-          'origin',
+          'target_origin',
           'file',
           'root',
           'params_schema',
@@ -1213,11 +1213,11 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     schema_file = task.get('credentials_schema')
     result['credentials_schema'] = schema_file
 
-    if validate_ctx and task_origin in ['cloud', 'env']:
+    if validate_ctx and task_target_origin in ['cloud', 'env']:
       if schema_file:
         schema_file_full = (
             schema_file
-            if (task_origin == 'cloud')
+            if (task_target_origin == 'cloud')
             else env_data.get('env_dir') + '/' + schema_file
         )
 
@@ -1231,7 +1231,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
         else:
           error_msgs_aux += [[
               'context: validate task credentials',
-              'origin: ' + task_origin,
+              'target_origin: ' + task_target_origin,
               'msg: credentials schema file not found: ' + schema_file,
           ]]
 
@@ -1298,11 +1298,11 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     schema_file = task.get('params_schema')
     result['params_schema'] = schema_file
 
-    if validate_ctx and task_origin in ['cloud', 'env']:
+    if validate_ctx and task_target_origin in ['cloud', 'env']:
       if schema_file:
         schema_file_full = (
             schema_file
-            if (task_origin == 'cloud')
+            if (task_target_origin == 'cloud')
             else env_data.get('env_dir') + '/' + schema_file
         )
 
@@ -1316,7 +1316,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
         else:
           error_msgs_aux += [[
               'context: validate task params',
-              'origin: ' + task_origin,
+              'target_origin: ' + task_target_origin,
               'msg: params schema file not found: ' + schema_file,
           ]]
 
@@ -1529,16 +1529,16 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
       task_description = task.get('description')
       task_type = task.get('type')
-      task_origin = task.get('origin')
+      task_target_origin = task.get('target_origin')
       task_file = task.get('file')
 
       if validate_ctx and (task_type == 'task'):
         error_msgs_aux = []
 
-        if task_origin != 'pod':
+        if task_target_origin != 'pod':
           task_file_full = (
               task_file
-              if (task_origin == 'cloud')
+              if (task_target_origin == 'cloud')
               else env_data.get('env_dir') + '/' + task_file
           )
 
@@ -1548,7 +1548,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
           task_file_paths = set()
 
           if stage_node_task:
-            error_msgs_aux += [['msg: node task with pod origin: ' + task_file]]
+            error_msgs_aux += [['msg: node task with pod target_origin: ' + task_file]]
 
           for node in nodes_to_run:
             for pod in node.get('pods'):
@@ -1615,7 +1615,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
               'run_stage_task: ' + run_stage_task_name,
               'task: ' + task_description,
               'task_type: ' + task_type,
-              'task_origin: ' + task_origin,
+              'task_target_origin: ' + task_target_origin,
           ] + value
           error_msgs += [new_value]
 

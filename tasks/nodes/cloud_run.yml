@@ -11,8 +11,8 @@
 - name: "{{ cloud_run_title }} - run node task file (outer)"
   include_tasks: "{{ tmp_base_dir_prefix + cloud_run_task.file }}"
   vars:
-    tmp_origin: "{{ cloud_run_task.origin | default('') }}"
-    tmp_base_dir_prefix: "{{ (tmp_origin != 'env') | ternary('', env_dir + '/') }}"
+    tmp_target_origin: "{{ cloud_run_task.target_origin | default('') }}"
+    tmp_base_dir_prefix: "{{ (tmp_target_origin != 'env') | ternary('', env_dir + '/') }}"
     params:
       title: "{{ cloud_run_title }} - run node file [{{ cloud_run_task.file }}]"
       task: "{{ cloud_run_task }}"
@@ -24,13 +24,13 @@
 - name: "{{ cloud_run_title }} - run pod task file (outer)"
   include_tasks: "{{ tmp_base_dir_prefix + cloud_run_task.file }}"
   vars:
-    tmp_origin: "{{ cloud_run_task.origin | default('') }}"
+    tmp_target_origin: "{{ cloud_run_task.target_origin | default('') }}"
     tmp_base_dir_prefix: >-
       {{
-        (tmp_origin not in ['env', 'pod'])
+        (tmp_target_origin not in ['env', 'pod'])
         | ternary(
           '',
-          (tmp_origin == 'env')
+          (tmp_target_origin == 'env')
           | ternary(env_dir + '/', cloud_run_pod.pod_dir + '/')
         )
       }}
