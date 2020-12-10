@@ -55,7 +55,8 @@ except ImportError:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
+# from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
+from ansible.template import generate_ansible_template_vars, USE_JINJA2_NATIVE
 from ansible.utils.display import Display
 from ansible.module_utils._text import to_text
 
@@ -340,7 +341,7 @@ class LookupModule(LookupBase):
       new_vars.update(dict(params=params))
       display.vv("params keys: %s" % params.keys())
 
-      ### Replace in newer ansible versions
+      #TODO: Remove in newer ansible versions
       old_vars = self._templar._available_variables
       self._templar.set_available_variables(new_vars)
       res_str = self._templar.template(
@@ -352,7 +353,7 @@ class LookupModule(LookupBase):
       self._templar.set_available_variables(old_vars)
       ###
 
-      ### Include in newer ansible versions
+      #TODO: Include in newer ansible versions
       # if USE_JINJA2_NATIVE:
       #   templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
       # else:
@@ -381,6 +382,7 @@ class LookupModule(LookupBase):
     else:
       raise AnsibleError("the template file %s could not be found for the lookup" % file)
 
+  #TODO: USe lrd_utils (verify creating a collection to be able to import)
   def error_text(self, error_msgs, context=None):
     if not error_msgs:
       return ''
