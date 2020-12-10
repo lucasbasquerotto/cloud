@@ -15,15 +15,3 @@
     env_ctx: "{{ ctx_data }}"
     env_ctx_params: "{{ ctx_data.params | default({}) }}"
   tags: ["no_print"]
-
-# - fail:
-#     msg: test
-#   when: true
-
-- debug:
-    var: ctx_data_result
-
-- name: "{{ env_title }} - env_ctx (old)"
-  set_fact:
-    env_ctx: "{{ env_ctx_raw }}"
-  tags: ["no_print"]

@@ -207,7 +207,7 @@
     - name: "{{ env_title }} - nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        main_tmp_nodes: "{{ env_ctx.nodes | default([]) }}"
+        main_tmp_nodes: "{{ ctx_data.nodes | default([]) }}"
         cloud_node_title: "{{ env_title }} - nodes"
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
@@ -574,7 +574,7 @@
       vars:
         main_tmp_nodes: >-
           {{
-            env_ctx.nodes | default([])
+            ctx_data.nodes | default([])
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
@@ -763,7 +763,7 @@
       vars:
         main_tmp_nodes: >-
           {{
-            env_ctx.nodes | default([])
+            ctx_data.nodes | default([])
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
