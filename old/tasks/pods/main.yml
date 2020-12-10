@@ -75,10 +75,6 @@
     pod_remote_base_dir: "{{ pod_node_base_dir }}/{{ pod_dirname }}"
     pod_tmp_dir: "{{ pod_item.tmp_dir }}"
     pod_data_dir: "{{ pod_item.data_dir }}"
-    pod_dependencies_data:
-      list: "{{ pod_dependencies }}"
-      node_ip_dict: "{{ pod_dependencies_ip_dict }}"
-      node_ips_dict: "{{ pod_dependencies_ips_dict }}"
   loop: "{{ pod_node.pods | default([], true) }}"
   loop_control:
     loop_var: pod_item

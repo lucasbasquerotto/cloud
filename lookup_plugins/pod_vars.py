@@ -34,6 +34,10 @@ DOCUMENTATION = """
         default: {}
         version_added: '2.11'
         type: dict
+      validate:
+        description: Specifies if the src files and templates should be validated.
+        version_added: '2.11'
+        type: bool
 """
 
 RETURN = """
@@ -73,12 +77,12 @@ class LookupModule(LookupBase):
         'dependencies_data',
         dict(list=list(), node_ip_dict=dict(), node_ips_dict=dict())
     )
+    validate = kwargs.get('validate')
     ret = []
+    error_msgs = []
 
     for term in terms:
-      pod_dir = term.get('pod_dir')
       pod_ctx_file = term.get('ctx')
-      file = pod_dir + '/' + pod_ctx_file
 
       params = dict(
           identifier=term.get('identifier'),
@@ -98,30 +102,58 @@ class LookupModule(LookupBase):
           file_names=set(),
       )
 
-      res = self.load_vars(
+      data_info = dict(
           variables=variables,
           env_data=env_data,
-          pod_dir=pod_dir,
-          file=file,
-          params=params,
+          pod=term,
           previous=previous,
+          validate=validate,
       )
 
-      error_msgs = res.get('error_msgs')
+      res = self.load_vars(
+          file_relpath=pod_ctx_file,
+          params=params,
+          data_info=data_info,
+      )
 
-      if error_msgs:
-        raise AnsibleError(to_text(self.error_text(error_msgs, 'pod_vars')))
+      error_msgs_aux = res.get('error_msgs')
+
+      if error_msgs_aux:
+        parent_type = term.get('parent_type')
+        parent_description = term.get('parent_description')
+        pod_description = term.get('description')
+
+        for value in error_msgs_aux:
+          new_value = [
+            str(parent_type + ': ' + parent_description),
+            str('pod: ' + pod_description),
+          ] + value
+          error_msgs += [new_value]
       else:
         res_result = res.get('result')
+        res_result['count'] = len(terms)
         ret.append(res_result)
+
+    if error_msgs:
+      raise AnsibleError(to_text(self.error_text(error_msgs, 'pod_vars')))
 
     return ret
 
-  def load_vars(self, variables, env_data, pod_dir, file, params, previous):
+  def load_vars(self, file_relpath, params, data_info):
     directories = list()
     files = list()
     templates = list()
     error_msgs = list()
+
+    variables = data_info.get('variables')
+    env_data = data_info.get('env_data')
+    pod = data_info.get('pod')
+    previous = data_info.get('previous')
+    validate = data_info.get('validate')
+
+    pod_dir = pod.get('pod_dir')
+    pod_local_dir = pod.get('local_dir')
+    pod_tmp_dir = pod.get('tmp_dir')
 
     dir_names = previous.get('dir_names')
     file_names = previous.get('file_names')
@@ -132,7 +164,28 @@ class LookupModule(LookupBase):
 
     env_dir = env_data.get('env_dir')
 
-    res = self.lookup(variables, file, params)
+    file = pod_dir + '/' + file_relpath
+
+    if validate and not os.path.exists(file):
+      error_msgs += [[
+          str('file: ' + file_relpath),
+          'msg: pod ctx file not found in the pod repository',
+      ]]
+      return dict(error_msgs=error_msgs)
+
+    try:
+      res_str = self.lookup(variables, file, params)
+    except Exception as error: # pylint: disable=broad-except
+      error_msgs += [[
+          str('file: ' + file_relpath),
+          'msg: error when trying to load the pod ctx file',
+          'error type: ' + str(type(error)),
+          'error details: ' + str(error),
+      ]]
+      return dict(error_msgs=error_msgs)
+
+
+    res = yaml.load(res_str, Loader=Loader)
 
     if res:
       res_files = res.get('files')
@@ -141,14 +194,23 @@ class LookupModule(LookupBase):
       res_env_templates = res.get('env_templates')
 
       for res_file in (res_files or []):
-        src = pod_dir + '/' + res_file.get('src')
+        src_relpath = res_file.get('src')
+        src = pod_dir + '/' + src_relpath
+        local_src = pod_local_dir + '/' + src_relpath
+
         dest = pod_dir + '/' + res_file.get('dest')
         dest_dir = os.path.dirname(dest)
+
+        if validate and not os.path.exists(local_src):
+          error_msgs += [[
+              str('src: ' + src_relpath),
+              'msg: file not found in the pod repository',
+          ]]
 
         if dest_dir not in dir_names:
           dir_names.add(dest_dir)
           dir_to_add = dict(
-              dest=dest_dir,
+              path=dest_dir,
               mode=res_file.get('dir_mode') or default_dir_mode,
           )
           directories += [dir_to_add]
@@ -156,6 +218,7 @@ class LookupModule(LookupBase):
         if dest not in file_names:
           file_names.add(dest)
           file_to_add = dict(
+              remote_src=True,
               src=src,
               dest=dest,
               mode=res_file.get('mode') or default_file_mode,
@@ -163,20 +226,41 @@ class LookupModule(LookupBase):
           files += [file_to_add]
         else:
           error_msgs += [[
-              'src: ' + src,
-              'dest: ' + dest,
+              str('src: ' + src),
+              str('dest: ' + dest),
               'msg: duplicate destination for pod file',
           ]]
 
       for res_template in (res_templates or []):
-        src = pod_dir + '/' + res_template.get('src')
-        dest = pod_dir + '/' + res_template.get('dest')
+        src_relpath = res_template.get('src')
+        src = pod_dir + '/' + src_relpath
+        local_src = pod_local_dir + '/' + src_relpath
+
+        dest_relpath = res_template.get('dest')
+        dest = pod_dir + '/' + dest_relpath
+        dest_tmp = pod_tmp_dir + '/tpl/' + dest_relpath
+
         dest_dir = os.path.dirname(dest)
+        dest_tmp_dir = os.path.dirname(dest_tmp)
+
+        if validate and not os.path.exists(local_src):
+          error_msgs += [[
+              str('src: ' + src_relpath),
+              'msg: template file not found in the pod repository',
+          ]]
 
         if dest_dir not in dir_names:
           dir_names.add(dest_dir)
           dir_to_add = dict(
-              dest=dest_dir,
+              path=dest_dir,
+              mode=res_template.get('dir_mode') or default_dir_mode,
+          )
+          directories += [dir_to_add]
+
+        if dest_tmp_dir not in dir_names:
+          dir_names.add(dest_tmp_dir)
+          dir_to_add = dict(
+              path=dest_tmp_dir,
               mode=res_template.get('dir_mode') or default_dir_mode,
           )
           directories += [dir_to_add]
@@ -186,26 +270,36 @@ class LookupModule(LookupBase):
           template_to_add = dict(
               src=src,
               dest=dest,
+              dest_tmp=dest_tmp,
               mode=res_template.get('mode') or default_file_mode,
               params=res_template.get('params') or {},
           )
           templates += [template_to_add]
         else:
           error_msgs += [[
-              'src: ' + src,
-              'dest: ' + dest,
+              str('src: ' + src),
+              str('dest: ' + dest),
               'msg: duplicate destination for pod template',
           ]]
 
       for res_file in (res_env_files or []):
-        src = env_dir + '/' + res_file.get('src')
+        src_relpath = res_file.get('src')
+        src = env_dir + '/' + src_relpath
+        local_src = src
+
         dest = pod_dir + '/' + res_file.get('dest')
         dest_dir = os.path.dirname(dest)
+
+        if validate and not os.path.exists(local_src):
+          error_msgs += [[
+              str('src: ' + src_relpath),
+              'msg: file not found in the environment repository',
+          ]]
 
         if dest_dir not in dir_names:
           dir_names.add(dest_dir)
           dir_to_add = dict(
-              dest=dest_dir,
+              path=dest_dir,
               mode=res_file.get('dir_mode') or default_dir_mode,
           )
           directories += [dir_to_add]
@@ -220,20 +314,41 @@ class LookupModule(LookupBase):
           files += [file_to_add]
         else:
           error_msgs += [[
-              'src: ' + src,
-              'dest: ' + dest,
+              str('src: ' + src),
+              str('dest: ' + dest),
               'msg: duplicate destination for pod environment file',
           ]]
 
       for res_template in (res_env_templates or []):
-        src = env_dir + '/' + res_template.get('src')
-        dest = pod_dir + '/' + res_template.get('dest')
+        src_relpath = res_template.get('src')
+        src = env_dir + '/' + src_relpath
+        local_src = src
+
+        dest_relpath = res_template.get('dest')
+        dest = pod_dir + '/' + dest_relpath
+        dest_tmp = pod_tmp_dir + '/tpl/' + dest_relpath
+
         dest_dir = os.path.dirname(dest)
+        dest_tmp_dir = os.path.dirname(dest_tmp)
+
+        if validate and not os.path.exists(local_src):
+          error_msgs += [[
+              str('src: ' + src_relpath),
+              'msg: template file not found in the environment repository',
+          ]]
 
         if dest_dir not in dir_names:
           dir_names.add(dest_dir)
           dir_to_add = dict(
-              dest=dest_dir,
+              path=dest_dir,
+              mode=res_template.get('dir_mode') or default_dir_mode,
+          )
+          directories += [dir_to_add]
+
+        if dest_tmp_dir not in dir_names:
+          dir_names.add(dest_tmp_dir)
+          dir_to_add = dict(
+              path=dest_tmp_dir,
               mode=res_template.get('dir_mode') or default_dir_mode,
           )
           directories += [dir_to_add]
@@ -243,14 +358,15 @@ class LookupModule(LookupBase):
           template_to_add = dict(
               src=src,
               dest=dest,
+              dest_tmp=dest_tmp,
               mode=res_template.get('mode') or default_file_mode,
               params=res_template.get('params') or {},
           )
           templates += [template_to_add]
         else:
           error_msgs += [[
-              'src: ' + src,
-              'dest: ' + dest,
+              str('src: ' + src),
+              str('dest: ' + dest),
               'msg: duplicate destination for pod environment template',
           ]]
 
@@ -260,23 +376,19 @@ class LookupModule(LookupBase):
         if children:
           for child in children:
             child_name = child.get('name')
-            child_file = pod_dir + '/' + child_name
             child_params = child.get('params')
 
             res_child = self.load_vars(
-                variables=variables,
-                env_data=env_data,
-                pod_dir=pod_dir,
-                file=child_file,
+                file_relpath=child_name,
                 params=child_params,
-                previous=previous,
+                data_info=data_info,
             )
 
             child_error_msgs = res_child.get('error_msgs')
 
             if child_error_msgs:
               for value in child_error_msgs:
-                new_value = ['child: ' + child_name] + value
+                new_value = [str('ctx child: ' + child_name)] + value
                 error_msgs += [new_value]
             else:
               res_child_result = res_child.get('result')
@@ -344,7 +456,7 @@ class LookupModule(LookupBase):
       #TODO: Remove in newer ansible versions
       old_vars = self._templar._available_variables
       self._templar.set_available_variables(new_vars)
-      res_str = self._templar.template(
+      res = self._templar.template(
           template_data,
           preserve_trailing_newlines=True,
           convert_data=False,
@@ -376,8 +488,6 @@ class LookupModule(LookupBase):
         # not to be processed by literal_eval anywhere in Ansible
         res = NativeJinjaText(res)
 
-      res = yaml.load(res_str, Loader=Loader)
-
       return res
     else:
       raise AnsibleError("the template file %s could not be found for the lookup" % file)
@@ -388,11 +498,11 @@ class LookupModule(LookupBase):
       return ''
 
     if context:
-      msg = '[' + context + '] ' + str(len(error_msgs)) + ' error(s)'
+      msg = str('[' + context + '] ' + str(len(error_msgs)) + ' error(s)')
       error_msgs = [[msg]] + error_msgs + [[msg]]
 
     separator = "-------------------------------------------"
-    new_error_msgs = [separator]
+    new_error_msgs = ['', separator]
 
     for value in error_msgs:
       new_error_msgs += [value, separator]

@@ -370,15 +370,15 @@ def prepare_services(services, env_data, validate_ctx, top=False, service_names=
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_pod(pod_info, node_data):
+def prepare_pod(pod_info, parent_data):
   result = dict()
   error_msgs = []
 
-  pod_ctx_info_dict = node_data.get('pod_ctx_info_dict')
-  local = node_data.get('local')
-  node_base_dir = node_data.get('base_dir')
-  env_data = node_data.get('env_data')
-  validate_ctx = node_data.get('validate_ctx')
+  pod_ctx_info_dict = parent_data.get('pod_ctx_info_dict')
+  local = parent_data.get('local')
+  parent_base_dir = parent_data.get('base_dir')
+  env_data = parent_data.get('env_data')
+  validate_ctx = parent_data.get('validate_ctx')
 
   env = env_data.get('env')
   ctx_dir = env_data.get('ctx_dir')
@@ -396,6 +396,8 @@ def prepare_pod(pod_info, node_data):
   result['name'] = pod_name
   result['key'] = pod_key
   result['description'] = pod_description
+  result['parent_type'] = parent_data.get('parent_type')
+  result['parent_description'] = parent_data.get('parent_description')
 
   pods_dict = env.get('pods')
 
@@ -455,16 +457,16 @@ def prepare_pod(pod_info, node_data):
     flat = pod.get('flat')
     base_dir = pod.get('base_dir') or pod_name
     pod_dir = base_dir if flat else (base_dir + '/main')
-    pod_dir = local_dir if local else (node_base_dir + '/' + pod_dir)
+    pod_dir = local_dir if local else (parent_base_dir + '/' + pod_dir)
     tmp_dir = (
         (dev_repos_dir + '/tmp/pods/' + pod_identifier)
         if local
         else (
             pod.get('tmp_dir')
             or (
-                (node_base_dir + '/.pods/' + pod_name + '/tmp')
+                (parent_base_dir + '/.pods/' + pod_name + '/tmp')
                 if flat
-                else (node_base_dir + '/' + base_dir + '/tmp')
+                else (parent_base_dir + '/' + base_dir + '/tmp')
             )
         )
     )
@@ -474,9 +476,9 @@ def prepare_pod(pod_info, node_data):
         else (
             pod.get('data_dir')
             or (
-                (node_base_dir + '/.pods/' + pod_name + '/data')
+                (parent_base_dir + '/.pods/' + pod_name + '/data')
                 if flat
-                else (node_base_dir + '/' + base_dir + '/data')
+                else (parent_base_dir + '/' + base_dir + '/data')
             )
         )
     )
@@ -644,12 +646,12 @@ def prepare_pod(pod_info, node_data):
 
   return dict(result=result, error_msgs=error_msgs)
 
-def prepare_pods(pods, node_data):
+def prepare_pods(pods, parent_data):
   result = []
   error_msgs = []
   pod_names = set()
 
-  env_data = node_data.get('env_data')
+  env_data = parent_data.get('env_data')
   env = env_data.get('env')
 
   if pods:
@@ -659,7 +661,7 @@ def prepare_pods(pods, node_data):
       error_msgs += [['msg: no pod specified for the environment']]
     else:
       for pod_info in pods:
-        info = prepare_pod(pod_info, node_data)
+        info = prepare_pod(pod_info, parent_data)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs')
@@ -996,6 +998,8 @@ def prepare_node(node_info, env_data, validate_ctx):
           base_dir=base_dir,
           env_data=env_data,
           validate_ctx=validate_ctx,
+          parent_type='node',
+          parent_description=node_description,
       )
       info = prepare_pods(pods, node_data)
 

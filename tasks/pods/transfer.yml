@@ -1,244 +1,39 @@
-- name: "{{ pod_transfer_title }} - pod_transfer_volumes"
-  set_fact:
-    pod_transfer_volumes: []
-    pod_transfer_dir_list: []
-    pod_transfer_repo_files: []
-    pod_transfer_env_files: []
-    pod_transfer_repo_templates: []
-    pod_transfer_env_templates: []
-    pod_transfer_files_list: []
-    pod_transfer_tpl_list: []
-  tags: ["no_print"]
+# get the pod vars
 
-- name: "{{ pod_transfer_title }} - pod_transfer_volumes"
+- name: "{{ pod_transfer_title }} - pod_vars"
   set_fact:
-    pod_transfer_volumes: >-
-      {{ pod_transfer_volumes + [pod_transfer_item] }}
-  loop: "{{ pod_transfer_src_volumes | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-  when: pod_transfer_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_dir_list"
-  set_fact:
-    pod_transfer_dir_list: >-
-      {{ pod_transfer_dir_list + [pod_transfer_item] }}
-  loop: "{{ pod_transfer_src_dir_list | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-  when: pod_transfer_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_repo_files"
-  set_fact:
-    pod_transfer_repo_files: >-
-      {{ pod_transfer_repo_files + [pod_transfer_item] }}
-  loop: "{{ pod_transfer_src_repo_files | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-  when: pod_transfer_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_env_files"
-  set_fact:
-    pod_transfer_env_files: >-
-      {{ pod_transfer_env_files + [pod_transfer_item] }}
-  loop: "{{ pod_transfer_src_env_files | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-  when: pod_transfer_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_repo_templates"
-  set_fact:
-    pod_transfer_repo_templates: >-
-      {{ pod_transfer_repo_templates + [pod_transfer_item] }}
-  loop: "{{ pod_transfer_src_repo_templates | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-  when: pod_transfer_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_env_templates"
-  set_fact:
-    pod_transfer_env_templates: >-
-      {{ pod_transfer_env_templates + [pod_transfer_item] }}
-  loop: "{{ pod_transfer_src_env_templates | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-  when: pod_transfer_item.when | default(true) | bool
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_files_list (repo_files)"
-  set_fact:
-    pod_transfer_files_list: >-
-      {{
-        pod_transfer_files_list + [{
-          'remote_src': 'true',
-          'src': pod_transfer_item_src_full,
-          'dest': pod_transfer_item_dest_full,
-          'dest_rel': pod_transfer_item_dest_rel,
-          'encrypted': pod_transfer_item.encrypted | default(false),
-          'mode': pod_transfer_item.mode | default(
-          (pod_node_local | bool) | ternary(0666, ''), true)
-        }]
-      }}
+    pod_transfer_directories: "{{ pod_transfer_vars.directories }}"
+    pod_transfer_templates: "{{ pod_transfer_vars.templates }}"
+    pod_transfer_files: "{{ pod_transfer_vars.files }}"
   vars:
-    pod_transfer_item_src_full: >-
-      {{ pod_repo_dir }}/{{ pod_transfer_item.src }}
-    pod_transfer_item_dest_rel: "{{ pod_transfer_item.dest }}"
-    pod_transfer_item_dest_full: >-
-      {{ pod_repo_dir }}/{{ pod_transfer_item_dest_rel }}
-    pod_transfer_item_params: "{{ pod_transfer_item.params | default({}) }}"
-  loop: "{{ pod_transfer_repo_files | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item.dest }}"
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_files_list (env_files)"
-  set_fact:
-    pod_transfer_files_list: >-
+    pod_transfer_vars: >-
       {{
-        pod_transfer_files_list + [{
-          'remote_src': 'false',
-          'src': pod_transfer_item_src_full,
-          'dest': pod_transfer_item_dest_full,
-          'dest_rel': pod_transfer_item_dest_rel,
-          'encrypted': pod_transfer_item.encrypted | default(false),
-          'mode': pod_transfer_item.mode | default(
-          (pod_node_local | bool) | ternary(0666, ''), true)
-        }]
+        lookup(
+          'pod_vars',
+          pod_item,
+          env_data=env_data,
+          dependencies_data=pod_dependencies_data,
+        )
       }}
-  vars:
-    pod_transfer_item_src_full: "{{ env_dir }}/{{ pod_transfer_item.src }}"
-    pod_transfer_item_dest_rel: "{{ pod_transfer_item.dest }}"
-    pod_transfer_item_dest_full: >-
-      {{ pod_repo_dir }}/{{ pod_transfer_item_dest_rel }}
-    pod_transfer_item_params: "{{ pod_transfer_item.params | default({}) }}"
-  loop: "{{ pod_transfer_env_files | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item.dest }}"
   tags: ["no_print"]
 
-- name: "{{ pod_transfer_title }} - pod_transfer_tpl_list (repo_templates)"
-  set_fact:
-    pod_transfer_tpl_list: >-
-      {{
-        pod_transfer_tpl_list + [{
-          'src': pod_transfer_item_src_local_full,
-          'dest': pod_transfer_item_dest_full,
-          'dest_rel': pod_transfer_item_dest_rel,
-          'mode': pod_transfer_item.mode | default(
-          (pod_node_local | bool) | ternary(0666, ''), true),
-          'params': pod_transfer_item_params
-        }]
-      }}
-  vars:
-    pod_transfer_item_src_local_full: >-
-      {{ pod_local_repo_dir }}/{{ pod_transfer_item.src }}
-    pod_transfer_item_dest_rel: >-
-      {{ pod_transfer_item.dest | default(pod_transfer_item.src) }}
-    pod_transfer_item_dest_full: >-
-      {{ pod_repo_dir }}/{{ pod_transfer_item_dest_rel }}
-    pod_transfer_item_params: "{{ pod_transfer_item.params | default({}) }}"
-  loop: "{{ pod_transfer_repo_templates | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item.dest | default(pod_transfer_item.src) }}"
-  tags: ["no_print"]
+# create the directories
 
-- name: "{{ pod_transfer_title }} - pod_transfer_tpl_list (env_templates)"
-  set_fact:
-    pod_transfer_tpl_list: >-
-      {{
-        pod_transfer_tpl_list + [{
-          'src': pod_transfer_item_src_full,
-          'dest': pod_transfer_item_dest_full,
-          'dest_rel': pod_transfer_item_dest_rel,
-          'mode': pod_transfer_item.mode | default(
-          (pod_node_local | bool) | ternary(0666, ''), true),
-          'params': pod_transfer_item_params
-        }]
-      }}
-  vars:
-    pod_transfer_item_src_full: "{{ env_dir }}/{{ pod_transfer_item.src }}"
-    pod_transfer_item_dest_rel: "{{ pod_transfer_item.dest }}"
-    pod_transfer_item_dest_full: >-
-      {{ pod_repo_dir }}/{{ pod_transfer_item_dest_rel }}
-    pod_transfer_item_params: "{{ pod_transfer_item.params | default({}) }}"
-  loop: "{{ pod_transfer_env_templates | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item.dest }}"
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_dir_list (files_list + tpl_list)"
-  set_fact:
-    pod_transfer_dir_list: >-
-      {{ pod_transfer_dir_list + [pod_transfer_item.dest | dirname] }}
-  loop: >-
-    {{
-      (pod_transfer_files_list | default([], true))
-      +
-      (pod_transfer_tpl_list | default([], true))
-    }}
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item.dest | dirname }}"
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_dir_list (tmp)"
-  set_fact:
-    pod_transfer_dir_list: >-
-      {{
-        pod_transfer_dir_list + [
-          (
-            pod_repo_dir +
-            '/tmp/tpl/' +
-            pod_transfer_item.dest_rel
-          ) | dirname
-        ]
-      }}
-  loop: "{{ pod_transfer_tpl_list | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item.dest | dirname }}"
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - create the volume directories"
+- name: "{{ pod_transfer_title }} - create the directories"
   become: "{{ pod_item.root }}"
   file:
     state: directory
     path: "{{ pod_transfer_item.path }}"
     owner: "{{ pod_host_user }}"
     group: "{{ pod_host_group }}"
-    mode: >-
-      {{
-      pod_transfer_item.mode | default(
-      (pod_node_local | bool) | ternary(0777, ''), true)
-      }}
-  loop: "{{ pod_transfer_volumes | default([], true) }}"
+    mode: "{{ pod_transfer_item.mode }}"
+  loop: "{{ pod_transfer_directories | default([], true) }}"
   loop_control:
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.path }}"
   tags: ["no_print_skipped"]
 
-- name: "{{ pod_transfer_title }} - create the needed directories"
-  become: "{{ pod_item.root }}"
-  file:
-    state: directory
-    path: "{{ pod_transfer_item }}"
-    owner: "{{ pod_host_user }}"
-    group: "{{ pod_host_group }}"
-    mode: "{{ (pod_node_local | bool) | ternary(777, 751) }}"
-  loop: "{{ pod_transfer_dir_list | default([], true) | unique | default([], true) }}"
-  loop_control:
-    loop_var: pod_transfer_item
-    label: "{{ pod_transfer_item }}"
-  tags: ["no_print_skipped"]
+# transfer the templates
 
 - name: >-
     {{ pod_transfer_title }} -
@@ -246,45 +41,41 @@
   become: "{{ pod_item.root }}"
   template:
     src: "{{ pod_transfer_item.src }}"
-    dest: "{{ pod_repo_dir }}/tmp/tpl/{{ pod_transfer_item.dest_rel }}"
+    dest: "{{ pod_transfer_item.dest_tmp }}"
     owner: "{{ pod_host_user }}"
     group: "{{ pod_host_group }}"
-    mode: >-
-      {{
-      pod_transfer_item.mode | default(
-      (pod_node_local | bool) | ternary(0666, ''), true)
-      }}
+    mode: "{{ pod_transfer_item.mode }}"
   vars:
     params: "{{ pod_transfer_item.params }}"
-  loop: "{{ pod_transfer_tpl_list | default([], true) }}"
+  loop: "{{ pod_transfer_templates | default([], true) }}"
   loop_control:
     loop_var: pod_transfer_item
-    label: "tmp/tpl/{{ pod_transfer_item.dest_rel }}"
+    label: "{{ pod_transfer_item.dest_tmp }}"
   changed_when: false
   tags: ["no_print_skipped"]
 
-- name: "{{ pod_transfer_title }}"
+- name: "{{ pod_transfer_title }} - pod_transfer_template_regex"
   set_fact:
-    template_regex: "^\\s*$"
+    pod_transfer_template_regex: "^\\s*$"
   tags: ["no_print"]
 
-- name: "{{ pod_transfer_title }}"
+- name: "{{ pod_transfer_title }} - pod_transfer_template_regex"
   set_fact:
-    template_regex: "\\n\\s*$"
-  when: pod_meta.template_no_empty_lines | default(false) | bool
+    pod_transfer_template_regex: "\\n\\s*$"
+  when: env.meta.template_no_empty_lines | default(false) | bool
   tags: ["no_print"]
 
 - name: >-
     {{ pod_transfer_title }} -
     remove excess of blank lines of files created from the templates
   replace:
-    path: "{{ pod_repo_dir }}/tmp/tpl/{{ pod_transfer_item.dest_rel }}"
-    regexp: "{{ template_regex }}"
+    path: "{{ pod_transfer_item.dest_tmp }}"
+    regexp: "{{ pod_transfer_template_regex }}"
     replace: ""
-  loop: "{{ pod_transfer_tpl_list | default([], true) }}"
+  loop: "{{ pod_transfer_templates | default([], true) }}"
   loop_control:
     loop_var: pod_transfer_item
-    label: "tmp/tpl/{{ pod_transfer_item.dest_rel }}"
+    label: "{{ pod_transfer_item.dest_tmp }}"
   changed_when: false
   tags: ["no_print_skipped"]
 
@@ -294,20 +85,18 @@
   become: "{{ pod_item.root }}"
   copy:
     remote_src: true
-    src: "{{ pod_repo_dir }}/tmp/tpl/{{ pod_transfer_item.dest_rel }}"
+    src: "{{ pod_transfer_item.dest_tmp }}"
     dest: "{{ pod_transfer_item.dest }}"
     owner: "{{ pod_host_user }}"
     group: "{{ pod_host_group }}"
-    mode: >-
-      {{
-      pod_transfer_item.mode | default(
-      (pod_node_local | bool) | ternary(0666, ''), true)
-      }}
-  loop: "{{ pod_transfer_tpl_list | default([], true) }}"
+    mode: "{{ pod_transfer_item.mode }}"
+  loop: "{{ pod_transfer_templates | default([], true) }}"
   loop_control:
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.dest }}"
   tags: ["no_print_skipped"]
+
+# transfer the files
 
 - name: "{{ pod_transfer_title }} - copy the static files to the specified locations"
   become: "{{ pod_item.root }}"
@@ -317,13 +106,8 @@
     dest: "{{ pod_transfer_item.dest }}"
     owner: "{{ pod_host_user }}"
     group: "{{ pod_host_group }}"
-    decrypt: "{{ pod_transfer_item.encrypted | bool | ternary(true | bool, omit) }}"
-    mode: >-
-      {{
-      pod_transfer_item.mode | default(
-      (pod_node_local | bool) | ternary(0666, ''), true)
-      }}
-  loop: "{{ pod_transfer_files_list | default([], true) }}"
+    mode: "{{ pod_transfer_item.mode }}"
+  loop: "{{ pod_transfer_files | default([], true) }}"
   loop_control:
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.dest }}"

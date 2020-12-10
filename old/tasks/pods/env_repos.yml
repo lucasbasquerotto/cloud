@@ -1,0 +1,16 @@
+- name: >-
+    {{ pod_prepare_title }} -
+    environment pod ({{ pod_prepare_env_repo_name }}) - repo (outer)
+  include_tasks: "tasks/util/repo.yml"
+  vars:
+    repo_title: >-
+      {{ pod_prepare_title }} -
+      environment pod ({{ pod_prepare_env_repo_name }}) - repo
+    repo_main: "{{ pod_prepare_env_repo }}"
+    repo_ssh_src_dir: "{{ env_dir }}"
+    repo_secrets_dir: "{{ pod_secrets_repos_dir }}/{{ pod_prepare_item.repo }}"
+    repo_default_dir: "{{ pod_repo_dir }}/{{ pod_prepare_item.dir }}"
+    repo_dev_base_dir: "{{ env_dev_repos_dir }}"
+    repo_dev_path: "{{ env_path_map[pod_prepare_item.repo] | default('') }}"
+    repo_dev: "{{ env_dev and (pod_node_local | bool) }}"
+  tags: ["no_print"]

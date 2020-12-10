@@ -35,88 +35,22 @@
       tags: ["no_print"]
   when: (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false, true) | bool)
 
-### Generate the environment pod context variables ###
+### Copy the specified pod env files and templates ###
 
-- name: "{{ pod_prepare_title }} - pod_params"
-  set_fact:
-    pod_params: "{{ pod_item.params | default({}) }}"
-    pod_inner_credentials: "{{ pod_item.credentials | default({}) }}"
-  tags: ["no_print"]
+# - name: "{{ pod_prepare_title }}"
+#   include_tasks: "tasks/pods/transfer.yml"
+#   vars:
+#     pod_transfer_title: "{{ pod_prepare_title }} - pod env"
+#     pod_transfer_src_env_files: "{{ pod_item.env_files | default([], true) }}"
+#     pod_transfer_src_env_templates: "{{ pod_item.env_templates | default([], true) }}"
+#   tags: ["no_print"]
 
-### Generate a file with the environment variables and state (for idempotence) ###
+### Transfer the pod artifacts (defined previously) ###
 
-- name: "{{ pod_prepare_title }} - pod_vars"
-  set_fact:
-    pod_vars:
-      identifier: "{{ pod_identifier }}"
-      env_name: "{{ env.name }}"
-      ctx_name: "{{ env_ctx_name }}"
-      pod_name: "{{ pod_name }}"
-      main: "{{ pod_params }}"
-      credentials: "{{ pod_inner_credentials }}"
-      data_dir: "{{ pod_data_dir }}"
-      extra_repos_dir_rel: "{{ pod_item.extra_repos_dir_relpath }}"
-      dependencies:
-        list: "{{ pod_dependencies }}"
-        node_ip_dict: "{{ pod_dependencies_ip_dict }}"
-        node_ips_dict: "{{ pod_dependencies_ips_dict }}"
-    pod_diff: {}
-  tags: ["no_print"]
-
-- block:
-    ### Copy the specified pod env files and templates ###
-
-    - name: "{{ pod_prepare_title }}"
-      include_tasks: "tasks/pods/transfer.yml"
-      vars:
-        pod_transfer_title: "{{ pod_prepare_title }} - pod env"
-        pod_transfer_src_env_files: "{{ pod_item.env_files | default([], true) }}"
-        pod_transfer_src_env_templates: "{{ pod_item.env_templates | default([], true) }}"
-      tags: ["no_print"]
-
-    ### Generate the environment pod expanded variables ###
-
-    - name: "{{ pod_prepare_title }}"
-      set_fact:
-        pod_vars_volumes: []
-        pod_vars_files: []
-        pod_vars_templates: []
-        pod_vars_env_files: []
-        pod_vars_env_templates: []
-      tags: ["no_print"]
-
-    - block:
-        - name: "{{ pod_prepare_title }}"
-          set_fact:
-            pod_vars_ctxs: "{{ [tmp_ctx] }}"
-            pod_vars_idx: 0
-            pod_vars_ctxs_completed: []
-          vars:
-            tmp_ctx:
-              name: "{{ pod_item.ctx | default('') }}"
-              params: "{{ pod_vars }}"
-          tags: ["no_print"]
-
-        - name: "{{ pod_prepare_title }} - include_tasks - vars_ctx.yml"
-          include_tasks: "tasks/pods/vars_ctx.yml"
-          tags: ["no_print"]
-
-      when: (pod_item.ctx | default('')) != ''
-      tags: ["no_print_skipped"]
-
-    ### Transfer the pod artifacts (defined previously) ###
-
-    - name: "{{ pod_prepare_title }}"
-      include_tasks: "tasks/pods/transfer.yml"
-      vars:
-        pod_transfer_title: "{{ pod_prepare_title }} - ctx"
-        pod_transfer_src_volumes: "{{ pod_vars_volumes | default([], true) }}"
-        pod_transfer_src_dir_list: []
-        pod_transfer_src_repo_files: "{{ pod_vars_files | default([], true) }}"
-        pod_transfer_src_env_files: "{{ pod_vars_env_files | default([], true) }}"
-        pod_transfer_src_repo_templates: "{{ pod_vars_templates | default([], true) }}"
-        pod_transfer_src_env_templates: "{{ (pod_vars_env_templates | default([], true)) }}"
-      tags: ["no_print"]
-
-  when: pod_diff.changed | default(true) | bool
+- name: "{{ pod_prepare_title }} - transfer (outer)"
+  include_tasks: "tasks/pods/transfer.yml"
+  vars:
+    pod_transfer_title: "{{ pod_prepare_title }} - ctx"
+  when: (pod_item.ctx | default('')) != ''
   tags: ["no_print_skipped"]
+
