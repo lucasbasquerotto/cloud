@@ -47,6 +47,11 @@
   set_fact:
     pod_base_dir_rel: >-
       {{ env_dev_repos_dir | relpath(pod_repo_dir) }}
+    pod_extra_repos_dir_rel: >-
+      {{
+        (pod_node_local | bool)
+        | ternary(env_dev_extra_repos_dir | relpath(pod_repo_dir), '')
+      }}
   tags: ["no_print"]
 
 ### Generate a file with the environment variables and state (for idempotence) ###
@@ -60,7 +65,7 @@
       pod_name: "{{ pod_name }}"
       main: "{{ pod_params }}"
       data_dir: "{{ pod_data_dir }}"
-      dev_extra_repos_dir: "{{ env_dev_extra_repos_dir }}"
+      extra_repos_dir_rel: "{{ pod_extra_repos_dir_rel }}"
       credentials: "{{ pod_inner_credentials }}"
       dependencies: "{{ pod_dependencies }}"
       dependencies_node_ip_dict: "{{ pod_dependencies_ip_dict }}"
