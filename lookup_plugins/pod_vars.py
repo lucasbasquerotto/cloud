@@ -382,7 +382,7 @@ class LookupModule(LookupBase):
     else:
       raise AnsibleError("the template file %s could not be found for the lookup" % file)
 
-  #TODO: USe lrd_utils (verify creating a collection to be able to import)
+  #TODO: Use lrd_utils (verify creating a collection to be able to import)
   def error_text(self, error_msgs, context=None):
     if not error_msgs:
       return ''
