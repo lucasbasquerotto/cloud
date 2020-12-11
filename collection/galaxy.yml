@@ -1,0 +1,13 @@
+namespace: "lrd"
+name: "cloud"
+version: "1.0.12"
+readme: "README.md"
+authors:
+    - "Lucas Basquerotto"
+dependencies: {}
+license:
+    - "MIT"
+tags:
+    - demo
+    - collection
+repository: "https://www.github.com/my_org/my_collection"

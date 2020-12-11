@@ -13,36 +13,31 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type # pylint: disable=invalid-name
 
 DOCUMENTATION = """
-    name: pod_vars
+    name: lrd_content
     author: Lucas Basquerotto
     version_added: "2.11"
-    short_description: retrieve contents of pod context after templating with Jinja2
+    short_description: retrieve content of a string, file or template
     description:
-      - Returns a dictionary with a list of directories, another list of files and another list of templates.
+      - Returns a string that is the result of loading the content of a string, file or template.
     options:
       _terms:
-        description: list of pods to template
-        default: False
+        description: contents to be loaded
         version_added: '2.11'
-        type: bool
+        type: list
       env_data:
         description: Data about the environment.
         version_added: '2.11'
         type: dict
-      dependencies_data:
-        description: Information about the pod dependencies.
-        default: {}
+      env:
+        description: The environment dictionary.
+        default: env_data.env
         version_added: '2.11'
         type: dict
-      validate:
-        description: Specifies if the src files and templates should be validated.
-        version_added: '2.11'
-        type: bool
 """
 
 RETURN = """
 _raw:
-   description: file(s) content after templating
+   description: content loaded from the source specified
    type: dicts
    elements: raw
 """

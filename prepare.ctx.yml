@@ -40,7 +40,7 @@
       debug:
         msg: "pod vars {{ tmp_validate }}"
       vars:
-        tmp_pod_vars: "{{ lookup('pod_vars', tmp_pod, env_data=env_data, dependencies_data={}, validate=true) }}"
+        tmp_pod_vars: "{{ lookup('lrd.cloud.pod_vars', tmp_pod, env_data=env_data, dependencies_data={}, validate=true) }}"
         tmp_validate: "{{ (tmp_pod_vars is defined) | ternary('validated', 'with error(s)') }}"
       loop: "{{ ctx_data.nodes | default([]) | subelements('pods') | map(attribute='1') | list }}"
       loop_control:

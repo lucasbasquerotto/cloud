@@ -10,6 +10,8 @@ COPY ansible/library /usr/main/ansible/library
 COPY ansible/module_utils /usr/main/ansible/module_utils
 COPY ansible/filter_plugins /usr/main/ansible/filter_plugins
 COPY ansible/lookup_plugins /usr/main/ansible/lookup_plugins
+COPY ansible/ansible.cfg /usr/main/ansible.cfg
+COPY ansible/prepare.hosts /usr/main/ansible/hosts
 
 COPY schemas /usr/main/ansible/schemas
 COPY tasks/util /usr/main/ansible/tasks/util

@@ -1,5 +1,5 @@
 - name: "{{ env_title }} - generate the context vars"
-  lrd_ctx:
+  lrd.cloud.lrd_ctx:
     ctx_name: "{{ env_ctx_name }}"
     env_data: "{{ env_data }}"
     validate: "{{ ctx_validate | default(false) | bool }}"
