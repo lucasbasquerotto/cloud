@@ -24,10 +24,10 @@ if USE_JINJA2_NATIVE:
   from ansible.utils.native_jinja import NativeJinjaText
 
 
-def lookup(plugin, variables, file, params):
+def lookup(plugin, ansible_vars, file, params):
   display.debug("File lookup term: %s" % file)
 
-  lookupfile = plugin.find_file_in_search_path(variables, 'templates', file)
+  lookupfile = plugin.find_file_in_search_path(ansible_vars, 'templates', file)
   display.vvvv("File lookup using %s as file" % lookupfile)
 
   if lookupfile:
@@ -35,7 +35,7 @@ def lookup(plugin, variables, file, params):
     template_data = to_text(b_template_data, errors='surrogate_or_strict')
 
     # set jinja2 internal search path for includes
-    searchpath = variables.get('ansible_search_path', [])
+    searchpath = ansible_vars.get('ansible_search_path', [])
 
     if searchpath:
       # our search paths aren't actually the proper ones for jinja includes.
@@ -55,7 +55,7 @@ def lookup(plugin, variables, file, params):
     # plus some added by ansible (e.g., template_{path,mtime}),
     # plus anything passed to the lookup with the template_vars=
     # argument.
-    new_vars = deepcopy(variables)
+    new_vars = deepcopy(ansible_vars)
     new_vars.update(generate_ansible_template_vars(lookupfile))
     new_vars.update(dict(params=params))
     display.vv("params keys: %s" % params.keys())
@@ -81,7 +81,7 @@ def lookup(plugin, variables, file, params):
     # with templar.set_temporary_context(
     #     variable_start_string=None,
     #     variable_end_string=None,
-    #     available_variables=new_vars,
+    #     available_ansible_vars=new_vars,
     #     searchpath=searchpath
     # ):
     #   res = templar.template(

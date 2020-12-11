@@ -44,11 +44,11 @@ def error_text(error_msgs, context=None):
     return ''
 
   if context:
-    msg = '[' + context + '] ' + str(len(error_msgs)) + ' error(s)'
+    msg = '[' + str(context) + '] ' + str(len(error_msgs)) + ' error(s)'
     error_msgs = [[msg]] + error_msgs + [[msg]]
 
   separator = "-------------------------------------------"
-  new_error_msgs = [separator]
+  new_error_msgs = ['', separator]
 
   for value in error_msgs:
     new_error_msgs += [value, separator]
