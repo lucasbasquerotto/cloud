@@ -85,7 +85,7 @@ else
 		ANSIBLE_CONFIG=/usr/main/ansible/ansible.cfg ansible-playbook \
 			${vault[@]+"${vault[@]}"} \
 			${debug[@]+"${debug[@]}"} \
-			-i ansible/hosts \
+			-i hosts \
 			prepare.yml \
 			--extra-vars "env_project_dir=$project_dir" \
 			${prepare_args[@]+"${prepare_args[@]}"} \

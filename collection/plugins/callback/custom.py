@@ -110,6 +110,9 @@ class CallbackModule(CallbackBase):
     super(CallbackModule, self).__init__()
     yaml.representer.BaseRepresenter.represent_scalar = my_represent_scalar
 
+  def __getattr__(self, item):
+    return None
+
   def set_options(self, task_keys=None, var_options=None, direct=None):
 
     super(CallbackModule, self).set_options(
