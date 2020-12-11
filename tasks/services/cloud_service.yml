@@ -68,19 +68,13 @@
   when: (cloud_service_prepared_list | default([]) | length) > 0
   tags: ["no_print"]
 
-- name: "{{ cloud_service_title }} - run list - block"
-  block:
-    - name: "{{ cloud_service_title }} - generate the service list"
-      lrd.cloud.services:
-        services: "{{ cloud_service_list | default([]) }}"
-        env_data: "{{ env_data }}"
-        validate: true
-      register: cloud_service_list_result
-
-    - name: "{{ cloud_service_title }} - cloud_service_run_list (filled)"
-      set_fact:
-        cloud_service_run_list: "{{ cloud_service_list_result.data | default([]) }}"
-      tags: ["no_print"]
+- name: "{{ cloud_service_title }} - generate the service list"
+  set_fact:
+    cloud_service_run_list: >-
+      {{
+        cloud_service_list | default([])
+        | lrd.cloud.services(env_data=env_data, validate=true)
+      }}
   when: (cloud_service_list | default([]) | length) > 0
   tags: ["no_print_skipped"]
 

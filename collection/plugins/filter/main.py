@@ -3,10 +3,47 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
+# pylint: disable=import-error
+
+from __future__ import absolute_import, division, print_function
+
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_ctx import prepare_services
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
+
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text
+
 
 class FilterModule(object):
   def filters(self):
-    return {'validate_connection': self.validate_connection}
+    return {
+        'params_mixer': self.params_mixer,
+        'services': self.services,
+        'validate_connection': self.validate_connection,
+    }
+
+  def params_mixer(self, params_args):
+    info = mix(params_args)
+
+    result = info.get('result')
+    error_msgs = info.get('error_msgs')
+
+    if error_msgs:
+      raise AnsibleError(to_text(error_text(error_msgs, 'pod_vars')))
+
+    return result
+
+  def services(self, services, env_data, validate):
+    info = prepare_services(services, env_data, validate, top=True)
+
+    result = info.get('result')
+    error_msgs = info.get('error_msgs')
+
+    if error_msgs:
+      raise AnsibleError(to_text(error_text(error_msgs, 'pod_vars')))
+
+    return result
 
   def validate_connection(self, node, env_info):
     node_name = node.get('name')
@@ -20,7 +57,8 @@ class FilterModule(object):
         (
             (local_node and local_connection)
             or
-            ((not local_node) and (not local_connection) and (node_name == instance_type))
+            ((not local_node) and (not local_connection)
+             and (node_name == instance_type))
         )
         and
         ((not env_node_name) or (env_node_name == node_name))

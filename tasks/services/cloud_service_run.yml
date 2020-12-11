@@ -13,12 +13,12 @@
       fail:
         msg: >-
           the service that would run ({{ cloud_service_run.name }}) has the same namespace
-          ({{ cloud_service_run.namespace }}) that a parent or ancestor of this service
-          ({{ tmp_item.name }}) has
+          ({{ cloud_service_run.namespace | default('') }}) that a parent or ancestor of
+          this service ({{ tmp_item.name }}) has
       when: >-
-        (cloud_service_run.namespace != '')
+        ((cloud_service_run.namespace | default('')) != '')
         and
-        (cloud_service_run.namespace == tmp_item.namespace)
+        ((cloud_service_run.namespace | default('')) == (tmp_item.namespace | default('')))
       loop: "{{ cloud_service_next.next_list }}"
       loop_control:
         loop_var: tmp_item
@@ -45,11 +45,13 @@
     inner_service_title: "{{ cloud_service_run_inner_title }} - inside"
     inner_service_name: "{{ cloud_service_run.name }}"
     inner_service_task: "{{ cloud_service_run.task }}"
-    inner_service_namespace: "{{ cloud_service_run.namespace }}"
+    inner_service_namespace: "{{ cloud_service_run.namespace | default('') }}"
     inner_service_params: "{{ cloud_service_run.params }}"
     inner_service_credentials: "{{ cloud_service_run.credentials }}"
     inner_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
     inner_service_tmp_dir: "{{ cloud_service_tmp_dir }}/{{ cloud_service_run.name }}"
+    # Define an empty list for the case in which a service call another
+    cloud_service_prepared_list: []
   when: cloud_service_continue | bool
   tags: ["no_print_skipped"]
 
