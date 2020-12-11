@@ -47,7 +47,7 @@
       loop_var: main_item
       label: "{{ main_tmp_label }}"
     when: >-
-      (main_tmp_node | validate_connection(env_info))
+      (main_tmp_node | lrd.cloud.validate_connection(env_info))
       and
       ((main_tmp_task.type | default('')) != 'skip')
     tags: ["no_print_skipped"]

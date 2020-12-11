@@ -71,7 +71,7 @@
 - name: "{{ cloud_service_title }} - run list - block"
   block:
     - name: "{{ cloud_service_title }} - generate the service list"
-      lrd_services:
+      lrd.cloud.services:
         services: "{{ cloud_service_list | default([]) }}"
         env_data: "{{ env_data }}"
         validate: true

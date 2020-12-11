@@ -9,7 +9,7 @@
     pod_transfer_vars: >-
       {{
         lookup(
-          'pod_vars',
+          'lrd.cloud.pod_vars',
           pod_item,
           env_data=env_data,
           dependencies_data=pod_dependencies_data,

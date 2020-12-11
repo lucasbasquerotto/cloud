@@ -309,7 +309,7 @@
         loop_var: main_item
         label: "{{ host_test_node.description }}"
       when: >-
-        (host_test_node | validate_connection(env_info))
+        (host_test_node | lrd.cloud.validate_connection(env_info))
         and
         (
           (ansible_connection != 'local')
@@ -363,7 +363,7 @@
         loop_var: main_item
         label: "{{ pod_node.description }}"
       when: >-
-        (pod_node | validate_connection(env_info))
+        (pod_node | lrd.cloud.validate_connection(env_info))
         and
         ((pod_node.pods | default([]) | length) > 0)
       tags: ["no_print_skipped"]
@@ -479,7 +479,7 @@
         loop_var: main_item
         label: "{{ cron_node.description }}"
       when: >-
-        (cron_node | validate_connection(env_info))
+        (cron_node | lrd.cloud.validate_connection(env_info))
         and
         ((cron_node.params.cron | default([]) | length) > 0)
       tags: ["no_print_skipped"]
