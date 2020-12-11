@@ -6,6 +6,7 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
 # pylint: disable=import-error
+# pylint: disable=broad-except
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
@@ -15,15 +16,21 @@ import os
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import load_yaml, to_bool
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
 
-__metaclass__ = type  # pylint: disable=invalid-name
 
+def load_vars(pod_info, run_info, meta_info=None):
+  pod = pod_info.get('pod')
+  dependencies_data = pod_info.get(
+      'dependencies_data',
+      dict(list=list(), node_ip_dict=dict(), node_ips_dict=dict()),
+  )
 
-def load_vars(pod, info):
-  plugin = info.get('plugin')
-  ansible_vars = info.get('ansible_vars')
-  env_data = info.get('env_data')
-  dependencies_data = info.get('dependencies_data')
-  validate = info.get('validate')
+  plugin = run_info.get('plugin')
+  ansible_vars = run_info.get('ansible_vars')
+  env_data = run_info.get('env_data')
+  validate = run_info.get('validate')
+
+  meta_info = meta_info or dict()
+  no_ctx_msg = meta_info.get('no_ctx_msg')
 
   result = None
   error_msgs = []
@@ -71,11 +78,14 @@ def load_vars(pod, info):
     pod_description = pod.get('description')
 
     for value in error_msgs_aux:
-      new_value = [
-          str(parent_type + ': ' + parent_description),
-          str('pod: ' + pod_description),
-      ] + value
-      error_msgs += [new_value]
+      if no_ctx_msg:
+        error_msgs += [value]
+      else:
+        new_value = [
+            str(parent_type + ': ' + parent_description),
+            str('pod: ' + pod_description),
+        ] + value
+        error_msgs += [new_value]
   else:
     result = res.get('result')
 
@@ -122,7 +132,7 @@ def load_next_vars(file_relpath, params, data_info):
 
     try:
       res_str = lookup(plugin, ansible_vars, file, params)
-    except Exception as error:  # pylint: disable=broad-except
+    except Exception as error:
       error_msgs += [[
           str('file: ' + file_relpath),
           'msg: error when trying to load the pod ctx file',
@@ -135,7 +145,7 @@ def load_next_vars(file_relpath, params, data_info):
 
     try:
       res = load_yaml(str(res_str))
-    except Exception as error:  # pylint: disable=broad-except
+    except Exception as error:
       error_msgs += [[
           str('file: ' + file_relpath),
           'file content type: ' + str(type(res_str)),
@@ -375,7 +385,7 @@ def load_next_vars(file_relpath, params, data_info):
 
               if child_templates:
                 templates += child_templates
-  except Exception as error:  # pylint: disable=broad-except
+  except Exception as error:
     error_msgs += [[
         str('file: ' + file_relpath),
         'msg: error when trying to define the pod ctx vars',

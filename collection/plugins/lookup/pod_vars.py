@@ -59,26 +59,28 @@ class LookupModule(LookupBase):
 
   def run(self, terms, variables, **kwargs):
     env_data = kwargs.get('env_data')
-    dependencies_data = kwargs.get(
-        'dependencies_data',
-        dict(list=list(), node_ip_dict=dict(), node_ips_dict=dict())
-    )
+    dependencies_data = kwargs.get('dependencies_data')
     validate = kwargs.get('validate')
+
     ret = []
     error_msgs = []
 
     for term in terms:
-      info = dict(
+      pod_info = dict(
+          pod=term,
+          dependencies_data=dependencies_data,
+      )
+
+      run_info = dict(
           plugin=self,
           ansible_vars=variables,
           env_data=env_data,
-          dependencies_data=dependencies_data,
           validate=validate,
       )
 
       result_info = load_vars(
-          pod=term,
-          info=info,
+          pod_info=pod_info,
+          run_info=run_info,
       )
 
       result_aux = result_info.get('result')

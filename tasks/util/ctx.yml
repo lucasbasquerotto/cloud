@@ -1,14 +1,14 @@
 - name: "{{ env_title }} - generate the context vars"
-  lrd.cloud.ctx:
-    ctx_name: "{{ env_ctx_name }}"
-    env_data: "{{ env_data }}"
-    validate: "{{ ctx_validate | default(false) | bool }}"
-  register: ctx_data_result
-
-- name: "{{ env_title }} - ctx_data"
   set_fact:
-    ctx_data: "{{ ctx_data_result.data }}"
-  tags: ["no_print"]
+    ctx_data: >-
+      {{
+        lookup(
+          'lrd.cloud.ctx',
+          env_ctx_name,
+          env_data=env_data,
+          validate=(ctx_validate | default(false) | bool)
+        )
+      }}
 
 - name: "{{ env_title }} - env_ctx"
   set_fact:

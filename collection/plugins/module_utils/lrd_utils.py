@@ -64,7 +64,14 @@ def default(value, default_value):
 
 
 def is_empty(value):
-  return (value is None) or (isinstance(value, str) and value == '')
+  return (value is None) or (is_str(value) and value == '')
+
+
+def is_str(value):
+  try:
+    return isinstance(value, basestring)
+  except NameError:
+    return isinstance(value, str)
 
 
 def is_int(str_val):
@@ -94,7 +101,7 @@ def to_bool(value):
   if isinstance(value, bool):
     return value
 
-  if isinstance(value, str):
+  if is_str(value):
     valid_strs_true = ['True', 'true', 'Yes', 'yes']
     valid_strs_false = ['False', 'false', 'No', 'no']
 

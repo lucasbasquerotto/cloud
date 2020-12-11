@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    is_bool, is_int, is_float, load_yaml
+    is_bool, is_int, is_float, is_str, load_yaml
 )
 
 SCHEMA_BASE = """
@@ -446,7 +446,7 @@ def validate_next_value(schema_data, value):
 
   is_list = isinstance(value, list)
   is_dict = isinstance(value, dict)
-  is_string = isinstance(value, str)
+  is_string = is_str(value)
 
   if non_empty:
     if is_list:
@@ -581,7 +581,7 @@ def validate_next_value(schema_data, value):
           ]]
       elif (value_type == 'int') and (
               isinstance(value, bool) or not isinstance(value, int)):
-        if (not isinstance(value, str)) or (not is_int(value)):
+        if (not is_str(value)) or (not is_int(value)):
           return [[
               'schema_name: ' + schema_name + schema_suffix,
               'at: ' + (schema_ctx or '<root>'),
@@ -590,7 +590,7 @@ def validate_next_value(schema_data, value):
               'msg: value should be an integer',
           ]]
       elif (value_type == 'float') and (not isinstance(value, float)):
-        if (not isinstance(value, str)) or (not is_float(value)):
+        if (not is_str(value)) or (not is_float(value)):
           return [[
               'schema_name: ' + schema_name + schema_suffix,
               'at: ' + (schema_ctx or '<root>'),

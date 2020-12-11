@@ -9,21 +9,21 @@
 
     # prepare the repositories
 
-    # - name: "{{ env_title }} - prepare repos (outer)"
-    #   include_role:
-    #     name: "prepare_repos"
-    #   vars:
-    #     prepare_repos_title: "{{ env_title }} - prepare repos"
-    #     prepare_repos_repos_dict: "{{ env.repos | default({}) }}"
-    #     prepare_repos_ctx_extra_repos: "{{ env_ctx_raw.extra_repos | default([]) }}"
-    #     prepare_repos_nodes: "{{ env_ctx_raw.nodes | default([]) }}"
-    #     prepare_repos_nodes_dict: "{{ env.nodes | default({}) }}"
-    #     prepare_repos_pods_dict: "{{ env.pods | default({}) }}"
-    #     prepare_repos_env_path_map: "{{ env_path_map }}"
-    #     prepare_repos_extra_repos_dir: "{{ env_ctx_dir }}/extra-repos"
-    #     prepare_repos_pods_dir: "{{ env_ctx_dir }}/pods"
-    #     prepare_repos_dev_repos_dir: "{{ env_dev_repos_dir }}"
-    #     prepare_repos_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+    - name: "{{ env_title }} - prepare repos (outer)"
+      include_role:
+        name: "prepare_repos"
+      vars:
+        prepare_repos_title: "{{ env_title }} - prepare repos"
+        prepare_repos_repos_dict: "{{ env.repos | default({}) }}"
+        prepare_repos_ctx_extra_repos: "{{ env_ctx_raw.extra_repos | default([]) }}"
+        prepare_repos_nodes: "{{ env_ctx_raw.nodes | default([]) }}"
+        prepare_repos_nodes_dict: "{{ env.nodes | default({}) }}"
+        prepare_repos_pods_dict: "{{ env.pods | default({}) }}"
+        prepare_repos_env_path_map: "{{ env_path_map }}"
+        prepare_repos_extra_repos_dir: "{{ env_ctx_dir }}/extra-repos"
+        prepare_repos_pods_dir: "{{ env_ctx_dir }}/pods"
+        prepare_repos_dev_repos_dir: "{{ env_dev_repos_dir }}"
+        prepare_repos_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
 
     # generate the context data
 
@@ -33,20 +33,6 @@
         ctx_validate: true
       when: ctx is not defined
       tags: ["no_print"]
-
-    # validate the pods vars
-
-    - name: "{{ env_title }} - validate pods vars"
-      debug:
-        msg: "pod vars {{ tmp_validate }}"
-      vars:
-        tmp_pod_vars: "{{ lookup('lrd.cloud.pod_vars', tmp_pod, env_data=env_data, dependencies_data={}, validate=true) }}"
-        tmp_validate: "{{ (tmp_pod_vars is defined) | ternary('validated', 'with error(s)') }}"
-      loop: "{{ ctx_data.nodes | default([]) | subelements('pods') | map(attribute='1') | list }}"
-      loop_control:
-        loop_var: tmp_pod
-        label: "{{ tmp_pod.parent_description }} - {{ tmp_pod.description }}"
-      when: (tmp_pod.ctx | default('')) != ''
 
     # project hosts file (inventory)
 
