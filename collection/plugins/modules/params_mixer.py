@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: lrd_params_mixer
+module: lrd.cloud.params_mixer
 short_description: Mix parameters to create a resulting parameter dictionary.
 description:
    - Mix parameters to create a resulting parameter dictionary.
@@ -64,7 +64,6 @@ notes:
 
 author: "Lucas Basquerotto (@lucasbasquerotto)"
 '''
-
 
 # ===========================================
 # Module execution.

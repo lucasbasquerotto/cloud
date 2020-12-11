@@ -10,10 +10,21 @@
 # pylint: disable=protected-access
 
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type # pylint: disable=invalid-name
+
+import os
+
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, load_yaml
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
+
+from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
+from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError
+
+__metaclass__ = type  # pylint: disable=invalid-name
 
 DOCUMENTATION = """
-    name: pod_vars
+    name: lrd.cloud.pod_vars
     author: Lucas Basquerotto
     version_added: "2.11"
     short_description: retrieve contents of pod context after templating with Jinja2
@@ -46,27 +57,8 @@ _raw:
    elements: raw
 """
 
-from copy import deepcopy
-import os
-
-import yaml
-
-try:
-  from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-  from yaml import Loader, Dumper
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-# from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
-from ansible.template import generate_ansible_template_vars, USE_JINJA2_NATIVE
-from ansible.utils.display import Display
-from ansible.module_utils._text import to_text
-
-if USE_JINJA2_NATIVE:
-  from ansible.utils.native_jinja import NativeJinjaText
-
 display = Display()
+
 
 def to_bool(value):
   if value is None:
@@ -86,6 +78,7 @@ def to_bool(value):
       return False
 
   return None
+
 
 class LookupModule(LookupBase):
 
@@ -153,7 +146,7 @@ class LookupModule(LookupBase):
         ret.append(res_result)
 
     if error_msgs:
-      raise AnsibleError(to_text(self.error_text(error_msgs, 'pod_vars')))
+      raise AnsibleError(to_text(error_text(error_msgs, 'pod_vars')))
 
     return ret
 
@@ -195,8 +188,8 @@ class LookupModule(LookupBase):
       res_str = None
 
       try:
-        res_str = self.lookup(variables, file, params)
-      except Exception as error: # pylint: disable=broad-except
+        res_str = lookup(self, variables, file, params)
+      except Exception as error:  # pylint: disable=broad-except
         error_msgs += [[
             str('file: ' + file_relpath),
             'msg: error when trying to load the pod ctx file',
@@ -208,8 +201,8 @@ class LookupModule(LookupBase):
       res = None
 
       try:
-        res = yaml.load(str(res_str), Loader=Loader)
-      except Exception as error: # pylint: disable=broad-except
+        res = load_yaml(str(res_str))
+      except Exception as error:  # pylint: disable=broad-except
         error_msgs += [[
             str('file: ' + file_relpath),
             'file content type: ' + str(type(res_str)),
@@ -449,7 +442,7 @@ class LookupModule(LookupBase):
 
                 if child_templates:
                   templates += child_templates
-    except Exception as error: # pylint: disable=broad-except
+    except Exception as error:  # pylint: disable=broad-except
       error_msgs += [[
           str('file: ' + file_relpath),
           'msg: error when trying to define the pod ctx vars',
@@ -468,98 +461,3 @@ class LookupModule(LookupBase):
     )
 
     return ret
-
-  def lookup(self, variables, file, params):
-    display.debug("File lookup term: %s" % file)
-
-    lookupfile = self.find_file_in_search_path(variables, 'templates', file)
-    display.vvvv("File lookup using %s as file" % lookupfile)
-
-    if lookupfile:
-      b_template_data, _ = self._loader._get_file_contents(lookupfile)
-      template_data = to_text(b_template_data, errors='surrogate_or_strict')
-
-      # set jinja2 internal search path for includes
-      searchpath = variables.get('ansible_search_path', [])
-
-      if searchpath:
-        # our search paths aren't actually the proper ones for jinja includes.
-        # We want to search into the 'templates' subdir of each search path in
-        # addition to our original search paths.
-        newsearchpath = []
-
-        for path in searchpath:
-          newsearchpath.append(os.path.join(path, 'templates'))
-          newsearchpath.append(path)
-
-        searchpath = newsearchpath
-
-      searchpath.insert(0, os.path.dirname(lookupfile))
-
-      # The template will have access to all existing variables,
-      # plus some added by ansible (e.g., template_{path,mtime}),
-      # plus anything passed to the lookup with the template_vars=
-      # argument.
-      new_vars = deepcopy(variables)
-      new_vars.update(generate_ansible_template_vars(lookupfile))
-      new_vars.update(dict(params=params))
-      display.vv("params keys: %s" % params.keys())
-
-      #TODO: Remove in newer ansible versions
-      old_vars = self._templar._available_variables
-      self._templar.set_available_variables(new_vars)
-      res = self._templar.template(
-          template_data,
-          preserve_trailing_newlines=True,
-          convert_data=False,
-          escape_backslashes=False
-      )
-      self._templar.set_available_variables(old_vars)
-      ###
-
-      #TODO: Include in newer ansible versions
-      # if USE_JINJA2_NATIVE:
-      #   templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
-      # else:
-      #   templar = self._templar
-
-      # with templar.set_temporary_context(
-      #     variable_start_string=None,
-      #     variable_end_string=None,
-      #     available_variables=new_vars,
-      #     searchpath=searchpath
-      # ):
-      #   res = templar.template(
-      #       template_data,
-      #       preserve_trailing_newlines=True,
-      #       escape_backslashes=False
-      #   )
-
-      if USE_JINJA2_NATIVE:
-        # jinja2_native is true globally, we need this text
-        # not to be processed by literal_eval anywhere in Ansible
-        res = NativeJinjaText(res)
-
-      return res
-    else:
-      raise AnsibleError("the template file %s could not be found for the lookup" % file)
-
-  #TODO: Use lrd_utils (verify creating a collection to be able to import)
-  def error_text(self, error_msgs, context=None):
-    if not error_msgs:
-      return ''
-
-    if context:
-      msg = str('[' + context + '] ' + str(len(error_msgs)) + ' error(s)')
-      error_msgs = [[msg]] + error_msgs + [[msg]]
-
-    separator = "-------------------------------------------"
-    new_error_msgs = ['', separator]
-
-    for value in error_msgs:
-      new_error_msgs += [value, separator]
-
-    Dumper.ignore_aliases = lambda self, data: True
-    error = yaml.dump(new_error_msgs, Dumper=Dumper, default_flow_style=False)
-
-    return error

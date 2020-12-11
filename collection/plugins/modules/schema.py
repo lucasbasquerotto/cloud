@@ -9,7 +9,14 @@
 # pylint: disable=import-error
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type # pylint: disable=invalid-name
+
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, load_yaml_file
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+
+__metaclass__ = type  # pylint: disable=invalid-name
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -18,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: lrd_schema
+module: lrd.cloud.schema
 short_description: Validate a value according to a specified schema.
 description:
    - Validate a value according to a specified schema.
@@ -113,15 +120,10 @@ EXAMPLES = """
       prop2: ["value", "another_value"]
 """
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, load_yaml_file
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
-
 # ===========================================
 # Module execution.
 #
+
 
 def main():
   module = AnsibleModule(
@@ -144,6 +146,7 @@ def main():
     module.fail_json(msg=to_text(error_text(error_msgs, context)))
 
   module.exit_json(changed=False)
+
 
 if __name__ == '__main__':
   main()

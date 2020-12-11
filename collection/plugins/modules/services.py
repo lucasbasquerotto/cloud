@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: lrd_ctx
+module: lrd.cloud.ctx
 short_description: Return the context variables from the environment.
 description:
    - Return the context variables from the environment.
@@ -102,7 +102,6 @@ notes:
 
 author: "Lucas Basquerotto (@lucasbasquerotto)"
 '''
-
 
 # ===========================================
 # Module execution.
