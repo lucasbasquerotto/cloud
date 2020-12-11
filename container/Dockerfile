@@ -5,10 +5,11 @@ RUN pip3 install pyyaml
 COPY container/run.sh /usr/local/bin/run
 COPY container/ansible /usr/main/ansible
 
-COPY callback_plugins /usr/main/ansible/callback_plugins
-COPY library /usr/main/ansible/library
-COPY module_utils /usr/main/ansible/module_utils
-COPY filter_plugins /usr/main/ansible/filter_plugins
+COPY ansible/callback_plugins /usr/main/ansible/callback_plugins
+COPY ansible/library /usr/main/ansible/library
+COPY ansible/module_utils /usr/main/ansible/module_utils
+COPY ansible/filter_plugins /usr/main/ansible/filter_plugins
+COPY ansible/lookup_plugins /usr/main/ansible/lookup_plugins
 
 COPY schemas /usr/main/ansible/schemas
 COPY tasks/util /usr/main/ansible/tasks/util

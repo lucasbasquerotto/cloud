@@ -2,8 +2,6 @@
 #!/container/*
 #!/tasks/*
 
-/ansible/
 /files/
-/library/
 /old/
 /roles/

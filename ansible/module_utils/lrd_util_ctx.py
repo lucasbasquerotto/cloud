@@ -1143,21 +1143,21 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
     ]]
   else:
     allowed_props_map = dict(
-      task=list([
-          'type',
-          'target_origin',
-          'file',
-          'root',
-          'params_schema',
-          'credentials_schema',
-          'credentials',
-          'params',
-          'group_params',
-          'shared_params',
-          'shared_group_params',
-      ]),
-      shell=list(['type', 'cmd', 'root', 'poll']),
-      skip=list(['type']),
+        task=list([
+            'type',
+            'target_origin',
+            'file',
+            'root',
+            'params_schema',
+            'credentials_schema',
+            'credentials',
+            'params',
+            'group_params',
+            'shared_params',
+            'shared_group_params',
+        ]),
+        shell=list(['type', 'cmd', 'root', 'poll']),
+        skip=list(['type']),
     )
 
     allowed_props = allowed_props_map.get(task_type)
@@ -1173,9 +1173,9 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
         ]]
 
     required_props_map = dict(
-      task=list(['type', 'file']),
-      shell=list(['type', 'cmd']),
-      skip=list(['type']),
+        task=list(['type', 'file']),
+        shell=list(['type', 'cmd']),
+        skip=list(['type']),
     )
 
     required_props = required_props_map.get(task_type)
@@ -1607,7 +1607,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
               if task_file_path not in task_file_paths:
                 if not os.path.exists(task_file_path):
                   error_msgs_aux_pod += [[
-                    'msg: pod task file not found: ' + task_file,
+                      'msg: pod task file not found: ' + task_file,
                   ]]
 
                 task_file_paths.add(task_file_path)
