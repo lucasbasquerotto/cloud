@@ -51,29 +51,34 @@ fi
 
 cd "$var_repo_dir"
 
-if [ "${fast:-}" = 'true' ]; then
+prepare_args=()
+skip=''
+fast_prepare=''
+
+if [ "${prepare:-}" = 'true' ]; then
+	if [ "${1:-}" = "--skip" ]; then
+		skip='true';
+		shift;
+	else
+		if [ "${fast:-}" = 'true' ]; then
+			fast_prepare="true"
+		fi
+
+		for arg in "$@"; do
+			shift;
+
+			if [ "$arg" = "--" ]; then
+				break;
+			fi
+
+			prepare_args+=( "$arg" )
+		done
+	fi
+fi
+
+if [ "${fast:-}" = 'true' ] && [ "${fast_prepare:-}" != "true" ]; then
 	echo "[cloud] skipping prepare project context (fast)..."
 else
-    prepare_args=()
-	skip=''
-
-    if [ "${prepare:-}" = 'true' ]; then
-		if [ "${1:-}" = "--skip" ]; then
-			skip='true';
-			shift;
-		else
-			for arg in "$@"; do
-				shift;
-
-				if [ "$arg" = "--" ]; then
-					break;
-				fi
-
-				prepare_args+=( "$arg" )
-			done
-		fi
-    fi
-
 	if [ "$skip" = "true" ]; then
 		echo "[cloud] skipping prepare project context (skip)..."
 	else
@@ -83,6 +88,7 @@ else
 			${debug[@]+"${debug[@]}"} \
 			-i ansible/prepare.hosts \
 			-e env_vars_file="$vars_file_yaml" \
+			-e env_fast_prepare="$fast_prepare" \
 			prepare.ctx.yml \
 			${prepare_args[@]+"${prepare_args[@]}"} \
 			|| error "[error] prepare ctx"

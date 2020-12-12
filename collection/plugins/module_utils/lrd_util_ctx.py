@@ -1030,7 +1030,7 @@ def prepare_node(node_info, run_info):
             services_info += [service_info]
 
           if services_info:
-            result['prepared_services'] = services_info.copy()
+            result['prepared_services'] = list(services_info)
 
             if validate_ctx:
               info = prepare_services(
@@ -1078,7 +1078,7 @@ def prepare_node(node_info, run_info):
                 services_info += [service_info]
 
             if services_info:
-              result['prepared_dns_services'] = services_info.copy()
+              result['prepared_dns_services'] = list(services_info)
 
               if validate_ctx:
                 info = prepare_services(

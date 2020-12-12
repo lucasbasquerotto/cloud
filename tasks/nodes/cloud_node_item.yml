@@ -91,6 +91,7 @@
     path: "{{ cloud_node_ssh_key_path | dirname }}"
     state: directory
     mode: 0755
+  when: cloud_node_ssh_key_path != ''
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_item_title }} - generate the ssh key file - {{ cloud_node_ssh_key_path }}"
@@ -99,6 +100,7 @@
     dest: "{{ cloud_node_ssh_key_path }}"
     decrypt: "{{ cloud_node_credential.ssh_file_encrypted | default(false) | bool }}"
     mode: 0600
+  when: cloud_node_ssh_key_path != ''
   tags: ["no_print_skipped"]
 
 # Main Service

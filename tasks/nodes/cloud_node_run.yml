@@ -25,7 +25,7 @@
     cloud_node_services: >-
       {{ cloud_node_services +
         [{
-          'name': 'cloud-node-service-' + tmp_item,
+          'name': 'cloud-node-service-' + (tmp_item | string),
           'key': cloud_node_node.service,
           'single': 'true',
           'params': cloud_node_service_params_base | combine({
@@ -40,11 +40,11 @@
           })
         }]
       }}
-  var:
+  vars:
     tmp_name: >-
       {{
         (cloud_node_info.hostname | default(cloud_node_name, true)) +
-        ((tmp_item == 1) | ternary('', '-' + tmp_item)),
+        ((tmp_item == 1) | ternary('', '-' + (tmp_item | string)))
       }}
   loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
   loop_control:
@@ -74,7 +74,10 @@
     cloud_node_hosts: >-
       {{
         cloud_node_hosts +
-        (cloud_service_result_map['cloud-node-service-' + tmp_item] | default([]))
+        (
+          cloud_service_result_map['cloud-node-service-' + (tmp_item | string)]
+          | default([])
+        )
       }}
   loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
   loop_control:

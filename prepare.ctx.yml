@@ -24,6 +24,8 @@
         prepare_repos_pods_dir: "{{ env_ctx_dir }}/pods"
         prepare_repos_dev_repos_dir: "{{ env_dev_repos_dir }}"
         prepare_repos_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+      when: not (env_fast_prepare | default(false) | bool)
+      tags: ["no_print_skipped"]
 
     # generate the context data
 

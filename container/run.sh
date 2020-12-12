@@ -43,6 +43,26 @@ if [ -z "${project_dir:-}" ]; then
 	error "[error] project-dir not specified"
 fi
 
+prepare_args=()
+skip=''
+
+if [ "${prepare:-}" = 'true' ]; then
+	if [ "${1:-}" = "--skip" ]; then
+		skip='true';
+		shift;
+	else
+		for arg in "$@"; do
+			shift;
+
+			if [ "$arg" = "--" ]; then
+				break;
+			fi
+
+			prepare_args+=( "$arg" )
+		done
+	fi
+fi
+
 if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project (fast)..."
 else
@@ -57,26 +77,6 @@ else
 	fi
 
 	cd /usr/main/ansible
-
-    prepare_args=()
-	skip=''
-
-    if [ "${prepare:-}" = 'true' ]; then
-		if [ "${1:-}" = "--skip" ]; then
-			skip='true';
-			shift;
-		else
-			for arg in "$@"; do
-				shift;
-
-				if [ "$arg" = "--" ]; then
-					break;
-				fi
-
-				prepare_args+=( "$arg" )
-			done
-		fi
-    fi
 
 	if [ "$skip" = "true" ]; then
 		echo "[cloud] skipping prepare project (skip)..."
