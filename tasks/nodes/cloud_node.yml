@@ -1,21 +1,10 @@
 - name: "{{ cloud_node_title }} - nodes (outer)"
   include_tasks: "cloud_node_item.yml"
   vars:
-    cloud_node_info: "{{ cloud_node_item }}"
-    cloud_node_name: "{{ cloud_node_info.name | default(cloud_node_info) }}"
-    cloud_node_key: >-
-      {{
-        cloud_node_info.key |
-        default(cloud_node_info.name, true) |
-        default(cloud_node_info, true)
-      }}
+    cloud_node_name: "{{ cloud_node_item.name }}"
     cloud_node_item_title: >-
-      {{ cloud_node_title }} - node [{{ cloud_node_name }}{{
-        (cloud_node_name != cloud_node_key)
-        | ternary(' (' + cloud_node_key + ')', '')
-      }}]
-    cloud_node_tmp_dir: >-
-      {{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}
+      {{ cloud_node_title }} - node [{{ cloud_node_item.description }}]
+    cloud_node_tmp_dir: "{{ cloud_node_item.tmp_dir }}"
   loop: "{{ cloud_node_list }}"
   loop_control:
     loop_var: cloud_node_item

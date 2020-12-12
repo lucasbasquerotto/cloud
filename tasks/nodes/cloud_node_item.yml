@@ -18,32 +18,14 @@
   when: cloud_node_conf is changed
   tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_node"
-  set_fact:
-    cloud_node_node: "{{ env.nodes[cloud_node_key] }}"
-  tags: ["no_print"]
-
 - name: "{{ cloud_node_item_title }} - cloud_node_credential"
   set_fact:
-    cloud_node_credential: >-
-      {{
-        env.credentials[cloud_node_node.credential | default('')] | default({})
-      }}
-  tags: ["no_print"]
-
-### Cloud Node Params ###
-
-- name: "{{ cloud_node_item_title }} - node params (outer)"
-  include_tasks: "tasks/nodes/node_params.yml"
-  vars:
-    node_params_title: "{{ cloud_node_item_title }} - node params"
-    node_params_node: "{{ cloud_node_node }}"
-    node_params_info: "{{ cloud_node_info }}"
+    cloud_node_credential: "{{ cloud_node_item.credential | default({}) }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_node_item_title }} - cloud_node_params"
   set_fact:
-    cloud_node_params: "{{ node_params }}"
+    cloud_node_params: "{{ cloud_node_item.params | default({}) }}"
   tags: ["no_print"]
 
 ### User Data ###
@@ -107,5 +89,5 @@
 
 - name: "{{ cloud_node_item_title }} - run (outer)"
   include_tasks: "cloud_node_run.yml"
-  when: (not (cloud_node_info.external | default(false) | bool))
+  when: (not (cloud_node_item.external | default(false) | bool))
   tags: ["no_print_skipped"]

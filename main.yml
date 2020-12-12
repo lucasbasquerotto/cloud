@@ -207,7 +207,12 @@
     - name: "{{ env_title }} - nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
       vars:
-        main_tmp_nodes: "{{ ctx_data.nodes | default([]) }}"
+        main_tmp_nodes: >-
+          {{
+            ctx_data.nodes | default([])
+            | selectattr('local', 'equalto', False)
+            | list
+          }}
         cloud_node_title: "{{ env_title }} - nodes"
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"

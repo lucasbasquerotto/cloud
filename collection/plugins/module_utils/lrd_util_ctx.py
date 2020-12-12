@@ -417,7 +417,7 @@ def prepare_pod(pod_info, parent_data, run_info):
     error_msgs = []
 
     pod_ctx_info_dict = parent_data.get('pod_ctx_info_dict')
-    local = parent_data.get('local')
+    local = parent_data.get('local') or False
     parent_base_dir = parent_data.get('base_dir')
 
     env_data = run_info.get('env_data')
@@ -781,8 +781,11 @@ def prepare_node(node_info, run_info):
 
     node_name = default(node_info_dict.get('name'), node_info)
     node_key = default(node_info_dict.get('key'), node_name)
-    node_description = (node_name + ' (' + node_key +
-                        ')') if node_name != node_key else node_name
+    node_description = (
+        (node_name + ' (' + node_key + ')')
+        if node_name != node_key
+        else node_name
+    )
 
     if not node_name:
       error_msgs += [['msg: node name not specified']]
@@ -811,7 +814,7 @@ def prepare_node(node_info, run_info):
         node_info_dict.pop('can_destroy', None)
 
         result['absent'] = to_bool(node_info_dict.get('absent'))
-        local = to_bool(node_info_dict.get('local'))
+        local = to_bool(node_info_dict.get('local') or False)
         result['local'] = local
         external = to_bool(node_info_dict.get('external'))
         result['external'] = external
@@ -1030,17 +1033,29 @@ def prepare_node(node_info, run_info):
             services_info += [service_info]
 
           if services_info:
-            result['prepared_services'] = list(services_info)
+            info = prepare_services(
+                services_info, env_data, validate_ctx, top=True
+            )
 
-            if validate_ctx:
-              info = prepare_services(
-                  services_info, env_data, validate_ctx, True)
+            prepared_services = info.get('result')
+            error_msgs_aux_services = info.get('error_msgs')
 
-              error_msgs_aux_service = info.get('error_msgs')
-
-              for value in (error_msgs_aux_service or []):
-                new_value = ['context: node service'] + value
+            if error_msgs_aux_services:
+              for value in error_msgs_aux_services:
+                new_value = ['context: prepare node service'] + value
                 error_msgs_aux += [new_value]
+            else:
+              result['prepared_services'] = prepared_services
+
+              if validate_ctx:
+                info = prepare_services(
+                    services_info, env_data, validate_ctx, True)
+
+                error_msgs_aux_service = info.get('error_msgs')
+
+                for value in (error_msgs_aux_service or []):
+                  new_value = ['context: node service'] + value
+                  error_msgs_aux += [new_value]
 
           if not dns_service:
             if dns_service_params_list:

@@ -1,55 +1,14 @@
-### Replicas ###
+# User Data
 
-- name: "{{ cloud_node_item_title }} - cloud_node_instance_count"
-  set_fact:
-    cloud_node_instance_count: "{{ tmp_amount }}"
-    cloud_node_instance_max: "{{ cloud_node_info.max_amount | default(tmp_amount) }}"
-    cloud_node_services: []
-    cloud_node_service_params_base: "{{ cloud_node_params.service_params | default({}) }}"
-  vars:
-    tmp_amount: "{{ cloud_node_info.amount | default(1) }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_user_data_title }} - cloud_node_user_data - lookup"
-  set_fact:
-    cloud_node_service_params_base: >-
-      {{
-        cloud_node_service_params_base
-        | combine({ 'user_data': cloud_node_user_data })
-      }}
-  when: cloud_node_user_data != ''
-  tags: ["no_print"]
-
-- name: "{{ cloud_node_item_title }} - cloud_node_services"
-  set_fact:
-    cloud_node_services: >-
-      {{ cloud_node_services +
-        [{
-          'name': 'cloud-node-service-' + (tmp_item | string),
-          'key': cloud_node_node.service,
-          'single': 'true',
-          'params': cloud_node_service_params_base | combine({
-            'name': tmp_name,
-            'state':
-              (
-                ((tmp_item | int) <= (cloud_node_instance_count | int))
-                and
-                ((cloud_node_state | default('')) != 'absent')
-              )
-              | ternary('present', 'absent')
-          })
-        }]
-      }}
-  vars:
-    tmp_name: >-
-      {{
-        (cloud_node_info.hostname | default(cloud_node_name, true)) +
-        ((tmp_item == 1) | ternary('', '-' + (tmp_item | string)))
-      }}
-  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
-  loop_control:
-    loop_var: tmp_item
-  tags: ["no_print"]
+# - name: "{{ cloud_node_user_data_title }} - cloud_node_user_data - lookup"
+#   set_fact:
+#     cloud_node_service_params_base: >-
+#       {{
+#         cloud_node_service_params_base
+#         | combine({ 'user_data': cloud_node_user_data })
+#       }}
+#   when: cloud_node_user_data != ''
+#   tags: ["no_print"]
 
 # Main Service
 
@@ -57,11 +16,11 @@
   include_tasks: "tasks/services/cloud_service.yml"
   vars:
     cloud_service_title: "{{ cloud_node_item_title }} - main service"
-    cloud_service_list: "{{ cloud_node_services }}"
+    cloud_service_prepared_list: "{{ cloud_node_item.prepared_services | default([]) }}"
     cloud_service_top: true
-    cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/services"
+    cloud_service_tmp_dir: "{{ cloud_node_item.tmp_dir }}/services"
     cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
-  when: (cloud_node_services | length) > 0
+  when: (cloud_node_item.prepared_services | default([]) | length) > 0
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_item_title }} - cloud_node_hosts - init"
@@ -74,12 +33,9 @@
     cloud_node_hosts: >-
       {{
         cloud_node_hosts +
-        (
-          cloud_service_result_map['cloud-node-service-' + (tmp_item | string)]
-          | default([])
-        )
+        (cloud_service_result_map[tmp_item.name] | default([]))
       }}
-  loop: "{{ range(1, (cloud_node_instance_max | int) + 1) | list }}"
+  loop: "{{ cloud_node_item.prepared_services | default([]) }}"
   loop_control:
     loop_var: tmp_item
   tags: ["no_print"]
@@ -138,7 +94,6 @@
         | ternary('ansible_ssh_private_key_file=' + cloud_node_ssh_key_path, '')
       }}
       instance_type={{ cloud_node_name }}
-      instance_key={{ cloud_node_key }}
       instance_index={{ tmp_idx + 1 }}
       {{
         ((tmp_item.public_ipv4 | default('')) != '')
