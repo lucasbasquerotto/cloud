@@ -23,6 +23,21 @@
   when: (cloud_node_item.prepared_services | default([]) | length) > 0
   tags: ["no_print_skipped"]
 
+- name: "{{ cloud_node_item_title }} - verify if there is a node result"
+  fail:
+    msg: >-
+      the result after calling the node service ({{ tmp_result_name }})
+      was not found or doesn't have a name
+  vars:
+    tmp_result_item: "{{ cloud_service_result_map[tmp_item.name] | default({}) }}"
+    tmp_result_name: "{{ tmp_result_item.name | default('') }}"
+  where: tmp_result_name == ''
+  loop: "{{ cloud_node_item.prepared_services | default([]) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.name }}"
+  tags: ["no_print"]
+
 - name: "{{ cloud_node_item_title }} - cloud_node_hosts - init"
   set_fact:
     cloud_node_hosts: []
@@ -30,15 +45,20 @@
 
 - name: "{{ cloud_node_item_title }} - cloud_node_hosts - fill"
   set_fact:
-    cloud_node_hosts: >-
-      {{
-        cloud_node_hosts +
-        (cloud_service_result_map[tmp_item.name] | default([]))
-      }}
+    cloud_node_hosts: "{{ cloud_node_hosts + [tmp_result_item] }}"
+  vars:
+    tmp_result_item: "{{ cloud_service_result_map[tmp_item.name] | default({}) }}"
+    tmp_result_name: "{{ tmp_result_item.name | default('') }}"
   loop: "{{ cloud_node_item.prepared_services | default([]) }}"
   loop_control:
     loop_var: tmp_item
+    label: "{{ tmp_result_name }}"
   tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - validate the node service result schema"
+  lrd.cloud.schema:
+    schema_file: "schemas/node_services_result.schema.yml"
+    value: "{{ cloud_node_hosts }}"
 
 - name: "{{ cloud_node_item_title }} - cloud_node_active_hosts"
   set_fact:
@@ -80,14 +100,18 @@
 - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill"
   set_fact:
     cloud_node_hosts_info: >-
-      {{ cloud_node_hosts_info | default('') }}
+      {{ cloud_node_hosts_info }}
 
       {{ tmp_item.name }}
+      {{
+        (tmp_item.local | default(false) | bool)
+        | ternary('ansible_connection=local', '')
+      }}
       ansible_host={{ tmp_item.public_ipv4 }}
       ansible_user={{ cloud_node_credential.host_user }}
       {{
-        ((cloud_node_credential.host_pass | default('')) != '')
-        | ternary('ansible_become_pass=' + (cloud_node_credential.host_pass | default('')), '')
+        (tmp_host_pass != '')
+        | ternary('ansible_become_pass=' + tmp_host_pass, '')
       }}
       {{
         (cloud_node_ssh_key_path != '')
@@ -96,17 +120,22 @@
       instance_type={{ cloud_node_name }}
       instance_index={{ tmp_idx + 1 }}
       {{
-        ((tmp_item.public_ipv4 | default('')) != '')
-        | ternary('instance_public_ipv4=' + (tmp_item.public_ipv4) | default(''), '')
+        (tmp_public_ipv4 != '')
+        | ternary('instance_public_ipv4=' + tmp_public_ipv4, '')
       }}
       {{
-        ((tmp_item.public_ipv6 | default('')) != '')
-        | ternary('instance_public_ipv6=' + (tmp_item.public_ipv6) | default(''), '')
+        (tmp_public_ipv6 != '')
+        | ternary('instance_public_ipv6=' + tmp_public_ipv6, '')
       }}
       {{
-        ((tmp_item.private_ip | default('')) != '')
-        | ternary('instance_private_ip=' + (tmp_item.private_ip) | default(''), '')
+        (tmp_private_ip != '')
+        | ternary('instance_private_ip=' + tmp_private_ip, '')
       }}
+  vars:
+    tmp_host_pass: "{{ cloud_node_credential.host_pass | default('') }}"
+    tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
+    tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
+    tmp_private_ip: "{{ tmp_item.private_ip | default('') }}"
   loop: "{{ cloud_node_active_hosts | list }}"
   loop_control:
     index_var: tmp_idx

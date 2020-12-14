@@ -1,0 +1,23 @@
+root: "node_services_result"
+schemas:
+  node_services_result:
+    type: "list"
+    elem_schema: "node_service_result"
+  node_service_result:
+    type: "dict"
+    props:
+      name:
+        type: "str"
+        non_empty: true
+      state:
+        type: "str"
+        non_empty: true
+        choices: ["present", "absent"]
+      local:
+        type: "bool"
+      private_ip:
+        type: "str"
+      public_ipv4:
+        type: "str"
+      public_ipv6:
+        type: "str"
