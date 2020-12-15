@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, load_yaml_file
 
 from ansible.module_utils._text import to_text
@@ -41,7 +41,7 @@ options:
       - value to be validated according to the schema
     type: raw
     required: true
-  validate_schema:
+  full_validation:
     description:
       - specifies if the schema itself must be validated
     type: bool
@@ -94,7 +94,7 @@ EXAMPLES = """
     value:
       prop1: "value1"
       prop3: ["value", "another_value"]
-    validate_schema: false
+    full_validation: false
 
 # Schema File 2 (schemas/my_file_2.yml):
 # (invalid: 'typo' instead of 'type')
@@ -130,16 +130,16 @@ def main():
       argument_spec=dict(
           schema_file=dict(type='str', required=True),
           value=dict(type='raw', required=True),
-          validate_schema=dict(type='bool', default=True),
+          full_validation=dict(type='bool', default=True),
       )
   )
 
   schema_file = module.params['schema_file']
   value = module.params['value']
-  validate_schema = module.boolean(module.params['validate_schema'])
+  full_validation = module.boolean(module.params['full_validation'])
 
   schema = load_yaml_file(schema_file)
-  error_msgs = validate(schema, value, validate_schema)
+  error_msgs = validate_schema(schema, value, full_validation)
 
   if error_msgs:
     context = "schema validation"

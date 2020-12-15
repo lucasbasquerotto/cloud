@@ -59,8 +59,10 @@ class LookupModule(LookupBase):
 
   def run(self, terms, variables, **kwargs):
     env_data = kwargs.get('env_data')
-    env = kwargs.get('env') or env_data.get('env'),
+    env = kwargs.get('env') or env_data.get('env')
+    custom_dir = kwargs.get('custom_dir')
     validate = kwargs.get('validate')
+    context = kwargs.get('context')
 
     ret = []
     error_msgs = []
@@ -75,7 +77,12 @@ class LookupModule(LookupBase):
           validate=validate if (validate is not None) else True,
       )
 
-      result_info = load_content(content, env, run_info)
+      result_info = load_content(
+          content,
+          env=env,
+          custom_dir=custom_dir,
+          run_info=run_info,
+      )
 
       result_aux = result_info.get('result')
       error_msgs_aux = result_info.get('error_msgs')
@@ -86,6 +93,6 @@ class LookupModule(LookupBase):
         ret.append(result_aux)
 
     if error_msgs:
-      raise AnsibleError(to_text(error_text(error_msgs, 'content')))
+      raise AnsibleError(to_text(error_text(error_msgs, context or 'content')))
 
     return ret

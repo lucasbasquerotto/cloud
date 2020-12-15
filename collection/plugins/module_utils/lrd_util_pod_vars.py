@@ -70,7 +70,7 @@ def load_vars(pod_info, run_info, meta_info=None):
       data_info=data_info,
   )
 
-  error_msgs_aux = res.get('error_msgs')
+  error_msgs_aux = res.get('error_msgs') or list()
 
   if error_msgs_aux:
     parent_type = pod.get('parent_type')
@@ -364,7 +364,7 @@ def load_next_vars(file_relpath, params, data_info):
                 data_info=data_info,
             )
 
-            child_error_msgs = res_child.get('error_msgs')
+            child_error_msgs = res_child.get('error_msgs') or list()
 
             if child_error_msgs:
               for value in child_error_msgs:

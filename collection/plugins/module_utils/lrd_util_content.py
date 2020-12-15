@@ -14,20 +14,30 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import os
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    is_str, load_file, load_schema
+    is_str, load_file, load_schema, merge_dicts
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
 
 
 def load_content(content, env, custom_dir, run_info):
   try:
+    env_data = run_info.get('env_data')
+    validate = run_info.get('validate')
+
     result = None
 
-    info = prepare_content(content, env, custom_dir, run_info)
+    info = prepare_content(
+        content,
+        env=env,
+        custom_dir=custom_dir,
+        env_data=env_data,
+        validate=validate,
+    )
 
     prepared_content = info.get('result')
-    error_msgs_aux = info.get('error_msgs')
+    error_msgs_aux = info.get('error_msgs') or list()
 
     if not error_msgs_aux:
       content_type = prepared_content.get('type')
@@ -68,10 +78,17 @@ def load_content(content, env, custom_dir, run_info):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_content(content, env, custom_dir, run_info, content_names=None):
+def prepare_content(content, env, custom_dir, env_data, validate, content_names=None):
   try:
-    env_data = run_info.get('env_data')
-    validate = run_info.get('validate')
+    if env is None:
+      error_msgs = [['msg: environment variable not specified']]
+      return dict(error_msgs=error_msgs)
+    elif not isinstance(env, dict):
+      error_msgs = [[
+          str('env type: ' + str(type(env))),
+          'msg: environment variable is not a dictionary',
+      ]]
+      return dict(error_msgs=error_msgs)
 
     if content is None:
       error_msgs = [['msg: content not specified']]
@@ -150,7 +167,7 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
           ]]
 
       for prop in sorted(required_props):
-        if not content.get('prop'):
+        if not content.get(prop):
           error_msgs_aux += [[
               str('property: ' + prop),
               'msg: required property not defined for the content or empty',
@@ -158,7 +175,17 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
 
       if not error_msgs_aux:
         content_origin = content.get('origin') or 'cloud'
+        allowed_origins = ['env', 'cloud', 'custom']
 
+        if content_origin not in allowed_origins:
+          error_msgs_aux += [[
+              str('content origin: ' + content_origin),
+              'msg: invalid content origin',
+              'allowed:',
+              allowed_origins,
+          ]]
+
+      if not error_msgs_aux:
         origin_dir_map = dict(
             cloud='',
             env=env_data.get('env_dir'),
@@ -179,7 +206,7 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
           info = mix(params_args)
 
           credentials = info.get('result')
-          error_msgs_aux_credentials = info.get('error_msgs')
+          error_msgs_aux_credentials = info.get('error_msgs') or list()
 
           for value in (error_msgs_aux_credentials or []):
             new_value = ['context: content credentials'] + value
@@ -196,7 +223,9 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
 
                 if os.path.exists(schema_file):
                   schema = load_schema(schema_file)
-                  error_msgs_aux_validate = validate(schema, credentials)
+                  error_msgs_aux_validate = validate_schema(
+                      schema, credentials
+                  )
 
                   for value in (error_msgs_aux_validate or []):
                     new_value = [
@@ -223,7 +252,7 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
           info = mix(params_args)
 
           content_params = info.get('result')
-          error_msgs_aux_params = info.get('error_msgs')
+          error_msgs_aux_params = info.get('error_msgs') or list()
 
           for value in (error_msgs_aux_params or []):
             new_value = ['context: content params'] + value
@@ -243,7 +272,9 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
 
                 if os.path.exists(schema_file):
                   schema = load_schema(schema_file)
-                  error_msgs_aux_validate = validate(schema, content_params)
+                  error_msgs_aux_validate = validate_schema(
+                      schema, content_params
+                  )
 
                   for value in (error_msgs_aux_validate or []):
                     new_value = ['context: validate content params'] + value
@@ -261,6 +292,7 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
 
           if validate and (not os.path.exists(file_path)):
             error_msgs_aux += [[
+                str('content origin: ' + content_origin),
                 str('msg: content file not found: ' + file_rel),
             ]]
 
@@ -294,13 +326,41 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
             error_msgs_aux += [['msg: the content is not specified for the environment']]
           else:
             child_content = contents.get(content_key)
+            params = result['params']
 
-            info = prepare_content(
-                child_content, env, custom_dir, run_info, content_names
-            )
+            try:
+              info = prepare_content(
+                  child_content,
+                  env=env,
+                  custom_dir=custom_dir,
+                  env_data=env_data,
+                  validate=validate,
+                  content_names=content_names,
+              )
 
-            result = info.get('result')
-            error_msgs_aux = info.get('error_msgs')
+              result = info.get('result')
+              error_msgs_aux += info.get('error_msgs') or list()
+            except Exception as error:
+              error_msgs_aux += [[
+                  'msg: error when trying to prepare the content child (env type)',
+                  'error type: ' + str(type(error)),
+                  'error details: ' + str(error),
+              ]]
+
+            if params and not error_msgs_aux:
+              child_content_type = result.get('type')
+
+              if child_content_type != 'template':
+                error_msgs_aux += [[str(
+                    'msg: the parent content [' + content_description + '] '
+                    + 'has parameters specified but the resulting child '
+                    + 'is not a template (' + child_content_type + ')'
+                )]]
+              else:
+                result_content_params = merge_dicts(
+                    result.get('params'), params
+                )
+                result['params'] = result_content_params
 
         for value in (error_msgs_aux or []):
           new_value = [str('content: ' + content_description)] + value

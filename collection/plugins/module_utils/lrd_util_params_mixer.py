@@ -59,7 +59,7 @@ def mix_inner(args):
   if group_params:
     info = expand_group_params(group_params, group_params_dict)
     result_aux = info.get('result')
-    error_msgs_aux = info.get('error_msgs')
+    error_msgs_aux = info.get('error_msgs') or list()
 
     if error_msgs_aux:
       error_msgs += error_msgs_aux
@@ -104,7 +104,7 @@ def mix_inner(args):
       info = expand_group_params(
           shared_group_params_aux, group_params_dict, 'shared_group_params')
       result_aux = info.get('result')
-      error_msgs_aux = info.get('error_msgs')
+      error_msgs_aux = info.get('error_msgs') or list()
 
       if error_msgs_aux:
         error_msgs += error_msgs_aux
@@ -130,7 +130,7 @@ def mix_inner(args):
 def mix(args):
   info = mix_inner(args)
 
-  error_msgs = info.get('error_msgs')
+  error_msgs = info.get('error_msgs') or list()
 
   if error_msgs:
     msg = str(len(error_msgs)) + ' error(s) when mixing parameters'

@@ -769,10 +769,10 @@ def validate_value(schema, value):
   return error_msgs
 
 
-def validate(schema, value, validate_schema=True):
+def validate_schema(schema, value, full_validation=True):
   error_msgs = []
 
-  if validate_schema:
+  if full_validation:
     schema_base = load_yaml(SCHEMA_BASE)
     error_msgs_aux = validate_value(schema_base, schema)
 

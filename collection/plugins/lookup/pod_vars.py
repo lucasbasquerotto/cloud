@@ -84,7 +84,7 @@ class LookupModule(LookupBase):
       )
 
       result_aux = result_info.get('result')
-      error_msgs_aux = result_info.get('error_msgs')
+      error_msgs_aux = result_info.get('error_msgs') or list()
 
       if error_msgs_aux:
         error_msgs += error_msgs_aux
