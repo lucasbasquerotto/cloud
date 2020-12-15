@@ -29,9 +29,9 @@
       the result after calling the node service ({{ tmp_result_name }})
       was not found or doesn't have a name
   vars:
-    tmp_result_item: "{{ cloud_service_result_map[tmp_item.name] | default({}) }}"
+    tmp_result_item: "{{ cloud_service_result_inner_map[tmp_item.name] | default({}) }}"
     tmp_result_name: "{{ tmp_result_item.name | default('') }}"
-  where: tmp_result_name == ''
+  when: tmp_result_name == ''
   loop: "{{ cloud_node_item.prepared_services | default([]) }}"
   loop_control:
     loop_var: tmp_item
@@ -47,7 +47,7 @@
   set_fact:
     cloud_node_hosts: "{{ cloud_node_hosts + [tmp_result_item] }}"
   vars:
-    tmp_result_item: "{{ cloud_service_result_map[tmp_item.name] | default({}) }}"
+    tmp_result_item: "{{ cloud_service_result_inner_map[tmp_item.name] | default({}) }}"
     tmp_result_name: "{{ tmp_result_item.name | default('') }}"
   loop: "{{ cloud_node_item.prepared_services | default([]) }}"
   loop_control:
@@ -107,7 +107,10 @@
         (tmp_item.local | default(false) | bool)
         | ternary('ansible_connection=local', '')
       }}
-      ansible_host={{ tmp_item.public_ipv4 }}
+      {{
+        (tmp_item.local | default(false) | bool)
+        | ternary('', 'ansible_host=' + tmp_host)
+      }}
       ansible_user={{ cloud_node_credential.host_user }}
       {{
         (tmp_host_pass != '')
@@ -136,6 +139,7 @@
     tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
     tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
     tmp_private_ip: "{{ tmp_item.private_ip | default('') }}"
+    tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6) }}"
   loop: "{{ cloud_node_active_hosts | list }}"
   loop_control:
     index_var: tmp_idx

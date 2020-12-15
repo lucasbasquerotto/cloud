@@ -39,7 +39,7 @@ options:
   value:
     description:
       - value to be validated according to the schema
-    type: dict
+    type: raw
     required: true
   validate_schema:
     description:
@@ -129,7 +129,7 @@ def main():
   module = AnsibleModule(
       argument_spec=dict(
           schema_file=dict(type='str', required=True),
-          value=dict(type='dict', required=True),
+          value=dict(type='raw', required=True),
           validate_schema=dict(type='bool', default=True),
       )
   )
