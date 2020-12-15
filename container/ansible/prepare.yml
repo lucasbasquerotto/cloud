@@ -135,7 +135,7 @@
 
     - name: "{{ project_env_title }} - validate env (minimum)"
       lrd.cloud.schema:
-        schema_file: "schemas/env-minimum.schema.yml"
+        schema_file: "schemas/env_minimum.schema.yml"
         value: "{{ project_env }}"
 
     - name: "{{ project_env_title }} - validate the container"

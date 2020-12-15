@@ -122,7 +122,7 @@ def load_next_vars(file_relpath, params, data_info):
     file = pod_dir + '/' + file_relpath
 
     if validate and not os.path.exists(file):
-      error_msgs += [[
+      error_msgs = [[
           str('file: ' + file_relpath),
           'msg: pod ctx file not found in the pod repository',
       ]]
@@ -133,7 +133,7 @@ def load_next_vars(file_relpath, params, data_info):
     try:
       res_str = lookup(plugin, ansible_vars, file, params)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('file: ' + file_relpath),
           'msg: error when trying to load the pod ctx file',
           'error type: ' + str(type(error)),
@@ -146,7 +146,7 @@ def load_next_vars(file_relpath, params, data_info):
     try:
       res = load_yaml(str(res_str))
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('file: ' + file_relpath),
           'file content type: ' + str(type(res_str)),
           'msg: error when trying to process the pod ctx file',
@@ -386,7 +386,7 @@ def load_next_vars(file_relpath, params, data_info):
               if child_templates:
                 templates += child_templates
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         str('file: ' + file_relpath),
         'msg: error when trying to define the pod ctx vars',
         'error type: ' + str(type(error)),

@@ -29,14 +29,18 @@ def merge_dicts(*args):
   return new_dict
 
 
+def load_file(file_path):
+  with open(file_path, 'rb') as file:
+    content = file.read().decode('utf-8-sig')
+    return content
+
+
 def load_yaml(text):
   return yaml.load(text, Loader=Loader)
 
 
 def load_yaml_file(file_path):
-  with open(file_path, 'rb') as file:
-    content = file.read().decode('utf-8-sig')
-    return load_yaml(content)
+  return load_yaml(load_file(file_path))
 
 
 def error_text(error_msgs, context=None):
@@ -92,6 +96,19 @@ def is_float(str_val):
 
 def is_bool(str_val):
   return to_bool(str_val) is not None
+
+
+schema_dict = dict()
+
+
+def load_schema(schema_file):
+  if schema_file in schema_dict:
+    return schema_dict.get(schema_file)
+
+  schema = load_yaml_file(schema_file)
+  schema_dict[schema_file] = schema
+
+  return schema
 
 
 def to_bool(value):

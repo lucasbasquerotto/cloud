@@ -75,7 +75,7 @@ class LookupModule(LookupBase):
           plugin=self,
           ansible_vars=variables,
           env_data=env_data,
-          validate=validate,
+          validate=validate if (validate is not None) else True,
       )
 
       result_info = load_vars(

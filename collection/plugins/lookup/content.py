@@ -12,7 +12,7 @@
 from __future__ import (absolute_import, division, print_function)
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import load_vars
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import load_content
 
 from ansible.module_utils._text import to_text
 from ansible.plugins.lookup import LookupBase
@@ -29,7 +29,7 @@ DOCUMENTATION = """
       - Returns a dictionary with a list of directories, another list of files and another list of templates.
     options:
       _terms:
-        description: contents to be loaded
+        description: Contents to be loaded
         version_added: '2.11'
         type: list
       env_data:
@@ -41,6 +41,10 @@ DOCUMENTATION = """
         default: env_data.env
         version_added: '2.11'
         type: dict
+      validate:
+        description: Specifies if the schema (when defined) should be validated
+        type: bool
+        default: true
 """
 
 RETURN = """
@@ -55,28 +59,23 @@ class LookupModule(LookupBase):
 
   def run(self, terms, variables, **kwargs):
     env_data = kwargs.get('env_data')
-    dependencies_data = kwargs.get(
-        'dependencies_data',
-        dict(list=list(), node_ip_dict=dict(), node_ips_dict=dict())
-    )
+    env = kwargs.get('env') or env_data.get('env'),
     validate = kwargs.get('validate')
 
     ret = []
     error_msgs = []
 
     for term in terms:
-      info = dict(
+      content = term
+
+      run_info = dict(
           plugin=self,
           ansible_vars=variables,
           env_data=env_data,
-          dependencies_data=dependencies_data,
-          validate=validate,
+          validate=validate if (validate is not None) else True,
       )
 
-      result_info = load_vars(
-          pod=term,
-          info=info,
-      )
+      result_info = load_content(content, env, run_info)
 
       result_aux = result_info.get('result')
       error_msgs_aux = result_info.get('error_msgs')
@@ -87,6 +86,6 @@ class LookupModule(LookupBase):
         ret.append(result_aux)
 
     if error_msgs:
-      raise AnsibleError(to_text(error_text(error_msgs, 'pod_vars')))
+      raise AnsibleError(to_text(error_text(error_msgs, 'content')))
 
     return ret

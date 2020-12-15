@@ -15,23 +15,11 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import os
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    default, is_empty, is_str, load_yaml_file, merge_dicts, to_bool
+    default, is_empty, is_str, load_schema, merge_dicts, to_bool
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import load_vars
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate
-
-schema_dict = dict()
-
-
-def load_schema(schema_file):
-  if schema_file in schema_dict:
-    return schema_dict.get(schema_file)
-
-  schema = load_yaml_file(schema_file)
-  schema_dict[schema_file] = schema
-
-  return schema
 
 
 def prepare_service(service_info, service_names, env_data, validate_ctx, top):
@@ -353,7 +341,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('service: ' + service_description),
           'msg: error when trying prepare service',
           'error type: ' + str(type(error)),
@@ -361,7 +349,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare unknown service',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -403,7 +391,7 @@ def prepare_services(services, env_data, validate_ctx, top=False, service_names=
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare services',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -706,7 +694,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('pod: ' + pod_description),
           'msg: error when trying prepare pod',
           'error type: ' + str(type(error)),
@@ -714,7 +702,7 @@ def prepare_pod(pod_info, parent_data, run_info):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare unknown pod',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -759,7 +747,7 @@ def prepare_pods(pods, parent_data, run_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare pods',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -1047,15 +1035,15 @@ def prepare_node(node_info, run_info):
             else:
               result['prepared_services'] = prepared_services
 
-              if validate_ctx:
-                info = prepare_services(
-                    services_info, env_data, validate_ctx, True)
+            if validate_ctx:
+              info = prepare_services(
+                  services_info, env_data, validate_ctx, True)
 
-                error_msgs_aux_service = info.get('error_msgs')
+              error_msgs_aux_service = info.get('error_msgs')
 
-                for value in (error_msgs_aux_service or []):
-                  new_value = ['context: node service'] + value
-                  error_msgs_aux += [new_value]
+              for value in (error_msgs_aux_service or []):
+                new_value = ['context: node service'] + value
+                error_msgs_aux += [new_value]
 
           if not dns_service:
             if dns_service_params_list:
@@ -1162,7 +1150,7 @@ def prepare_node(node_info, run_info):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('node: ' + node_description),
           'msg: error when trying prepare node',
           'error type: ' + str(type(error)),
@@ -1170,7 +1158,7 @@ def prepare_node(node_info, run_info):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare unknown node',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -1480,7 +1468,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('task: ' + task_description),
           'msg: error when trying prepare task',
           'error type: ' + str(type(error)),
@@ -1488,7 +1476,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare unknown task',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -1804,7 +1792,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('run stage task: ' + run_stage_task_name),
           'msg: error when trying prepare run stage task',
           'error type: ' + str(type(error)),
@@ -1812,7 +1800,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare unknown run stage task',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -1938,7 +1926,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs += [[
+      error_msgs = [[
           str('run stage: ' + run_stage_name),
           'msg: error when trying prepare run stage',
           'error type: ' + str(type(error)),
@@ -1946,7 +1934,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare unknown run stage',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -1974,7 +1962,7 @@ def prepare_run_stages(run_stages, prepared_nodes, env_data, validate_ctx):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'msg: error when trying prepare run stages',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
@@ -2148,7 +2136,7 @@ def prepare_ctx(ctx_name, run_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs += [[
+    error_msgs = [[
         'ctx_name: ' + str(ctx_name),
         'msg: error when trying prepare the context',
         'error type: ' + str(type(error)),

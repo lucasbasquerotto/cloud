@@ -28,18 +28,15 @@ DOCUMENTATION = """
       - Return the context variables from the environment based on the environment dictionary and ctx name.
     options:
       ctx_name:
-        description:
-          - the context name
+        description: The context name
         type: str
         required: true
       env_data:
-        description:
-          - the environment data (vars, env type, ctx dir)
+        description: The environment data (vars, env type, ctx dir)
         type: dict
         required: true
       validate:
-        description:
-          - specifies if the schemas should be validated
+        description: Specifies if the schema (when defined) should be validated
         type: bool
         default: true
 """
@@ -68,7 +65,7 @@ class LookupModule(LookupBase):
           plugin=self,
           ansible_vars=variables,
           env_data=env_data,
-          validate=validate,
+          validate=validate if (validate is not None) else True,
       )
 
       result_info = prepare_ctx(ctx_name, run_info)
