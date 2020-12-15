@@ -18,6 +18,7 @@
         repo_default_dir: "{{ pod_repo_dir }}"
         repo_dev_base_dir: "{{ env_dev_repos_dir }}"
         repo_dev: "{{ (env_dev | bool) and (pod_node_local | bool) }}"
+        repo_lax: "{{ env_lax }}"
       tags: ["no_print"]
 
     ### Create the environment pod repositories in the env folders (when defined) ###

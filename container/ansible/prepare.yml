@@ -31,7 +31,10 @@
     - name: "{{ project_base_title }} - project_title"
       set_fact:
         project_title: "{{ project_base_title }} [{{ project_env_init.key }}]"
-        env_dev: "{{ project_env_init.dev | default(false) }}"
+        env_dev: "{{ tmp_dev }}"
+        env_lax: "{{ project_env_init.lax | default(tmp_dev, true) }}"
+      vars:
+        tmp_dev: "{{ project_env_init.dev | default(false, true) }}"
       tags: ["no_print"]
 
     - name: "{{ project_title }} - validate the repo init parameters"
@@ -62,6 +65,7 @@
         repo_dev_base_dir: "{{ project_dev_repos_dir }}"
         repo_dev_path: "{{ project_env_init.path_params.path_env | default('') }}"
         repo_dev: "{{ env_dev }}"
+        repo_lax: "{{ env_lax }}"
       tags: ["no_print"]
 
     - name: "{{ project_base_title }} - project_env_dir"
@@ -115,6 +119,7 @@
             repo_dev_base_dir: "{{ project_dev_repos_dir }}"
             repo_dev_path: "{{ project_env_init.path_params.path_env_base | default('') }}"
             repo_dev: "{{ env_dev }}"
+            repo_lax: "{{ env_lax }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - load the base environment vars"
@@ -224,13 +229,13 @@
       file:
         path: "{{ project_files_cloud_dir }}"
         state: directory
-        mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
 
     - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_files_cloud_dir }}/"
       template:
         src: "templates/ssh.tpl.sh"
         dest: "{{ project_files_cloud_dir }}/ssh"
-        mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
+        mode: "{{ env_lax | bool | ternary(0777, 0700) }}"
       vars:
         project_ssh_ctxs: "{{ project_env.ctxs }}"
         project_ssh_default_ctx: "{{ project_env_init.env_params.default_ctx | default('') }}"
@@ -251,13 +256,13 @@
       copy:
         content: "{{ project_env_params | to_nice_yaml }}"
         dest: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
-        mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
 
     - name: "{{ project_ctxs_title }} - create the config file with the repo path maps"
       copy:
         content: "{{ project_path_map_repos | to_nice_yaml }}"
         dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
-        mode: "{{ env_dev | default(false, true) | bool | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
 
     - name: "{{ project_ctxs_title }} (main)"
       include_tasks: "ctx.yml"
@@ -272,7 +277,7 @@
       template:
         src: "templates/run-ctxs.tpl.sh"
         dest: "{{ project_files_cloud_dir }}/run-ctxs"
-        mode: "{{ env_dev | bool | ternary(0777, 0700) }}"
+        mode: "{{ env_lax | bool | ternary(0777, 0700) }}"
       vars:
         project_run_ctxs_title: "{{ project_ctxs_title }}"
         project_run_ctxs_list: "{{ project_env.ctxs }}"

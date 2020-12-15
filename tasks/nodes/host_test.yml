@@ -81,7 +81,7 @@
           file:
             path: "{{ host_test_log_file | dirname }}"
             state: directory
-            mode: "{{ (env_dev | bool) | ternary(0777, 0751) }}"
+            mode: "{{ (env_lax | bool) | ternary(0777, 0751) }}"
           tags: ["no_print_skipped"]
 
         - name: >
@@ -97,7 +97,7 @@
                   host_test_local_success_msg
                 )
               }}
-            mode: "{{ (env_dev | bool) | ternary(0666, 0640) }}"
+            mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
           tags: ["no_print_skipped"]
 
       when: >-

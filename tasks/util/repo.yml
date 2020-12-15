@@ -42,6 +42,7 @@
     git_repo_dir: "{{ repo_dir }}"
     git_update: "{{ not (repo_dir_dev | bool) }}"
     git_dev: "{{ repo_dev }}"
+    git_lax: "{{ repo_lax }}"
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - git_result"

@@ -98,7 +98,7 @@
       copy:
         src: "{{ project_hosts_file_src }}"
         dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       register: project_diff_hosts
       when: project_hosts_file_src != ''
       tags: ["no_print_skipped"]
@@ -107,7 +107,7 @@
       template:
         src: "{{ project_hosts_template_src }}"
         dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       vars:
         params:
           ctx: "{{ env_vars.ctx }}"
@@ -120,7 +120,7 @@
       copy:
         content: "{{ project_hosts_content }}"
         dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       register: project_diff_hosts
       when: project_hosts_content != ''
       tags: ["no_print_skipped"]
@@ -129,7 +129,7 @@
       copy:
         src: "{{ env_vars.ctx_dir }}/hosts.tmp"
         dest: "{{ env_vars.ctx_dir }}/hosts"
-        mode: "{{ env_dev | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
         force: "{{ project_diff_hosts.changed or project_diff_hosts.changed }}"
       tags: ["no_print_skipped"]
 
@@ -149,7 +149,7 @@
       file:
         path: "{{ project_ctx_run_item }}"
         state: directory
-        mode: "{{ env_dev | bool | ternary(0777, 0755) }}"
+        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
       loop:
         - "{{ project_ctx_run_tmp_dest | dirname }}"
         - "{{ project_ctx_run_dest | dirname }}"
@@ -164,7 +164,7 @@
       template:
         src: "{{ project_ctx_run_src }}"
         dest: "{{ project_ctx_run_tmp_dest }}"
-        mode: "{{ env_dev | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | ternary(0666, 0600) }}"
         block_end_string: "%>"
         block_start_string: "<%"
         variable_end_string: ">>"
@@ -186,7 +186,7 @@
     - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (remove empty lines)"
       set_fact:
         project_ctx_run_regex: "\\n\\s*$"
-      when: env_ctx_params.meta.template_no_empty_lines | default(false) | bool
+      when: env.meta.template_no_empty_lines | default(false) | bool
       tags: ["no_print"]
 
     - name: >-
@@ -207,4 +207,4 @@
         remote_src: false
         src: "{{ project_ctx_run_tmp_dest }}"
         dest: "{{ project_ctx_run_dest }}"
-        mode: "{{ env_dev | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | ternary(0666, 0600) }}"

@@ -21,6 +21,7 @@
     repo_dev_base_dir: "{{ prepare_repos_dev_repos_dir }}"
     repo_dev_path: "{{ prepare_repos_env_path_map[prepare_repos_layer.repo] | default('') }}"
     repo_dev: "{{ env_dev }}"
+    repo_lax: "{{ env_lax }}"
   tags: ["no_print"]
 
 - name: "{{ prepare_repos_layer_title }} - prepare_repos_layer_dir"
@@ -39,6 +40,7 @@
     repo_dev_base_dir: "{{ prepare_repos_dev_repos_dir }}"
     repo_dev_path: "{{ prepare_repos_env_path_map[prepare_repos_layer_item.repo] | default('') }}"
     repo_dev: "{{ env_dev }}"
+    repo_lax: "{{ env_lax }}"
   loop: "{{ prepare_repos_layer.env_repos | default([]) }}"
   loop_control:
     loop_var: prepare_repos_layer_item

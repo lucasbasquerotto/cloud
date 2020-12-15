@@ -13,4 +13,5 @@
     repo_dev_base_dir: "{{ env_dev_repos_dir }}"
     repo_dev_path: "{{ env_path_map[pod_prepare_item.repo] | default('') }}"
     repo_dev: "{{ env_dev and (pod_node_local | bool) }}"
+    repo_lax: "{{ env_lax }}"
   tags: ["no_print"]
