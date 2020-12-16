@@ -235,7 +235,7 @@
       template:
         src: "templates/ssh.tpl.sh"
         dest: "{{ project_files_cloud_dir }}/ssh"
-        mode: "{{ env_lax | bool | ternary(0777, 0700) }}"
+        mode: "{{ env_lax | bool | ternary(0777, 0711) }}"
       vars:
         project_ssh_ctxs: "{{ project_env.ctxs }}"
         project_ssh_default_ctx: "{{ project_env_init.env_params.default_ctx | default('') }}"
@@ -277,7 +277,7 @@
       template:
         src: "templates/run-ctxs.tpl.sh"
         dest: "{{ project_files_cloud_dir }}/run-ctxs"
-        mode: "{{ env_lax | bool | ternary(0777, 0700) }}"
+        mode: "{{ env_lax | bool | ternary(0777, 0711) }}"
       vars:
         project_run_ctxs_title: "{{ project_ctxs_title }}"
         project_run_ctxs_list: "{{ project_env.ctxs }}"

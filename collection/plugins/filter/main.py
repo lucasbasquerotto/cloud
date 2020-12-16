@@ -25,7 +25,7 @@ class FilterModule(object):
         'validate_connection': self.validate_connection,
     }
 
-  def content(self, content, env_data, env, custom_dir, validate):
+  def content(self, content, env_data, env=None, custom_dir=None, validate=None):
     info = prepare_content(
         content,
         env=env,
@@ -76,8 +76,13 @@ class FilterModule(object):
         (
             (local_node and local_connection)
             or
-            ((not local_node) and (not local_connection)
-             and (node_name == instance_type))
+            (
+                (not local_node)
+                and
+                (not local_connection)
+                and
+                (node_name == instance_type)
+            )
         )
         and
         ((not env_node_name) or (env_node_name == node_name))

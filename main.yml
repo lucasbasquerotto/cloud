@@ -28,8 +28,8 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_initial_services }}"
-      when: (env_ctx_params.hooks.before_initial_services | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.before_initial_services }}"
+      when: (ctx_data.hooks.before_initial_services | default('')) != ''
       tags: ["no_print"]
 
     - name: "{{ env_title }} - initial services (outer)"
@@ -45,8 +45,8 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_initial_services }}"
-      when: (env_ctx_params.hooks.after_initial_services | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.after_initial_services }}"
+      when: (ctx_data.hooks.after_initial_services | default('')) != ''
       tags: ["no_print"]
 
 ###############################################################################
@@ -66,8 +66,8 @@
 #       tags: ["no_print"]
 
 #     - name: "{{ env_title }}"
-#       include_tasks: "{{ env_ctx_params.hooks.before_cloud_main }}"
-#       when: (env_ctx_params.hooks.before_cloud_main | default('')) != ''
+#       include_tasks: "{{ ctx_data.hooks.before_cloud_main }}"
+#       when: (ctx_data.hooks.before_cloud_main | default('')) != ''
 #       tags: ["no_print"]
 
 #     - name: "{{ env_title }}"
@@ -91,8 +91,8 @@
 #       tags: ["no_print_skipped"]
 
 #     - name: "{{ env_title }}"
-#       include_tasks: "{{ env_ctx_params.hooks.after_cloud_main }}"
-#       when: (env_ctx_params.hooks.after_cloud_main | default('')) != ''
+#       include_tasks: "{{ ctx_data.hooks.after_cloud_main }}"
+#       when: (ctx_data.hooks.after_cloud_main | default('')) != ''
 #       tags: ["no_print"]
 
 ###############################################################################
@@ -110,8 +110,8 @@
 #       tags: ["no_print"]
 
 #     - name: "{{ env_title }}"
-#       include_tasks: "{{ env_ctx_params.hooks.before_dns }}"
-#       when: (env_ctx_params.hooks.before_dns | default('')) != ''
+#       include_tasks: "{{ ctx_data.hooks.before_dns }}"
+#       when: (ctx_data.hooks.before_dns | default('')) != ''
 #       tags: ["no_print"]
 
 #     - name: "{{ env_title }}"
@@ -137,8 +137,8 @@
 #       tags: ["no_print_skipped"]
 
 #     - name: "{{ env_title }}"
-#       include_tasks: "{{ env_ctx_params.hooks.after_dns }}"
-#       when: (env_ctx_params.hooks.after_dns | default('')) != ''
+#       include_tasks: "{{ ctx_data.hooks.after_dns }}"
+#       when: (ctx_data.hooks.after_dns | default('')) != ''
 #       tags: ["no_print"]
 
 # ###############################################################################
@@ -156,8 +156,8 @@
 #       tags: ["no_print"]
 
 #     - name: "{{ env_title }}"
-#       include_tasks: "{{ env_ctx_params.hooks.before_buckets }}"
-#       when: (env_ctx_params.hooks.before_buckets | default('')) != ''
+#       include_tasks: "{{ ctx_data.hooks.before_buckets }}"
+#       when: (ctx_data.hooks.before_buckets | default('')) != ''
 #       tags: ["no_print"]
 
 #     - name: "{{ env_title }} - create the buckets"
@@ -178,8 +178,8 @@
 #       tags: ["no_print_skipped"]
 
 #     - name: "{{ env_title }}"
-#       include_tasks: "{{ env_ctx_params.hooks.after_buckets }}"
-#       when: (env_ctx_params.hooks.after_buckets | default('')) != ''
+#       include_tasks: "{{ ctx_data.hooks.after_buckets }}"
+#       when: (ctx_data.hooks.after_buckets | default('')) != ''
 #       tags: ["no_print"]
 
 ###############################################################################
@@ -200,8 +200,8 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_nodes }}"
-      when: (env_ctx_params.hooks.before_nodes | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.before_nodes }}"
+      when: (ctx_data.hooks.before_nodes | default('')) != ''
       tags: ["no_print"]
 
     - name: "{{ env_title }} - nodes (outer)"
@@ -266,8 +266,8 @@
     #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_nodes }}"
-      when: (env_ctx_params.hooks.after_nodes | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.after_nodes }}"
+      when: (ctx_data.hooks.after_nodes | default('')) != ''
       tags: ["no_print"]
 
 ###############################################################################
@@ -294,11 +294,11 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_wait_nodes }}"
+      include_tasks: "{{ ctx_data.hooks.before_wait_nodes }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
-        ((env_ctx_params.hooks.before_wait_nodes | default('')) != '')
+        ((ctx_data.hooks.before_wait_nodes | default('')) != '')
       tags: ["no_print"]
 
     - name: "{{ env_title }} - host test (outer)"
@@ -324,11 +324,11 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_wait_nodes }}"
+      include_tasks: "{{ ctx_data.hooks.after_wait_nodes }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
-        ((env_ctx_params.hooks.after_wait_nodes | default('')) != '')
+        ((ctx_data.hooks.after_wait_nodes | default('')) != '')
       tags: ["no_print"]
 
 ###############################################################################
@@ -349,11 +349,11 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_prepare }}"
+      include_tasks: "{{ ctx_data.hooks.before_prepare }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
-        ((env_ctx_params.hooks.before_prepare | default('')) != '')
+        ((ctx_data.hooks.before_prepare | default('')) != '')
       tags: ["no_print"]
 
     - name: "{{ env_title }} - prepare pods (outer)"
@@ -434,11 +434,11 @@
     #   tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_prepare }}"
+      include_tasks: "{{ ctx_data.hooks.after_prepare }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
-        ((env_ctx_params.hooks.after_prepare | default('')) != '')
+        ((ctx_data.hooks.after_prepare | default('')) != '')
       tags: ["no_print"]
 
 ###############################################################################
@@ -465,11 +465,11 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_cron }}"
+      include_tasks: "{{ ctx_data.hooks.before_cron }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
-        ((env_ctx_params.hooks.before_cron | default('')) != '')
+        ((ctx_data.hooks.before_cron | default('')) != '')
       tags: ["no_print"]
 
     - name: "{{ env_title }} - cron (outer)"
@@ -490,11 +490,11 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_cron }}"
+      include_tasks: "{{ ctx_data.hooks.after_cron }}"
       when: >-
         (((env_node | default('')) == '') or (env_node == (instance_type | default(''))))
         and
-        ((env_ctx_params.hooks.after_cron | default('')) != '')
+        ((ctx_data.hooks.after_cron | default('')) != '')
       tags: ["no_print"]
 
 ###############################################################################
@@ -514,8 +514,8 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_final_services }}"
-      when: (env_ctx_params.hooks.before_final_services | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.before_final_services }}"
+      when: (ctx_data.hooks.before_final_services | default('')) != ''
       tags: ["no_print"]
 
     - name: "{{ env_title }} - final services (outer)"
@@ -531,8 +531,8 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_final_services }}"
-      when: (env_ctx_params.hooks.after_final_services | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.after_final_services }}"
+      when: (ctx_data.hooks.after_final_services | default('')) != ''
       tags: ["no_print"]
 
 ###############################################################################
@@ -552,8 +552,8 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_delete_tmp }}"
-      when: (env_ctx_params.hooks.before_delete_tmp | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.before_delete_tmp }}"
+      when: (ctx_data.hooks.before_delete_tmp | default('')) != ''
       tags: ["no_print"]
 
     - name: "{{ env_title }} - [destroy (tmp)] final services (outer)"
@@ -580,6 +580,7 @@
         main_tmp_nodes: >-
           {{
             ctx_data.nodes | default([])
+            | selectattr('local', 'equalto', False)
             | selectattr('tmp', 'defined')
             | selectattr('tmp', 'equalto', True)
             | list
@@ -721,8 +722,8 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_delete_tmp }}"
-      when: (env_ctx_params.hooks.after_delete_tmp | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.after_delete_tmp }}"
+      when: (ctx_data.hooks.after_delete_tmp | default('')) != ''
       tags: ["no_print"]
 
 ###############################################################################
@@ -741,8 +742,8 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.before_delete_main }}"
-      when: (env_ctx_params.hooks.before_delete_main | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.before_delete_main }}"
+      when: (ctx_data.hooks.before_delete_main | default('')) != ''
       tags: ["no_print"]
 
     - name: "{{ env_title }} - [destroy] final services (outer)"
@@ -769,6 +770,7 @@
         main_tmp_nodes: >-
           {{
             ctx_data.nodes | default([])
+            | selectattr('local', 'equalto', False)
             | selectattr('can_destroy', 'defined')
             | selectattr('can_destroy', 'equalto', True)
             | list
@@ -906,7 +908,7 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ env_ctx_params.hooks.after_delete_main }}"
-      when: (env_ctx_params.hooks.after_delete_main | default('')) != ''
+      include_tasks: "{{ ctx_data.hooks.after_delete_main }}"
+      when: (ctx_data.hooks.after_delete_main | default('')) != ''
       tags: ["no_print"]
 ###############################################################################

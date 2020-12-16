@@ -9,8 +9,5 @@
   loop_control:
     loop_var: cloud_node_item
     label: "{{ cloud_node_name }}"
-  when: >-
-    (((env_node | default('')) == '') or (env_node == cloud_node_name))
-    and
-    (not (cloud_node_info.local | default(false) | bool))
+  when: (env_node | default('')) in ['', cloud_node_name]
   tags: ["no_print_skipped"]

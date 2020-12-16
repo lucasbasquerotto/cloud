@@ -1994,6 +1994,7 @@ def prepare_ctx(ctx_name, run_info):
         result['repo'] = repo
         env_repos = ctx.get('env_repos')
         result['env_repos'] = env_repos
+        result['hosts'] = ctx.get('hosts')
 
         repos = env.get('repos')
 
@@ -2012,50 +2013,31 @@ def prepare_ctx(ctx_name, run_info):
                 str('msg: repository not found: ' + env_repo.get('repo')),
             ]]
 
-        params_args = dict(
-            params=ctx.get('params'),
-            group_params=ctx.get('group_params'),
-            shared_params=ctx.get('shared_params'),
-            shared_group_params=ctx.get('shared_group_params'),
-            shared_group_params_dict=env.get('main_shared_group_params'),
-            shared_params_dict=env.get('main_shared_params'),
-            group_params_dict=env.get('main_group_params'),
-        )
+        hooks = ctx.get('hooks')
 
-        info = mix(params_args)
+        if hooks:
+          for key in sorted(list(hooks.keys())):
+            hook_file = hooks.get('key')
 
-        result_aux = info.get('result')
-        error_msgs_aux = info.get('error_msgs') or list()
-
-        for value in (error_msgs_aux or []):
-          new_value = ['context: ctx params'] + value
-          error_msgs += [new_value]
-
-        if not error_msgs_aux:
-          ctx_params = result_aux
-          result['params'] = ctx_params
-
-          if validate_ctx:
-            schema_file = 'schemas/ctx_params.schema.yml'
-
-            if os.path.exists(schema_file):
-              schema = load_schema(schema_file)
-              error_msgs_aux = validate_schema(schema, ctx_params)
-
-              for value in (error_msgs_aux or []):
-                new_value = ['context: validate ctx params'] + value
-                error_msgs += [new_value]
-            else:
-              error_msgs_aux += [[
-                  'context: validate ctx params',
-                  str('msg: params schema file not found: ' + schema_file),
+            if not os.path.exists(hook_file):
+              error_msgs += [[
+                  'context: validate ctx hooks',
+                  str('hook: ' + key),
+                  str('hook file: ' + hook_file),
+                  'msg: hook file not found',
               ]]
+
+        result['hooks'] = hooks
 
         ctx_initial_services = ctx.get('initial_services')
 
         if ctx_initial_services:
-          info = prepare_services(ctx_initial_services,
-                                  env_data, validate_ctx, top=True)
+          info = prepare_services(
+              ctx_initial_services,
+              env_data,
+              validate_ctx,
+              top=True
+          )
 
           result_aux = info.get('result')
           error_msgs_aux = info.get('error_msgs') or list()

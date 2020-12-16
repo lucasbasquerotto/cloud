@@ -1,0 +1,55 @@
+- name: "{{ transfer_title }} - prepare the content"
+  set_fact:
+    transfer_prepared_content: >-
+      {{
+        transfer_prepared | default(false) | ternary(
+          transfer_content,
+          transfer_content | lrd.cloud.content(
+            env_data=env_data,
+            env=transfer_env | default(env, true),
+            custom_dir=transfer_custom_dir | default(''),
+            validate=transfer_validate | default(true, true),
+          )
+        )
+      }}
+  tags: ["no_print"]
+
+- name: "{{ transfer_title }} - prepare the content"
+  fail:
+    msg: |
+      invalid prepared content type:
+      type: {{ transfer_prepared_content.type }}
+      allowed: {{ tmp_allowed | to_json }}
+  vars:
+    tmp_allowed: ["file", "template", "str"]
+  when: transfer_prepared_content.type not in tmp_allowed
+  tags: ["no_print"]
+
+- name: "{{ transfer_title }} - copy the file content to {{ transfer_dest }}"
+  copy:
+    src: "{{ transfer_prepared_content.file }}"
+    dest: "{{ transfer_dest }}"
+    mode: "{{ transfer_mode | default(omit) }}"
+  register: transfer_diff
+  when: transfer_prepared_content.type == 'file'
+  tags: ["no_print_skipped"]
+
+- name: "{{ transfer_title }} - copy the template content to {{ transfer_dest }}"
+  template:
+    src: "{{ transfer_prepared_content.file }}"
+    dest: "{{ transfer_dest }}"
+    mode: "{{ transfer_mode | default(omit) }}"
+  vars:
+    params: "{{ transfer_prepared_content.params }}"
+  register: transfer_diff
+  when: transfer_prepared_content.type == 'template'
+  tags: ["no_print_skipped"]
+
+- name: "{{ transfer_title }} - copy the string content to {{ transfer_dest }}"
+  copy:
+    content: "{{ transfer_prepared_content.params.value }}"
+    dest: "{{ transfer_dest }}"
+    mode: "{{ transfer_mode | default(omit) }}"
+  register: transfer_diff
+  when: transfer_prepared_content.type == 'str'
+  tags: ["no_print_skipped"]

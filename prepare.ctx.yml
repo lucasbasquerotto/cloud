@@ -38,91 +38,13 @@
 
     # project hosts file (inventory)
 
-    - name: "{{ env_title }} - project_hosts"
-      set_fact:
-        project_hosts_file_src: >-
-          {{
-            ((env_ctx_params.hosts_file | default('')) != '')
-            | ternary(env_vars.env_dir + '/'
-            + (env_ctx_params.hosts_file | default('')), '')
-          }}
-        project_hosts_template_src: >-
-          {{
-            ((env_ctx_params.hosts_template | default('')) != '')
-            | ternary(env_vars.env_dir + '/'
-            + (env_ctx_params.hosts_template | default('')), '')
-          }}
-        project_hosts_content: "{{ env_ctx_params.hosts_content | default('') }}"
-        project_hosts_src_count: 0
-      tags: ["no_print"]
-
-    - name: "{{ env_title }} - ensure that there is a hosts file, template or content"
-      set_fact:
-        project_hosts_src_count: >-
-          {{ (project_hosts_src_count | int) + ((project_item.value == '') | ternary(0, 1) | int) }}
-      loop:
-        - {
-            name: "project_hosts_file_src",
-            value: "{{ project_hosts_file_src }}",
-          }
-        - {
-            name: "project_hosts_template_src",
-            value: "{{ project_hosts_template_src }}",
-          }
-        - {
-            name: "project_hosts_content",
-            value: "{{ project_hosts_content }}",
-          }
-      loop_control:
-        loop_var: project_item
-        label: "{{ project_item.name }}"
-      tags: ["no_print"]
-
-    - name: >-
-        {{ env_title }} -
-        ensure that there is a hosts file, template or content
-      fail:
-        msg: "Enter a value for hosts_file, hosts_template or hosts_content"
-      when: (project_hosts_src_count | int) == 0
-
-    - name: >-
-        {{ env_title }} -
-        ensure that there isn't a hosts file, template and content at once
-      fail:
-        msg: >-
-          Enter a value for only one of hosts_file, hosts_template or hosts_content
-          (expected: 1, found: {{ project_hosts_src_count }})
-      when: (project_hosts_src_count | int) > 1
-
-    - name: "{{ env_title }} - copy the hosts file temporarily to verify changes"
-      copy:
-        src: "{{ project_hosts_file_src }}"
-        dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
-      register: project_diff_hosts
-      when: project_hosts_file_src != ''
-      tags: ["no_print_skipped"]
-
-    - name: "{{ env_title }} - copy the hosts template temporarily to verify changes"
-      template:
-        src: "{{ project_hosts_template_src }}"
-        dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+    - name: "{{ env_title }} - hosts file - copy the hosts content temporarily to verify changes"
+      include_tasks: "tasks/util/transfer.yml"
       vars:
-        params:
-          ctx: "{{ env_vars.ctx }}"
-          env: "{{ env }}"
-      register: project_diff_hosts
-      when: project_hosts_template_src != ''
-      tags: ["no_print_skipped"]
-
-    - name: "{{ env_title }} - copy the hosts content temporarily to verify changes"
-      copy:
-        content: "{{ project_hosts_content }}"
-        dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
-      register: project_diff_hosts
-      when: project_hosts_content != ''
+        transfer_title: "{{ env_title }} - hosts file"
+        transfer_content: "{{ ctx_data.hosts }}"
+        transfer_dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
+        transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - copy the hosts file when changed"
@@ -130,7 +52,7 @@
         src: "{{ env_vars.ctx_dir }}/hosts.tmp"
         dest: "{{ env_vars.ctx_dir }}/hosts"
         mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
-        force: "{{ project_diff_hosts.changed or project_diff_hosts.changed }}"
+        force: "{{ transfer_diff.changed }}"
       tags: ["no_print_skipped"]
 
     # project cloud - playbook run file
