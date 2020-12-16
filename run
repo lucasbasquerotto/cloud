@@ -27,6 +27,7 @@ while getopts ':fp-:' OPT; do
 	case "$OPT" in
 		f|fast ) fast="true";;
 		p|prepare ) prepare="true";;
+		end ) end="true";;
 		debug ) debug=( "-vvvvv" );;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;
 		?* ) error "[error] unknown long option: --${OPT:-}";;
@@ -98,10 +99,17 @@ fi
 if [ "${prepare:-}" = 'true' ]; then
 	echo "[cloud] skipping execute project context (prepare)..."
 else
+	other_args=()
+
+	if [ "${end:-}" = 'true' ]; then
+		other_args=( '--tags=destroy' )
+	fi
+
     # Execute the cloud context
     ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
         ${vault[@]+"${vault[@]}"} \
         ${debug[@]+"${debug[@]}"} \
+        ${other_args[@]+"${other_args[@]}"} \
         -i "$var_ctx_dir/hosts" \
         -e env_vars_file="$vars_file_yaml" \
         main.yml "${@}" || error "[error] run ctx"

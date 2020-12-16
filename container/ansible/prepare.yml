@@ -16,6 +16,7 @@
         project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
         project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
         project_dev_repos_dir: "{{ project_base_dir }}/dev/link"
+        project_commit_dir: "{{ project_base_dir }}/files/cloud/commit"
       tags: ["no_print"]
 
     - name: "{{ project_base_title }} - load the init environment vars"
@@ -73,6 +74,20 @@
         project_env_dir: "{{ repo_dir }}"
         project_env_commit: "{{ repo_git_result.after }}"
       tags: ["no_print"]
+
+    - name: "{{ project_base_title }} - create the cloud commit dir"
+      file:
+        path: "{{ project_commit_dir }}"
+        state: directory
+        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+
+    - name: "{{ project_base_title }} - create the cloud commit file"
+      copy:
+        content: |
+          #!/bin/bash
+          export commit={{ project_env_commit | quote }}
+        dest: "{{ project_commit_dir }}/current"
+        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
 
     - name: "{{ project_env_title }} - set_fact - project_env_file"
       set_fact:

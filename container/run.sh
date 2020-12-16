@@ -24,8 +24,10 @@ while getopts ':fp-:' OPT; do
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		f|fast ) fast="true"; args+=( "--fast" );;
+		f|force ) force="true";;
+		s|fast ) fast="true"; args+=( "--fast" );;
 		p|prepare ) prepare="true"; args+=( "--prepare" );;
+		end ) end="true"; args+=( "--end" );;
 		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
 		project-dir ) project_dir=${OPTARG:-};;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;
@@ -93,7 +95,32 @@ else
 	fi
 fi
 
-# Execute the cloud contexts
-bash "$project_dir/files/cloud/run-ctxs" \
-	${args[@]+"${args[@]}"} "${@}" \
-	|| error "[error] run-ctxs"
+last_commit=''
+can_change_commit=''
+commit_dir="$project_dir/files/cloud/commit"
+
+if [ "${prepare:-}" != 'true' ] && [ "${end:-}" != 'true' ]; then
+	can_change_commit='true'
+fi
+
+if [ "$can_change_commit" = 'true' ]; then
+	if [ -f "$commit_dir/backup" ]; then
+		last_commit="$(cat "$commit_dir/backup")"
+	fi
+
+	# shellcheck source=./commit.sample.sh
+	. "$commit_dir/current"
+fi
+
+if [ "${force:-}" = 'true' ] || [ "$last_commit" = '' ] || [ "$last_commit" != "${commit:-}" ]; then
+	# Execute the cloud contexts
+	bash "$project_dir/files/cloud/run-ctxs" \
+		${args[@]+"${args[@]}"} "${@}" \
+		|| error "[error] run-ctxs"
+
+	if [ "$can_change_commit" = 'true' ]; then
+		echo "${commit:-}" > "$commit_dir/backup"
+	fi
+else
+	echo "[cloud] skipping the cloud contexts execution (same commit)..."
+fi
