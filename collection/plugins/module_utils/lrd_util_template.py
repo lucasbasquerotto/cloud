@@ -57,7 +57,7 @@ def lookup(plugin, ansible_vars, file, params):
     # argument.
     new_vars = deepcopy(ansible_vars)
     new_vars.update(generate_ansible_template_vars(lookupfile))
-    new_vars.update(dict(params=params))
+    new_vars.update(params)
     display.vv("params keys: %s" % params.keys())
 
     # TODO: Remove in newer ansible versions

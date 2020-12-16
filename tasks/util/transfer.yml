@@ -41,6 +41,7 @@
     mode: "{{ transfer_mode | default(omit) }}"
   vars:
     params: "{{ transfer_prepared_content.params }}"
+    credentials: "{{ transfer_prepared_content.credentials }}"
   register: transfer_diff
   when: transfer_prepared_content.type == 'template'
   tags: ["no_print_skipped"]

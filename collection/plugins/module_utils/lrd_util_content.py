@@ -54,8 +54,14 @@ def load_content(content, env, custom_dir, run_info):
 
         content_file = prepared_content.get('file')
         params = prepared_content.get('params')
+        credentials = prepared_content.get('credentials')
 
-        result = lookup(plugin, ansible_vars, content_file, params)
+        result = lookup(
+            plugin,
+            ansible_vars,
+            content_file,
+            dict(params=params, credentials=credentials),
+        )
       else:
         error_msgs_aux = [[
             str('type: ' + str(type(content))),

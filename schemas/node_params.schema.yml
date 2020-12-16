@@ -3,15 +3,9 @@ schemas:
   node_params:
     type: "dict"
     props:
-      service_params:
-        type: "dict"
       dns_service_params_list:
         type: "list"
         elem_schema: "dns"
-      user_data_file:
-        type: "str"
-      user_data_params:
-        type: "dict"
       host_test:
         schema: "host_test"
       cron:
