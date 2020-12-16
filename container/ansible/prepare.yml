@@ -103,11 +103,19 @@
     - name: "{{ project_env_title }} - project_env"
       set_fact:
         project_env: "{{ project_env_aux }}"
+        project_env_has_original: false
+        project_env_original: {}
       vars:
         project_name: "{{ project_env_init.key }}"
         project_ctxs: "{{ project_env_init.ctxs | default([]) }}"
         params: "{{ project_env_init.env_params | default({}) }}"
       tags: ["no_print"]
+
+    - name: "{{ project_env_title }} - validate ctl env (env vars)"
+      lrd.cloud.schema:
+        schema_file: "{{ project_env_dir }}/{{ project_env.ctl_env_schema | default('') }}"
+        value: "{{ project_env_init.env_params | default({}) }}"
+      when: (project_env.ctl_env_schema | default('')) != ''
 
     # env base repository
 
@@ -121,6 +129,8 @@
         - name: "{{ project_env_title }} - set_fact - project_env_base_dir"
           set_fact:
             project_env_base_dir: "{{ project_env_dir + '/' + project_env.env.repo_dir }}"
+            project_env_has_original: true
+            project_env_original: "{{ project_env }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - env base - repo (outer)"
@@ -152,6 +162,15 @@
       tags: ["no_print"]
 
     # validate environment
+
+    - name: "{{ project_env_title }} - validate original env"
+      lrd.cloud.schema:
+        schema_file: "{{ project_env_dir }}/{{ project_env.original_env_schema | default('') }}"
+        value: "{{ project_env_original }}"
+      when: >-
+        (project_env_has_original | bool)
+        and
+        ((project_env.original_env_schema | default('')) != '')
 
     - name: "{{ project_env_title }} - validate env (minimum)"
       lrd.cloud.schema:
