@@ -10,6 +10,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
+
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, load_yaml_file
 
@@ -138,8 +140,17 @@ def main():
   value = module.params['value']
   full_validation = module.boolean(module.params['full_validation'])
 
-  schema = load_yaml_file(schema_file)
-  error_msgs = validate_schema(schema, value, full_validation)
+  error_msgs = list()
+
+  if os.path.exists(schema_file):
+    schema = load_yaml_file(schema_file)
+    error_msgs_aux = validate_schema(schema, value, full_validation)
+
+    for value in (error_msgs_aux or []):
+      new_value = [str('schema file: ' + schema_file)] + value
+      error_msgs += [new_value]
+  else:
+    error_msgs += [[str('schema file not found: ' + schema_file)]]
 
   if error_msgs:
     context = "schema validation"

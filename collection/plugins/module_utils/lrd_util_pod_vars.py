@@ -136,11 +136,12 @@ def load_next_vars(file_relpath, params, data_info):
     env_dir = env_data.get('env_dir')
 
     try:
-      file = pod_dir + '/' + file_relpath
+      file = pod_local_dir + '/' + file_relpath
 
       if validate and not os.path.exists(file):
         error_msgs = [[
             str('file: ' + file_relpath),
+            str('pod_local_dir: ' + pod_local_dir),
             'msg: pod ctx file not found in the pod repository',
         ]]
         return dict(error_msgs=error_msgs)
@@ -224,7 +225,7 @@ def load_next_vars(file_relpath, params, data_info):
 
           if to_bool(when if (when is not None) else True):
             src_relpath = res_template.get('src')
-            src = pod_dir + '/' + src_relpath
+            src = pod_local_dir + '/' + src_relpath
             local_src = pod_local_dir + '/' + src_relpath
 
             dest_relpath = res_template.get('dest')

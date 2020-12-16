@@ -36,6 +36,8 @@ schemas:
       env_repos:
         type: "list"
         elem_schema: "repo_info"
+      original_env_schema:
+        type: "str"
   repo_info:
     type: "dict"
     props:
