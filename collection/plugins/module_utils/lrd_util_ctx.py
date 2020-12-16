@@ -181,7 +181,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
             ]]
 
           if validate_ctx:
-            task_file = base_dir_prefix + task
+            task_file = (base_dir_prefix + task) or ''
 
             if not os.path.exists(task_file):
               error_msgs_aux += [[str('task file not found: ' + task_file)]]
@@ -208,7 +208,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
               schema_file = service.get('credentials_schema')
 
               if schema_file:
-                schema_file = base_dir_prefix + schema_file
+                schema_file = (base_dir_prefix + schema_file) or ''
 
                 if os.path.exists(schema_file):
                   schema = load_schema(schema_file)
@@ -279,7 +279,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
               schema_file = service.get('params_schema')
 
               if schema_file:
-                schema_file = base_dir_prefix + schema_file
+                schema_file = (base_dir_prefix + schema_file) or ''
 
                 if os.path.exists(schema_file):
                   schema = load_schema(schema_file)
@@ -543,7 +543,7 @@ def prepare_pod(pod_info, parent_data, run_info):
           pod_ctx_file = pod.get('ctx')
 
           if pod_ctx_file:
-            pod_ctx_file_full = base_dir_prefix + pod_ctx_file
+            pod_ctx_file_full = (base_dir_prefix + pod_ctx_file) or ''
 
             if not os.path.exists(pod_ctx_file_full):
               error_msgs_aux += [[str('pod ctx file not found: ' + pod_ctx_file)]]
@@ -570,7 +570,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             schema_file = pod.get('credentials_schema')
 
             if schema_file:
-              schema_file_full = base_dir_prefix + schema_file
+              schema_file_full = (base_dir_prefix + schema_file) or ''
 
               if os.path.exists(schema_file_full):
                 schema = load_schema(schema_file_full)
@@ -657,7 +657,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             schema_file = pod.get('params_schema')
 
             if schema_file:
-              schema_file_full = base_dir_prefix + schema_file
+              schema_file_full = (base_dir_prefix + schema_file) or ''
 
               if os.path.exists(schema_file_full):
                 schema = load_schema(schema_file_full)
@@ -1347,7 +1347,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
                 schema_file
                 if (task_target_origin == 'cloud')
                 else env_data.get('env_dir') + '/' + schema_file
-            )
+            ) or ''
 
             if os.path.exists(schema_file_full):
               schema = load_schema(schema_file_full)
@@ -1432,7 +1432,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
                 schema_file
                 if (task_target_origin == 'cloud')
                 else env_data.get('env_dir') + '/' + schema_file
-            )
+            ) or ''
 
             if os.path.exists(schema_file_full):
               schema = load_schema(schema_file_full)
@@ -1691,7 +1691,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                   task_file
                   if (task_target_origin == 'cloud')
                   else env_data.get('env_dir') + '/' + task_file
-              )
+              ) or ''
 
               if not os.path.exists(task_file_full):
                 error_msgs_aux += [[str('msg: task file not found: ' + task_file)]]
@@ -2017,7 +2017,7 @@ def prepare_ctx(ctx_name, run_info):
 
         if hooks:
           for key in sorted(list(hooks.keys())):
-            hook_file = hooks.get('key')
+            hook_file = hooks.get(key) or ''
 
             if not os.path.exists(hook_file):
               error_msgs += [[
