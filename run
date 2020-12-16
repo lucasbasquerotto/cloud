@@ -18,15 +18,15 @@ shift;
 debug=()
 
 # shellcheck disable=SC2214
-while getopts ':fp-:' OPT; do
+while getopts ':ps-:' OPT; do
 	if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
 		OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		f|fast ) fast="true";;
 		p|prepare ) prepare="true";;
+		s|fast ) fast="true";;
 		end ) end="true";;
 		debug ) debug=( "-vvvvv" );;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;

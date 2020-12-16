@@ -16,7 +16,7 @@ debug=()
 last_index=1
 
 # shellcheck disable=SC2214
-while getopts ':fp-:' OPT; do
+while getopts ':fps-:' OPT; do
 	last_index="$OPTIND"
 	if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
@@ -25,8 +25,8 @@ while getopts ':fp-:' OPT; do
 	fi
 	case "$OPT" in
 		f|force ) force="true";;
-		s|fast ) fast="true"; args+=( "--fast" );;
 		p|prepare ) prepare="true"; args+=( "--prepare" );;
+		s|fast ) fast="true"; args+=( "--fast" );;
 		end ) end="true"; args+=( "--end" );;
 		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
 		project-dir ) project_dir=${OPTARG:-};;
