@@ -402,7 +402,7 @@ def prepare_services(services, env_data, validate_ctx, top=False, service_names=
     return dict(error_msgs=error_msgs)
 
 
-def prepare_pod_transfer(transfer_contents, context_title, prepare_info):
+def prepare_transfer_content(transfer_contents, context_title, prepare_info):
   try:
     result = list()
     error_msgs_aux = list()
@@ -413,7 +413,7 @@ def prepare_pod_transfer(transfer_contents, context_title, prepare_info):
     current_content_dests = set()
 
     env = prepare_info.get('env')
-    local_dir = prepare_info.get('local_dir')
+    custom_dir = prepare_info.get('custom_dir')
     run_info = prepare_info.get('run_info')
     all_content_dests = prepare_info.get('all_content_dests')
 
@@ -431,7 +431,7 @@ def prepare_pod_transfer(transfer_contents, context_title, prepare_info):
           info = prepare_content(
               transfer_content.get('src'),
               env=env,
-              custom_dir=local_dir,
+              custom_dir=custom_dir,
               run_info=run_info,
           )
 
@@ -460,7 +460,7 @@ def prepare_pod_transfer(transfer_contents, context_title, prepare_info):
         error_msgs_aux += [[
             str('content: #' + str(idx + 1)),
             str('dest: ' + dest),
-            'msg: error when trying to prepare the pod transfer content item',
+            'msg: error when trying to prepare to transfer the content item',
             'error type: ' + str(type(error)),
             'error details: ' + str(error),
         ]]
@@ -475,7 +475,7 @@ def prepare_pod_transfer(transfer_contents, context_title, prepare_info):
   except Exception as error:
     error_msgs = [[
         str('context: ' + (context_title or '')),
-        'msg: error when trying to prepare the pod transfer contents',
+        'msg: error when trying to prepare to transfer the contents',
         'error type: ' + str(type(error)),
         'error details: ' + str(error),
     ]]
@@ -634,7 +634,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         prepare_transfer_info = dict(
             env=env,
-            local_dir=local_dir,
+            custom_dir=local_dir,
             run_info=run_info,
             all_content_dests=all_content_dests,
         )
@@ -643,7 +643,7 @@ def prepare_pod(pod_info, parent_data, run_info):
           transfer_contents = pod_ctx_info.get('transfer')
 
           if transfer_contents:
-            info = prepare_pod_transfer(
+            info = prepare_transfer_content(
                 transfer_contents,
                 context_title='prepare pod ctx info transfer contents',
                 prepare_info=prepare_transfer_info,
@@ -660,7 +660,7 @@ def prepare_pod(pod_info, parent_data, run_info):
         transfer_contents = pod_info_dict.get('transfer')
 
         if transfer_contents:
-          info = prepare_pod_transfer(
+          info = prepare_transfer_content(
               transfer_contents,
               context_title='prepare pod info transfer contents',
               prepare_info=prepare_transfer_info,
@@ -677,7 +677,7 @@ def prepare_pod(pod_info, parent_data, run_info):
         transfer_contents = pod.get('transfer')
 
         if transfer_contents:
-          info = prepare_pod_transfer(
+          info = prepare_transfer_content(
               transfer_contents,
               context_title='prepare pod transfer contents',
               prepare_info=prepare_transfer_info,
@@ -1063,6 +1063,52 @@ def prepare_node(node_info, run_info):
                 ]]
 
         error_msgs_aux_params = []
+
+        all_content_dests = set()
+        prepared_transfer = []
+
+        prepare_transfer_info = dict(
+            env=env,
+            run_info=run_info,
+            all_content_dests=all_content_dests,
+        )
+
+        transfer_contents = node_info_dict.get('transfer')
+
+        if transfer_contents:
+          info = prepare_transfer_content(
+              transfer_contents,
+              context_title='prepare node info transfer contents',
+              prepare_info=prepare_transfer_info,
+          )
+
+          prepared_transfer_aux = info.get('result')
+          error_msgs_aux_transfer = info.get('error_msgs')
+
+          if error_msgs_aux_transfer:
+            error_msgs_aux += error_msgs_aux_transfer
+          else:
+            prepared_transfer += prepared_transfer_aux
+
+        transfer_contents = node.get('transfer')
+
+        if transfer_contents:
+          info = prepare_transfer_content(
+              transfer_contents,
+              context_title='prepare node transfer contents',
+              prepare_info=prepare_transfer_info,
+          )
+
+          prepared_transfer_aux = info.get('result')
+          error_msgs_aux_transfer = info.get('error_msgs')
+
+          if error_msgs_aux_transfer:
+            error_msgs_aux += error_msgs_aux_transfer
+          else:
+            prepared_transfer += prepared_transfer_aux
+
+        if prepared_transfer:
+          result['prepared_transfer'] = prepared_transfer
 
         if isinstance(node_info, dict):
           params_args = dict(

@@ -1,0 +1,16 @@
+- name: "{{ node_prepare_title }} - transfer (outer)"
+  include_tasks: "tasks/util/transfer.yml"
+  vars:
+    transfer_title: "{{ node_prepare_title }} - transfer #{{ node_prepare_idx }}"
+    transfer_prepared: true
+    transfer_content: "{{ node_prepare_item.src }}"
+    transfer_dest: "{{ node_prepare_node.node_dir }}/{{ node_prepare_item.dest }}"
+    transfer_mode: >-
+      {{ node_prepare_item.mode | default(env_lax | bool | ternary(0644, 0600)) }}
+  when: node_prepare_item.when | default(true, true) | bool
+  loop: "{{ node_prepare_node.prepared_transfer | default([]) }}"
+  loop_control:
+    index_var: node_prepare_idx
+    loop_var: node_prepare_item
+    label: "{{ node_prepare_idx }}"
+  tags: ["no_print_skipped"]

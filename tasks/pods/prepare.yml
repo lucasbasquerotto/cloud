@@ -50,7 +50,7 @@
 - name: "{{ pod_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
-    transfer_title: "{{ pod_prepare_title }} - transfer"
+    transfer_title: "{{ pod_prepare_title }} - transfer #{{ pod_prepare_idx }}"
     transfer_prepared: true
     transfer_content: "{{ pod_prepare_item.src }}"
     transfer_dest: "{{ pod_item.pod_dir }}/{{ pod_prepare_item.dest }}"

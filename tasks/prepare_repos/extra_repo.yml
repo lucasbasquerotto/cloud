@@ -3,7 +3,8 @@
 - name: "{{ prepare_repos_extra_repo_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
-    transfer_title: "{{ prepare_repos_extra_repo_title }} - transfer"
+    transfer_title: >-
+      {{ prepare_repos_extra_repo_title }} - transfer #{{ prepare_repos_extra_repo_idx }}
     transfer_content: "{{ prepare_repos_extra_repo_item.src }}"
     transfer_dest: "{{ prepare_repos_extra_repo_dir }}/{{ prepare_repos_extra_repo_item.dest }}"
     transfer_custom_dir: "{{ prepare_repos_extra_repo_dir }}"
