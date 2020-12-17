@@ -180,7 +180,7 @@ def prepare_content(content, env, custom_dir, env_data, validate, content_names=
           ]]
 
       if not error_msgs_aux:
-        content_origin = content.get('origin') or 'cloud'
+        content_origin = content.get('origin') or 'custom'
         allowed_origins = ['env', 'cloud', 'custom']
 
         if content_origin not in allowed_origins:
