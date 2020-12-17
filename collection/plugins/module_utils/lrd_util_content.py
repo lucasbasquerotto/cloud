@@ -23,17 +23,13 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import
 
 def load_content(content, env, custom_dir, run_info):
   try:
-    env_data = run_info.get('env_data')
-    validate = run_info.get('validate')
-
     result = None
 
     info = prepare_content(
         content,
         env=env,
         custom_dir=custom_dir,
-        env_data=env_data,
-        validate=validate,
+        run_info=run_info,
     )
 
     prepared_content = info.get('result')
@@ -84,7 +80,7 @@ def load_content(content, env, custom_dir, run_info):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_content(content, env, custom_dir, env_data, validate, content_names=None):
+def prepare_content(content, env, custom_dir, run_info, content_names=None):
   try:
     if env is None:
       error_msgs = [['msg: environment variable not specified']]
@@ -108,6 +104,9 @@ def prepare_content(content, env, custom_dir, env_data, validate, content_names=
     elif isinstance(content, dict):
       result = dict()
       error_msgs_aux = list()
+
+      env_data = run_info.get('env_data')
+      validate = run_info.get('validate')
 
       content_type = content.get('type')
 
@@ -267,12 +266,13 @@ def prepare_content(content, env, custom_dir, env_data, validate, content_names=
             if validate:
               schema_file = content.get('params_schema')
 
+              if schema_file:
+                schema_file = base_dir_prefix + schema_file
+
               if content_type == 'str':
                 schema_file = 'schemas/content_params_str.yml'
 
               if schema_file:
-                schema_file = base_dir_prefix + schema_file
-
                 if os.path.exists(schema_file):
                   schema = load_schema(schema_file)
                   error_msgs_aux_validate = validate_schema(
@@ -336,8 +336,7 @@ def prepare_content(content, env, custom_dir, env_data, validate, content_names=
                   child_content,
                   env=env,
                   custom_dir=custom_dir,
-                  env_data=env_data,
-                  validate=validate,
+                  run_info=run_info,
                   content_names=content_names,
               )
 

@@ -17,6 +17,7 @@ import os
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     default, is_empty, is_str, load_schema, merge_dicts, to_bool
 )
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import prepare_content
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import load_vars
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
@@ -401,6 +402,86 @@ def prepare_services(services, env_data, validate_ctx, top=False, service_names=
     return dict(error_msgs=error_msgs)
 
 
+def prepare_pod_transfer(transfer_contents, context_title, prepare_info):
+  try:
+    result = list()
+    error_msgs_aux = list()
+
+    if not transfer_contents:
+      return dict(result=result)
+
+    current_content_dests = set()
+
+    env = prepare_info.get('env')
+    local_dir = prepare_info.get('local_dir')
+    run_info = prepare_info.get('run_info')
+    all_content_dests = prepare_info.get('all_content_dests')
+
+    for idx, transfer_content in enumerate(transfer_contents or []):
+      try:
+        dest = transfer_content.get('dest')
+        error_msgs_aux_item = list()
+
+        if dest in current_content_dests:
+          error_msgs_aux_item += [['msg: duplicate destination']]
+        elif dest not in all_content_dests:
+          all_content_dests.add(dest)
+          current_content_dests.add(dest)
+
+          info = prepare_content(
+              transfer_content.get('src'),
+              env=env,
+              custom_dir=local_dir,
+              run_info=run_info,
+          )
+
+          prepared_content = info.get('result')
+          error_msgs_aux_content = info.get('error_msgs')
+
+          if error_msgs_aux_content:
+            error_msgs_aux_item += error_msgs_aux_content
+          else:
+            result_item = dict(
+                src=prepared_content,
+                dest=dest,
+                mode=transfer_content.get('mode'),
+                when=to_bool(transfer_content.get('when')),
+            )
+
+            result += [result_item]
+
+        for value in error_msgs_aux_item:
+          new_value = [
+              str('content: #' + str(idx + 1)),
+              str('dest: ' + dest),
+          ] + value
+          error_msgs_aux += [new_value]
+      except Exception as error:
+        error_msgs_aux += [[
+            str('content: #' + str(idx + 1)),
+            str('dest: ' + dest),
+            'msg: error when trying to prepare the pod transfer content item',
+            'error type: ' + str(type(error)),
+            'error details: ' + str(error),
+        ]]
+
+    error_msgs = list()
+
+    for value in error_msgs_aux:
+      new_value = [str('context: ' + (context_title or ''))] + value
+      error_msgs += [new_value]
+
+    return dict(result=result, error_msgs=error_msgs)
+  except Exception as error:
+    error_msgs = [[
+        str('context: ' + (context_title or '')),
+        'msg: error when trying to prepare the pod transfer contents',
+        'error type: ' + str(type(error)),
+        'error details: ' + str(error),
+    ]]
+    return dict(error_msgs=error_msgs)
+
+
 def prepare_pod(pod_info, parent_data, run_info):
   try:
     result = dict()
@@ -547,6 +628,71 @@ def prepare_pod(pod_info, parent_data, run_info):
 
             if not os.path.exists(pod_ctx_file_full):
               error_msgs_aux += [[str('pod ctx file not found: ' + pod_ctx_file)]]
+
+        all_content_dests = set()
+        prepared_transfer = []
+
+        prepare_transfer_info = dict(
+            env=env,
+            local_dir=local_dir,
+            run_info=run_info,
+            all_content_dests=all_content_dests,
+        )
+
+        if pod_ctx_info:
+          transfer_contents = pod_ctx_info.get('transfer')
+
+          if transfer_contents:
+            info = prepare_pod_transfer(
+                transfer_contents,
+                context_title='prepare pod ctx info transfer contents',
+                prepare_info=prepare_transfer_info,
+            )
+
+            prepared_transfer_aux = info.get('result')
+            error_msgs_aux_transfer = info.get('error_msgs')
+
+            if error_msgs_aux_transfer:
+              error_msgs_aux += error_msgs_aux_transfer
+            else:
+              prepared_transfer += prepared_transfer_aux
+
+        transfer_contents = pod_info_dict.get('transfer')
+
+        if transfer_contents:
+          info = prepare_pod_transfer(
+              transfer_contents,
+              context_title='prepare pod info transfer contents',
+              prepare_info=prepare_transfer_info,
+          )
+
+          prepared_transfer_aux = info.get('result')
+          error_msgs_aux_transfer = info.get('error_msgs')
+
+          if error_msgs_aux_transfer:
+            error_msgs_aux += error_msgs_aux_transfer
+          else:
+            prepared_transfer += prepared_transfer_aux
+
+        transfer_contents = pod.get('transfer')
+
+        if transfer_contents:
+          info = prepare_pod_transfer(
+              transfer_contents,
+              context_title='prepare pod transfer contents',
+              prepare_info=prepare_transfer_info,
+          )
+
+          prepared_transfer_aux = info.get('result')
+          error_msgs_aux_transfer = info.get('error_msgs')
+
+          if error_msgs_aux_transfer:
+            error_msgs_aux += error_msgs_aux_transfer
+          else:
+            prepared_transfer += prepared_transfer_aux
+
+        if prepared_transfer:
+          result['prepared_transfer'] = prepared_transfer
 
         params_args = dict(
             group_params=pod.get('credentials'),
@@ -1067,8 +1213,10 @@ def prepare_node(node_info, run_info):
 
             for idx, dns_service_params in enumerate(dns_service_params_list, start=1):
               for dns_type_name in ['ipv4', 'ipv6']:
-                name_suffix = '-' + dns_type_name + \
-                    (('-' + str(idx)) if idx > 1 else '')
+                name_suffix = (
+                    '-' + dns_type_name
+                    + (('-' + str(idx)) if idx > 1 else '')
+                )
                 service_info = dict(
                     name=dns_service + name_suffix,
                     key=dns_service,

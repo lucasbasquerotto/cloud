@@ -12,7 +12,7 @@
 from __future__ import (absolute_import, division, print_function)
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import load_content
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import prepare_content
 
 from ansible.module_utils._text import to_text
 from ansible.plugins.lookup import LookupBase
@@ -21,7 +21,7 @@ from ansible.errors import AnsibleError
 __metaclass__ = type  # pylint: disable=invalid-name
 
 DOCUMENTATION = """
-    name: lrd.cloud.content
+    name: lrd.cloud.prepare_content
     author: Lucas Basquerotto
     version_added: "2.11"
     short_description: retrieve contents of pod context after templating with Jinja2
@@ -29,7 +29,7 @@ DOCUMENTATION = """
       - Returns a dictionary with a list of directories, another list of files and another list of templates.
     options:
       _terms:
-        description: Contents to be loaded
+        description: Contents to be prepare
         version_added: '2.11'
         type: list
       env_data:
@@ -81,7 +81,7 @@ class LookupModule(LookupBase):
           validate=validate if (validate is not None) else True,
       )
 
-      result_info = load_content(
+      result_info = prepare_content(
           content,
           env=env,
           custom_dir=custom_dir,

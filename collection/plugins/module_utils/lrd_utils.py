@@ -111,9 +111,9 @@ def load_schema(schema_file):
   return schema
 
 
-def to_bool(value):
+def to_bool(value, default_value=None):
   if value is None:
-    return None
+    return default_value
 
   if isinstance(value, bool):
     return value

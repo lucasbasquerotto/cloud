@@ -12,116 +12,13 @@
         prepare_repos_extra_repo_item.mode
         | default(env_lax | bool | ternary(0644, 0600))
       }}
+  when: prepare_repos_extra_repo_item.when | default(true, true) | bool
   loop: "{{ prepare_repos_item.transfer | default([]) }}"
   loop_control:
     index_var: prepare_repos_extra_repo_idx
     loop_var: prepare_repos_extra_repo_item
     label: "{{ prepare_repos_extra_repo_idx }}"
   tags: ["no_print_skipped"]
-
-# # repo files
-
-# - name: >-
-#     {{ prepare_repos_extra_repo_title }} - repo files - create the dest files directories
-#   file:
-#     path: "{{ (prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest) | dirname }}"
-#     state: directory
-#     mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-#   loop: "{{ prepare_repos_item.files | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print"]
-
-# - name: "{{ prepare_repos_extra_repo_title }} - repo files - copy"
-#   copy:
-#     src: "{{ prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.src }}"
-#     dest: "{{ prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest }}"
-#     mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
-#   loop: "{{ prepare_repos_item.files | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.src }} -> {{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print_skipped"]
-
-# # env files
-
-# - name: >-
-#     {{ prepare_repos_extra_repo_title }} - env files - create the dest files directories
-#   file:
-#     path: "{{ (prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest) | dirname }}"
-#     state: directory
-#     mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-#   loop: "{{ prepare_repos_item.env_files | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print"]
-
-# - name: "{{ prepare_repos_extra_repo_title }} - env files - copy"
-#   copy:
-#     src: "{{ env_dir + '/' + prepare_repos_extra_repo_item.src }}"
-#     dest: "{{ prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest }}"
-#     mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
-#   loop: "{{ prepare_repos_item.env_files | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.src }} -> {{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print_skipped"]
-
-# # repo templates
-
-# - name: >-
-#     {{ prepare_repos_extra_repo_title }} - repo templates - create the dest templates directories
-#   file:
-#     path: "{{ (prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest) | dirname }}"
-#     state: directory
-#     mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-#   loop: "{{ prepare_repos_item.templates | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print"]
-
-# - name: "{{ prepare_repos_extra_repo_title }} - repo templates - transfer"
-#   template:
-#     src: "{{ prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.src }}"
-#     dest: "{{ prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest }}"
-#     mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
-#   vars:
-#     params: "{{ prepare_repos_extra_repo_item.params }}"
-#   loop: "{{ prepare_repos_item.templates | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.src }} -> {{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print_skipped"]
-
-# # env templates
-
-# - name: >-
-#     {{ prepare_repos_extra_repo_title }} - env templates - create the dest templates directories
-#   file:
-#     path: "{{ (prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest) | dirname }}"
-#     state: directory
-#     mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-#   loop: "{{ prepare_repos_item.env_templates | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print"]
-
-# - name: "{{ prepare_repos_extra_repo_title }} - env templates - transfer"
-#   template:
-#     src: "{{ env_dir + '/' + prepare_repos_extra_repo_item.src }}"
-#     dest: "{{ prepare_repos_extra_repo_dir + '/' + prepare_repos_extra_repo_item.dest }}"
-#     mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
-#   vars:
-#     params: "{{ prepare_repos_extra_repo_item.params }}"
-#   loop: "{{ prepare_repos_item.env_templates | default([]) }}"
-#   loop_control:
-#     loop_var: prepare_repos_extra_repo_item
-#     label: "{{ prepare_repos_extra_repo_item.src }} -> {{ prepare_repos_extra_repo_item.dest }}"
-#   tags: ["no_print_skipped"]
 
 # links
 

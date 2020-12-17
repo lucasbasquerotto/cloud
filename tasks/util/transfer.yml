@@ -1,17 +1,22 @@
+- name: "{{ transfer_title }} - transfer_prepared_content"
+  set_fact:
+    transfer_prepared_content: "{{ transfer_content }}"
+  tags: ["no_print"]
+
 - name: "{{ transfer_title }} - prepare the content"
   set_fact:
     transfer_prepared_content: >-
       {{
-        transfer_prepared | default(false) | ternary(
+        lookup(
+          'lrd.cloud.prepare_content',
           transfer_content,
-          transfer_content | lrd.cloud.content(
-            env_data=env_data,
-            env=transfer_env | default(env, true),
-            custom_dir=transfer_custom_dir | default(''),
-            validate=transfer_validate | default(true, true),
-          )
+          env_data=env_data,
+          env=transfer_env | default(env, true),
+          custom_dir=transfer_custom_dir | default(''),
+          validate=transfer_validate | default(true, true),
         )
       }}
+  when: not (transfer_prepared | default(false) | bool)
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - prepare the content"

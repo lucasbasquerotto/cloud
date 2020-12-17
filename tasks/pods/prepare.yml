@@ -36,22 +36,32 @@
       tags: ["no_print"]
   when: (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false, true) | bool)
 
-### Copy the specified pod env files and templates ###
-
-# - name: "{{ pod_prepare_title }}"
-#   include_tasks: "tasks/pods/transfer.yml"
-#   vars:
-#     pod_transfer_title: "{{ pod_prepare_title }} - pod env"
-#     pod_transfer_src_env_files: "{{ pod_item.env_files | default([], true) }}"
-#     pod_transfer_src_env_templates: "{{ pod_item.env_templates | default([], true) }}"
-#   tags: ["no_print"]
-
-### Transfer the pod artifacts (defined previously) ###
+### Transfer the pod artifacts (when ctx is defined in the pod) ###
 
 - name: "{{ pod_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/pods/transfer.yml"
   vars:
     pod_transfer_title: "{{ pod_prepare_title }} - ctx"
   when: (pod_item.ctx | default('')) != ''
+  tags: ["no_print_skipped"]
+
+### Transfer the pod contents ###
+
+- name: "{{ pod_prepare_title }} - transfer (outer)"
+  include_tasks: "tasks/util/transfer.yml"
+  vars:
+    transfer_title: "{{ pod_prepare_title }} - transfer"
+    transfer_prepared: true
+    transfer_content: "{{ pod_prepare_item.src }}"
+    transfer_dest: "{{ pod_item.pod_dir }}/{{ pod_prepare_item.dest }}"
+    transfer_custom_dir: "{{ pod_item.local_dir }}"
+    transfer_mode: >-
+      {{ pod_prepare_item.mode | default(env_lax | bool | ternary(0644, 0600)) }}
+  when: pod_prepare_item.when | default(true, true) | bool
+  loop: "{{ pod_item.prepared_transfer | default([]) }}"
+  loop_control:
+    index_var: pod_prepare_idx
+    loop_var: pod_prepare_item
+    label: "{{ pod_prepare_idx }}"
   tags: ["no_print_skipped"]
 
