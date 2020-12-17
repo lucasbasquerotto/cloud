@@ -10,8 +10,7 @@
     # prepare the repositories
 
     - name: "{{ env_title }} - prepare repos (outer)"
-      include_role:
-        name: "prepare_repos"
+      include_tasks: "tasks/prepare_repos/main.yml"
       vars:
         prepare_repos_title: "{{ env_title }} - prepare repos"
         prepare_repos_repos_dict: "{{ env.repos | default({}) }}"

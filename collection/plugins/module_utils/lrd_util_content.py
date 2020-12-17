@@ -158,10 +158,7 @@ def prepare_content(content, env, custom_dir, env_data, validate, content_names=
             'origin',
             'file',
         ]
-        required_props = [
-            'type',
-            'file',
-        ]
+        required_props = ['file']
 
       for prop in sorted(list(content.keys())):
         if prop not in allowed_props:

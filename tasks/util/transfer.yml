@@ -25,6 +25,13 @@
   when: transfer_prepared_content.type not in tmp_allowed
   tags: ["no_print"]
 
+- name: "{{ transfer_title }} - create the directory {{ transfer_dest | dirname }}"
+  file:
+    path: "{{ transfer_dest | dirname }}"
+    state: directory
+    mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+  tags: ["no_print"]
+
 - name: "{{ transfer_title }} - copy the file content to {{ transfer_dest }}"
   copy:
     src: "{{ transfer_prepared_content.file }}"
