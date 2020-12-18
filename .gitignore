@@ -10,4 +10,5 @@
 /ext/
 /ext-*/
 
+/ansible/ansible.generated.cfg
 /run.yml

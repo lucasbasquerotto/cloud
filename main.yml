@@ -134,6 +134,11 @@
         )
       tags: ["no_print_skipped"]
 
+    - name: "{{ env_title }} - instance_info_skip (initial)"
+      set_fact:
+        instance_info_skip: false
+      tags: ["no_print"]
+
     - name: "{{ env_title }} - instance info - before (outer)"
       include_tasks: "tasks/nodes/instance_info.yml"
       vars:

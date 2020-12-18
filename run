@@ -113,7 +113,7 @@ else
 	fi
 
     # Execute the cloud context
-    ANSIBLE_CONFIG="$ctx_dir/ansible.cfg" ansible-playbook \
+    ANSIBLE_CONFIG="ansible/ansible.generated.cfg" ansible-playbook \
         ${vault[@]+"${vault[@]}"} \
         ${debug[@]+"${debug[@]}"} \
         ${other_args[@]+"${other_args[@]}"} \
