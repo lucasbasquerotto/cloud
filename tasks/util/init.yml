@@ -1,6 +1,6 @@
 - name: "{{ env_title | default('[env]') }} gathering facts"
   setup:
-  when: not (init_skip_setup | default(false) | bool)
+  when: init_run_setup | default(false) | bool
   tags: ["no_print_skipped"]
 
 - name: "env (outer)"

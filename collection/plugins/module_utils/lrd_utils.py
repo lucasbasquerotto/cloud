@@ -67,23 +67,12 @@ def default(value, default_value):
   return default_value if value is None else value
 
 
+def is_bool(str_val):
+  return to_bool(str_val) is not None
+
+
 def is_empty(value):
   return (value is None) or (is_str(value) and value == '')
-
-
-def is_str(value):
-  try:
-    return isinstance(value, basestring)
-  except NameError:
-    return isinstance(value, str)
-
-
-def is_int(str_val):
-  try:
-    int(str_val)
-    return True
-  except ValueError:
-    return False
 
 
 def is_float(str_val):
@@ -94,8 +83,19 @@ def is_float(str_val):
     return False
 
 
-def is_bool(str_val):
-  return to_bool(str_val) is not None
+def is_int(str_val):
+  try:
+    int(str_val)
+    return True
+  except ValueError:
+    return False
+
+
+def is_str(value):
+  try:
+    return isinstance(value, basestring)
+  except NameError:
+    return isinstance(value, str)
 
 
 schema_dict = dict()
@@ -129,3 +129,31 @@ def to_bool(value, default_value=None):
       return False
 
   return None
+
+
+def to_float(val):
+  if val is None:
+    return None
+  elif isinstance(val, float):
+    return val
+  elif is_str(val):
+    try:
+      return float(val)
+    except ValueError:
+      return None
+  else:
+    return None
+
+
+def to_int(val):
+  if val is None:
+    return None
+  elif isinstance(val, int):
+    return val
+  elif is_str(val):
+    try:
+      return int(val)
+    except ValueError:
+      return None
+  else:
+    return None

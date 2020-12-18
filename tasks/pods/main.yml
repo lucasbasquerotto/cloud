@@ -83,5 +83,5 @@
   loop_control:
     loop_var: pod_item
     label: "{{ pod_item.description }}"
-  when: (env_pod | default('')) in ['', pod_name]
+  when: env_pod in ['', pod_name]
   tags: ["no_print_skipped"]

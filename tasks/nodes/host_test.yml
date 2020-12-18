@@ -7,8 +7,8 @@
 
 - name: "{{ host_test_title }} - validate instance type - node name"
   fail:
-    msg: "instance_type ({{ instance_type | default('') }}) should be {{ host_test_node_name }}"
-  when: (host_test_node_name != (instance_type | default(''))) and (ansible_connection != 'local')
+    msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
+  when: (host_test_node_name != instance_type) and (ansible_connection != 'local')
   tags: ["no_print"]
 
 # Node Params

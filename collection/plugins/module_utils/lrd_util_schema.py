@@ -6,12 +6,15 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
 # pylint: disable=import-error
+# pylint: disable=too-many-lines
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
+import re
+
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    is_bool, is_int, is_float, is_str, load_yaml
+    is_bool, is_int, is_float, is_str, load_yaml, to_float, to_int
 )
 
 SCHEMA_BASE = """
@@ -33,21 +36,43 @@ schemas:
       type:
         required: true
         schema: "type"
+      choices:
+        type: "list"
+        elem_type: "primitive"
+      regex:
+        type: "str"
+      min:
+        type: "int"
+      max:
+        type: "int"
       alternative_type:
         schema: "type"
+      alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      alternative_regex:
+        type: "str"
+      alternative_min:
+        type: "int"
+      alternative_max:
+        type: "int"
       main_schema:
         type: "str"
       alternative_schema:
         type: "str"
-      non_empty:
-        type: "bool"
-      choices:
-        type: "list"
-        elem_type: "primitive"
       elem_type:
         type: "str"
       elem_alternative_type:
         schema: "type"
+      elem_alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      elem_alternative_regex:
+        type: "str"
+      elem_alternative_min:
+        type: "int"
+      elem_alternative_max:
+        type: "int"
       elem_schema:
         type: "str"
       elem_main_schema:
@@ -61,6 +86,12 @@ schemas:
       elem_choices:
         type: "list"
         elem_type: "primitive"
+      elem_regex:
+        type: "str"
+      elem_min:
+        type: "int"
+      elem_max:
+        type: "int"
       props:
         type: "map"
         elem_schema: "prop"
@@ -71,14 +102,6 @@ schemas:
     props:
       type:
         schema: "type"
-      alternative_type:
-        schema: "type"
-      schema:
-        type: "str"
-      main_schema:
-        type: "str"
-      alternative_schema:
-        type: "str"
       required:
         type: "bool"
       non_empty:
@@ -86,10 +109,42 @@ schemas:
       choices:
         type: "list"
         elem_type: "primitive"
+      regex:
+        type: "str"
+      min:
+        type: "int"
+      max:
+        type: "int"
+      alternative_type:
+        schema: "type"
+      alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      alternative_regex:
+        type: "str"
+      alternative_min:
+        type: "int"
+      alternative_max:
+        type: "int"
+      schema:
+        type: "str"
+      main_schema:
+        type: "str"
+      alternative_schema:
+        type: "str"
       elem_type:
         type: "str"
       elem_alternative_type:
         schema: "type"
+      elem_alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      elem_alternative_regex:
+        type: "str"
+      elem_alternative_min:
+        type: "int"
+      elem_alternative_max:
+        type: "int"
       elem_schema:
         type: "str"
       elem_main_schema:
@@ -103,6 +158,12 @@ schemas:
       elem_choices:
         type: "list"
         elem_type: "primitive"
+      elem_regex:
+        type: "str"
+      elem_min:
+        type: "int"
+      elem_max:
+        type: "int"
   type:
     type: "str"
     choices:
@@ -169,6 +230,10 @@ def validate_next_value(schema_data, value):
     ]]
 
   value_type = schema_info.get('type')
+  choices = schema_info.get('choices')
+  regex = schema_info.get('regex')
+  minimum = to_int(schema_info.get('min'))
+  maximum = to_int(schema_info.get('max'))
   next_schema = schema_info.get('schema')
 
   if (not value_type) and (not next_schema):
@@ -184,38 +249,77 @@ def validate_next_value(schema_data, value):
         'msg: a definition should not have both type and schema properties'
     ]]
 
-  if next_schema:
-    new_schema_info = schema_info_dict.get(next_schema)
+  if not value_type:
+    if choices:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have choices only when type is defined'
+      ]]
+    elif regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have regex only when type is defined'
+      ]]
+    elif minimum is not None:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have min only when type is defined'
+      ]]
+    elif maximum is not None:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have max only when type is defined'
+      ]]
 
-    new_schema_data = dict(
-        name=next_schema,
-        ctx=schema_ctx,
-        info=new_schema_info,
-        dict=schema_info_dict,
-        prop=False,
-        subelement=False,
-        required=True
-    )
+  valid_primitive_types = ['str', 'int', 'float']
 
-    return validate_next_value(new_schema_data, value)
-
-  new_type = schema_info.get('type')
-  new_schema_name = schema_info.get('schema')
-
-  if (not new_type) and (not new_schema_name):
-    return [[
-        str('schema_name: ' + schema_name + schema_suffix),
-        str('at: ' + (schema_ctx or '<root>')),
-        'msg: a property definition should have either a type or schema property'
-    ]]
-  elif new_type and new_schema_name:
-    return [[
-        str('schema_name: ' + schema_name + schema_suffix),
-        str('at: ' + (schema_ctx or '<root>')),
-        'msg: a property definition should not have both type and schema properties'
-    ]]
+  if value_type not in valid_primitive_types:
+    if choices:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: choices is specified for an invalid type',
+          'allowed types:',
+          valid_primitive_types,
+      ]]
+    elif regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: regex is specified for an invalid type',
+          'allowed types:',
+          valid_primitive_types,
+      ]]
+    elif minimum is not None:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: min is specified for an invalid type',
+          'allowed types:',
+          valid_primitive_types,
+      ]]
+    elif maximum is not None:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: max is specified for an invalid type',
+          'allowed types:',
+          valid_primitive_types,
+      ]]
 
   alternative_type = schema_info.get('alternative_type')
+  alternative_choices = schema_info.get('alternative_choices')
+  alternative_regex = schema_info.get('alternative_regex')
+  alternative_min = schema_info.get('alternative_min')
+  alternative_max = schema_info.get('alternative_max')
   main_schema = schema_info.get('main_schema')
   alternative_schema = schema_info.get('alternative_schema')
 
@@ -255,14 +359,66 @@ def validate_next_value(schema_data, value):
         'msg: define only an alternative type or alternative schema, not both'
     ]]
 
+  if not alternative_type:
+    if alternative_choices:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have alternative_choices only '
+          + 'when alternative_type is defined'
+      ]]
+    elif alternative_regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have alternative_regex only '
+          + 'when alternative_type is defined'
+      ]]
+    elif alternative_min:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have alternative_min only '
+          + 'when alternative_type is defined'
+      ]]
+    elif alternative_max:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have alternative_max only '
+          + 'when alternative_type is defined'
+      ]]
+
+  if next_schema:
+    new_schema_info = schema_info_dict.get(next_schema)
+
+    new_schema_data = dict(
+        name=next_schema,
+        ctx=schema_ctx,
+        info=new_schema_info,
+        dict=schema_info_dict,
+        prop=False,
+        subelement=False,
+        required=True
+    )
+
+    return validate_next_value(new_schema_data, value)
+
   elem_type = schema_info.get('elem_type')
   elem_alternative_type = schema_info.get('elem_alternative_type')
+  elem_alternative_choices = schema_info.get('elem_alternative_choices')
+  elem_alternative_regex = schema_info.get('elem_alternative_regex')
+  elem_alternative_min = schema_info.get('elem_alternative_min')
+  elem_alternative_max = schema_info.get('elem_alternative_max')
   elem_schema_name = schema_info.get('elem_schema')
   elem_main_schema = schema_info.get('elem_main_schema')
   elem_alternative_schema_name = schema_info.get('elem_alternative_schema')
   elem_required = schema_info.get('elem_required')
   elem_non_empty = schema_info.get('elem_non_empty')
   elem_choices = schema_info.get('elem_choices')
+  elem_regex = schema_info.get('elem_regex')
+  elem_min = schema_info.get('elem_min')
+  elem_max = schema_info.get('elem_max')
 
   if value_type not in ['map', 'simple_map', 'list', 'simple_list']:
     if elem_type:
@@ -272,12 +428,41 @@ def validate_next_value(schema_data, value):
           str('type: ' + value_type),
           'msg: a definition should have elem_type only for lists and maps'
       ]]
-    elif elem_alternative_type:
+
+    if elem_alternative_type:
       return [[
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
           'msg: a definition should have elem_alternative_type only for lists and maps'
+      ]]
+    elif elem_alternative_choices:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_alternative_choices only for lists and maps'
+      ]]
+    elif elem_alternative_regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_alternative_regex only for lists and maps'
+      ]]
+    elif elem_alternative_min:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_alternative_min only for lists and maps'
+      ]]
+    elif elem_alternative_max:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_alternative_max only for lists and maps'
       ]]
     elif elem_schema_name:
       return [[
@@ -320,6 +505,105 @@ def validate_next_value(schema_data, value):
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
           'msg: a definition should have elem_choices only for lists and maps'
+      ]]
+    elif elem_regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_regex only for lists and maps'
+      ]]
+    elif elem_min:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_min only for lists and maps'
+      ]]
+    elif elem_max:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_max only for lists and maps'
+      ]]
+
+  elem_type_default = elem_type or ''
+
+  if (
+      (elem_type_default == 'simple_dict')
+      and
+      (not elem_alternative_type)
+      and
+      (not elem_alternative_schema_name)
+  ):
+    return [[
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('elem_type: ' + elem_type_default),
+        'msg: a simple_dict for elem_type must have an elem_alternative_type or '
+        + 'elem_alternative_schema'
+    ]]
+  elif elem_main_schema and (elem_type_default != 'simple_dict'):
+    return [[
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('elem_type: ' + elem_type_default),
+        'msg: elem_main_schema should be defined only when elem_type '
+        + 'is defined and is simple_dict'
+    ]]
+  elif elem_alternative_type and (elem_type_default != 'simple_dict'):
+    return [[
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('elem_type: ' + elem_type_default),
+        'msg: elem_alternative_type should be defined only when elem_type '
+        + 'is defined and is simple_dict'
+    ]]
+  elif elem_alternative_schema_name and (elem_type_default != 'simple_dict'):
+    return [[
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('elem_type: ' + elem_type_default),
+        'msg: elem_alternative_schema should be defined only when elem_type '
+        + 'is defined and is simple_dict'
+    ]]
+  elif elem_alternative_type and elem_alternative_schema_name:
+    return [[
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('elem_type: ' + elem_type_default),
+        'msg: define only one of elem_alternative_type or elem_alternative_schema, not both'
+    ]]
+
+  if not elem_alternative_type:
+    if elem_alternative_choices:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have elem_alternative_choices only '
+          + 'when elem_alternative_type is defined'
+      ]]
+    elif elem_alternative_regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have elem_alternative_regex only '
+          + 'when elem_alternative_type is defined'
+      ]]
+    elif elem_alternative_min:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have elem_alternative_min only '
+          + 'when elem_alternative_type is defined'
+      ]]
+    elif elem_alternative_max:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          'msg: a definition should have elem_alternative_max only '
+          + 'when elem_alternative_type is defined'
       ]]
 
   if value_type in ['map', 'simple_map', 'list', 'simple_list']:
@@ -502,6 +786,10 @@ def validate_next_value(schema_data, value):
       if not is_dict:
         new_schema_info = dict(
             type=alternative_type,
+            choices=alternative_choices,
+            regex=alternative_regex,
+            min=alternative_min,
+            max=alternative_max,
             schema=alternative_schema,
             required=required,
             non_empty=non_empty,
@@ -528,10 +816,18 @@ def validate_next_value(schema_data, value):
 
         new_schema_info = dict(
             type=elem_type,
+            alternative_type=elem_alternative_type,
+            alternative_choices=elem_alternative_choices,
+            alternative_regex=elem_alternative_regex,
+            alternative_min=elem_alternative_min,
+            alternative_max=elem_alternative_max,
             schema=elem_schema_name,
             required=elem_required,
             non_empty=elem_non_empty,
             choices=elem_choices,
+            regex=elem_regex,
+            min=elem_min,
+            max=elem_max,
         )
 
         new_schema_data = dict(
@@ -606,7 +902,27 @@ def validate_next_value(schema_data, value):
               'msg: value should be a float',
           ]]
 
-    choices = schema_info.get('choices')
+    if choices and regex:
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: when choices is specified, regex cannot be specified',
+      ]]
+    elif choices and (minimum is not None):
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: when choices is specified, min cannot be specified',
+      ]]
+    elif choices and (maximum is not None):
+      return [[
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: when choices is specified, max cannot be specified',
+      ]]
 
     if choices:
       if value_type not in primitive_types:
@@ -625,6 +941,95 @@ def validate_next_value(schema_data, value):
             'msg: value is invalid',
             'valid choices:',
             choices
+        ]]
+
+    if regex:
+      if value_type != 'str':
+        return [[
+            str('schema_name: ' + schema_name + schema_suffix),
+            str('at: ' + (schema_ctx or '<root>')),
+            str('type: ' + value_type),
+            'msg: value type should be str when regex is defined',
+        ]]
+
+      pattern = re.compile(regex)
+
+      if not pattern.search(value):
+        return [[
+            str('schema_name: ' + schema_name + schema_suffix),
+            str('at: ' + (schema_ctx or '<root>')),
+            str('type: ' + value_type),
+            'msg: value is invalid (not compatible with the regex specified)',
+        ]]
+
+    if minimum is not None:
+      if value_type == 'str':
+        if len(value) < minimum:
+          return [[
+              str('schema_name: ' + schema_name + schema_suffix),
+              str('at: ' + (schema_ctx or '<root>')),
+              str('type: ' + value_type),
+              str('min: ' + str(minimum)),
+              'msg: value is invalid (the length of the string is less than the minimum specified)',
+          ]]
+      elif value_type in ['int', 'float']:
+        numeric_value = (
+            to_int(value)
+            if (value_type == 'int')
+            else to_float(value)
+        )
+
+        if numeric_value < minimum:
+          return [[
+              str('schema_name: ' + schema_name + schema_suffix),
+              str('at: ' + (schema_ctx or '<root>')),
+              str('type: ' + value_type),
+              str('min: ' + str(minimum)),
+              'msg: value is invalid (numeric value is less than the minimum specified)',
+          ]]
+      else:
+        return [[
+            str('schema_name: ' + schema_name + schema_suffix),
+            str('at: ' + (schema_ctx or '<root>')),
+            str('type: ' + value_type),
+            'msg: min property is not allowed with this value type',
+            'allowed types:',
+            ['str', 'int', 'float'],
+        ]]
+
+    if maximum is not None:
+      if value_type == 'str':
+        if len(value) > maximum:
+          return [[
+              str('schema_name: ' + schema_name + schema_suffix),
+              str('at: ' + (schema_ctx or '<root>')),
+              str('type: ' + value_type),
+              str('max: ' + str(maximum)),
+              'msg: value is invalid (the length of the string is more than the maximum specified)',
+          ]]
+      elif value_type in ['int', 'float']:
+        numeric_value = (
+            to_int(value)
+            if (value_type == 'int')
+            else to_float(value)
+        )
+
+        if numeric_value > maximum:
+          return [[
+              str('schema_name: ' + schema_name + schema_suffix),
+              str('at: ' + (schema_ctx or '<root>')),
+              str('type: ' + value_type),
+              str('max: ' + str(maximum)),
+              'msg: value is invalid (numeric value is more than the maximum specified)',
+          ]]
+      else:
+        return [[
+            str('schema_name: ' + schema_name + schema_suffix),
+            str('at: ' + (schema_ctx or '<root>')),
+            str('type: ' + value_type),
+            'msg: max property is not allowed with this value type',
+            'allowed types:',
+            ['str', 'int', 'float'],
         ]]
 
     if main_schema:
@@ -655,12 +1060,19 @@ def validate_next_value(schema_data, value):
           new_schema_info = dict(
               type=elem_type,
               alternative_type=elem_alternative_type,
+              alternative_choices=elem_alternative_choices,
+              alternative_regex=elem_alternative_regex,
+              alternative_min=elem_alternative_min,
+              alternative_max=elem_alternative_max,
               schema=elem_schema_name,
               main_schema=elem_main_schema,
               alternative_schema=elem_alternative_schema_name,
               required=elem_required,
               non_empty=elem_non_empty,
               choices=elem_choices,
+              regex=elem_regex,
+              min=elem_min,
+              max=elem_max,
           )
 
           new_schema_data = dict(
@@ -720,12 +1132,19 @@ def validate_next_value(schema_data, value):
             new_schema_info = dict(
                 type=elem_type,
                 alternative_type=elem_alternative_type,
+                alternative_choices=elem_alternative_choices,
+                alternative_regex=elem_alternative_regex,
+                alternative_min=elem_alternative_min,
+                alternative_max=elem_alternative_max,
                 schema=elem_schema_name,
                 main_schema=elem_main_schema,
                 alternative_schema=elem_alternative_schema_name,
                 required=elem_required,
                 non_empty=elem_non_empty,
                 choices=elem_choices,
+                regex=elem_regex,
+                min=elem_min,
+                max=elem_max,
             )
 
             new_schema_data = dict(
