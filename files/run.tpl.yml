@@ -9,8 +9,6 @@
 ###############################################################################
 <% endif %>
 
-<% set ns_outer_run.first = false %>
-
 - name: Play 04.<< loop.index >> - Run Stage (<< var_run_stage.name >>)
   hosts: << var_run_stage.hosts | join(',') >>
   strategy: free
@@ -19,9 +17,14 @@
   - run
   gather_facts: no
   tasks:
+
+    <% if ns_outer_run.first | bool %>
+
     - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
+
+    <% endif %>
 
     - block:
         - name: "{{ env_title }} - run stage [<< var_run_stage.name >>]"
@@ -69,6 +72,9 @@
     - name: "{{ env_title }} - wait hosts"
       debug:
         msg: "wait hosts..."
+
+
+<% set ns_outer_run.first = false %>
 
 <% endif %>
 <% endfor %>
