@@ -1,7 +1,7 @@
 - name: "{{ node_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
-    transfer_title: "{{ node_prepare_title }} - transfer #{{ node_prepare_idx }}"
+    transfer_title: "{{ node_prepare_title }} - transfer #{{ node_prepare_idx + 1 }}"
     transfer_prepared: true
     transfer_content: "{{ node_prepare_item.src }}"
     transfer_dest: "{{ node_prepare_node.node_dir }}/{{ node_prepare_item.dest }}"

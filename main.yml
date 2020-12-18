@@ -356,7 +356,7 @@
       vars:
         node_prepare_node: "{{ main_item }}"
         node_prepare_title: >-
-          {{ env_title }} - prepare nodes - node [{{ node_prepare_node.description }}]
+          {{ env_title }} - prepare node [{{ node_prepare_node.description }}]
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:
         loop_var: main_item
