@@ -96,7 +96,6 @@
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
       tags: ["no_print"]
 
     - name: "{{ env_title }} - validate instance type (required)"
@@ -135,6 +134,21 @@
         )
       tags: ["no_print_skipped"]
 
+    - name: "{{ env_title }} - instance info - before (outer)"
+      include_tasks: "tasks/nodes/instance_info.yml"
+      vars:
+        instance_info_node: "{{ main_item }}"
+        instance_info_title: >-
+          {{ env_title }} - instance info - before -
+          instance [{{ instance_info_node.description }}
+        instance_info_type: "before"
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ instance_info_node.description }}"
+      when: instance_info_node | lrd.cloud.validate_connection(env_info)
+      tags: ["no_print_skipped"]
+
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_wait_nodes }}"
       when: >-
@@ -156,6 +170,10 @@
     - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
+
+    - name: "2"
+      debug:
+        var: instance_info_skip
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.before_prepare_nodes }}"
@@ -289,6 +307,51 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.after_cron | default('')) != '')
+      tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 02.03 - Cloud - Nodes - Finished
+  hosts: main,host
+  tags:
+    - init
+    - nodes
+    - nodes_finished
+  gather_facts: no
+  tasks:
+    - include_tasks: "tasks/util/init.yml"
+      when: ansible_connection != 'local'
+      tags: ["no_print"]
+
+    - name: "{{ env_title }}"
+      include_tasks: "{{ ctx_data.hooks.before_nodes_finished }}"
+      when: >-
+        (env_can_run_node | bool)
+        and
+        ((ctx_data.hooks.before_nodes_finished | default('')) != '')
+      tags: ["no_print"]
+
+    - name: "{{ env_title }} - instance info - after (outer)"
+      include_tasks: "tasks/nodes/instance_info.yml"
+      vars:
+        instance_info_node: "{{ main_item }}"
+        instance_info_title: >-
+          {{ env_title }} - instance info - after -
+          instance [{{ instance_info_node.description }}
+        instance_info_type: "after"
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ instance_info_node.description }}"
+      when: instance_info_node | lrd.cloud.validate_connection(env_info)
+      tags: ["no_print_skipped"]
+
+    - name: "{{ env_title }}"
+      include_tasks: "{{ ctx_data.hooks.after_nodes_finished }}"
+      when: >-
+        (env_can_run_node | bool)
+        and
+        ((ctx_data.hooks.after_nodes_finished | default('')) != '')
       tags: ["no_print"]
 
 ###############################################################################

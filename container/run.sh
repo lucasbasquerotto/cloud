@@ -24,7 +24,7 @@ while getopts ':fps-:' OPT; do
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		f|force ) force="true";;
+		f|force ) force="true"; args+=( "--force" );;
 		p|prepare ) prepare="true"; args+=( "--prepare" );;
 		s|fast ) fast="true"; args+=( "--fast" );;
 		end ) end="true"; args+=( "--end" );;

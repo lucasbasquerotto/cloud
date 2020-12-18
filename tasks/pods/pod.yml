@@ -19,14 +19,14 @@
   tags: ["no_print"]
 
 - block:
-    - name: "{{ pod_inner_title }} - pod_vars_full"
+    - name: "{{ pod_inner_title }} - pod_backup_dir"
       set_fact:
         pod_backup_dir: "{{ tmp_backup_dir }}"
         pod_backup_file: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}"
         pod_backup_file_tmp: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}.tmp"
       vars:
-        tmp_backup_dir: "{{ pod_tmp_base_dir }}/env"
-        tmp_backup_file: "pod.vars"
+        tmp_backup_dir: "{{ pod_tmp_base_dir }}/backup"
+        tmp_backup_file: "commit"
       tags: ["no_print"]
 
     - name: "{{ pod_inner_title }} - create the backup directory"
@@ -34,7 +34,7 @@
       file:
         path: "{{ pod_backup_dir }}"
         state: directory
-        mode: "{{ (pod_node_local | bool) | ternary(0777, 0755) }}"
+        mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ pod_inner_title }} - create the temporary file to verify if there was a change"
@@ -44,7 +44,7 @@
         dest: "{{ pod_backup_file_tmp }}"
         owner: "{{ pod_host_user }}"
         group: "{{ pod_host_group }}"
-        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
+        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       tags: ["no_print_skipped"]
 
     - name: >-
@@ -57,7 +57,7 @@
         dest: "{{ pod_backup_file }}"
         owner: "{{ pod_host_user }}"
         group: "{{ pod_host_group }}"
-        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
+        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ pod_inner_title }} - get the difference of the 2 files (old and current)"
@@ -107,7 +107,7 @@
         dest: "{{ pod_backup_file }}"
         owner: "{{ pod_host_user }}"
         group: "{{ pod_host_group }}"
-        mode: "{{ (pod_node_local | bool) | ternary(0666, 0640) }}"
+        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       when: pod_skip_unchanged | bool
       tags: ["no_print_skipped"]
   when: not (pod_skip | bool)

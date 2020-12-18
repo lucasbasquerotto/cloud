@@ -18,13 +18,14 @@ shift;
 debug=()
 
 # shellcheck disable=SC2214
-while getopts ':ps-:' OPT; do
+while getopts ':fps-:' OPT; do
 	if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
 		OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
+		f|force ) force="true";;
 		p|prepare ) prepare="true";;
 		s|fast ) fast="true";;
 		end ) end="true";;
@@ -102,7 +103,11 @@ else
 	other_args=()
 
 	if [ "${end:-}" = 'true' ]; then
-		other_args=( '--tags=destroy' )
+		other_args+=( '--tags=destroy' )
+	fi
+
+	if [ "${force:-}" = 'true' ]; then
+		other_args+=( '-e env_force=true' )
 	fi
 
     # Execute the cloud context

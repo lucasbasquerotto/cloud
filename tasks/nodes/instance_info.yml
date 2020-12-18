@@ -1,0 +1,75 @@
+- name: "{{ instance_info_title }} - instance_info_skip (initial)"
+  set_fact:
+    instance_info_skip: false
+  when: instance_info_type == 'before'
+  tags: ["no_print_skipped"]
+
+- name: "{{ instance_info_title }} - instance_info_backup_dir"
+  set_fact:
+    instance_info_backup_dir: "{{ tmp_backup_dir }}"
+    instance_info_backup_file: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}"
+    instance_info_backup_file_tmp: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}.tmp"
+  vars:
+    tmp_backup_dir: "{{ instance_info_node.tmp_dir }}/backup"
+    tmp_backup_file: "commit"
+  tags: ["no_print"]
+
+- name: "{{ instance_info_title }} - create the backup directory"
+  file:
+    path: "{{ instance_info_backup_dir }}"
+    state: directory
+    mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
+  when: (not (env_force | bool)) or (instance_info_type == 'after')
+  tags: ["no_print_skipped"]
+
+- block:
+
+    - name: >-
+        {{ instance_info_title }} -
+        create the temporary file to verify if there was a change in the commit
+      copy:
+        content: "{{ env_commit }}"
+        dest: "{{ instance_info_backup_file_tmp }}"
+        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+      tags: ["no_print_skipped"]
+
+    - name: >-
+        {{ instance_info_title }} - create the file to verify if there was a change
+        in the commit, if it was not created before
+      copy:
+        force: no
+        content: ""
+        dest: "{{ instance_info_backup_file }}"
+        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+      tags: ["no_print_skipped"]
+
+    - name: "{{ instance_info_title }} - get the difference of the 2 files (old and current)"
+      command: "diff {{ instance_info_backup_file_tmp }} {{ instance_info_backup_file }}"
+      register: instance_info_diff
+      failed_when: instance_info_diff.rc > 1
+      changed_when: instance_info_diff.rc == 1
+      tags: ["no_print_skipped"]
+
+    - name: "{{ instance_info_title }} - instance_info_skip (define)"
+      set_fact:
+        instance_info_skip: "{{ not instance_info_diff.changed }}"
+      tags: ["no_print"]
+
+  when: (instance_info_type == 'before') and (not (env_force | bool))
+  tags: ["no_print_skipped"]
+
+- name: >-
+    {{ instance_info_title }} -
+    update the file to verify if there was a change in the commit
+    (for newer runs)
+  copy:
+    remote_src: yes
+    src: "{{ instance_info_backup_file_tmp }}"
+    dest: "{{ instance_info_backup_file }}"
+    mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+  when: instance_info_type == 'after'
+  tags: ["no_print_skipped"]
+
+- name: "1"
+  debug:
+    var: instance_info_skip
