@@ -69,7 +69,3 @@
     mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
   when: instance_info_type == 'after'
   tags: ["no_print_skipped"]
-
-- name: "1"
-  debug:
-    var: instance_info_skip
