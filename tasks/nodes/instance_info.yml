@@ -1,9 +1,3 @@
-- name: "{{ instance_info_title }} - instance_info_skip (initial)"
-  set_fact:
-    instance_info_skip: false
-  when: instance_info_type == 'before'
-  tags: ["no_print_skipped"]
-
 - name: "{{ instance_info_title }} - instance_info_backup_dir"
   set_fact:
     instance_info_backup_dir: "{{ tmp_backup_dir }}"
@@ -13,6 +7,12 @@
     tmp_backup_dir: "{{ instance_info_node.tmp_dir }}/backup"
     tmp_backup_file: "commit"
   tags: ["no_print"]
+
+- name: "{{ instance_info_title }} - instance_info_skip (initial)"
+  set_fact:
+    instance_info_skip: false
+  when: instance_info_type == 'before'
+  tags: ["no_print_skipped"]
 
 - name: "{{ instance_info_title }} - create the backup directory"
   file:
@@ -43,7 +43,7 @@
         mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       tags: ["no_print_skipped"]
 
-    - name: "{{ instance_info_title }} - get the difference of the 2 files (old and current)"
+    - name: "{{ instance_info_title }} - get the difference of the 2 commit files (old and current)"
       command: "diff {{ instance_info_backup_file_tmp }} {{ instance_info_backup_file }}"
       register: instance_info_diff
       failed_when: instance_info_diff.rc > 1

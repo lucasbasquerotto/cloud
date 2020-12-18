@@ -171,38 +171,36 @@
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
-    - name: "2"
-      debug:
-        var: instance_info_skip
+    - block:
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.before_prepare_nodes }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.before_prepare_nodes | default('')) != '')
+          tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.before_prepare_nodes }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.before_prepare_nodes | default('')) != '')
-      tags: ["no_print"]
+        - name: "{{ env_title }} - prepare nodes (outer)"
+          include_tasks: "tasks/nodes/prepare.yml"
+          vars:
+            node_prepare_node: "{{ main_item }}"
+            node_prepare_title: >-
+              {{ env_title }} - prepare node [{{ node_prepare_node.description }}]
+          loop: "{{ ctx_data.nodes | default([]) }}"
+          loop_control:
+            loop_var: main_item
+            label: "{{ node_prepare_node.description }}"
+          when: node_prepare_node | lrd.cloud.validate_connection(env_info)
+          tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }} - prepare nodes (outer)"
-      include_tasks: "tasks/nodes/prepare.yml"
-      vars:
-        node_prepare_node: "{{ main_item }}"
-        node_prepare_title: >-
-          {{ env_title }} - prepare node [{{ node_prepare_node.description }}]
-      loop: "{{ ctx_data.nodes | default([]) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ node_prepare_node.description }}"
-      when: node_prepare_node | lrd.cloud.validate_connection(env_info)
-      tags: ["no_print_skipped"]
-
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.after_prepare_nodes }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.after_prepare_nodes | default('')) != '')
-      tags: ["no_print"]
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.after_prepare_nodes }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.after_prepare_nodes | default('')) != '')
+          tags: ["no_print"]
+      when: not (instance_info_skip | bool)
 
 ###############################################################################
 ######################        PREPARE THE PODS         ########################
@@ -220,38 +218,40 @@
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.before_prepare_pods }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.before_prepare_pods | default('')) != '')
-      tags: ["no_print"]
+    - block:
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.before_prepare_pods }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.before_prepare_pods | default('')) != '')
+          tags: ["no_print"]
 
-    - name: "{{ env_title }} - prepare pods (outer)"
-      include_tasks: "tasks/pods/main.yml"
-      vars:
-        pod_node: "{{ main_item }}"
-        pod_title: "{{ env_title }} - prepare pod - node [{{ pod_node.description }}]"
-        pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
-        pod_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
-      loop: "{{ ctx_data.nodes | default([]) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ pod_node.description }}"
-      when: >-
-        (pod_node | lrd.cloud.validate_connection(env_info))
-        and
-        ((pod_node.pods | default([]) | length) > 0)
-      tags: ["no_print_skipped"]
+        - name: "{{ env_title }} - prepare pods (outer)"
+          include_tasks: "tasks/pods/main.yml"
+          vars:
+            pod_node: "{{ main_item }}"
+            pod_title: "{{ env_title }} - prepare pod - node [{{ pod_node.description }}]"
+            pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+            pod_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
+          loop: "{{ ctx_data.nodes | default([]) }}"
+          loop_control:
+            loop_var: main_item
+            label: "{{ pod_node.description }}"
+          when: >-
+            (pod_node | lrd.cloud.validate_connection(env_info))
+            and
+            ((pod_node.pods | default([]) | length) > 0)
+          tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.after_prepare_pods }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.after_prepare_pods | default('')) != '')
-      tags: ["no_print"]
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.after_prepare_pods }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.after_prepare_pods | default('')) != '')
+          tags: ["no_print"]
+      when: not (instance_info_skip | bool)
 
 ###############################################################################
 ###########        RUN - MIGRATE THE DATA & START THE PODS         ############
@@ -276,38 +276,40 @@
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.before_cron }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.before_cron | default('')) != '')
-      tags: ["no_print"]
+    - block:
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.before_cron }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.before_cron | default('')) != '')
+          tags: ["no_print"]
 
-    - name: "{{ env_title }} - cron (outer)"
-      include_tasks: "tasks/nodes/cron.yml"
-      vars:
-        cron_node: "{{ main_item }}"
-        cron_node_name: "{{ cron_node.name }}"
-        cron_title: "{{ env_title }} - cron - node [{{ cron_node.description }}]"
-        cron_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes//{{ cron_node_name }}/cron"
-      loop: "{{ ctx_data.nodes | default([]) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ cron_node.description }}"
-      when: >-
-        (cron_node | lrd.cloud.validate_connection(env_info))
-        and
-        ((cron_node.params.cron | default([]) | length) > 0)
-      tags: ["no_print_skipped"]
+        - name: "{{ env_title }} - cron (outer)"
+          include_tasks: "tasks/nodes/cron.yml"
+          vars:
+            cron_node: "{{ main_item }}"
+            cron_node_name: "{{ cron_node.name }}"
+            cron_title: "{{ env_title }} - cron - node [{{ cron_node.description }}]"
+            cron_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes//{{ cron_node_name }}/cron"
+          loop: "{{ ctx_data.nodes | default([]) }}"
+          loop_control:
+            loop_var: main_item
+            label: "{{ cron_node.description }}"
+          when: >-
+            (cron_node | lrd.cloud.validate_connection(env_info))
+            and
+            ((cron_node.params.cron | default([]) | length) > 0)
+          tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.after_cron }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.after_cron | default('')) != '')
-      tags: ["no_print"]
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.after_cron }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.after_cron | default('')) != '')
+          tags: ["no_print"]
+      when: not (instance_info_skip | bool)
 
 ###############################################################################
 
@@ -323,36 +325,38 @@
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.before_nodes_finished }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.before_nodes_finished | default('')) != '')
-      tags: ["no_print"]
+    - block:
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.before_nodes_finished }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.before_nodes_finished | default('')) != '')
+          tags: ["no_print"]
 
-    - name: "{{ env_title }} - instance info - after (outer)"
-      include_tasks: "tasks/nodes/instance_info.yml"
-      vars:
-        instance_info_node: "{{ main_item }}"
-        instance_info_title: >-
-          {{ env_title }} - instance info - after -
-          instance [{{ instance_info_node.description }}
-        instance_info_type: "after"
-      loop: "{{ ctx_data.nodes | default([]) }}"
-      loop_control:
-        loop_var: main_item
-        label: "{{ instance_info_node.description }}"
-      when: instance_info_node | lrd.cloud.validate_connection(env_info)
-      tags: ["no_print_skipped"]
+        - name: "{{ env_title }} - instance info - after (outer)"
+          include_tasks: "tasks/nodes/instance_info.yml"
+          vars:
+            instance_info_node: "{{ main_item }}"
+            instance_info_title: >-
+              {{ env_title }} - instance info - after -
+              instance [{{ instance_info_node.description }}
+            instance_info_type: "after"
+          loop: "{{ ctx_data.nodes | default([]) }}"
+          loop_control:
+            loop_var: main_item
+            label: "{{ instance_info_node.description }}"
+          when: instance_info_node | lrd.cloud.validate_connection(env_info)
+          tags: ["no_print_skipped"]
 
-    - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.after_nodes_finished }}"
-      when: >-
-        (env_can_run_node | bool)
-        and
-        ((ctx_data.hooks.after_nodes_finished | default('')) != '')
-      tags: ["no_print"]
+        - name: "{{ env_title }}"
+          include_tasks: "{{ ctx_data.hooks.after_nodes_finished }}"
+          when: >-
+            (env_can_run_node | bool)
+            and
+            ((ctx_data.hooks.after_nodes_finished | default('')) != '')
+          tags: ["no_print"]
+      when: not (instance_info_skip | bool)
 
 ###############################################################################
 ####################           FINAL SERVICES            ######################
