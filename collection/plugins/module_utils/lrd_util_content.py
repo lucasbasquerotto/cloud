@@ -51,12 +51,17 @@ def load_content(content, env, custom_dir, run_info):
         content_file = prepared_content.get('file')
         params = prepared_content.get('params')
         credentials = prepared_content.get('credentials')
+        contents = prepared_content.get('contents')
 
         result = lookup(
             plugin,
             ansible_vars,
             content_file,
-            dict(params=params, credentials=credentials),
+            dict(
+              params=params,
+              credentials=credentials,
+              contents=contents,
+            ),
         )
       else:
         error_msgs_aux = [[
@@ -145,6 +150,7 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
             'group_params',
             'shared_params',
             'shared_group_params',
+            'contents',
         ]
         required_props = [
             'type',
@@ -298,6 +304,27 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
                 str('content origin: ' + content_origin),
                 str('msg: content file not found: ' + file_rel),
             ]]
+
+        if content_type == 'template':
+          inner_contents = content.get('contents')
+          prepared_inner_contents = dict()
+
+          for inner_content_key in sorted(list((inner_contents or dict()).keys())):
+            inner_content = inner_contents.get(inner_content_key)
+
+            info = load_content(inner_content, env, custom_dir, run_info)
+
+            prepared_inner_content = info.get('result')
+            error_msgs_aux_content = info.get('error_msgs') or list()
+
+            for value in (error_msgs_aux_content or []):
+              new_value = [str('inner content:' + inner_content_key)] + value
+              error_msgs_aux += [new_value]
+
+            if not error_msgs_aux_content:
+              prepared_inner_contents[inner_content_key] = prepared_inner_content
+
+          result['contents'] = prepared_inner_contents
 
       error_msgs = list()
 

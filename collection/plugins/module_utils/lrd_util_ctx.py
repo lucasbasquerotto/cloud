@@ -2196,6 +2196,7 @@ def prepare_ctx(ctx_name, run_info):
         result['repo'] = repo
         env_repos = ctx.get('env_repos')
         result['env_repos'] = env_repos
+        result['cfg'] = ctx.get('cfg')
         result['hosts'] = ctx.get('hosts')
 
         repos = env.get('repos')

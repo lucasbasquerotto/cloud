@@ -35,6 +35,18 @@
       when: ctx is not defined
       tags: ["no_print"]
 
+    # project configuration (cfg)
+
+    - name: "{{ env_title }} - cfg file (outer)"
+      include_tasks: "tasks/util/transfer.yml"
+      vars:
+        tmp_default:
+          file: "ansible/ansible.cfg"
+        transfer_title: "{{ env_title }} - cfg file"
+        transfer_content: "{{ ctx_data.cfg | default(tmp_default, true) }}"
+        transfer_dest: "{{ env_vars.ctx_dir }}/ansible.cfg"
+        transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+
     # project hosts file (inventory)
 
     - name: "{{ env_title }} - create the hosts backup file, if it doesn't exist"

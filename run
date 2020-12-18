@@ -10,8 +10,10 @@ function error {
 	exit 2
 }
 
-vars_file_shell="$1/vars.sh"
-vars_file_yaml="$1/vars.yml"
+ctx_dir="$1"
+
+vars_file_shell="$ctx_dir/vars.sh"
+vars_file_yaml="$ctx_dir/vars.yml"
 
 shift;
 
@@ -111,7 +113,7 @@ else
 	fi
 
     # Execute the cloud context
-    ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
+    ANSIBLE_CONFIG="$ctx_dir/ansible.cfg" ansible-playbook \
         ${vault[@]+"${vault[@]}"} \
         ${debug[@]+"${debug[@]}"} \
         ${other_args[@]+"${other_args[@]}"} \
