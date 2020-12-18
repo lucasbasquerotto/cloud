@@ -24,16 +24,18 @@ def expand_group_params(group_params, group_params_dict, ctx_name=None):
 
       if not mapped_key:
         error_msgs += [[
-            'group_params key: ' + key + ctx_info,
+            str('group_params key: ' + key + ctx_info),
             'msg: group_params mapped key not defined',
         ]]
       if (not group_params_dict) or (mapped_key not in group_params_dict):
         error_msgs += [[
-            'group_params key: ' + key + ctx_info,
-            'group_params mapped_key: ' + mapped_key,
+            str('group_params key: ' + key + ctx_info),
+            str('group_params mapped_key: ' + mapped_key),
             'group_params_dict keys:',
-            sorted(list(group_params_dict.keys())
-                   ) if group_params_dict else '',
+            sorted(
+                str(dict_key)
+                for dict_key in list(group_params_dict.keys())
+            ) if group_params_dict else '',
             'msg: group_params mapped key not present in dict',
         ]]
       else:
@@ -72,10 +74,12 @@ def mix_inner(args):
     for key in shared_params:
       if (not shared_params_dict) or (key not in shared_params_dict):
         error_msgs += [[
-            'shared_params key: ' + key,
+            str('shared_params key: ' + key),
             'shared_params_dict keys',
-            sorted(list(shared_params_dict.keys())
-                   ) if shared_params_dict else '',
+            sorted(
+                str(dict_key)
+                for dict_key in list(shared_params_dict.keys())
+            ) if shared_params_dict else '',
             'msg: shared_params key not present in dict',
         ]]
       else:
@@ -90,10 +94,12 @@ def mix_inner(args):
 
     if (not shared_group_params_dict) or (shared_group_params not in shared_group_params_dict):
       error_msgs += [[
-          'shared_group_params: ' + shared_group_params,
+          str('shared_group_params: ' + shared_group_params),
           'shared_group_params_dict keys',
-          sorted(list(shared_group_params_dict.keys())
-                 ) if shared_group_params_dict else '',
+          sorted(
+              str(dict_key)
+              for dict_key in list(shared_group_params_dict.keys())
+          ) if shared_group_params_dict else '',
           'msg: shared_group_params key not present in dict',
       ]]
     else:
