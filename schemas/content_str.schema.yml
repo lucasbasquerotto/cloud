@@ -1,0 +1,14 @@
+root: "content_str"
+schemas:
+  content_str:
+    type: "dict"
+    props:
+      params:
+        required: true
+        schema: "params"
+  params:
+    type: "dict"
+    props:
+      value:
+        required: true
+        type: "str"

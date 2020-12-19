@@ -58,9 +58,9 @@ def load_content(content, env, custom_dir, run_info):
             ansible_vars,
             content_file,
             dict(
-              params=params,
-              credentials=credentials,
-              contents=contents,
+                params=params,
+                credentials=credentials,
+                contents=contents,
             ),
         )
       else:
@@ -143,8 +143,7 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
             'type',
             'origin',
             'file',
-            'params_schema',
-            'credentials_schema',
+            'schema',
             'credentials',
             'params',
             'group_params',
@@ -223,29 +222,6 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
           if not error_msgs_aux_credentials:
             result['credentials'] = credentials
 
-            if validate:
-              schema_file = content.get('credentials_schema')
-
-              if schema_file:
-                schema_file = base_dir_prefix + schema_file
-
-                if os.path.exists(schema_file):
-                  schema = load_schema(schema_file)
-                  error_msgs_aux_validate = validate_schema(
-                      schema, credentials
-                  )
-
-                  for value in (error_msgs_aux_validate or []):
-                    new_value = [
-                        'context: validate content credentials'
-                    ] + value
-                    error_msgs_aux += [new_value]
-                else:
-                  error_msgs_aux += [[
-                      'context: validate content credentials',
-                      str('msg: content schema file not found: ' + schema_file),
-                  ]]
-
         if content_type in ['env', 'str', 'template']:
           params_args = dict(
               params=content.get('params'),
@@ -268,31 +244,6 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
 
           if not error_msgs_aux_params:
             result['params'] = content_params
-
-            if validate:
-              schema_file = content.get('params_schema')
-
-              if schema_file:
-                schema_file = base_dir_prefix + schema_file
-
-              if content_type == 'str':
-                schema_file = 'schemas/content_params_str.yml'
-
-              if schema_file:
-                if os.path.exists(schema_file):
-                  schema = load_schema(schema_file)
-                  error_msgs_aux_validate = validate_schema(
-                      schema, content_params
-                  )
-
-                  for value in (error_msgs_aux_validate or []):
-                    new_value = ['context: validate content params'] + value
-                    error_msgs_aux += [new_value]
-                else:
-                  error_msgs_aux += [[
-                      'context: validate content params',
-                      str('msg: params schema file not found: ' + schema_file),
-                  ]]
 
         if content_type in ['file', 'template']:
           file_rel = content.get('file')
@@ -324,7 +275,40 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
             if not error_msgs_aux_content:
               prepared_inner_contents[inner_content_key] = prepared_inner_content
 
-          result['contents'] = prepared_inner_contents
+          if prepared_inner_contents:
+            result['contents'] = prepared_inner_contents
+
+        if validate and not error_msgs_aux:
+          schema_file = content.get('schema')
+
+          if schema_file:
+            schema_file = base_dir_prefix + schema_file
+
+          if content_type == 'str':
+            schema_file = 'schemas/content_str.schema.yml'
+
+          if schema_file:
+            if os.path.exists(schema_file):
+              schema = load_schema(schema_file)
+
+              schema_data = dict()
+
+              for key in ['params', 'credentials', 'contents']:
+                if result.get(key) is not None:
+                  schema_data[key] = result.get(key)
+
+              error_msgs_aux_validate = validate_schema(
+                  schema, schema_data
+              )
+
+              for value in (error_msgs_aux_validate or []):
+                new_value = ['context: validate content schema'] + value
+                error_msgs_aux += [new_value]
+            else:
+              error_msgs_aux += [[
+                  'context: validate content schema',
+                  str('msg: schema file not found: ' + schema_file),
+              ]]
 
       error_msgs = list()
 

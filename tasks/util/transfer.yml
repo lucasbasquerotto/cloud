@@ -52,9 +52,9 @@
     dest: "{{ transfer_dest }}"
     mode: "{{ transfer_mode | default(omit) }}"
   vars:
-    params: "{{ transfer_prepared_content.params }}"
-    credentials: "{{ transfer_prepared_content.credentials }}"
-    contents: "{{ transfer_prepared_content.contents }}"
+    params: "{{ transfer_prepared_content.params | default({}) }}"
+    credentials: "{{ transfer_prepared_content.credentials | default({}) }}"
+    contents: "{{ transfer_prepared_content.contents | default({}) }}"
   register: transfer_diff
   when: transfer_prepared_content.type == 'template'
   tags: ["no_print_skipped"]

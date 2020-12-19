@@ -1,9 +1,0 @@
-root: "content_params_str"
-schemas:
-  content_params_str:
-    type: "dict"
-    lax: true
-    props:
-      value:
-        required: true
-        type: "str"

@@ -1,6 +1,33 @@
-root: "node_params"
+root: "node_schema"
 schemas:
-  node_params:
+  node_schema:
+    type: "dict"
+    props:
+      credential:
+        schema: "credential"
+        non_empty: true
+      params:
+        schema: "params"
+        non_empty: true
+  credential:
+    type: "dict"
+    props:
+      host_user:
+        type: "str"
+        non_empty: true
+      host_group:
+        type: "str"
+      host_pass:
+        type: "str"
+      ssh_file:
+        type: "str"
+      ssh_file_encrypted:
+        type: "bool"
+      host_ssh_public_keys_path:
+        type: "str"
+      user_data:
+        type: "dict"
+  params:
     type: "dict"
     props:
       dns_service_params_list:

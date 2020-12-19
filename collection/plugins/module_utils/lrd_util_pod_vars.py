@@ -87,14 +87,15 @@ def load_vars(pod_info, run_info, meta_info=None):
       pod_description = pod.get('description')
 
       for value in error_msgs_aux:
-        if no_ctx_msg:
-          error_msgs += [value]
-        else:
+        new_value = ['context: pod ctx vars'] + value
+
+        if not no_ctx_msg:
           new_value = [
               str(parent_type + ': ' + parent_description),
               str('pod: ' + pod_description),
-          ] + value
-          error_msgs += [new_value]
+          ] + new_value
+
+        error_msgs += [new_value]
     else:
       result = res.get('result')
 
