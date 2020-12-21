@@ -959,6 +959,7 @@ def validate_next_value(schema_data, value):
             str('schema_name: ' + schema_name + schema_suffix),
             str('at: ' + (schema_ctx or '<root>')),
             str('type: ' + value_type),
+            str('regex: ' + regex),
             'msg: value is invalid (not compatible with the regex specified)',
         ]]
 
