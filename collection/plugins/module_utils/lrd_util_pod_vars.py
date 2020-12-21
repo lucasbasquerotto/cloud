@@ -92,7 +92,7 @@ def load_vars(pod_info, run_info, meta_info=None):
 
         if not no_ctx_msg:
           new_value = [
-              str(parent_type + ': ' + parent_description),
+              str((parent_type or '') + ': ' + (parent_description or '')),
               str('pod: ' + pod_description),
           ] + new_value
 
@@ -109,6 +109,183 @@ def load_vars(pod_info, run_info, meta_info=None):
     ]]
     return dict(error_msgs=error_msgs)
 
+def load_ctx_file(current_file, is_env, data_info)
+  try:
+    directories = list()
+    files = list()
+    error_msgs = list()
+
+    pod = data_info.get('pod')
+    previous = data_info.get('previous')
+    validate = data_info.get('validate')
+
+    pod_dir = pod.get('pod_dir')
+    pod_local_dir = pod.get('local_dir')
+    pod_tmp_dir = pod.get('tmp_dir')
+
+    dir_names = previous.get('dir_names')
+    file_names = previous.get('file_names')
+
+    when = current_file.get('when')
+
+    if to_bool(when if (when is not None) else True):
+      src_relpath = current_file.get('src')
+      src = (env_dir if is_env else pod_dir) + '/' + src_relpath
+      local_src = src if is_env else (pod_local_dir + '/' + src_relpath)
+
+      dest = pod_dir + '/' + current_file.get('dest')
+      dest_dir = os.path.dirname(dest)
+
+      if validate and not os.path.exists(local_src):
+        error_msgs += [[
+            str('src: ' + (src_relpath or '')),
+            'msg: pod ctx file not found',
+        ]]
+
+      if dest_dir not in dir_names:
+        dir_names.add(dest_dir)
+        dir_to_add = dict(
+            path=dest_dir,
+            mode=current_file.get('dir_mode') or default_dir_mode,
+        )
+        directories += [dir_to_add]
+
+      if dest not in file_names:
+        file_names.add(dest)
+        file_to_add = dict(
+            remote_src=not is_env,
+            src=src,
+            dest=dest,
+            mode=current_file.get('mode') or default_file_mode,
+        )
+        files += [file_to_add]
+      else:
+        error_msgs += [[
+            str('src: ' + (src or '')),
+            str('dest: ' + (dest or '')),
+            'msg: duplicate destination for the pod ctx file',
+        ]]
+
+    result = dict(directories=directories, files=files)
+
+    return dict(result=result, error_msgs=error_msgs)
+  except Exception as error:
+    error_msgs = [[
+        'msg: error when trying to load the pod ctx file',
+        'error type: ' + str(type(error)),
+        'error details: ' + str(error),
+    ]]
+    return dict(error_msgs=error_msgs)
+
+def load_ctx_template(current_template, is_env, data_info)
+  try:
+    directories = list()
+    templates = list()
+    error_msgs = list()
+
+    pod = data_info.get('pod')
+    previous = data_info.get('previous')
+    validate = data_info.get('validate')
+
+    pod_dir = pod.get('pod_dir')
+    pod_local_dir = pod.get('local_dir')
+    pod_tmp_dir = pod.get('tmp_dir')
+
+    dir_names = previous.get('dir_names')
+    file_names = previous.get('file_names')
+
+    when = current_template.get('when')
+
+    if to_bool(when if (when is not None) else True):
+      src_relpath = current_template.get('src')
+      src = (env_dir if is_env else pod_local_dir) + '/' + src_relpath
+      local_src = src
+
+      dest_relpath = current_template.get('dest')
+      dest = pod_dir + '/' + dest_relpath
+      dest_tmp = pod_tmp_dir + '/tpl/' + dest_relpath
+
+      dest_dir = os.path.dirname(dest)
+      dest_tmp_dir = os.path.dirname(dest_tmp)
+
+      if validate and not os.path.exists(local_src):
+        error_msgs += [[
+            str('src: ' + (src_relpath or '')),
+            'msg: pod ctx template file not found',
+        ]]
+
+      if validate and not error_msgs:
+        schema_file = current_template.get('schema')
+
+        if schema_file:
+          schema_file = (env_dir if is_env else pod_local_dir) + '/' + schema_file
+
+          if os.path.exists(schema_file):
+            schema = load_schema(schema_file)
+
+            error_msgs_aux = validate_schema(schema, res)
+
+            for value in (error_msgs_aux or []):
+              new_value = [
+                  str('src: ' + (src_relpath or '')),
+                  'context: validate pod ctx vars template schema',
+                  str('schema file: ' + schema_file),
+              ] + value
+              error_msgs += [new_value]
+
+            if error_msgs:
+              return dict(error_msgs=error_msgs)
+          else:
+            error_msgs += [[
+                'context: validate pod ctx vars template schema',
+                str('schema file: ' + schema_file),
+                str('msg: schema file not found: ' + schema_file),
+            ]]
+            return dict(error_msgs=error_msgs)
+
+      if dest_dir not in dir_names:
+        dir_names.add(dest_dir)
+        dir_to_add = dict(
+            path=dest_dir,
+            mode=current_template.get('dir_mode') or default_dir_mode,
+        )
+        directories += [dir_to_add]
+
+      if dest_tmp_dir not in dir_names:
+        dir_names.add(dest_tmp_dir)
+        dir_to_add = dict(
+            path=dest_tmp_dir,
+            mode=current_template.get('dir_mode') or default_dir_mode,
+        )
+        directories += [dir_to_add]
+
+      if dest not in file_names:
+        file_names.add(dest)
+        template_to_add = dict(
+            src=src,
+            dest=dest,
+            dest_tmp=dest_tmp,
+            mode=current_template.get('mode') or default_file_mode,
+            params=current_template.get('params') or {},
+        )
+        templates += [template_to_add]
+      else:
+        error_msgs += [[
+            str('src: ' + (src or '')),
+            str('dest: ' + (dest or '')),
+            'msg: duplicate destination for the pod ctx template',
+        ]]
+
+    result = dict(directories=directories, templates=templates)
+
+    return dict(result=result, error_msgs=error_msgs)
+  except Exception as error:
+    error_msgs = [[
+        'msg: error when trying to load the pod ctx template',
+        'error type: ' + str(type(error)),
+        'error details: ' + str(error),
+    ]]
+    return dict(error_msgs=error_msgs)
 
 def load_next_vars(file_relpath, params, data_info):
   try:
@@ -141,7 +318,7 @@ def load_next_vars(file_relpath, params, data_info):
       file = pod_local_dir + '/' + file_relpath
 
       if validate and not os.path.exists(file):
-        error_msgs = [[
+        error_msgs += [[
             str('file: ' + file_relpath),
             str('pod_local_dir: ' + pod_local_dir),
             'msg: pod ctx file not found in the pod repository',
@@ -153,7 +330,7 @@ def load_next_vars(file_relpath, params, data_info):
       try:
         res_str = lookup(plugin, ansible_vars, file, dict(params=params))
       except Exception as error:
-        error_msgs = [[
+        error_msgs += [[
             str('file: ' + file_relpath),
             'msg: error when trying to load the pod ctx file',
             'error type: ' + str(type(error)),
@@ -166,8 +343,8 @@ def load_next_vars(file_relpath, params, data_info):
       try:
         res = load_yaml(str(res_str))
       except Exception as error:
-        error_msgs = [[
-            str('file: ' + file_relpath),
+        error_msgs += [[
+            str('file: ' + (file_relpath or '')),
             'file content type: ' + str(type(res_str)),
             'msg: error when trying to process the pod ctx file',
             'error type: ' + str(type(error)),
@@ -176,235 +353,129 @@ def load_next_vars(file_relpath, params, data_info):
         return dict(error_msgs=error_msgs)
 
       if res:
+        if validate:
+          schema_file = 'schemas/pod_ctx.schema.yml'
+
+          if os.path.exists(schema_file):
+            schema = load_schema(schema_file)
+
+            error_msgs_aux = validate_schema(schema, res)
+
+            for value in (error_msgs_aux or []):
+              new_value = [
+                  'context: validate pod ctx vars schema',
+                  str('schema file: ' + schema_file),
+              ] + value
+              error_msgs += [new_value]
+
+            if error_msgs:
+              return dict(error_msgs=error_msgs)
+          else:
+            error_msgs += [[
+                'context: validate pod ctx vars schema',
+                str('msg: schema file not found: ' + schema_file),
+            ]]
+            return dict(error_msgs=error_msgs)
+
         res_files = res.get('files')
         res_templates = res.get('templates')
         res_env_files = res.get('env_files')
         res_env_templates = res.get('env_templates')
 
         for res_file in (res_files or []):
-          when = res_file.get('when')
+          info = load_ctx_file(res_file, is_env=False, data_info=data_info)
 
-          if to_bool(when if (when is not None) else True):
-            src_relpath = res_file.get('src')
-            src = pod_dir + '/' + src_relpath
-            local_src = pod_local_dir + '/' + src_relpath
+          result_aux = info.get('result')
+          error_msgs_aux = info.get('error_msgs')
 
-            dest = pod_dir + '/' + res_file.get('dest')
-            dest_dir = os.path.dirname(dest)
-
-            if validate and not os.path.exists(local_src):
-              error_msgs += [[
-                  str('src: ' + src_relpath),
-                  'msg: file not found in the pod repository',
-              ]]
-
-            if dest_dir not in dir_names:
-              dir_names.add(dest_dir)
-              dir_to_add = dict(
-                  path=dest_dir,
-                  mode=res_file.get('dir_mode') or default_dir_mode,
-              )
-              directories += [dir_to_add]
-
-            if dest not in file_names:
-              file_names.add(dest)
-              file_to_add = dict(
-                  remote_src=True,
-                  src=src,
-                  dest=dest,
-                  mode=res_file.get('mode') or default_file_mode,
-              )
-              files += [file_to_add]
-            else:
-              error_msgs += [[
-                  str('src: ' + src),
-                  str('dest: ' + dest),
-                  'msg: duplicate destination for pod file',
-              ]]
+          if error_msgs_aux:
+              for value in error_msgs_aux:
+                new_value = ['context: pod ctx file']
+                error_msgs += [new_value]
+          else:
+            directories += result_aux.get('directories') or []
+            files += result_aux.get('files') or []
 
         for res_template in (res_templates or []):
-          when = res_template.get('when')
+          info = load_ctx_template(res_template, is_env=False, data_info=data_info)
 
-          if to_bool(when if (when is not None) else True):
-            src_relpath = res_template.get('src')
-            src = pod_local_dir + '/' + src_relpath
-            local_src = pod_local_dir + '/' + src_relpath
+          result_aux = info.get('result')
+          error_msgs_aux = info.get('error_msgs')
 
-            dest_relpath = res_template.get('dest')
-            dest = pod_dir + '/' + dest_relpath
-            dest_tmp = pod_tmp_dir + '/tpl/' + dest_relpath
+          if error_msgs_aux:
+              for value in error_msgs_aux:
+                new_value = ['context: pod ctx template']
+                error_msgs += [new_value]
+          else:
+            directories += result_aux.get('directories') or []
+            templates += result_aux.get('templates') or []
 
-            dest_dir = os.path.dirname(dest)
-            dest_tmp_dir = os.path.dirname(dest_tmp)
+        for res_env_file in (res_env_files or []):
+          info = load_ctx_file(res_env_file, is_env=True, data_info=data_info)
 
-            if validate and not os.path.exists(local_src):
-              error_msgs += [[
-                  str('src: ' + src_relpath),
-                  'msg: template file not found in the pod repository',
-              ]]
+          result_aux = info.get('result')
+          error_msgs_aux = info.get('error_msgs')
 
-            if dest_dir not in dir_names:
-              dir_names.add(dest_dir)
-              dir_to_add = dict(
-                  path=dest_dir,
-                  mode=res_template.get('dir_mode') or default_dir_mode,
-              )
-              directories += [dir_to_add]
+          if error_msgs_aux:
+              for value in error_msgs_aux:
+                new_value = ['context: pod ctx env file']
+                error_msgs += [new_value]
+          else:
+            directories += result_aux.get('directories') or []
+            files += result_aux.get('files') or []
 
-            if dest_tmp_dir not in dir_names:
-              dir_names.add(dest_tmp_dir)
-              dir_to_add = dict(
-                  path=dest_tmp_dir,
-                  mode=res_template.get('dir_mode') or default_dir_mode,
-              )
-              directories += [dir_to_add]
+        for res_env_template in (res_env_templates or []):
+          info = load_ctx_template(res_env_template, is_env=True, data_info=data_info)
 
-            if dest not in file_names:
-              file_names.add(dest)
-              template_to_add = dict(
-                  src=src,
-                  dest=dest,
-                  dest_tmp=dest_tmp,
-                  mode=res_template.get('mode') or default_file_mode,
-                  params=res_template.get('params') or {},
-              )
-              templates += [template_to_add]
-            else:
-              error_msgs += [[
-                  str('src: ' + src),
-                  str('dest: ' + dest),
-                  'msg: duplicate destination for pod template',
-              ]]
+          result_aux = info.get('result')
+          error_msgs_aux = info.get('error_msgs')
 
-        for res_file in (res_env_files or []):
-          when = res_file.get('when')
-
-          if to_bool(when if (when is not None) else True):
-            src_relpath = res_file.get('src')
-            src = env_dir + '/' + src_relpath
-            local_src = src
-
-            dest = pod_dir + '/' + res_file.get('dest')
-            dest_dir = os.path.dirname(dest)
-
-            if validate and not os.path.exists(local_src):
-              error_msgs += [[
-                  str('src: ' + src_relpath),
-                  'msg: file not found in the environment repository',
-              ]]
-
-            if dest_dir not in dir_names:
-              dir_names.add(dest_dir)
-              dir_to_add = dict(
-                  path=dest_dir,
-                  mode=res_file.get('dir_mode') or default_dir_mode,
-              )
-              directories += [dir_to_add]
-
-            if dest not in file_names:
-              file_names.add(dest)
-              file_to_add = dict(
-                  src=src,
-                  dest=dest,
-                  mode=res_file.get('mode') or default_file_mode,
-              )
-              files += [file_to_add]
-            else:
-              error_msgs += [[
-                  str('src: ' + src),
-                  str('dest: ' + dest),
-                  'msg: duplicate destination for pod environment file',
-              ]]
-
-        for res_template in (res_env_templates or []):
-          when = res_template.get('when')
-
-          if to_bool(when if (when is not None) else True):
-            src_relpath = res_template.get('src')
-            src = env_dir + '/' + src_relpath
-            local_src = src
-
-            dest_relpath = res_template.get('dest')
-            dest = pod_dir + '/' + dest_relpath
-            dest_tmp = pod_tmp_dir + '/tpl/' + dest_relpath
-
-            dest_dir = os.path.dirname(dest)
-            dest_tmp_dir = os.path.dirname(dest_tmp)
-
-            if validate and not os.path.exists(local_src):
-              error_msgs += [[
-                  str('src: ' + src_relpath),
-                  'msg: template file not found in the environment repository',
-              ]]
-
-            if dest_dir not in dir_names:
-              dir_names.add(dest_dir)
-              dir_to_add = dict(
-                  path=dest_dir,
-                  mode=res_template.get('dir_mode') or default_dir_mode,
-              )
-              directories += [dir_to_add]
-
-            if dest_tmp_dir not in dir_names:
-              dir_names.add(dest_tmp_dir)
-              dir_to_add = dict(
-                  path=dest_tmp_dir,
-                  mode=res_template.get('dir_mode') or default_dir_mode,
-              )
-              directories += [dir_to_add]
-
-            if dest not in file_names:
-              file_names.add(dest)
-              template_to_add = dict(
-                  src=src,
-                  dest=dest,
-                  dest_tmp=dest_tmp,
-                  mode=res_template.get('mode') or default_file_mode,
-                  params=res_template.get('params') or {},
-              )
-              templates += [template_to_add]
-            else:
-              error_msgs += [[
-                  str('src: ' + src),
-                  str('dest: ' + dest),
-                  'msg: duplicate destination for pod environment template',
-              ]]
+          if error_msgs_aux:
+              for value in error_msgs_aux:
+                new_value = ['context: pod ctx env template']
+                error_msgs += [new_value]
+          else:
+            directories += result_aux.get('directories') or []
+            templates += result_aux.get('templates') or []
 
         if not error_msgs:
           children = res.get('children')
 
           if children:
             for child in children:
-              child_name = child.get('name')
-              child_params = child.get('params')
+              when = child.get('when')
 
-              res_child = load_next_vars(
-                  file_relpath=child_name,
-                  params=child_params,
-                  data_info=data_info,
-              )
+              if to_bool(when if (when is not None) else True):
+                child_name = child.get('name')
+                child_params = child.get('params')
 
-              child_error_msgs = res_child.get('error_msgs') or list()
+                res_child = load_next_vars(
+                    file_relpath=child_name,
+                    params=child_params,
+                    data_info=data_info,
+                )
 
-              if child_error_msgs:
-                for value in child_error_msgs:
-                  new_value = [str('ctx child: ' + child_name)] + value
-                  error_msgs += [new_value]
-              else:
-                res_child_result = res_child.get('result')
+                child_error_msgs = res_child.get('error_msgs') or list()
 
-                child_directories = res_child_result.get('directories')
-                child_files = res_child_result.get('files')
-                child_templates = res_child_result.get('templates')
+                if child_error_msgs:
+                  for value in child_error_msgs:
+                    new_value = [str('ctx child: ' + child_name)] + value
+                    error_msgs += [new_value]
+                else:
+                  child_result = res_child.get('result')
 
-                if child_directories:
-                  directories += child_directories
+                  child_directories = child_result.get('directories')
+                  child_files = child_result.get('files')
+                  child_templates = child_result.get('templates')
 
-                if child_files:
-                  files += child_files
+                  if child_directories:
+                    directories += child_directories
 
-                if child_templates:
-                  templates += child_templates
+                  if child_files:
+                    files += child_files
+
+                  if child_templates:
+                    templates += child_templates
     except Exception as error:
       error_msgs = [[
           str('file: ' + (file_relpath or '')),
@@ -414,16 +485,13 @@ def load_next_vars(file_relpath, params, data_info):
       ]]
       return dict(error_msgs=error_msgs)
 
-    ret = dict(
-        result=dict(
-            directories=directories,
-            files=files,
-            templates=templates,
-        ),
-        error_msgs=error_msgs,
+    result = dict(
+        directories=directories,
+        files=files,
+        templates=templates,
     )
 
-    return ret
+    return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
     error_msgs = [[
         str('file: ' + (file_relpath or '')),

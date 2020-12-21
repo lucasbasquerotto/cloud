@@ -1,0 +1,59 @@
+root: "pod_ctx"
+schemas:
+  pod_ctx:
+    type: "dict"
+    props:
+      files:
+        type: "list"
+        elem_schema: "file"
+      templates:
+        type: "list"
+        elem_schema: "template"
+      env_files:
+        type: "list"
+        elem_schema: "file"
+      env_templates:
+        type: "list"
+        elem_schema: "template"
+      children:
+        type: "list"
+        elem_schema: "child"
+  file:
+    type: "dict"
+    props:
+      src:
+        type: "str"
+      dest:
+        type: "str"
+      mode:
+        type: "int"
+      dir_mode:
+        type: "int"
+      when:
+        type: "bool"
+  template:
+    type: "dict"
+    props:
+      src:
+        type: "str"
+      dest:
+        type: "str"
+      mode:
+        type: "int"
+      dir_mode:
+        type: "int"
+      schema:
+        type: "str"
+      params:
+        type: "dict"
+      when:
+        type: "bool"
+  child:
+    type: "dict"
+    props:
+      name:
+        type: "str"
+      params:
+        type: "dict"
+      when:
+        type: "bool"
