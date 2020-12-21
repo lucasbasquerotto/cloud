@@ -79,6 +79,6 @@ class LookupModule(LookupBase):
         ret.append(result_aux)
 
     if error_msgs:
-      raise AnsibleError(to_text(error_text(error_msgs, 'ctx validation')))
+      raise AnsibleError(to_text(error_text(error_msgs, 'ctx generation')))
 
     return ret

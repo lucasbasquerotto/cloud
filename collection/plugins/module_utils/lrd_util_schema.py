@@ -61,7 +61,7 @@ schemas:
       alternative_schema:
         type: "str"
       elem_type:
-        type: "str"
+        schema: "type"
       elem_alternative_type:
         schema: "type"
       elem_alternative_choices:
@@ -133,7 +133,7 @@ schemas:
       alternative_schema:
         type: "str"
       elem_type:
-        type: "str"
+        schema: "type"
       elem_alternative_type:
         schema: "type"
       elem_alternative_choices:

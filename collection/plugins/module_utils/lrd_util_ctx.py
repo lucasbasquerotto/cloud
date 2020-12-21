@@ -17,16 +17,22 @@ import os
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     default, is_empty, is_str, load_schema, merge_dicts, to_bool
 )
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import prepare_content
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import (
+    load_content, prepare_content
+)
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import load_vars
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 
 
-def prepare_service(service_info, service_names, env_data, validate_ctx, top):
+def prepare_service(service_info, service_names, run_info, top):
   try:
     result = dict()
     error_msgs = []
+
+    env_data = run_info.get('env_data')
+    validate_ctx = run_info.get('validate')
+
     env = env_data.get('env')
 
     service_info_dict = service_info if isinstance(
@@ -253,6 +259,27 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
             service_params = merge_dicts(result_aux_service, result_aux_info)
             result['params'] = service_params
 
+          contents = service.get('contents')
+          prepared_contents = dict()
+
+          for content_key in sorted(list((contents or dict()).keys())):
+            content = contents.get(content_key)
+
+            info = load_content(content, env, run_info=run_info)
+
+            prepared_content = info.get('result')
+            error_msgs_aux_content = info.get('error_msgs') or list()
+
+            for value in (error_msgs_aux_content or []):
+              new_value = [str('service content:' + content_key)] + value
+              error_msgs_aux += [new_value]
+
+            if not error_msgs_aux_content:
+              prepared_contents[content_key] = prepared_content
+
+          if prepared_contents:
+            result['contents'] = prepared_contents
+
           if validate_ctx and not error_msgs_aux:
             schema_file = service.get('schema')
 
@@ -265,7 +292,7 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
 
                 schema_data = dict()
 
-                for key in ['params', 'credentials']:
+                for key in ['params', 'credentials', 'contents']:
                   if result.get(key) is not None:
                     schema_data[key] = result.get(key)
 
@@ -274,7 +301,10 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
                 )
 
                 for value in (error_msgs_aux_validate or []):
-                  new_value = ['context: validate service schema'] + value
+                  new_value = [
+                      'context: validate service schema',
+                      str('schema file: ' + schema_file),
+                  ] + value
                   error_msgs_aux += [new_value]
               else:
                 error_msgs_aux += [[
@@ -308,7 +338,11 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
                   services[idx] = dict(name=service_info_aux, absent=True)
 
             info = prepare_services(
-                services, env_data, validate_ctx, top=False, service_names=service_names)
+                services,
+                run_info=run_info,
+                top=False,
+                service_names=service_names
+            )
 
             result_children = info.get('result')
             error_msgs_children = info.get('error_msgs') or list()
@@ -346,11 +380,13 @@ def prepare_service(service_info, service_names, env_data, validate_ctx, top):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_services(services, env_data, validate_ctx, top=False, service_names=None):
+def prepare_services(services, run_info, top=False, service_names=None):
   try:
     result = []
     error_msgs = []
     service_names = service_names if service_names is not None else set()
+
+    env_data = run_info.get('env_data')
     env = env_data.get('env')
 
     if services:
@@ -360,8 +396,7 @@ def prepare_services(services, env_data, validate_ctx, top=False, service_names=
         error_msgs += [['msg: no service specified for the environment']]
       else:
         for service_info in services:
-          info = prepare_service(service_info, service_names,
-                                 env_data, validate_ctx, top)
+          info = prepare_service(service_info, service_names, run_info, top)
 
           result_aux = info.get('result')
           error_msgs_aux = info.get('error_msgs') or list()
@@ -410,16 +445,18 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info):
 
         if dest in current_content_dests:
           error_msgs_aux_item += [['msg: duplicate destination']]
-        elif dest not in all_content_dests:
-          all_content_dests.add(dest)
+        else:
           current_content_dests.add(dest)
 
-          info = prepare_content(
-              transfer_content.get('src'),
-              env=env,
-              custom_dir=custom_dir,
-              run_info=run_info,
-          )
+          if dest not in all_content_dests:
+            all_content_dests.add(dest)
+
+            info = prepare_content(
+                transfer_content.get('src'),
+                env=env,
+                run_info=run_info,
+                custom_dir=custom_dir,
+            )
 
           prepared_content = info.get('result')
           error_msgs_aux_content = info.get('error_msgs')
@@ -766,6 +803,32 @@ def prepare_pod(pod_info, parent_data, run_info):
               result_aux_pod, result_aux_info, result_aux_ctx_info)
           result['params'] = pod_params
 
+        contents = pod.get('contents')
+        prepared_contents = dict()
+
+        for content_key in sorted(list((contents or dict()).keys())):
+          content = contents.get(content_key)
+
+          info = load_content(
+              content,
+              env,
+              custom_dir=local_dir,
+              run_info=run_info,
+          )
+
+          prepared_content = info.get('result')
+          error_msgs_aux_content = info.get('error_msgs') or list()
+
+          for value in (error_msgs_aux_content or []):
+            new_value = [str('pod content:' + content_key)] + value
+            error_msgs_aux += [new_value]
+
+          if not error_msgs_aux_content:
+            prepared_contents[content_key] = prepared_content
+
+        if prepared_contents:
+          result['contents'] = prepared_contents
+
         if validate_ctx and not error_msgs_aux:
           schema_file = pod.get('schema')
 
@@ -778,7 +841,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
               schema_data = dict()
 
-              for key in ['params', 'credentials']:
+              for key in ['params', 'credentials', 'contents']:
                 if result.get(key) is not None:
                   schema_data[key] = result.get(key)
 
@@ -787,7 +850,10 @@ def prepare_pod(pod_info, parent_data, run_info):
               )
 
               for value in (error_msgs_aux_validate or []):
-                new_value = ['context: validate pod schema'] + value
+                new_value = [
+                    'context: validate pod schema',
+                    str('schema file: ' + schema_file),
+                ] + value
                 error_msgs_aux += [new_value]
             else:
               error_msgs_aux += [[
@@ -1134,7 +1200,10 @@ def prepare_node(node_info, run_info):
               )
 
               for value in (error_msgs_aux_validate or []):
-                new_value = ['context: validate node schema'] + value
+                new_value = [
+                    'context: validate node schema',
+                    str('schema file: ' + schema_file),
+                ] + value
                 error_msgs_aux += [new_value]
 
               if (not error_msgs_aux_validate) and (not local):
@@ -1194,7 +1263,7 @@ def prepare_node(node_info, run_info):
 
           if services_info:
             info = prepare_services(
-                services_info, env_data, validate_ctx, top=True
+                services_info, run_info=run_info, top=True
             )
 
             prepared_services = info.get('result')
@@ -1249,7 +1318,8 @@ def prepare_node(node_info, run_info):
 
               if validate_ctx:
                 info = prepare_services(
-                    services_info, env_data, validate_ctx, True)
+                    services_info, run_info=run_info, top=True
+                )
                 error_msgs_aux_service = info.get('error_msgs') or list()
 
                 for value in (error_msgs_aux_service or []):
@@ -1367,10 +1437,13 @@ def prepare_nodes(nodes, run_info):
   return dict(result=result, error_msgs=error_msgs)
 
 
-def prepare_task(task_info_dict, env_data, validate_ctx):
+def prepare_task(task_info_dict, run_info):
   try:
     result = dict()
     error_msgs = []
+
+    env_data = run_info.get('env_data')
+    validate_ctx = run_info.get('validate')
 
     task_name = task_info_dict.get('name')
 
@@ -1441,6 +1514,7 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
                 'root',
                 'schema',
                 'credentials',
+                'contents',
                 'params',
                 'group_params',
                 'shared_params',
@@ -1570,6 +1644,27 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
         task_params = merge_dicts(result_aux_task, result_aux_info)
         result['params'] = task_params
 
+      contents = task.get('contents')
+      prepared_contents = dict()
+
+      for content_key in sorted(list((contents or dict()).keys())):
+        content = contents.get(content_key)
+
+        info = load_content(content, env, run_info=run_info)
+
+        prepared_content = info.get('result')
+        error_msgs_aux_content = info.get('error_msgs') or list()
+
+        for value in (error_msgs_aux_content or []):
+          new_value = [str('task content:' + content_key)] + value
+          error_msgs_aux += [new_value]
+
+        if not error_msgs_aux_content:
+          prepared_contents[content_key] = prepared_content
+
+      if prepared_contents:
+        result['contents'] = prepared_contents
+
       schema_file = task.get('schema')
       result['schema'] = schema_file
 
@@ -1586,14 +1681,17 @@ def prepare_task(task_info_dict, env_data, validate_ctx):
 
             schema_data = dict()
 
-            for key in ['params', 'credentials']:
+            for key in ['params', 'credentials', 'contents']:
               if result.get(key) is not None:
                 schema_data[key] = result.get(key)
 
             error_msgs_aux_validate = validate_schema(schema, schema_data)
 
             for value in (error_msgs_aux_validate or []):
-              new_value = ['context: validate task schema'] + value
+              new_value = [
+                  'context: validate task schema',
+                  str('schema file: ' + schema_file_full),
+              ] + value
               error_msgs_aux += [new_value]
           else:
             error_msgs_aux += [[
@@ -1637,8 +1735,10 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
     default_task_name = run_stage_data.get('default_task_name')
     prepared_nodes = run_stage_data.get('prepared_nodes')
-    env_data = run_stage_data.get('env_data')
-    validate_ctx = run_stage_data.get('validate_ctx')
+    run_info = run_stage_data.get('run_info')
+
+    env_data = run_info.get('env_data')
+    validate_ctx = run_info.get('validate')
 
     env = env_data.get('env')
 
@@ -1796,7 +1896,8 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
               nodes_to_run += [node]
             else:
               all_node_pods_names = map(
-                  lambda p: p.get('name'), node.get('pods') or [])
+                  lambda p: p.get('name'), node.get('pods') or []
+              )
 
               for pod_name in (pods_names or []):
                 if pod_name not in all_node_pods_names:
@@ -1820,7 +1921,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
       if task_name:
         result['task_name'] = task_name
 
-        info = prepare_task(run_stage_task, env_data, validate_ctx)
+        info = prepare_task(run_stage_task, run_info=run_info)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs') or list()
@@ -1854,7 +1955,8 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
               if stage_node_task:
                 error_msgs_aux += [
-                    [str('msg: node task with pod target_origin: ' + task_file)]]
+                    [str('msg: node task with pod target_origin: ' + task_file)]
+                ]
 
               for node in nodes_to_run:
                 for pod in node.get('pods'):
@@ -1871,7 +1973,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
                       schema_data = dict()
 
-                      for key in ['params', 'credentials']:
+                      for key in ['params', 'credentials', 'contents']:
                         if task.get(key) is not None:
                           schema_data[key] = task.get(key)
 
@@ -1881,13 +1983,14 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
                       for value in (error_msgs_aux_validate or []):
                         new_value = [
-                            'context: validate pod task schema'
+                            'context: validate pod task schema',
+                            str('schema file: ' + schema_file_full),
                         ] + value
                         error_msgs_aux_pod += [new_value]
                     else:
                       error_msgs_aux_pod += [[
                           'context: validate pod task schema',
-                          str('msg: schema file not found: ' + schema_file),
+                          str('msg: schema file not found: ' + schema_file_full),
                       ]]
 
                   task_file_path = pod_local_dir + '/' + task_file
@@ -1942,11 +2045,12 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, validate_ctx):
+def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
   try:
     result = dict()
     error_msgs = []
 
+    env_data = run_info.get('env_data')
     env = env_data.get('env')
 
     run_stage_name = None
@@ -2005,8 +2109,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
         run_stage_data = dict(
             default_task_name=default_task_name,
             prepared_nodes=prepared_nodes,
-            env_data=env_data,
-            validate_ctx=validate_ctx,
+            run_info=run_info,
         )
         info = prepare_run_stage_task(
             run_stage_task,
@@ -2076,7 +2179,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, env_data, va
     return dict(error_msgs=error_msgs)
 
 
-def prepare_run_stages(run_stages, prepared_nodes, env_data, validate_ctx):
+def prepare_run_stages(run_stages, prepared_nodes, run_info):
   try:
     result = []
     error_msgs = []
@@ -2084,7 +2187,11 @@ def prepare_run_stages(run_stages, prepared_nodes, env_data, validate_ctx):
     for idx, run_stage_info in enumerate(run_stages or []):
       default_name = str(idx + 1)
       info = prepare_run_stage(
-          run_stage_info, default_name, prepared_nodes, env_data, validate_ctx)
+          run_stage_info,
+          default_name=default_name,
+          prepared_nodes=prepared_nodes,
+          run_info=run_info,
+      )
 
       result_aux = info.get('result')
       error_msgs_aux = info.get('error_msgs') or list()
@@ -2110,7 +2217,6 @@ def prepare_ctx(ctx_name, run_info):
     error_msgs = []
 
     env_data = run_info.get('env_data')
-    validate_ctx = run_info.get('validate')
 
     if not env_data:
       error_msgs += [['msg: env_data property not specified']]
@@ -2176,9 +2282,8 @@ def prepare_ctx(ctx_name, run_info):
         if ctx_initial_services:
           info = prepare_services(
               ctx_initial_services,
-              env_data,
-              validate_ctx,
-              top=True
+              run_info=run_info,
+              top=True,
           )
 
           result_aux = info.get('result')
@@ -2212,7 +2317,10 @@ def prepare_ctx(ctx_name, run_info):
 
         if ctx_final_services:
           info = prepare_services(
-              ctx_final_services, env_data, validate_ctx, top=True)
+              ctx_final_services,
+              run_info=run_info,
+              top=True,
+          )
 
           result_aux = info.get('result')
           error_msgs_aux = info.get('error_msgs') or list()
@@ -2235,7 +2343,10 @@ def prepare_ctx(ctx_name, run_info):
               ]]
           else:
             info = prepare_run_stages(
-                run_stages, prepared_nodes, env_data, validate_ctx)
+                run_stages,
+                prepared_nodes=prepared_nodes,
+                run_info=run_info,
+            )
 
             result_aux = info.get('result')
             error_msgs_aux = info.get('error_msgs') or list()

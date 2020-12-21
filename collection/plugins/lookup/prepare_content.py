@@ -84,8 +84,8 @@ class LookupModule(LookupBase):
       result_info = prepare_content(
           content,
           env=env,
-          custom_dir=custom_dir,
           run_info=run_info,
+          custom_dir=custom_dir,
       )
 
       result_aux = result_info.get('result')

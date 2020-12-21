@@ -21,15 +21,15 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import v
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
 
 
-def load_content(content, env, custom_dir, run_info):
+def load_content(content, env, run_info, custom_dir=None):
   try:
     result = None
 
     info = prepare_content(
         content,
         env=env,
-        custom_dir=custom_dir,
         run_info=run_info,
+        custom_dir=custom_dir,
     )
 
     prepared_content = info.get('result')
@@ -85,7 +85,7 @@ def load_content(content, env, custom_dir, run_info):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_content(content, env, custom_dir, run_info, content_names=None):
+def prepare_content(content, env, run_info, custom_dir=None, content_names=None):
   try:
     if env is None:
       error_msgs = [['msg: environment variable not specified']]
@@ -263,7 +263,12 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
           for inner_content_key in sorted(list((inner_contents or dict()).keys())):
             inner_content = inner_contents.get(inner_content_key)
 
-            info = load_content(inner_content, env, custom_dir, run_info)
+            info = load_content(
+                inner_content,
+                env,
+                run_info=run_info,
+                custom_dir=custom_dir,
+            )
 
             prepared_inner_content = info.get('result')
             error_msgs_aux_content = info.get('error_msgs') or list()
@@ -302,7 +307,10 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
               )
 
               for value in (error_msgs_aux_validate or []):
-                new_value = ['context: validate content schema'] + value
+                new_value = [
+                    'context: validate content schema',
+                    str('schema file: ' + schema_file),
+                ] + value
                 error_msgs_aux += [new_value]
             else:
               error_msgs_aux += [[
@@ -346,8 +354,8 @@ def prepare_content(content, env, custom_dir, run_info, content_names=None):
               info = prepare_content(
                   child_content,
                   env=env,
-                  custom_dir=custom_dir,
                   run_info=run_info,
+                  custom_dir=custom_dir,
                   content_names=content_names,
               )
 

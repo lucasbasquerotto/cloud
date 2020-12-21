@@ -54,6 +54,7 @@ def load_vars(pod_info, run_info, meta_info=None):
         local=pod.get('local'),
         main=pod.get('params', {}),
         credentials=pod.get('credentials', {}),
+        contents=pod.get('contents', {}),
         data_dir=pod.get('data_dir'),
         extra_repos_dir_relpath=pod.get('extra_repos_dir_relpath'),
         dependencies_data=dependencies_data,
