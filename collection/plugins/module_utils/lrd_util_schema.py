@@ -36,6 +36,10 @@ schemas:
       type:
         required: true
         schema: "type"
+      required:
+        type: "bool"
+      non_empty:
+        type: "bool"
       choices:
         type: "list"
         elem_type: "primitive"

@@ -55,6 +55,8 @@ def load_vars(pod_info, run_info, meta_info=None):
         ctx_name=env_data.get('ctx_name'),
         pod_name=pod.get('name'),
         local=pod.get('local'),
+        dev=env_data.get('dev'),
+        lax=env_data.get('lax'),
         main=pod.get('params', {}),
         credentials=pod.get('credentials', {}),
         contents=pod.get('contents', {}),
@@ -230,7 +232,7 @@ def load_ctx_template(current_template, is_env, data_info):
             'msg: pod ctx template file not found',
         ]]
 
-      template_params = current_template.get('params') or {}
+      template_params = current_template.get('params') or None
 
       if validate and not error_msgs:
         schema_file = current_template.get('schema')
@@ -397,7 +399,7 @@ def load_next_vars(file_relpath, params, data_info):
 
           if error_msgs_aux:
             for value in error_msgs_aux:
-              new_value = ['context: pod ctx file']
+              new_value = ['context: pod ctx file'] + value
               error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
@@ -412,7 +414,7 @@ def load_next_vars(file_relpath, params, data_info):
 
           if error_msgs_aux:
             for value in error_msgs_aux:
-              new_value = ['context: pod ctx template']
+              new_value = ['context: pod ctx template'] + value
               error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
@@ -426,7 +428,7 @@ def load_next_vars(file_relpath, params, data_info):
 
           if error_msgs_aux:
             for value in error_msgs_aux:
-              new_value = ['context: pod ctx env file']
+              new_value = ['context: pod ctx env file'] + value
               error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
@@ -441,7 +443,7 @@ def load_next_vars(file_relpath, params, data_info):
 
           if error_msgs_aux:
             for value in error_msgs_aux:
-              new_value = ['context: pod ctx env template']
+              new_value = ['context: pod ctx env template'] + value
               error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []

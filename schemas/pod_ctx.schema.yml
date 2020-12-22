@@ -45,7 +45,7 @@ schemas:
       schema:
         type: "str"
       params:
-        type: "dict"
+        type: "unknown"
       when:
         type: "bool"
   child:
@@ -54,6 +54,6 @@ schemas:
       name:
         type: "str"
       params:
-        type: "dict"
+        type: "unknown"
       when:
         type: "bool"
