@@ -1,37 +1,58 @@
+# User Data
+
+# - name: "{{ cloud_node_user_data_title }} - cloud_node_user_data - lookup"
+#   set_fact:
+#     cloud_node_service_params_base: >-
+#       {{
+#         cloud_node_service_params_base
+#         | combine({ 'user_data': cloud_node_user_data })
+#       }}
+#   when: cloud_node_user_data != ''
+#   tags: ["no_print"]
+
 # Main Service
 
 - name: "{{ cloud_node_item_title }} - main service (outer)"
   include_tasks: "tasks/services/cloud_service.yml"
   vars:
-    tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
     cloud_service_title: "{{ cloud_node_item_title }} - main service"
-    cloud_service_prepared_list: "{{ [tmp_service] }}"
+    cloud_service_prepared_list: "{{ cloud_node_item.prepared_services | default([]) }}"
     cloud_service_top: true
     cloud_service_tmp_dir: "{{ cloud_node_item.tmp_dir }}/services"
     cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+  when: (cloud_node_item.prepared_services | default([]) | length) > 0
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_item_title }} - verify if there is a node result"
   fail:
     msg: >-
-      the result after calling the node service ({{ tmp_service_name }})
-      was not found or doesn't have a "hosts" property
+      the result after calling the node service ({{ tmp_result_name }})
+      was not found or doesn't have a name
   vars:
-    tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
-    tmp_service_name: "{{ tmp_service.name | default('') }}"
-    tmp_result_item: >-
-      {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
-  when: tmp_result_item.hosts is not defined
+    tmp_result_item: "{{ cloud_service_result_inner_map[tmp_item.name] | default({}) }}"
+    tmp_result_name: "{{ tmp_result_item.name | default('') }}"
+  when: tmp_result_name == ''
+  loop: "{{ cloud_node_item.prepared_services | default([]) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.name }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_hosts"
+- name: "{{ cloud_node_item_title }} - cloud_node_hosts - init"
   set_fact:
-    cloud_node_hosts: "{{ tmp_result_item.hosts }}"
+    cloud_node_hosts: []
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_hosts - fill"
+  set_fact:
+    cloud_node_hosts: "{{ cloud_node_hosts + [tmp_result_item] }}"
   vars:
-    tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
-    tmp_service_name: "{{ tmp_service.name | default('') }}"
-    tmp_result_item: >-
-      {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
+    tmp_result_item: "{{ cloud_service_result_inner_map[tmp_item.name] | default({}) }}"
+    tmp_result_name: "{{ tmp_result_item.name | default('') }}"
+  loop: "{{ cloud_node_item.prepared_services | default([]) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_result_name }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_node_item_title }} - validate the node service result schema"

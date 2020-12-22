@@ -121,17 +121,17 @@
         src: "{{ project_ctx_run_src }}"
         dest: "{{ project_ctx_run_tmp_dest }}"
         mode: "{{ env_lax | ternary(0666, 0600) }}"
-        block_end_string: "%>"
-        block_start_string: "<%"
-        variable_end_string: ">>"
-        variable_start_string: "<<"
+        block_end_string: "%>>"
+        block_start_string: "<<%"
+        variable_end_string: "}>>"
+        variable_start_string: "<<{"
       vars:
-        env: "<< project_ctx_run_env >>"
-        ctx_data: "<< project_ctx_run_ctx_data >>"
+        env: "<<{ project_ctx_run_env }>>"
+        ctx_data: "<<{ project_ctx_run_ctx_data }>>"
         local_params:
-          pods_dir: "<< env_dev_pods_dir >>"
-          apps_dir: "<< env_dev_apps_dir >>"
-          path_map: "<< env_path_map >>"
+          pods_dir: "<<{ env_dev_pods_dir }>>"
+          apps_dir: "<<{ env_dev_apps_dir }>>"
+          path_map: "<<{ env_path_map }>>"
       changed_when: false
 
     - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (keep empty lines)"

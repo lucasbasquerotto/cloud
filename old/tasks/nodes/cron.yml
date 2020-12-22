@@ -1,0 +1,44 @@
+# Node Params
+
+- name: "{{ cron_title }} - cron_node_params"
+  set_fact:
+    cron_node_params: "{{ cron_node.params | default({}) }}"
+  tags: ["no_print"]
+
+# Cron Item
+
+- name: "{{ cron_title }} - cron list (outer)"
+  include_tasks: "cron_item.yml"
+  vars:
+    cron_inner_title: "{{ cron_title }} - {{ cron_item.user }} - {{ cron_item.src_file }}"
+    cron_src_file: "{{ env_dir }}/{{ cron_item.src_file }}"
+    cron_become: "{{ cron_item.user == 'root' }}"
+    cron_dest_dir: "{{ cron_item.dest_dir }}"
+    cron_user: "{{ cron_item.user }}"
+    cron_inner_start: "{{ cron_node_params.cron_start | default(true) }}"
+  loop: "{{ cron_node_params.cron | default([]) | list }}"
+  loop_control:
+    loop_var: cron_item
+  tags: ["no_print"]
+
+# Cron - Start
+
+- name: "{{ cron_title }} - ensure cron is running (user)"
+  become: no
+  service:
+    name: cron
+    state: started
+  when: >-
+    (cron_node_params.cron_start | default(true) | bool)
+    and
+    ((cron_node_params.cron | default([]) | list | length) > 0)
+
+- name: "{{ cron_title }} - ensure cron is running (root)"
+  become: yes
+  service:
+    name: cron
+    state: started
+  when: >-
+    (cron_node_params.cron_start_root | default(true) | bool)
+    and
+    ((cron_node_params.cron | default([]) | list | length) > 0)

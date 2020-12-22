@@ -220,7 +220,7 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
             error_msgs_aux += [new_value]
 
           if not error_msgs_aux_credentials:
-            result['credentials'] = credentials
+            result['credentials'] = credentials or None
 
         if content_type in ['env', 'str', 'template']:
           params_args = dict(
@@ -243,7 +243,7 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
             error_msgs_aux += [new_value]
 
           if not error_msgs_aux_params:
-            result['params'] = content_params
+            result['params'] = content_params or None
 
         if content_type in ['file', 'template']:
           file_rel = content.get('file')
@@ -274,14 +274,13 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
             error_msgs_aux_content = info.get('error_msgs') or list()
 
             for value in (error_msgs_aux_content or []):
-              new_value = [str('inner content:' + inner_content_key)] + value
+              new_value = [str('inner content: ' + inner_content_key)] + value
               error_msgs_aux += [new_value]
 
             if not error_msgs_aux_content:
               prepared_inner_contents[inner_content_key] = prepared_inner_content
 
-          if prepared_inner_contents:
-            result['contents'] = prepared_inner_contents
+          result['contents'] = prepared_inner_contents or None
 
         if validate and not error_msgs_aux:
           schema_file = content.get('schema')
@@ -381,7 +380,7 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
                 result_content_params = merge_dicts(
                     result.get('params'), params
                 )
-                result['params'] = result_content_params
+                result['params'] = result_content_params or None
 
         for value in (error_msgs_aux or []):
           new_value = [str('content: ' + content_description)] + value

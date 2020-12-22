@@ -25,10 +25,12 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 
 
-def prepare_service(service_info, service_names, run_info, top):
+def prepare_service(service_info, run_info, top, service_names=None):
   try:
     result = dict()
     error_msgs = []
+
+    service_names = service_names if service_names is not None else set()
 
     env_data = run_info.get('env_data')
     validate_ctx = run_info.get('validate')
@@ -147,8 +149,9 @@ def prepare_service(service_info, service_names, run_info, top):
               'base_dir',
               'task',
               'namespace',
-              'credentials',
               'schema',
+              'credentials',
+              'contents',
               'params',
               'group_params',
               'shared_params',
@@ -208,7 +211,7 @@ def prepare_service(service_info, service_names, run_info, top):
 
           if not error_msgs_aux_credentials:
             credentials = result_aux_credentials
-            result['credentials'] = credentials
+            result['credentials'] = credentials or None
 
           error_msgs_aux_params = []
 
@@ -257,7 +260,7 @@ def prepare_service(service_info, service_names, run_info, top):
 
           if not error_msgs_aux_params:
             service_params = merge_dicts(result_aux_service, result_aux_info)
-            result['params'] = service_params
+            result['params'] = service_params or None
 
           contents = service.get('contents')
           prepared_contents = dict()
@@ -271,14 +274,13 @@ def prepare_service(service_info, service_names, run_info, top):
             error_msgs_aux_content = info.get('error_msgs') or list()
 
             for value in (error_msgs_aux_content or []):
-              new_value = [str('service content:' + content_key)] + value
+              new_value = [str('service content: ' + content_key)] + value
               error_msgs_aux += [new_value]
 
             if not error_msgs_aux_content:
               prepared_contents[content_key] = prepared_content
 
-          if prepared_contents:
-            result['contents'] = prepared_contents
+          result['contents'] = prepared_contents or None
 
           if validate_ctx and not error_msgs_aux:
             schema_file = service.get('schema')
@@ -396,7 +398,12 @@ def prepare_services(services, run_info, top=False, service_names=None):
         error_msgs += [['msg: no service specified for the environment']]
       else:
         for service_info in services:
-          info = prepare_service(service_info, service_names, run_info, top)
+          info = prepare_service(
+              service_info,
+              run_info=run_info,
+              top=top,
+              service_names=service_names
+          )
 
           result_aux = info.get('result')
           error_msgs_aux = info.get('error_msgs') or list()
@@ -733,7 +740,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         if not error_msgs_aux_credentials:
           credentials = result_aux_credentials
-          result['credentials'] = credentials
+          result['credentials'] = credentials or None
 
         error_msgs_aux_params = []
 
@@ -801,7 +808,7 @@ def prepare_pod(pod_info, parent_data, run_info):
         if not error_msgs_aux_params:
           pod_params = merge_dicts(
               result_aux_pod, result_aux_info, result_aux_ctx_info)
-          result['params'] = pod_params
+          result['params'] = pod_params or None
 
         contents = pod.get('contents')
         prepared_contents = dict()
@@ -820,14 +827,13 @@ def prepare_pod(pod_info, parent_data, run_info):
           error_msgs_aux_content = info.get('error_msgs') or list()
 
           for value in (error_msgs_aux_content or []):
-            new_value = [str('pod content:' + content_key)] + value
+            new_value = [str('pod content: ' + content_key)] + value
             error_msgs_aux += [new_value]
 
           if not error_msgs_aux_content:
             prepared_contents[content_key] = prepared_content
 
-        if prepared_contents:
-          result['contents'] = prepared_contents
+        result['contents'] = prepared_contents or None
 
         if validate_ctx and not error_msgs_aux:
           schema_file = pod.get('schema')
@@ -1180,7 +1186,7 @@ def prepare_node(node_info, run_info):
 
         if not error_msgs_aux_params:
           node_params = merge_dicts(result_aux_node, result_aux_info)
-          result['params'] = node_params
+          result['params'] = node_params or None
 
         if validate_ctx and not error_msgs_aux:
           schema_file = 'schemas/node.schema.yml'
@@ -1245,28 +1251,28 @@ def prepare_node(node_info, run_info):
           instance_amount = int(node_info_dict.get('amount') or 1)
           instance_max_amount = int(
               node_info_dict.get('max_amount') or instance_amount)
-          services_info = []
+          replicas = []
 
-          for idx in range(1, instance_max_amount + 1):
-            name_suffix = ('-' + str(idx)) if idx > 1 else ''
+          if instance_max_amount > 0:
+            for idx in range(1, instance_max_amount + 1):
+              name_suffix = ('-' + str(idx)) if idx > 1 else ''
+              replica = dict(
+                  name=(
+                      node_info_dict.get('hostname') or node_name
+                  ) + name_suffix,
+                  absent=None if (idx <= instance_amount) else True,
+              )
+              replicas += [replica]
+
             service_info = dict(
-                name=service + name_suffix,
-                key=service,
+                name=service,
                 single=True,
-                params=dict(
-                    name=(node_info_dict.get('hostname')
-                          or node_name) + name_suffix,
-                    state=None if idx <= instance_amount else 'absent',
-                )
-            )
-            services_info += [service_info]
-
-          if services_info:
-            info = prepare_services(
-                services_info, run_info=run_info, top=True
+                params=dict(replicas=replicas)
             )
 
-            prepared_services = info.get('result')
+            info = prepare_service(service_info, run_info=run_info, top=True)
+
+            prepared_service = info.get('result')
             error_msgs_aux_services = info.get('error_msgs') or list()
 
             if error_msgs_aux_services:
@@ -1274,7 +1280,7 @@ def prepare_node(node_info, run_info):
                 new_value = ['context: prepare node service'] + value
                 error_msgs_aux += [new_value]
             else:
-              result['prepared_services'] = prepared_services
+              result['prepared_service'] = prepared_service
 
           if not dns_service:
             if dns_service_params_list:
@@ -1581,7 +1587,7 @@ def prepare_task(task_info_dict, run_info):
             ]]
 
         credentials = result_aux_credentials
-        result['credentials'] = credentials
+        result['credentials'] = credentials or None
 
       error_msgs_aux_params = []
       result_aux_info = None
@@ -1642,7 +1648,7 @@ def prepare_task(task_info_dict, run_info):
             ]]
 
         task_params = merge_dicts(result_aux_task, result_aux_info)
-        result['params'] = task_params
+        result['params'] = task_params or None
 
       contents = task.get('contents')
       prepared_contents = dict()
@@ -1656,14 +1662,13 @@ def prepare_task(task_info_dict, run_info):
         error_msgs_aux_content = info.get('error_msgs') or list()
 
         for value in (error_msgs_aux_content or []):
-          new_value = [str('task content:' + content_key)] + value
+          new_value = [str('task content: ' + content_key)] + value
           error_msgs_aux += [new_value]
 
         if not error_msgs_aux_content:
           prepared_contents[content_key] = prepared_content
 
-      if prepared_contents:
-        result['contents'] = prepared_contents
+      result['contents'] = prepared_contents or None
 
       schema_file = task.get('schema')
       result['schema'] = schema_file

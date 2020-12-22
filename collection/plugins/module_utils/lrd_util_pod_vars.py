@@ -13,7 +13,10 @@ __metaclass__ = type  # pylint: disable=invalid-name
 
 import os
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import load_yaml, to_bool
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
+    load_schema, load_yaml, to_bool
+)
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
 
 
@@ -109,22 +112,28 @@ def load_vars(pod_info, run_info, meta_info=None):
     ]]
     return dict(error_msgs=error_msgs)
 
-def load_ctx_file(current_file, is_env, data_info)
+
+def load_ctx_file(current_file, is_env, data_info):
   try:
     directories = list()
     files = list()
     error_msgs = list()
 
     pod = data_info.get('pod')
+    env_data = data_info.get('env_data')
     previous = data_info.get('previous')
     validate = data_info.get('validate')
 
     pod_dir = pod.get('pod_dir')
     pod_local_dir = pod.get('local_dir')
-    pod_tmp_dir = pod.get('tmp_dir')
 
     dir_names = previous.get('dir_names')
     file_names = previous.get('file_names')
+
+    env_dir = env_data.get('env_dir')
+    env_lax = env_data.get('lax')
+    default_dir_mode = 777 if env_lax else 751
+    default_file_mode = 666 if env_lax else 640
 
     when = current_file.get('when')
 
@@ -177,13 +186,15 @@ def load_ctx_file(current_file, is_env, data_info)
     ]]
     return dict(error_msgs=error_msgs)
 
-def load_ctx_template(current_template, is_env, data_info)
+
+def load_ctx_template(current_template, is_env, data_info):
   try:
     directories = list()
     templates = list()
     error_msgs = list()
 
     pod = data_info.get('pod')
+    env_data = data_info.get('env_data')
     previous = data_info.get('previous')
     validate = data_info.get('validate')
 
@@ -193,6 +204,11 @@ def load_ctx_template(current_template, is_env, data_info)
 
     dir_names = previous.get('dir_names')
     file_names = previous.get('file_names')
+
+    env_dir = env_data.get('env_dir')
+    env_lax = env_data.get('lax')
+    default_dir_mode = 777 if env_lax else 751
+    default_file_mode = 666 if env_lax else 640
 
     when = current_template.get('when')
 
@@ -214,16 +230,19 @@ def load_ctx_template(current_template, is_env, data_info)
             'msg: pod ctx template file not found',
         ]]
 
+      template_params = current_template.get('params') or {}
+
       if validate and not error_msgs:
         schema_file = current_template.get('schema')
 
         if schema_file:
-          schema_file = (env_dir if is_env else pod_local_dir) + '/' + schema_file
+          schema_file = (env_dir if is_env else pod_local_dir) + \
+              '/' + schema_file
 
           if os.path.exists(schema_file):
             schema = load_schema(schema_file)
 
-            error_msgs_aux = validate_schema(schema, res)
+            error_msgs_aux = validate_schema(schema, template_params)
 
             for value in (error_msgs_aux or []):
               new_value = [
@@ -266,7 +285,7 @@ def load_ctx_template(current_template, is_env, data_info)
             dest=dest,
             dest_tmp=dest_tmp,
             mode=current_template.get('mode') or default_file_mode,
-            params=current_template.get('params') or {},
+            params=template_params,
         )
         templates += [template_to_add]
       else:
@@ -287,6 +306,7 @@ def load_ctx_template(current_template, is_env, data_info)
     ]]
     return dict(error_msgs=error_msgs)
 
+
 def load_next_vars(file_relpath, params, data_info):
   try:
     directories = list()
@@ -296,23 +316,10 @@ def load_next_vars(file_relpath, params, data_info):
 
     plugin = data_info.get('plugin')
     ansible_vars = data_info.get('ansible_vars')
-    env_data = data_info.get('env_data')
     pod = data_info.get('pod')
-    previous = data_info.get('previous')
     validate = data_info.get('validate')
 
-    pod_dir = pod.get('pod_dir')
     pod_local_dir = pod.get('local_dir')
-    pod_tmp_dir = pod.get('tmp_dir')
-
-    dir_names = previous.get('dir_names')
-    file_names = previous.get('file_names')
-
-    env_lax = env_data.get('lax')
-    default_dir_mode = 777 if env_lax else 751
-    default_file_mode = 666 if env_lax else 640
-
-    env_dir = env_data.get('env_dir')
 
     try:
       file = pod_local_dir + '/' + file_relpath
@@ -389,23 +396,24 @@ def load_next_vars(file_relpath, params, data_info):
           error_msgs_aux = info.get('error_msgs')
 
           if error_msgs_aux:
-              for value in error_msgs_aux:
-                new_value = ['context: pod ctx file']
-                error_msgs += [new_value]
+            for value in error_msgs_aux:
+              new_value = ['context: pod ctx file']
+              error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
             files += result_aux.get('files') or []
 
         for res_template in (res_templates or []):
-          info = load_ctx_template(res_template, is_env=False, data_info=data_info)
+          info = load_ctx_template(
+              res_template, is_env=False, data_info=data_info)
 
           result_aux = info.get('result')
           error_msgs_aux = info.get('error_msgs')
 
           if error_msgs_aux:
-              for value in error_msgs_aux:
-                new_value = ['context: pod ctx template']
-                error_msgs += [new_value]
+            for value in error_msgs_aux:
+              new_value = ['context: pod ctx template']
+              error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
             templates += result_aux.get('templates') or []
@@ -417,23 +425,24 @@ def load_next_vars(file_relpath, params, data_info):
           error_msgs_aux = info.get('error_msgs')
 
           if error_msgs_aux:
-              for value in error_msgs_aux:
-                new_value = ['context: pod ctx env file']
-                error_msgs += [new_value]
+            for value in error_msgs_aux:
+              new_value = ['context: pod ctx env file']
+              error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
             files += result_aux.get('files') or []
 
         for res_env_template in (res_env_templates or []):
-          info = load_ctx_template(res_env_template, is_env=True, data_info=data_info)
+          info = load_ctx_template(
+              res_env_template, is_env=True, data_info=data_info)
 
           result_aux = info.get('result')
           error_msgs_aux = info.get('error_msgs')
 
           if error_msgs_aux:
-              for value in error_msgs_aux:
-                new_value = ['context: pod ctx env template']
-                error_msgs += [new_value]
+            for value in error_msgs_aux:
+              new_value = ['context: pod ctx env template']
+              error_msgs += [new_value]
           else:
             directories += result_aux.get('directories') or []
             templates += result_aux.get('templates') or []

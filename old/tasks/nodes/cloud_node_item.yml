@@ -23,6 +23,22 @@
     cloud_node_credential: "{{ cloud_node_item.credential | default({}) }}"
   tags: ["no_print"]
 
+- name: "{{ cloud_node_item_title }} - cloud_node_params"
+  set_fact:
+    cloud_node_params: "{{ cloud_node_item.params | default({}) }}"
+  tags: ["no_print"]
+
+### User Data ###
+
+- name: "{{ cloud_node_item_title }} - cloud_node_user_data - initial"
+  set_fact:
+    cloud_node_user_data: ""
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - cloud_node_user_data - fill (outer)"
+  include_tasks: "cloud_node_user_data.yml"
+  when: (cloud_node_params.user_data_file | default('')) != ''
+
 ### SSH Vars ###
 
 - name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_filename"
@@ -69,10 +85,9 @@
   when: cloud_node_ssh_key_path != ''
   tags: ["no_print_skipped"]
 
+# Main Service
+
 - name: "{{ cloud_node_item_title }} - run (outer)"
   include_tasks: "cloud_node_run.yml"
-  when: >-
-    (not (cloud_node_item.external | default(false) | bool))
-    and
-    (cloud_node_item.prepared_service is defined)
+  when: (not (cloud_node_item.external | default(false) | bool))
   tags: ["no_print_skipped"]

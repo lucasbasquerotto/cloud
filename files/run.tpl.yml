@@ -1,16 +1,16 @@
-<% set var_run_stages = ctx_data.run_stages | default([], true) %>
-<% set ns_outer_run = namespace(first=true) %>
+<<% set var_run_stages = ctx_data.run_stages | default([], true) %>>
+<<% set ns_outer_run = namespace(first=true) %>>
 
-<% for var_run_stage in var_run_stages %>
+<<% for var_run_stage in var_run_stages %>>
 
-<% if (var_run_stage.tasks | default([], true) | length) > 0 %>
+<<% if (var_run_stage.tasks | default([], true) | length) > 0 %>>
 
-<% if not (ns_outer_run.first | bool) %>
+<<% if not (ns_outer_run.first | bool) %>>
 ###############################################################################
-<% endif %>
+<<% endif %>>
 
-- name: Play 04.<< loop.index >> - Run Stage (<< var_run_stage.name >>)
-  hosts: << var_run_stage.hosts | join(',') >>
+- name: Play 04.<<{ loop.index }>> - Run Stage (<<{ var_run_stage.name }>>)
+  hosts: <<{ var_run_stage.hosts | join(',') }>>
   strategy: free
   tags:
   - init
@@ -18,19 +18,19 @@
   gather_facts: no
   tasks:
 
-    <% if ns_outer_run.first | bool %>
+    <<% if ns_outer_run.first | bool %>>
 
     - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'
       tags: ["no_print"]
 
-    <% endif %>
+    <<% endif %>>
 
     - block:
-        - name: "{{ env_title }} - run stage [<< var_run_stage.name >>]"
+        - name: "{{ env_title }} - run stage [<<{ var_run_stage.name }>>]"
           include_tasks: "tasks/nodes/cloud_run.yml"
           vars:
-            main_tmp_stage_name: "<< var_run_stage.name >>"
+            main_tmp_stage_name: "<<{ var_run_stage.name }>>"
             main_tmp_stage_task: "{{ main_item.0 }}"
             main_tmp_task: "{{ main_tmp_stage_task.task }}"
             main_tmp_node: "{{ main_item.1 }}"
@@ -46,7 +46,7 @@
             cloud_run_node_task: "{{ main_tmp_stage_task.node_task | default(false) }}"
             cloud_run_pod_task: "{{ main_tmp_stage_task.pod_task | default(false) }}"
           loop: >-
-            {{ ctx_data.run_stages[<< loop.index - 1 >>].tasks | default([]) | subelements('nodes') }}
+            {{ ctx_data.run_stages[<<{ loop.index - 1 }>>].tasks | default([]) | subelements('nodes') }}
           loop_control:
             loop_var: main_item
             label: "{{ main_tmp_label }}"
@@ -59,7 +59,7 @@
 
 ###############################################################################
 
-- name: Play 04.<< loop.index >> - Wait Stage (<< var_run_stage.name >>)
+- name: Play 04.<<{ loop.index }>> - Wait Stage (<<{ var_run_stage.name }>>)
   hosts: main,host
   strategy: linear
   any_errors_fatal: true
@@ -74,12 +74,12 @@
         msg: "wait hosts..."
 
 
-<% set ns_outer_run.first = false %>
+<<% set ns_outer_run.first = false %>>
 
-<% endif %>
-<% endfor %>
+<<% endif %>>
+<<% endfor %>>
 
-<% if ns_outer_run.first | bool %>
+<<% if ns_outer_run.first | bool %>>
 
 - name: Play 04 - Run Stages (Empty)
   hosts: main
@@ -95,4 +95,4 @@
       debug:
         msg: "nothing to run..."
 
-<% endif %>
+<<% endif %>>
