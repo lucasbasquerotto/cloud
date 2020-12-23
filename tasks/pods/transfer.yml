@@ -24,8 +24,8 @@
   file:
     state: directory
     path: "{{ pod_transfer_item.path }}"
-    owner: "{{ pod_host_user }}"
-    group: "{{ pod_host_group }}"
+    owner: "{{ pod_host_user | default(omit, true) }}"
+    group: "{{ pod_host_group | default(omit, true) }}"
     mode: "{{ pod_transfer_item.mode }}"
   loop: "{{ pod_transfer_directories | default([], true) }}"
   loop_control:
@@ -42,8 +42,8 @@
   template:
     src: "{{ pod_transfer_item.src }}"
     dest: "{{ pod_transfer_item.dest_tmp }}"
-    owner: "{{ pod_host_user }}"
-    group: "{{ pod_host_group }}"
+    owner: "{{ pod_host_user | default(omit, true) }}"
+    group: "{{ pod_host_group | default(omit, true) }}"
     mode: "{{ pod_transfer_item.mode }}"
   vars:
     params: "{{ pod_transfer_item.params }}"
@@ -87,8 +87,8 @@
     remote_src: true
     src: "{{ pod_transfer_item.dest_tmp }}"
     dest: "{{ pod_transfer_item.dest }}"
-    owner: "{{ pod_host_user }}"
-    group: "{{ pod_host_group }}"
+    owner: "{{ pod_host_user | default(omit, true) }}"
+    group: "{{ pod_host_group | default(omit, true) }}"
     mode: "{{ pod_transfer_item.mode }}"
   loop: "{{ pod_transfer_templates | default([], true) }}"
   loop_control:
@@ -104,8 +104,8 @@
     remote_src: "{{ pod_transfer_item.remote_src | default(false) | bool }}"
     src: "{{ pod_transfer_item.src }}"
     dest: "{{ pod_transfer_item.dest }}"
-    owner: "{{ pod_host_user }}"
-    group: "{{ pod_host_group }}"
+    owner: "{{ pod_host_user | default(omit, true) }}"
+    group: "{{ pod_host_group | default(omit, true) }}"
     mode: "{{ pod_transfer_item.mode }}"
   loop: "{{ pod_transfer_files | default([], true) }}"
   loop_control:

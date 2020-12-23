@@ -42,8 +42,8 @@
       copy:
         content: "{{ env_commit }}"
         dest: "{{ pod_backup_file_tmp }}"
-        owner: "{{ pod_host_user }}"
-        group: "{{ pod_host_group }}"
+        owner: "{{ pod_host_user | default(omit, true) }}"
+        group: "{{ pod_host_group | default(omit, true) }}"
         mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       tags: ["no_print_skipped"]
 
@@ -55,8 +55,8 @@
         force: no
         content: ""
         dest: "{{ pod_backup_file }}"
-        owner: "{{ pod_host_user }}"
-        group: "{{ pod_host_group }}"
+        owner: "{{ pod_host_user | default(omit, true) }}"
+        group: "{{ pod_host_group | default(omit, true) }}"
         mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       tags: ["no_print_skipped"]
 
@@ -105,8 +105,8 @@
         remote_src: yes
         src: "{{ pod_backup_file_tmp }}"
         dest: "{{ pod_backup_file }}"
-        owner: "{{ pod_host_user }}"
-        group: "{{ pod_host_group }}"
+        owner: "{{ pod_host_user | default(omit, true) }}"
+        group: "{{ pod_host_group | default(omit, true) }}"
         mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
       when: pod_skip_unchanged | bool
       tags: ["no_print_skipped"]

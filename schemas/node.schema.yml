@@ -5,10 +5,8 @@ schemas:
     props:
       credential:
         schema: "credential"
-        non_empty: true
       params:
         schema: "params"
-        non_empty: true
   credential:
     type: "dict"
     props:
