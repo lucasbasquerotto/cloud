@@ -57,5 +57,3 @@ schemas:
         type: "str"
       ssh_file:
         type: "str"
-      ssh_file_encrypted:
-        type: "bool"

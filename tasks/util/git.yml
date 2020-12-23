@@ -64,7 +64,6 @@
   copy:
     src: "{{ git_ssh_src_dir }}/{{ git_repo.ssh_file }}"
     dest: "{{ git_ssh_file }}"
-    decrypt: "{{ git_repo.ssh_file_encrypted | default(false) | bool }}"
     mode: 0600
   when: git_ssh_file != ''
   tags: ["no_print_skipped"]

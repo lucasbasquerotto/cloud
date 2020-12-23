@@ -64,7 +64,6 @@
   copy:
     src: "{{ cloud_node_ssh_file }}"
     dest: "{{ cloud_node_ssh_key_path }}"
-    decrypt: "{{ cloud_node_credential.ssh_file_encrypted | default(false) | bool }}"
     mode: 0600
   when: cloud_node_ssh_key_path != ''
   tags: ["no_print_skipped"]
