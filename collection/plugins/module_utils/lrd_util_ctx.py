@@ -474,9 +474,17 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info):
             result_item = dict(
                 src=prepared_content,
                 dest=dest,
+                user=transfer_content.get('user'),
+                group=transfer_content.get('group') or transfer_content.get('user'),
                 mode=transfer_content.get('mode'),
                 when=to_bool(transfer_content.get('when')),
             )
+
+            result_item_keys = sorted(list(result_item))
+
+            for key in result_item_keys:
+              if result_item.get(key) is None:
+                result_item.pop(key, None)
 
             result += [result_item]
 
@@ -1183,6 +1191,7 @@ def prepare_node(node_info, run_info):
           error_msgs_aux_params += [new_value]
 
         error_msgs_aux += error_msgs_aux_params
+        node_params = None
 
         if not error_msgs_aux_params:
           node_params = merge_dicts(result_aux_node, result_aux_info)
@@ -1228,6 +1237,24 @@ def prepare_node(node_info, run_info):
                   'context: validate node schema',
                   str('msg: schema file not found: ' + schema_file),
               ]]
+
+        if node_params:
+          cron = node_params.get('cron')
+
+          if cron:
+            info = prepare_transfer_content(
+                cron,
+                context_title='prepare the node cron transfer contents',
+                prepare_info=prepare_transfer_info,
+            )
+
+            cron_transfer = info.get('result')
+            error_msgs_aux_transfer = info.get('error_msgs')
+
+            if error_msgs_aux_transfer:
+              error_msgs_aux += error_msgs_aux_transfer
+            else:
+              result['cron_transfer'] = cron_transfer
 
         service = node.get('service')
         dns_service = node.get('dns_service')

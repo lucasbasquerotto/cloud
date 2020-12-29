@@ -8,17 +8,18 @@
 # Cron Item
 
 - name: "{{ cron_title }} - cron list (outer)"
-  include_tasks: "cron_item.yml"
+  include_tasks: "cron_transfer.yml"
   vars:
-    cron_inner_title: "{{ cron_title }} - {{ cron_item.user }} - {{ cron_item.src_file }}"
-    cron_src_file: "{{ env_dir }}/{{ cron_item.src_file }}"
-    cron_become: "{{ cron_item.user == 'root' }}"
-    cron_dest_dir: "{{ cron_item.dest_dir }}"
-    cron_user: "{{ cron_item.user }}"
-    cron_inner_start: "{{ cron_node_params.cron_start | default(true) }}"
-  loop: "{{ cron_node_params.cron | default([]) | list }}"
+    cron_transfer_become: "{{ (cron_item.user | default('')) == 'root' }}"
+    cron_transfer_src: "{{ cron_item.src }}"
+    cron_transfer_dest: "{{ cron_item.dest }}"
+    cron_transfer_user: "{{ cron_item.user | default('') }}"
+    cron_transfer_group: "{{ cron_item.group | default(cron_transfer_user, true) }}"
+    cron_transfer_title: "{{ cron_title }} - transfer cron file [{{ cron_transfer_dest }}]"
+  loop: "{{ cron_node.cron_transfer | default([]) | list }}"
   loop_control:
     loop_var: cron_item
+    label: "{{ cron_transfer_dest }}"
   tags: ["no_print"]
 
 # Cron - Start

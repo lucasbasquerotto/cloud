@@ -41,7 +41,9 @@
   copy:
     src: "{{ transfer_prepared_content.file }}"
     dest: "{{ transfer_dest }}"
-    mode: "{{ transfer_mode | default(omit) }}"
+    owner: "{{ transfer_user | default(omit, true) }}"
+    group: "{{ transfer_group | default(omit, true) }}"
+    mode: "{{ transfer_mode | default(omit, true) }}"
   register: transfer_diff
   when: transfer_prepared_content.type == 'file'
   tags: ["no_print_skipped"]
@@ -50,7 +52,9 @@
   template:
     src: "{{ transfer_prepared_content.file }}"
     dest: "{{ transfer_dest }}"
-    mode: "{{ transfer_mode | default(omit) }}"
+    owner: "{{ transfer_user | default(omit, true) }}"
+    group: "{{ transfer_group | default(omit, true) }}"
+    mode: "{{ transfer_mode | default(omit, true) }}"
   vars:
     params: "{{ transfer_prepared_content.params | default({}) }}"
     credentials: "{{ transfer_prepared_content.credentials | default({}) }}"
@@ -63,7 +67,9 @@
   copy:
     content: "{{ transfer_prepared_content.params.value }}"
     dest: "{{ transfer_dest }}"
-    mode: "{{ transfer_mode | default(omit) }}"
+    owner: "{{ transfer_user | default(omit, true) }}"
+    group: "{{ transfer_group | default(omit, true) }}"
+    mode: "{{ transfer_mode | default(omit, true) }}"
   register: transfer_diff
   when: transfer_prepared_content.type == 'str'
   tags: ["no_print_skipped"]

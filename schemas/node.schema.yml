@@ -60,10 +60,10 @@ schemas:
       user:
         type: "str"
         non_empty: true
-      src_file:
-        type: "str"
+      src:
+        schema: "content"
         non_empty: true
-      dest_dir:
+      dest:
         type: "str"
         non_empty: true
   dns:
@@ -74,3 +74,37 @@ schemas:
         non_empty: true
       ttl:
         type: "int"
+  content:
+    type: "simple_dict"
+    alternative_type: "str"
+    props:
+      type:
+        type: "str"
+        choices: ["env", "str", "file", "template"]
+      name:
+        type: "str"
+      key:
+        type: "str"
+      origin:
+        type: "str"
+        choices: ["env", "cloud", "custom"]
+      file:
+        type: "str"
+      schema:
+        type: "str"
+      credentials:
+        type: "map"
+        elem_type: "str"
+      contents:
+        type: "map"
+        elem_schema: "content"
+      params:
+        type: "dict"
+      group_params:
+        type: "map"
+        elem_type: "str"
+      shared_params:
+        type: "list"
+        elem_type: "str"
+      shared_group_params:
+        type: "str"

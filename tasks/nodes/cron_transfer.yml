@@ -1,0 +1,91 @@
+# Cron File (Tmp)
+
+- name: "{{ cron_transfer_title }} - create the temporary directory"
+  become: "{{ cron_transfer_become | default(omit, true) }}"
+  file:
+    state: directory
+    path: "{{ cron_tmp_dir }}"
+
+- name: "{{ cron_transfer_title }} - ensure the crontab file is present"
+  become: "{{ cron_transfer_become | default(omit, true) }}"
+  copy:
+    content: ""
+    force: no
+    dest: "{{ cron_transfer_dest }}"
+    owner: "{{ cron_transfer_user | default(omit, true) }}"
+    group: "{{ cron_transfer_group | default(omit, true) }}"
+
+- name: "{{ cron_transfer_title }} - transfer (outer)"
+  include_tasks: "tasks/util/transfer.yml"
+  vars:
+    transfer_title: "{{ cron_transfer_title }} - transfer new content (tmp)"
+    transfer_prepared: true
+    transfer_content: "{{ cron_transfer_src }}"
+    transfer_dest: "{{ cron_tmp_dir }}/new.cron"
+    transfer_user: "{{ cron_transfer_user | default('') }}"
+    transfer_group: "{{ cron_transfer_group | default('') }}"
+    transfer_mode: "{{ cron_transfer_mode | default('') }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ cron_transfer_title }} - copy the temporary cron files"
+  become: "{{ cron_transfer_become | default(omit, true) }}"
+  copy:
+    remote_src: true
+    src: "{{ cron_transfer_item.src }}"
+    dest: "{{ cron_tmp_dir }}/{{ cron_transfer_item.name }}"
+    owner: "{{ cron_transfer_user | default(omit, true) }}"
+    group: "{{ cron_transfer_group | default(omit, true) }}"
+    mode: 0600
+  loop:
+    - name: "old.tmp.cron"
+      src: "{{ cron_transfer_dest }}"
+    - name: "new.tmp.cron"
+      src: "{{ cron_tmp_dir }}/new.cron"
+  loop_control:
+    loop_var: cron_transfer_item
+    label: "{{ cron_transfer_item.name }}"
+  changed_when: false
+
+- name: "{{ cron_transfer_title }} - remove the comments from cron files"
+  become: "{{ cron_transfer_become | default(omit, true) }}"
+  lineinfile:
+    path: "{{ cron_tmp_dir }}/{{ cron_transfer_item }}"
+    state: absent
+    regexp: "^#"
+  loop:
+    - "old.tmp.cron"
+    - "new.tmp.cron"
+  loop_control:
+    loop_var: cron_transfer_item
+  changed_when: false
+
+# Cron File - Update When Changed
+
+- name: "{{ cron_transfer_title }} - get the difference of the 2 files (old and new)"
+  become: "{{ cron_transfer_become | default(omit, true) }}"
+  command: "diff {{ cron_tmp_dir + '/old.tmp.cron' }} {{ cron_tmp_dir + '/new.tmp.cron' }}"
+  register: cron_diff
+  failed_when: cron_diff.rc > 1
+  changed_when: cron_diff.rc == 1
+
+- block:
+    - name: >-
+        {{ cron_transfer_title }} - ensure the crontab file is up-to-date
+        ({{ cron_transfer_dest }})
+      become: "{{ cron_transfer_become | default(omit, true) }}"
+      copy:
+        remote_src: true
+        src: "{{ cron_tmp_dir + '/new.cron' }}"
+        dest: "{{ cron_transfer_dest }}"
+        owner: "{{ cron_transfer_user | default(omit, true) }}"
+        group: "{{ cron_transfer_group | default(omit, true) }}"
+        mode: 0600
+      register: cron_result
+
+    - name: "{{ cron_transfer_title }} - ensure the crontab file is active"
+      become: "{{ cron_transfer_become | default(omit, true) }}"
+      shell: "crontab '{{ cron_transfer_dest }}'"
+      when: cron_result is changed
+
+  when: cron_diff.changed
+  tags: ["no_print_skipped"]
