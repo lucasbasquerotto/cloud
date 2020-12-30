@@ -49,7 +49,7 @@
       wait_for_connection:
         delay: 0
         sleep: 1
-        timeout: "{{ host_test_initial_connection_timeout }}"
+        timeout: "{{ host_test_initial_connection_timeout | int }}"
       when: ansible_connection != 'local'
 
     - name: "{{ host_test_title }} - Gathering facts"

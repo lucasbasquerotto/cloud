@@ -93,7 +93,6 @@
     - init
     - nodes
     - wait_nodes
-    - always
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"

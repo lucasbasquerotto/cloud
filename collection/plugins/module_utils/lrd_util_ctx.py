@@ -1298,7 +1298,7 @@ def prepare_node(node_info, run_info):
               name_suffix = ('-' + str(idx)) if idx > 1 else ''
               replica = dict(
                   name=(
-                      node_info_dict.get('hostname') or node_name
+                      node_info_dict.get('hostname') or (node_name + '-host')
                   ) + name_suffix,
                   absent=None if (idx <= instance_amount) else True,
               )

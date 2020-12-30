@@ -1,6 +1,8 @@
 # Main Vars and Validations
 
-- name: "{{ cloud_node_item_title }} - ensure the inventory contains {{ '[' + cloud_node_name + ']' }}"
+- name: >-
+    {{ cloud_node_item_title }} -
+    ensure the inventory contains {{ '[' + cloud_node_name + ']' }} - check
   lineinfile:
     name: "{{ inventory_file }}"
     line: "{{ '[' + cloud_node_name + ']' }}"
@@ -12,7 +14,7 @@
 
 - name: >-
     {{ cloud_node_item_title }} -
-    ensure the inventory contains {{ '[' + cloud_node_name + ']' }}
+    ensure the inventory contains {{ '[' + cloud_node_name + ']' }} - fail
   fail:
     msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_name + ']' }}"
   when: cloud_node_conf is changed
