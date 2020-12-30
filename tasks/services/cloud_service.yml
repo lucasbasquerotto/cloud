@@ -72,8 +72,12 @@
   set_fact:
     cloud_service_run_list: >-
       {{
-        cloud_service_list | default([])
-        | lookup('lrd.cloud.services', env_data=env_data, validate=true)
+        lookup(
+          'lrd.cloud.services',
+          cloud_service_list | default([]),
+          env_data=env_data,
+          validate=true
+        )
       }}
   when: (cloud_service_list | default([]) | length) > 0
   tags: ["no_print_skipped"]
