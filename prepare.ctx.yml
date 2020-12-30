@@ -46,7 +46,7 @@
         transfer_title: "{{ env_title }} - cfg file"
         transfer_content: "{{ ctx_data.cfg | default(tmp_default, true) }}"
         transfer_dest: "ansible/ansible.generated.cfg"
-        transfer_tmp_dest: "tmp/ansible/ansible.generated.cfg"
+        transfer_tmp_dest: "{{ env_vars.ctx_dir }}/tmp/ansible.generated.cfg"
         transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
 
     # project hosts file (inventory)
@@ -67,7 +67,7 @@
         transfer_input:
           nodes: "{{ ctx_data.nodes | default([]) }}"
         transfer_dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        transfer_tmp_dest: "tmp/ansible/hosts.tmp"
+        transfer_tmp_dest: "{{ env_vars.ctx_dir }}/tmp/hosts.tmp"
         transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       tags: ["no_print_skipped"]
 
