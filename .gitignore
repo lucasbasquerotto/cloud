@@ -12,3 +12,4 @@
 
 /ansible/ansible.generated.cfg
 /run.yml
+/tmp/
