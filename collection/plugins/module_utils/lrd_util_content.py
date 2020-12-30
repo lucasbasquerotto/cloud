@@ -21,7 +21,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import v
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
 
 
-def load_content(content, env, run_info, custom_dir=None):
+def load_content(content, env, run_info, input_params=None, custom_dir=None):
   try:
     result = None
 
@@ -29,6 +29,7 @@ def load_content(content, env, run_info, custom_dir=None):
         content,
         env=env,
         run_info=run_info,
+        input_params=input_params,
         custom_dir=custom_dir,
     )
 
@@ -49,6 +50,7 @@ def load_content(content, env, run_info, custom_dir=None):
         ansible_vars = run_info.get('ansible_vars')
 
         content_file = prepared_content.get('file')
+        input_prepared_params = prepared_content.get('input')
         params = prepared_content.get('params')
         credentials = prepared_content.get('credentials')
         contents = prepared_content.get('contents')
@@ -58,6 +60,7 @@ def load_content(content, env, run_info, custom_dir=None):
             ansible_vars,
             content_file,
             dict(
+                input=input_prepared_params,
                 params=params,
                 credentials=credentials,
                 contents=contents,
@@ -85,7 +88,7 @@ def load_content(content, env, run_info, custom_dir=None):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_content(content, env, run_info, custom_dir=None, content_names=None):
+def prepare_content(content, env, run_info, input_params=None, custom_dir=None, content_names=None):
   try:
     if env is None:
       error_msgs = [['msg: environment variable not specified']]
@@ -245,6 +248,9 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
           if not error_msgs_aux_params:
             result['params'] = content_params or None
 
+        if input_params and (content_type == 'template'):
+          result['input'] = input_params
+
         if content_type in ['file', 'template']:
           file_rel = content.get('file')
           file_path = base_dir_prefix + file_rel
@@ -265,8 +271,9 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
 
             info = load_content(
                 inner_content,
-                env,
+                env=env,
                 run_info=run_info,
+                input_params=input_params,
                 custom_dir=custom_dir,
             )
 
@@ -297,7 +304,7 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
 
               schema_data = dict()
 
-              for key in ['params', 'credentials', 'contents']:
+              for key in ['input', 'params', 'credentials', 'contents']:
                 if result.get(key) is not None:
                   schema_data[key] = result.get(key)
 
@@ -354,6 +361,7 @@ def prepare_content(content, env, run_info, custom_dir=None, content_names=None)
                   child_content,
                   env=env,
                   run_info=run_info,
+                  input_params=input_params,
                   custom_dir=custom_dir,
                   content_names=content_names,
               )

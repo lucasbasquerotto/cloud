@@ -41,6 +41,10 @@ DOCUMENTATION = """
         default: env_data.env
         version_added: '2.11'
         type: dict
+      input:
+        description: Dynamic params to be used by template contents.
+        version_added: '2.11'
+        type: dict
       custom_dir:
         description: Base directory to be used when the content origin is custom
         version_added: '2.11'
@@ -64,6 +68,7 @@ class LookupModule(LookupBase):
   def run(self, terms, variables, **kwargs):
     env_data = kwargs.get('env_data')
     env = kwargs.get('env') or env_data.get('env')
+    input_params = kwargs.get('input')
     custom_dir = kwargs.get('custom_dir')
     validate = kwargs.get('validate')
     context = kwargs.get('context')
@@ -85,6 +90,7 @@ class LookupModule(LookupBase):
           content,
           env=env,
           run_info=run_info,
+          input_params=input_params,
           custom_dir=custom_dir,
       )
 

@@ -25,27 +25,11 @@
 
 ### SSH Vars ###
 
-- name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_filename"
-  set_fact:
-    cloud_node_ssh_key_filename: "{{ cloud_node_name + '.key' }}"
-  tags: ["no_print"]
-
 - name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_path"
   set_fact:
     cloud_node_ssh_file: >-
-      {{
-        cloud_node_credential.ssh_file | default('')
-        | ternary(
-          env_dir + '/' +
-            (cloud_node_credential.ssh_file | default('')),
-            ''
-          )
-      }}
-    cloud_node_ssh_key_path: >-
-      {{
-        ((cloud_node_credential.ssh_file | default('')) != '')
-        | ternary(cloud_node_tmp_dir + '/' + cloud_node_ssh_key_filename, '')
-      }}
+      {{ env_dir + '/' + (cloud_node_credential.ssh_file | default('')) }}
+    cloud_node_ssh_key_path: "{{ cloud_node_item.ssh_key_path | default('') }}"
   tags: ["no_print"]
 
 ### SSH File ###

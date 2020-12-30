@@ -24,6 +24,8 @@
       [{{ prepare_repos_item.dir }} ({{ prepare_repos_extra_repo_name }})]
     prepare_repos_extra_repo_dir: >-
       {{ prepare_repos_extra_repos_dir + '/' + prepare_repos_item.dir }}
+    prepare_repos_extra_repo_tmp_dir: >-
+      {{ prepare_repos_extra_repos_tmp_dir + '/' + prepare_repos_item.dir }}
   loop: "{{ prepare_repos_ctx_extra_repos }}"
   loop_control:
     loop_var: prepare_repos_item

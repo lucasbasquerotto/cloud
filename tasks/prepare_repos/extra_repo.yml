@@ -6,7 +6,10 @@
     transfer_title: >-
       {{ prepare_repos_extra_repo_title }} - transfer #{{ prepare_repos_extra_repo_idx + 1 }}
     transfer_content: "{{ prepare_repos_extra_repo_item.src }}"
-    transfer_dest: "{{ prepare_repos_extra_repo_dir }}/{{ prepare_repos_extra_repo_item.dest }}"
+    transfer_dest: >-
+      {{ prepare_repos_extra_repo_dir }}/{{ prepare_repos_extra_repo_item.dest }}
+    transfer_tmp_dest: >-
+      {{ prepare_repos_extra_repo_tmp_dir }}/{{ prepare_repos_extra_repo_item.dest }}
     transfer_custom_dir: "{{ prepare_repos_extra_repo_dir }}"
     transfer_mode: >-
       {{

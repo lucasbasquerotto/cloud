@@ -54,6 +54,7 @@
     transfer_prepared: true
     transfer_content: "{{ pod_prepare_item.src }}"
     transfer_dest: "{{ pod_item.pod_dir }}/{{ pod_prepare_item.dest }}"
+    transfer_tmp_dest: "{{ pod_item.tmp_dir }}/{{ pod_prepare_item.dest }}"
     transfer_custom_dir: "{{ pod_item.local_dir }}"
     transfer_mode: >-
       {{ pod_prepare_item.mode | default(env_lax | bool | ternary(0644, 0600)) }}

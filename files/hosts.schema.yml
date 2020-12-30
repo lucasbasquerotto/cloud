@@ -1,0 +1,63 @@
+root: "hosts"
+schemas:
+  hosts:
+    type: "dict"
+    props:
+      input:
+        required: true
+        schema: "input"
+      params:
+        schema: "params"
+  input:
+    type: "dict"
+    props:
+      nodes:
+        type: "list"
+        elem_schema: "node"
+  node:
+    type: "dict"
+    lax: true
+    props:
+      name:
+        non_empty: true
+        type: "str"
+      local:
+        type: "bool"
+      ssh_key_path:
+        type: "str"
+      credential:
+        required: true
+        schema: "node_credential"
+  node_credential:
+    type: "dict"
+    lax: true
+    props:
+      host_user:
+        non_empty: true
+        type: "str"
+      host_pass:
+        type: "str"
+  params:
+    type: "dict"
+    props:
+      hosts:
+        type: "map"
+        elem_schema: "host_map_item"
+  host_map_item:
+    type: "list"
+    elem_schema: "host"
+  host:
+    type: "dict"
+    props:
+      name:
+        non_empty: true
+        type: "str"
+      ip:
+        non_empty: true
+        type: "str"
+      ipv4:
+        type: "str"
+      ipv6:
+        type: "str"
+      private_ip:
+        type: "str"

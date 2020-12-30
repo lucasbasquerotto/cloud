@@ -22,6 +22,7 @@
     transfer_prepared: true
     transfer_content: "{{ cron_transfer_src }}"
     transfer_dest: "{{ cron_tmp_dir }}/new.cron"
+    transfer_tmp_dest: "{{ cron_tmp_dir }}/new.cron.tmp"
     transfer_user: "{{ cron_transfer_user | default('') }}"
     transfer_group: "{{ cron_transfer_group | default('') }}"
     transfer_mode: "{{ cron_transfer_mode | default('') }}"

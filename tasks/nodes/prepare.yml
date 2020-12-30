@@ -5,6 +5,7 @@
     transfer_prepared: true
     transfer_content: "{{ node_prepare_item.src }}"
     transfer_dest: "{{ node_prepare_node.node_dir }}/{{ node_prepare_item.dest }}"
+    transfer_tmp_dest: "{{ node_prepare_node.tmp_dir }}/{{ node_prepare_item.dest }}"
     transfer_mode: >-
       {{ node_prepare_item.mode | default(env_lax | bool | ternary(0644, 0600)) }}
   when: node_prepare_item.when | default(true, true) | bool

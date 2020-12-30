@@ -268,7 +268,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
           for content_key in sorted(list((contents or dict()).keys())):
             content = contents.get(content_key)
 
-            info = load_content(content, env, run_info=run_info)
+            info = load_content(content, env=env, run_info=run_info)
 
             prepared_content = info.get('result')
             error_msgs_aux_content = info.get('error_msgs') or list()
@@ -430,7 +430,7 @@ def prepare_services(services, run_info, top=False, service_names=None):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_transfer_content(transfer_contents, context_title, prepare_info):
+def prepare_transfer_content(transfer_contents, context_title, prepare_info, input_params=None):
   try:
     result = list()
     error_msgs_aux = list()
@@ -462,6 +462,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info):
                 transfer_content.get('src'),
                 env=env,
                 run_info=run_info,
+                input_params=input_params,
                 custom_dir=custom_dir,
             )
 
@@ -475,7 +476,8 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info):
                 src=prepared_content,
                 dest=dest,
                 user=transfer_content.get('user'),
-                group=transfer_content.get('group') or transfer_content.get('user'),
+                group=transfer_content.get(
+                    'group') or transfer_content.get('user'),
                 mode=transfer_content.get('mode'),
                 when=to_bool(transfer_content.get('when')),
             )
@@ -826,7 +828,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
           info = load_content(
               content,
-              env,
+              env=env,
               custom_dir=local_dir,
               run_info=run_info,
           )
@@ -1068,14 +1070,16 @@ def prepare_node(node_info, run_info):
         base_dir = None if local else node.get('base_dir')
         node_dir = local_dir if local else (
             node.get('node_dir') or (base_dir + '/.node'))
+        local_tmp_dir = dev_repos_dir + '/tmp/nodes/' + node_identifier
         tmp_dir = (
-            (dev_repos_dir + '/tmp/nodes/' + node_identifier)
+            local_tmp_dir
             if local
             else (node.get('tmp_dir') or (base_dir + '/.tmp'))
         )
 
         result['base_dir'] = base_dir
         result['node_dir'] = node_dir
+        result['local_tmp_dir'] = local_tmp_dir
         result['tmp_dir'] = tmp_dir
         result['local_host_test'] = to_bool(
             node_info_dict.get('local_host_test'))
@@ -1255,6 +1259,15 @@ def prepare_node(node_info, run_info):
               error_msgs_aux += error_msgs_aux_transfer
             else:
               result['cron_transfer'] = cron_transfer
+
+        credential = result.get('credential') or dict()
+        ssh_file = credential.get('ssh_file')
+        ssh_key_path = (
+            (local_tmp_dir + '/' + node_name + '.key')
+            if ssh_file
+            else None
+        )
+        result['ssh_key_path'] = ssh_key_path
 
         service = node.get('service')
         dns_service = node.get('dns_service')
@@ -1683,7 +1696,7 @@ def prepare_task(task_info_dict, run_info):
       for content_key in sorted(list((contents or dict()).keys())):
         content = contents.get(content_key)
 
-        info = load_content(content, env, run_info=run_info)
+        info = load_content(content, env=env, run_info=run_info)
 
         prepared_content = info.get('result')
         error_msgs_aux_content = info.get('error_msgs') or list()
