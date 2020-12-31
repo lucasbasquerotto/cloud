@@ -25,34 +25,36 @@
     cloud_node_credential: "{{ cloud_node_item.credential | default({}) }}"
   tags: ["no_print"]
 
-### SSH Vars ###
+- block:
+    ### SSH Vars ###
 
-- name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_path"
-  set_fact:
-    cloud_node_ssh_file: >-
-      {{ env_dir + '/' + (cloud_node_credential.ssh_file | default('')) }}
-    cloud_node_ssh_key_path: "{{ cloud_node_item.ssh_key_path | default('') }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - cloud_node_ssh_key_path"
+      set_fact:
+        cloud_node_ssh_file: >-
+          {{ env_dir + '/' + (cloud_node_credential.ssh_file | default('')) }}
+        cloud_node_ssh_key_path: "{{ cloud_node_item.ssh_key_path | default('') }}"
+      tags: ["no_print"]
 
-### SSH File ###
+    ### SSH File ###
 
-- name: >-
-    {{ cloud_node_item_title }} - create the ssh key file dir -
-    {{ cloud_node_ssh_key_path | dirname }}
-  file:
-    path: "{{ cloud_node_ssh_key_path | dirname }}"
-    state: directory
-    mode: 0755
-  when: cloud_node_ssh_key_path != ''
-  tags: ["no_print_skipped"]
+    - name: >-
+        {{ cloud_node_item_title }} - create the ssh key file dir -
+        {{ cloud_node_ssh_key_path | dirname }}
+      file:
+        path: "{{ cloud_node_ssh_key_path | dirname }}"
+        state: directory
+        mode: 0755
+      when: cloud_node_ssh_key_path != ''
+      tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - generate the ssh key file - {{ cloud_node_ssh_key_path }}"
-  copy:
-    src: "{{ cloud_node_ssh_file }}"
-    dest: "{{ cloud_node_ssh_key_path }}"
-    mode: 0600
-  when: cloud_node_ssh_key_path != ''
-  tags: ["no_print_skipped"]
+    - name: "{{ cloud_node_item_title }} - generate the ssh key file - {{ cloud_node_ssh_key_path }}"
+      copy:
+        src: "{{ cloud_node_ssh_file }}"
+        dest: "{{ cloud_node_ssh_key_path }}"
+        mode: 0600
+      when: cloud_node_ssh_key_path != ''
+      tags: ["no_print_skipped"]
+  when: (cloud_node_state | default('')) != 'absent'
 
 - name: "{{ cloud_node_item_title }} - run (outer)"
   include_tasks: "cloud_node_run.yml"

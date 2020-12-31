@@ -1023,6 +1023,7 @@ def prepare_node(node_info, run_info):
         result['external'] = external
 
         ctx_dir = env_data.get('ctx_dir')
+        secrets_ctx_dir = env_data.get('secrets_ctx_dir')
 
         result_aux_info = dict()
         error_msgs_aux = []
@@ -1061,6 +1062,8 @@ def prepare_node(node_info, run_info):
 
         local_dir = ctx_dir + '/nodes/' + node_name
         result['local_dir'] = local_dir
+        local_secrets_dir = secrets_ctx_dir + '/nodes/' + node_name
+        result['local_secrets_dir'] = local_secrets_dir
 
         node_identifier = env.get('name') + '-' + env_data.get('ctx_name')
         result['identifier'] = node_identifier
@@ -1263,7 +1266,7 @@ def prepare_node(node_info, run_info):
         credential = result.get('credential') or dict()
         ssh_file = credential.get('ssh_file')
         ssh_key_path = (
-            (local_tmp_dir + '/' + node_name + '.key')
+            (local_secrets_dir + '/' + node_name + '.key')
             if ssh_file
             else None
         )
