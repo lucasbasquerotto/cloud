@@ -55,7 +55,7 @@
       copy:
         force: no
         content: ""
-        dest: "{{ env_vars.ctx_dir }}/hosts.backup"
+        dest: "{{ env_vars.secrets_ctx_dir }}/hosts.backup"
         mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       tags: ["no_print_skipped"]
 
@@ -66,13 +66,13 @@
         transfer_content: "{{ ctx_data.hosts }}"
         transfer_input:
           nodes: "{{ ctx_data.nodes | default([]) }}"
-        transfer_dest: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        transfer_tmp_dest: "{{ env_vars.ctx_dir }}/tmp/hosts.tmp"
+        transfer_dest: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
+        transfer_tmp_dest: "{{ env_vars.secrets_ctx_dir }}/tmp/hosts.tmp"
         transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - get the difference of the 2 hosts files (backup and tmp)"
-      command: "diff {{ env_vars.ctx_dir }}/hosts.tmp {{ env_vars.ctx_dir }}/hosts.backup"
+      command: "diff {{ env_vars.secrets_ctx_dir }}/hosts.tmp {{ env_vars.secrets_ctx_dir }}/hosts.backup"
       register: project_ctx_hosts_diff
       failed_when: project_ctx_hosts_diff.rc > 1
       changed_when: project_ctx_hosts_diff.rc == 1
@@ -80,16 +80,16 @@
 
     - name: "{{ env_title }} - copy the hosts file when changed"
       copy:
-        src: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        dest: "{{ env_vars.ctx_dir }}/hosts"
+        src: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
+        dest: "{{ env_vars.secrets_ctx_dir }}/hosts"
         mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
         force: "{{ project_ctx_hosts_diff.changed }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - backup the hosts file"
       copy:
-        src: "{{ env_vars.ctx_dir }}/hosts.tmp"
-        dest: "{{ env_vars.ctx_dir }}/hosts.backup"
+        src: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
+        dest: "{{ env_vars.secrets_ctx_dir }}/hosts.backup"
         mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       when: project_ctx_hosts_diff.changed
       tags: ["no_print_skipped"]

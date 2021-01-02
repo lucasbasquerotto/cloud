@@ -16,7 +16,7 @@ debug=()
 last_index=1
 
 # shellcheck disable=SC2214
-while getopts ':fps-:' OPT; do
+while getopts ':fnps-:' OPT; do
 	last_index="$OPTIND"
 	if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"       # extract long option name
@@ -24,10 +24,10 @@ while getopts ':fps-:' OPT; do
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		f|force ) force="true"; args+=( "--force" );;
-		p|prepare ) prepare="true"; args+=( "--prepare" );;
-		s|fast ) fast="true"; args+=( "--fast" );;
-		end ) end="true"; args+=( "--end" );;
+		f|force ) force='true'; args+=( "--force" );;
+		n|next ) next='true';;
+		p|prepare ) prepare='true'; args+=( "--prepare" );;
+		s|fast ) fast='true'; args+=( "--fast" );;
 		debug ) debug=( "-vvvvv" ); args+=( "--debug" );;
 		project-dir ) project_dir=${OPTARG:-};;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;
@@ -35,14 +35,14 @@ while getopts ':fps-:' OPT; do
 	esac
 done
 
-if [ "$last_index" != "$OPTIND" ]; then
-	args+=( "--" );
-fi
-
 shift $((OPTIND-1))
 
 if [ -z "${project_dir:-}" ]; then
 	error "[error] project-dir not specified"
+fi
+
+if [ "${next:-}" = 'true' ] && [ "${prepare:-}" = 'true' ]; then
+	error "[error] next and prepare shouldn't be both true"
 fi
 
 prepare_args=()
@@ -65,6 +65,52 @@ if [ "${prepare:-}" = 'true' ]; then
 	fi
 fi
 
+if [ "${next:-}" = 'true' ]; then
+	next_opt=''
+	echo "args=${*}"
+	echo "args#=${#}"
+
+	while getopts ':-:' OPT; do
+		last_index="$OPTIND"
+		if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
+			OPT="${OPTARG%%=*}"       # extract long option name
+			OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+			OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+		fi
+		case "$OPT" in
+			end ) next_opt='true'; args+=( "--end" );;
+			ssh ) next_opt='true'; ssh='true'; break;;
+			\? ) error "[error] unknown next short option: -${OPTARG:-}";;
+			?* ) error "[error] unknown next long option: --${OPT:-}";;
+		esac
+	done
+
+	shift $((OPTIND-1))
+
+	if [ "${next_opt:-}" != 'true' ]; then
+		msg_aux="ssh, end"
+		error "[error] no option specified using the next argument (options: $msg_aux)"
+	fi
+fi
+
+if [ "${ssh:-}" = 'true' ] && [ "${end:-}" = 'true' ]; then
+	error "[error] both end and ssh options are defined (should me at most one of them)"
+fi
+
+skip_main=''
+
+if [ "${ssh:-}" = 'true' ]; then
+	if [ "${fast:-}" = 'true' ]; then
+		skip_main='true'
+	else
+		args+=( "--prepare" )
+	fi
+fi
+
+if [ "$last_index" != "$OPTIND" ]; then
+	args+=( "--" );
+fi
+
 if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project (fast)..."
 else
@@ -80,7 +126,7 @@ else
 
 	cd /usr/main/ansible
 
-	if [ "$skip" = "true" ]; then
+	if [ "$skip" = 'true' ]; then
 		echo "[cloud] skipping prepare project (skip)..."
 	else
 		# Prepare the cloud contexts
@@ -99,7 +145,7 @@ last_commit=''
 can_change_commit=''
 commit_dir="$project_dir/files/cloud/commit"
 
-if [ "${prepare:-}" != 'true' ] && [ "${end:-}" != 'true' ]; then
+if [ "${prepare:-}" != 'true' ] && [ "${next:-}" != 'true' ]; then
 	can_change_commit='true'
 fi
 
@@ -112,7 +158,15 @@ if [ "$can_change_commit" = 'true' ]; then
 	. "$commit_dir/current"
 fi
 
-if [ "${force:-}" = 'true' ] || [ "$last_commit" = '' ] || [ "$last_commit" != "${commit:-}" ]; then
+diff_commit=''
+
+if [ "$last_commit" = '' ] || [ "$last_commit" != "${commit:-}" ]; then
+	diff_commit='true'
+fi
+
+if [ "${skip_main:-}" = 'true' ]; then
+	echo "[cloud] skipping the cloud contexts execution (skip main)..."
+if [ "${force:-}" = 'true' ] || [ "$diff_commit" = 'true' ]; then
 	# Execute the cloud contexts
 	bash "$project_dir/files/cloud/run-ctxs" \
 		${args[@]+"${args[@]}"} "${@}" \
@@ -123,4 +177,9 @@ if [ "${force:-}" = 'true' ] || [ "$last_commit" = '' ] || [ "$last_commit" != "
 	fi
 else
 	echo "[cloud] skipping the cloud contexts execution (same commit)..."
+fi
+
+if [ "${ssh:-}" = 'true' ]; then
+	# Connect through ssh
+	bash "$project_dir/files/cloud/ssh" "${@}" || error "[error] ssh"
 fi
