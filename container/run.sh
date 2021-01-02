@@ -67,9 +67,9 @@ fi
 
 if [ "${next:-}" = 'true' ]; then
 	next_opt=''
-	echo "args=${*}"
-	echo "args#=${#}"
+	OPTIND=1
 
+	# shellcheck disable=SC2214
 	while getopts ':-:' OPT; do
 		last_index="$OPTIND"
 		if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
@@ -166,7 +166,7 @@ fi
 
 if [ "${skip_main:-}" = 'true' ]; then
 	echo "[cloud] skipping the cloud contexts execution (skip main)..."
-if [ "${force:-}" = 'true' ] || [ "$diff_commit" = 'true' ]; then
+elif [ "${force:-}" = 'true' ] || [ "$diff_commit" = 'true' ]; then
 	# Execute the cloud contexts
 	bash "$project_dir/files/cloud/run-ctxs" \
 		${args[@]+"${args[@]}"} "${@}" \

@@ -27,8 +27,8 @@ while getopts ':c:n:i:-:' OPT; do
 		c|ctx ) arg_ctx="${OPTARG:-}";;
 		n|node ) arg_node="${OPTARG:-}";;
 		i|idx ) arg_idx="${OPTARG:-}";;
-		??* ) ;; # bad long option
-		\? )  ;; # bad short option (error reported via getopts)
+		\? ) error "[error] unknown short option: -${OPTARG:-}";;
+		?* ) error "[error] unknown long option: --${OPT:-}";;
 	esac
 done
 shift $((OPTIND-1))
@@ -55,7 +55,7 @@ shift $((OPTIND-1))
     {% endif %}
 {% endif %}
 
-project_files_cloud_dir={{ project_files_cloud_dir | quote }}
+project_secrets_cloud_dir={{ project_secrets_cloud_dir | quote }}
 ssh_default_ctx={{ ssh_default_ctx | default('') | quote }}
 ssh_default_node={{ ssh_default_node | default('') | quote }}
 
@@ -71,7 +71,12 @@ if [ -z "$node_name" ]; then
     error "node not defined for ssh (use parameter --node or define a default node)"
 fi
 
-hosts_file="$project_files_cloud_dir/hosts"
+hosts_file="$project_secrets_cloud_dir/ctxs/$ctx_name/hosts"
+
+if [ ! -f "$hosts_file" ]; then
+    msg_aux="maybe the context (ctx) is wrong, or the preparation step was not done"
+    error "[error] the hosts file $hosts_file doesn't exist ($msg_aux)"
+fi
 
 hosts_file_content="$(cat "$hosts_file" || error "error when accessing the file $hosts_file")"
 
@@ -80,7 +85,7 @@ line="$(echo "$hosts_file_content" \
     | grep "instance_index=$instance_index " | tail -n 1 || :)"
 
 if [ -z "$line" ]; then
-    msg="No line in the hosts file ($hosts_file) of the type '$node_name'"
+    msg="No line in the hosts file ($hosts_file) with the node type '$node_name'"
 
 	if [[ "$instance_index" -gt 1 ]]; then
     	msg="$msg in the index $instance_index (starting in 1)"
