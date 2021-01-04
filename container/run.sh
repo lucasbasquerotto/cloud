@@ -93,10 +93,6 @@ if [ "${next:-}" = 'true' ]; then
 	fi
 fi
 
-if [ "${ssh:-}" = 'true' ] && [ "${end:-}" = 'true' ]; then
-	error "[error] both end and ssh options are defined (should me at most one of them)"
-fi
-
 skip_main=''
 
 if [ "${ssh:-}" = 'true' ]; then

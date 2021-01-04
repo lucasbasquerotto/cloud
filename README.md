@@ -123,7 +123,8 @@ Aside from `project-dir`, the file that [runs this preparation step](container/r
 
 | Option        | Description |
 | ------------- | ----------- |
-| <nobr>`-f`</nobr><br><nobr>`--force`</nobr> | Force the execution even if the repository commit is the same as the last time it was executed. |
+| <nobr>`-f`</nobr><br><nobr>`--force`</nobr> | Force the execution even if the commit of the [project environment repository](#project-environment) is the same as the last time it was executed. |
+| <nobr>`-n`</nobr><br><nobr>`--next`</nobr> | The deployment will use parameters passed after the project name to be used by the next steps. The parameters are specified at the [Cloud Next Parameters](#cloud-next-parameters) section._ |
 | <nobr>`-p`</nobr><br><nobr>`--prepare`</nobr> | Only runs the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step).<br><br>This has a particular feature that allows to pass arguments to each step that will handle it (as long as subsequent layers handle it). For example, passing the args `-vv` would generally be used only by the last step ([Cloud Context Main Step](#cloud-context-main-step)), but in this case it will be used as args to run the [Cloud Preparation Step](#cloud-preparation-step) and no args to subsequent steps.<br><br>You can pass `--` to indicate the end of the arguments for a given step, so the following args `-a -b -c -- -d` will pass the argument `-a -b -c` to the [Cloud Preparation Step](#cloud-preparation-step), and `-d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). You can use `--skip` to skip a given step (you shouldn't pass `--` in this case). For example, `--skip -c -d` will skip the [Cloud Preparation Step](#cloud-preparation-step) and pass `-c -d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). |
 | <nobr>`-s`</nobr><br><nobr>`--fast`</nobr> | Skips the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step). |
 | <nobr>`--debug`</nobr> | Runs in verbose mode and forwards this option to the subsequent step. |
@@ -190,7 +191,7 @@ This step as [defined in this repository](prepare.ctx.yml) does the following ta
 
 2. Prepare the repositories defined in the `extra_repos` defined for the context in the environment file (`main.<ctx>.extra_repos`), which could be used, for example, to setup all the required repositories of a development environment to setup the workspace. It also clones the repositories of the pods defined for the nodes of the context (used when transfering templates of the pod to the actual pod repository in remote hosts, because Ansible requires that templates should be in the local machine, as well as some validations). This step doen't run when the `--prepare` and `--fast` flags are specified.
 
-3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#merging-and-overriding-parameters-in-the-enviroment-file), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates schemas for services, nodes, tasks and pods, and do several other types of validations, like the existence of some files that will be transfered.
+3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#mergeable-parameters), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates schemas for services, nodes, tasks and pods, and do several other types of validations, like the existence of some files that will be transfered.
 
 4. Creates the hosts file to be used by Ansible when connecting to hosts (when new hosts are created dynamically, this file is updated) as well as the (optional) configuration file (`ansible.cfg`), that by default is the file [ansible/ansible.cfg](ansible/ansible.cfg), but can be overriden using the `cfg` property in the context object (in the environment file):
 
@@ -256,17 +257,118 @@ env:
 
 # Useful Information
 
-## Merging and overriding parameters in the enviroment file
+## Cloud Next Parameters
 
-The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params`. These sections are merged to result in a single parameter property, with the precedence `shared_group_params` < `shared_params` < `group_params` < `params`, which means that what is defined in `params` will override the same parameter if specified in another section.
+The following are the parameters that can be specified when deploying a project, specific to this layer:
+
+| Option | Description |
+| ------ | ------- |
+| <nobr>`--end`</nobr> | Will destroy what was created by the deployment, the nodes and services, as long as the property `can_destroy` is defined and is `true` for them. It sends the state `absent` and expects that the nodes and services know how to handle this state. This is almost the same as running without the `--next` parameter as one of the launch parameters, and passing `--tags=destroy`, except that using `--end` won't register the commit of the project environment repository (used to skip newer deployments with the same commit, when not using the `--force` option) for this deployment (which is the expected). |
+| <nobr>`--ssh`</nobr> | Will ssh into the host specified by the context (`-c`/`--ctx`), node type (`-n`/`--node`) and index (`-i`/`--idx`), these params specified right after `--ssh`. When the context is not specified, if there is only one context in the deployment, this context will be used by default, otherwise an error will be thrown. When the node type is not specified, if there is only one node type in the context, this node type will be used by default, otherwise an error will be thrown. When the index is not specified, the default will be `1` (the first host with of the before mentioned node type). This ssh option can only be used after the preparation step is completed, and the hosts are defined in the hosts file (either directly or after a node service creates them). |
+
+## Mergeable Parameters
+
+The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params` that can be merged and overriden. **These mergeable parameters can be very useful to achieve a DRY approach, avoiding lots of duplication, but should be used moderately, so as to not generate an illegible environment file with lots of indirections.**
+
+The values specified in `params` will be considered as is.
+
+```yaml
+services:
+  my_service:
+    params:
+      param1: 1
+      param2: 2
+```
+
+_The output is the same as the input._
+
+The values specified in `group_params` must be a dictionary in which the value of each property is a string that references a property in a group params dictionary that contains the values that will be mapped to the initial dictionary properties. The group params dictionary depends on the context that the `group_params` is specified (for example, if defined in a service, the group params dictionary is `service_group_params` defined at the topmost layer of the project environment variable; if defined in a node, will be `node_group_params`; and so on).
+
+```yaml
+services:
+  my_service:
+    group_params:
+      param1: "group_1"
+      param2: "group_2"
+service_group_params:
+  group_1: 3
+  group_2: 4
+```
+
+_Outputs:_
+
+```yaml
+services:
+  my_service:
+    params:
+      param1: 3
+      param2: 4
+```
+
+The values specified in `shared_params` must be an array of strings in which each string references a property in a shared params dictionary that contains the values that will be mapped to the whole parameter. The shared params dictionary depends on the context that the `shared_params` is specified (for example, if defined in a service, the shared params dictionary is `service_shared_params` defined at the topmost layer of the project environment variable; if defined in a node, will be `node_shared_params`; and so on).
+
+The shared parameters are overriden in the order in which they are specified in the array, so the last one overrides all others, and the first is overriden by all others.
+
+```yaml
+services:
+  my_service:
+    shared_params: ["shared_1", "shared_2"]
+shared_group_params:
+  shared_1:
+    param1: 11
+    param2: 12
+  shared_2:
+    param2: 22
+    param3: 23
+```
+
+_Outputs:_
+
+```yaml
+services:
+  my_service:
+    params:
+      param1: 11
+      param2: 22
+      param3: 23
+```
+
+The values specified in `shared_group_params` must be a string that references a property in a shared group params dictionary that contains the values that will expanded as group parameters, and then mapped to the whole parameter as a shared parameter. The shared group params dictionary depends on the context that the `shared_group_params` is specified (for example, if defined in a service, the shared params dictionary is `service_shared_group_params` defined at the topmost layer of the project environment variable; if defined in a node, will be `node_shared_group_params`; and so on).
+
+The properties in the shared group params dictionary should behavle as `group_params`, so they must be dictionaries in which each property value is a string that map to the group params dictionary.
+
+```yaml
+services:
+  my_service:
+    shared_group_params: "shared_group_1"
+service_shared_group_params:
+  shared_group_1:
+    param1: "group_shared_1"
+    param2: "group_shared_2"
+service_group_params:
+  group_shared_1: 123
+  group_shared_2: 456
+```
+
+_Outputs:_
+
+```yaml
+services:
+  my_service:
+    params:
+      param1: 123
+      param2: 456
+```
+
+These sections are merged to result in a single parameter (`params`) property, with the precedence `shared_group_params` < `shared_params` < `group_params` < `params`, which means, for example, that what is defined in `params` will override the same parameter if specified in another section.
 
 #TODO
 
-## Defining contents
+## Contents
 
 #TODO
 
-## Defining custom schemas
+## Custom Schemas
 
 #TODO
 
