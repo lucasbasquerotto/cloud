@@ -123,8 +123,9 @@ Aside from `project-dir`, the file that [runs this preparation step](container/r
 
 | Option        | Description |
 | ------------- | ----------- |
-| <nobr>`-f`</nobr><br><nobr>`--fast`</nobr> | Skips the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step). |
-| <nobr>`-p`</nobr><br><nobr>`--prepare`</nobr> | Only runs the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step).<br><br>This has a particular feature that allows to pass arguments to each step that will handle it (as long as subsequent layers handle it). For example, passing the args `-vv` would generally be used only by the last step, but in this case it will be used as args to run the [Cloud Preparation Step](#cloud-preparation-step) and no args to subsequent steps.<br><br>You can pass `--` to indicate the end of the arguments for a given step, so the following args `-a -b -c -- -d` will pass the argument `-a -b -c` to the [Cloud Preparation Step](#cloud-preparation-step), and `-d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). You can use `--skip` to skip a given step (you shouldn't pass `--` in this case). For example, `--skip -c -d` will skip the [Cloud Preparation Step](#cloud-preparation-step) and pass `-c -d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). |
+| <nobr>`-f`</nobr><br><nobr>`--force`</nobr> | Force the execution even if the repository commit is the same as the last time it was executed. |
+| <nobr>`-p`</nobr><br><nobr>`--prepare`</nobr> | Only runs the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step).<br><br>This has a particular feature that allows to pass arguments to each step that will handle it (as long as subsequent layers handle it). For example, passing the args `-vv` would generally be used only by the last step ([Cloud Context Main Step](#cloud-context-main-step)), but in this case it will be used as args to run the [Cloud Preparation Step](#cloud-preparation-step) and no args to subsequent steps.<br><br>You can pass `--` to indicate the end of the arguments for a given step, so the following args `-a -b -c -- -d` will pass the argument `-a -b -c` to the [Cloud Preparation Step](#cloud-preparation-step), and `-d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). You can use `--skip` to skip a given step (you shouldn't pass `--` in this case). For example, `--skip -c -d` will skip the [Cloud Preparation Step](#cloud-preparation-step) and pass `-c -d` to the [Cloud Context Preparation Step](#cloud-context-preparation-step). |
+| <nobr>`-s`</nobr><br><nobr>`--fast`</nobr> | Skips the [Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step). |
 | <nobr>`--debug`</nobr> | Runs in verbose mode and forwards this option to the subsequent step. |
 
 In this step, when the `dev` input var is `true`, the `path_params` value in the [Cloud Input Vars](#cloud-input-vars) file will be included in a new file at `<project_base_dir>/files/cloud/path-map.yml` so that the next steps can use it to map repositories to other locations and skip pulling already cloned repositories.
@@ -183,13 +184,36 @@ TODO explanation of the above
 
 ## Cloud Context Preparation Step
 
-This step as [defined in this repository](prepare.ctx.yml) does 3 things:
+This step as [defined in this repository](prepare.ctx.yml) does the following tasks:
 
-1. Creates the hosts file to be used by Ansible when connecting to hosts (when new hosts are created dynamically, this file is updated).
+1. Loads (from the environment repository) and validates the environment (`env`) variable schema (as defined in the corresponding [schema file](schemas/env.schema.yml)).
 
-2. Creates the playbook to execute instructions in the hosts (from `files/run.tpl.yml` to `plays/run.yml`). This is needed because the instructions, and hosts to run the instructions, as well the order in which they are run, are dynamically defined in the project environment file, but Ansible expects that the playbook is already created and the hosts and plays to be statically defined when it starts to run the [Cloud Context Main Step](#cloud-context-main-step).
+2. Prepare the repositories defined in the `extra_repos` defined for the context in the environment file (`main.<ctx>.extra_repos`), which could be used, for example, to setup all the required repositories of a development environment to setup the workspace. It also clones the repositories of the pods defined for the nodes of the context (used when transfering templates of the pod to the actual pod repository in remote hosts, because Ansible requires that templates should be in the local machine, as well as some validations). This step doen't run when the `--prepare` and `--fast` flags are specified.
 
-3. Prepare the repositories defined in the `extra_repos` defined for the context in the environment file (`main.<ctx>.extra_repos`), which could be used, for exaple, to setup all the required repositories of a development environment to setup the workspace. It also clones the repositories of the pods defined for the nodes of the context (used when transfering templates of the pod to the actual pod repository in remote hosts, because Ansible requires that templates should be in the local machine).
+3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#merging-and-overriding-parameters-in-the-enviroment-file), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates schemas for services, nodes, tasks and pods, and do several other types of validations, like the existence of some files that will be transfered.
+
+4. Creates the hosts file to be used by Ansible when connecting to hosts (when new hosts are created dynamically, this file is updated) as well as the (optional) configuration file (`ansible.cfg`), that by default is the file [ansible/ansible.cfg](ansible/ansible.cfg), but can be overriden using the `cfg` property in the context object (in the environment file):
+
+```yaml
+# ...
+main:
+  my_context:
+    repo: "cloud"
+    cfg: |
+      [defaults]
+      interpreter_python=/usr/bin/python3
+      stdout_callback = default
+      collections_paths = collections
+    hosts: |
+      [main]
+      localhost ansible_connection=local
+      [host]
+    # ...
+  # ...
+# ...
+```
+
+5. Creates the playbook to execute instructions in the hosts (from `files/run.tpl.yml` to `plays/run.yml`). This is needed because the instructions, and hosts to run the instructions, as well the order in which they are run, are dynamically defined in the project environment file, but Ansible expects that the playbook is already created and the hosts and plays to be statically defined when it starts to run the [Cloud Context Main Step](#cloud-context-main-step).
 
 ## Cloud Context Main Step
 
@@ -229,6 +253,22 @@ env:
   repo_dir: "env-base"
   file: "common/repos.yml"
 ```
+
+# Useful Information
+
+## Merging and overriding parameters in the enviroment file
+
+The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params`. These sections are merged to result in a single parameter property, with the precedence `shared_group_params` < `shared_params` < `group_params` < `params`, which means that what is defined in `params` will override the same parameter if specified in another section.
+
+#TODO
+
+## Defining contents
+
+#TODO
+
+## Defining custom schemas
+
+#TODO
 
 # Encrypt and Decrypt
 
