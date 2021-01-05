@@ -2,109 +2,157 @@ root: "node_schema"
 schemas:
   node_schema:
     type: "dict"
+    description: "node schema"
     props:
       credential:
         schema: "credential"
+        description: "node credential"
       params:
         schema: "params"
+        description: "node params"
   credential:
     type: "dict"
+    description: "node credential schema"
     props:
       host_user:
         type: "str"
         non_empty: true
+        description: >-
+          host user that will execute the instructions in the node;
+          also used when creating files and directories in the node (owner)
       host_group:
         type: "str"
+        description: >-
+          host group to be used when creating files and directories in the node
+          (owner), defaults to the host user
       host_pass:
         type: "str"
+        description: "password of the host user"
       ssh_file:
         type: "str"
+        description: "ssh key file used to connect to the node (host)"
       host_ssh_public_keys_path:
         type: "str"
-      user_data:
-        type: "dict"
+        description: "public ssh keys that the node allows access from"
   params:
     type: "dict"
+    description: "node params schema"
     props:
       dns_service_params_list:
         type: "list"
         elem_schema: "dns"
+        description: >-
+          list with dns records to create A and AAAA records
+          (when dn_service is specified for the node); will use
+          the node ips returned by the service that created the node
       host_test:
         schema: "host_test"
+        description: >-
+          tests to verify if can connect to the host and
+          if the host was initialized successfully
       cron:
         type: "list"
         elem_schema: "cron"
+        description: "list of cron jobs to be created in the host"
       cron_start:
         type: "bool"
-      cron_start_root:
-        type: "bool"
+        description: "specify if the cron service must be started (when stopped)"
   host_test:
     type: "dict"
+    description: >-
+      tests to verify if can connect to the host and
+      if the host was initialized successfully
     props:
-      log_file:
+      initial_connection_timeout:
+        type: "int"
+        description: "timeout for the innitial connection to the host"
+      setup_log_file:
         type: "str"
         non_empty: true
+        description: "log file used to verify if the host setup was completed"
       setup_finished_log_regex:
         type: "str"
         non_empty: true
+        description: "regex applied to the log file used to determine if the setup ended"
       setup_success_log_last_line:
         type: "str"
         non_empty: true
-      initial_connection_timeout:
-        type: "int"
+        description: "last line expected in the log file in the case of a successful setup"
       setup_finished_timeout:
         type: "int"
+        description: "timeout while waiting for the host setup to complete"
   cron:
     type: "dict"
     props:
       user:
         type: "str"
         non_empty: true
+        description: "user that will execute the cron job"
       src:
         schema: "content"
         non_empty: true
+        description: "source content (can be a file) with the cron jobs"
       dest:
         type: "str"
         non_empty: true
+        description: "destination file in which the cron jobs will be specified"
   dns:
     type: "dict"
+    description: "dns record information schema"
     props:
       record:
         type: "str"
         non_empty: true
+        description: "dns record (like a subdomain, for example)"
       ttl:
         type: "int"
+        description: "dns record ttl"
   content:
     type: "simple_dict"
     alternative_type: "str"
+    description: "content schema"
     props:
       type:
         type: "str"
         choices: ["env", "str", "file", "template"]
+        description: "content type"
       name:
         type: "str"
+        description: "content name (when type is env)"
       key:
         type: "str"
+        description: "content key (when type is env)"
       origin:
         type: "str"
         choices: ["env", "cloud", "custom"]
+        description: >-
+          content origin (the custom origin path will depend
+          on where the content is specified)
       file:
         type: "str"
+        description: "content file (when type is file or template)"
       schema:
         type: "str"
+        description: "content schema (when type is template)"
       credentials:
         type: "map"
         elem_type: "str"
+        description: "content credentials (when type is template)"
       contents:
         type: "map"
         elem_schema: "content"
+        description: "content inner contents (when type is template)"
       params:
         type: "dict"
+        description: "content params (when type is env, str or template)"
       group_params:
         type: "map"
         elem_type: "str"
+        description: "content group_params (when type is env, str or template)"
       shared_params:
         type: "list"
         elem_type: "str"
+        description: "content shared_params (when type is env, str or template)"
       shared_group_params:
         type: "str"
+        description: "content shared_group_params (when type is env, str or template)"

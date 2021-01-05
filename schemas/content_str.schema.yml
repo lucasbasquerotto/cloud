@@ -2,13 +2,19 @@ root: "content_str"
 schemas:
   content_str:
     type: "dict"
+    description: "string content schema"
     props:
       params:
         required: true
         schema: "params"
+        description: "string content parameters (value)"
   params:
     type: "dict"
+    description: "string content parameters schema"
     props:
       value:
         required: true
         type: "str"
+        description: >-
+          content string value (can be defined directly as the content value,
+          instead of as a parameter)"

@@ -14,7 +14,7 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import re
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    is_bool, is_int, is_float, is_str, load_yaml, to_float, to_int
+    is_bool, is_int, is_float, is_str, load_cached_file, to_float, to_int
 )
 
 SCHEMA_BASE = """
@@ -1197,7 +1197,7 @@ def validate_schema(schema, value, full_validation=True):
   error_msgs = []
 
   if full_validation:
-    schema_base = load_yaml(SCHEMA_BASE)
+    schema_base = load_cached_file('schemas/schema.yml')
     error_msgs_aux = validate_value(schema_base, schema)
 
     if error_msgs_aux:

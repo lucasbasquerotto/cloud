@@ -15,7 +15,7 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import os
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    default, is_empty, is_str, load_schema, merge_dicts, to_bool
+    default, is_empty, is_str, load_cached_file, merge_dicts, to_bool
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import (
     load_content, prepare_content
@@ -290,7 +290,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
 
             if schema_file:
               if os.path.exists(schema_file):
-                schema = load_schema(schema_file)
+                schema = load_cached_file(schema_file)
 
                 schema_data = dict()
 
@@ -853,7 +853,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
           if schema_file:
             if os.path.exists(schema_file):
-              schema = load_schema(schema_file)
+              schema = load_cached_file(schema_file)
 
               schema_data = dict()
 
@@ -1209,7 +1209,7 @@ def prepare_node(node_info, run_info):
 
           if schema_file:
             if os.path.exists(schema_file):
-              schema = load_schema(schema_file)
+              schema = load_cached_file(schema_file)
 
               schema_data = dict()
 
@@ -1725,7 +1725,7 @@ def prepare_task(task_info_dict, run_info):
           ) or ''
 
           if os.path.exists(schema_file_full):
-            schema = load_schema(schema_file_full)
+            schema = load_cached_file(schema_file_full)
 
             schema_data = dict()
 
@@ -2017,7 +2017,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                     schema_file_full = pod_local_dir + '/' + schema_file
 
                     if os.path.exists(schema_file_full):
-                      schema = load_schema(schema_file_full)
+                      schema = load_cached_file(schema_file_full)
 
                       schema_data = dict()
 

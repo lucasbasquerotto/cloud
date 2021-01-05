@@ -16,6 +16,8 @@ try:
 except ImportError:
   from yaml import Loader, Dumper
 
+cached_files_dict = dict()
+
 
 def merge_dicts(*args):
   new_dict = None
@@ -98,17 +100,14 @@ def is_str(value):
     return isinstance(value, str)
 
 
-schema_dict = dict()
+def load_cached_file(file_path):
+  if file_path in cached_files_dict:
+    return cached_files_dict.get(file_path)
 
+  file_result = load_yaml_file(file_path)
+  cached_files_dict[file_path] = file_result
 
-def load_schema(schema_file):
-  if schema_file in schema_dict:
-    return schema_dict.get(schema_file)
-
-  schema = load_yaml_file(schema_file)
-  schema_dict[schema_file] = schema
-
-  return schema
+  return file_result
 
 
 def to_bool(value, default_value=None):

@@ -14,7 +14,7 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import os
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    load_schema, load_yaml, to_bool
+    load_cached_file, load_yaml, to_bool
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
@@ -242,7 +242,7 @@ def load_ctx_template(current_template, is_env, data_info):
               '/' + schema_file
 
           if os.path.exists(schema_file):
-            schema = load_schema(schema_file)
+            schema = load_cached_file(schema_file)
 
             error_msgs_aux = validate_schema(schema, template_params)
 
@@ -366,7 +366,7 @@ def load_next_vars(file_relpath, params, data_info):
           schema_file = 'schemas/pod_ctx.schema.yml'
 
           if os.path.exists(schema_file):
-            schema = load_schema(schema_file)
+            schema = load_cached_file(schema_file)
 
             error_msgs_aux = validate_schema(schema, res)
 

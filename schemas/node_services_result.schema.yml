@@ -3,21 +3,29 @@ schemas:
   node_services_result:
     type: "list"
     elem_schema: "node_service_result"
+    description: "list with the service result for each node replica"
   node_service_result:
     type: "dict"
+    description: "service result for a node replica"
     props:
       name:
         type: "str"
         non_empty: true
+        description: "name of the node replica"
       state:
         type: "str"
         non_empty: true
         choices: ["present", "absent"]
+        description: "state of the node replica"
       local:
         type: "bool"
+        description: "indicates if it's a local node (used mainly in development)"
       private_ip:
         type: "str"
+        description: "node replica private ip"
       public_ipv4:
         type: "str"
+        description: "node replica ipv4"
       public_ipv6:
         type: "str"
+        description: "node replica ipv6"

@@ -29,9 +29,9 @@
   block:
     # Inner Params
 
-    - name: "{{ host_test_title }} - host_test_log_file"
+    - name: "{{ host_test_title }} - host_test_setup_log_file"
       set_fact:
-        host_test_log_file: "{{ host_test_vars.log_file }}"
+        host_test_setup_log_file: "{{ host_test_vars.setup_log_file }}"
         host_test_setup_finished_log_regex: "{{ host_test_vars.setup_finished_log_regex }}"
         host_test_setup_success_log_last_line: >-
           {{ host_test_vars.setup_success_log_last_line }}
@@ -76,19 +76,19 @@
           tags: ["no_print"]
 
         - name: >
-            {{ host_test_title }} - create the directory "{{ host_test_log_file | dirname }}"
+            {{ host_test_title }} - create the directory "{{ host_test_setup_log_file | dirname }}"
             to simulate success locally
           file:
-            path: "{{ host_test_log_file | dirname }}"
+            path: "{{ host_test_setup_log_file | dirname }}"
             state: directory
             mode: "{{ (env_lax | bool) | ternary(0777, 0751) }}"
           tags: ["no_print_skipped"]
 
         - name: >
-            {{ host_test_title }} - create the file "{{ host_test_log_file }}"
+            {{ host_test_title }} - create the file "{{ host_test_setup_log_file }}"
             to simulate success locally
           copy:
-            dest: "{{ host_test_log_file }}"
+            dest: "{{ host_test_setup_log_file }}"
             content: >-
               {{
                 ((host_test_node.local_host_test_error | default('')) == 'msg')
@@ -107,25 +107,25 @@
       tags: ["no_print_skipped"]
 
     - name: >
-        {{ host_test_title }} - make sure the file "{{ host_test_log_file }}"
+        {{ host_test_title }} - make sure the file "{{ host_test_setup_log_file }}"
         has "{{ host_test_setup_finished_log_regex }}" in it
         (wait {{ host_test_setup_finished_timeout }} seconds)
       wait_for:
         delay: 0
         sleep: 1
         timeout: "{{ host_test_setup_finished_timeout }}"
-        path: "{{ host_test_log_file }}"
+        path: "{{ host_test_setup_log_file }}"
         search_regex: "{{ host_test_setup_finished_log_regex }}"
         msg: >
           Timeout to find "{{ host_test_setup_finished_log_regex }}"
-          inside file "{{ host_test_log_file }}"
+          inside file "{{ host_test_setup_log_file }}"
 
     # Verify Successful Setup
 
     - name: "{{ host_test_title }} - block - verify last line"
       block:
-        - name: "{{ host_test_title }} - retrieve last line of {{ host_test_log_file }}"
-          shell: tail -n 1 "{{ host_test_log_file }}"
+        - name: "{{ host_test_title }} - retrieve last line of {{ host_test_setup_log_file }}"
+          shell: tail -n 1 "{{ host_test_setup_log_file }}"
           register: host_test_last_line_var
           changed_when: False
 

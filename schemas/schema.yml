@@ -1,0 +1,165 @@
+root: "schema_wrapper"
+schemas:
+  schema_wrapper:
+    type: "dict"
+    props:
+      root:
+        required: true
+        type: "str"
+      schemas:
+        required: true
+        type: "map"
+        elem_schema: "schema"
+  schema:
+    type: "dict"
+    props:
+      type:
+        required: true
+        schema: "type"
+      required:
+        type: "bool"
+      non_empty:
+        type: "bool"
+      choices:
+        type: "list"
+        elem_type: "primitive"
+      regex:
+        type: "str"
+      min:
+        type: "int"
+      max:
+        type: "int"
+      alternative_type:
+        schema: "type"
+      alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      alternative_regex:
+        type: "str"
+      alternative_min:
+        type: "int"
+      alternative_max:
+        type: "int"
+      main_schema:
+        type: "str"
+      alternative_schema:
+        type: "str"
+      elem_type:
+        schema: "type"
+      elem_alternative_type:
+        schema: "type"
+      elem_alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      elem_alternative_regex:
+        type: "str"
+      elem_alternative_min:
+        type: "int"
+      elem_alternative_max:
+        type: "int"
+      elem_schema:
+        type: "str"
+      elem_main_schema:
+        type: "str"
+      elem_alternative_schema:
+        type: "str"
+      elem_required:
+        type: "bool"
+      elem_non_empty:
+        type: "bool"
+      elem_choices:
+        type: "list"
+        elem_type: "primitive"
+      elem_regex:
+        type: "str"
+      elem_min:
+        type: "int"
+      elem_max:
+        type: "int"
+      props:
+        type: "map"
+        elem_schema: "prop"
+      lax:
+        type: "bool"
+  prop:
+    type: "dict"
+    props:
+      type:
+        schema: "type"
+      required:
+        type: "bool"
+      non_empty:
+        type: "bool"
+      choices:
+        type: "list"
+        elem_type: "primitive"
+      regex:
+        type: "str"
+      min:
+        type: "int"
+      max:
+        type: "int"
+      alternative_type:
+        schema: "type"
+      alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      alternative_regex:
+        type: "str"
+      alternative_min:
+        type: "int"
+      alternative_max:
+        type: "int"
+      schema:
+        type: "str"
+      main_schema:
+        type: "str"
+      alternative_schema:
+        type: "str"
+      elem_type:
+        schema: "type"
+      elem_alternative_type:
+        schema: "type"
+      elem_alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+      elem_alternative_regex:
+        type: "str"
+      elem_alternative_min:
+        type: "int"
+      elem_alternative_max:
+        type: "int"
+      elem_schema:
+        type: "str"
+      elem_main_schema:
+        type: "str"
+      elem_alternative_schema:
+        type: "str"
+      elem_required:
+        type: "bool"
+      elem_non_empty:
+        type: "bool"
+      elem_choices:
+        type: "list"
+        elem_type: "primitive"
+      elem_regex:
+        type: "str"
+      elem_min:
+        type: "int"
+      elem_max:
+        type: "int"
+  type:
+    type: "str"
+    choices:
+      - "unknown"
+      - "primitive"
+      - "str"
+      - "bool"
+      - "int"
+      - "float"
+      - "dict"
+      - "simple_dict"
+      - "map"
+      - "simple_map"
+      - "list"
+      - "simple_list"

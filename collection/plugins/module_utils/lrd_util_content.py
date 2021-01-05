@@ -14,7 +14,7 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import os
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    is_str, load_file, load_schema, merge_dicts
+    is_str, load_file, load_cached_file, merge_dicts
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
@@ -300,7 +300,7 @@ def prepare_content(content, env, run_info, input_params=None, custom_dir=None, 
 
           if schema_file:
             if os.path.exists(schema_file):
-              schema = load_schema(schema_file)
+              schema = load_cached_file(schema_file)
 
               schema_data = dict()
 

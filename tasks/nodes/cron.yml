@@ -24,22 +24,12 @@
 
 # Cron - Start
 
-- name: "{{ cron_title }} - ensure cron is running (user)"
-  become: no
+- name: "{{ cron_title }} - ensure cron is running"
+  become: true
   service:
     name: cron
     state: started
   when: >-
     (cron_node_params.cron_start | default(true) | bool)
-    and
-    ((cron_node_params.cron | default([]) | list | length) > 0)
-
-- name: "{{ cron_title }} - ensure cron is running (root)"
-  become: yes
-  service:
-    name: cron
-    state: started
-  when: >-
-    (cron_node_params.cron_start_root | default(true) | bool)
     and
     ((cron_node_params.cron | default([]) | list | length) > 0)
