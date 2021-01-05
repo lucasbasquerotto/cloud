@@ -69,47 +69,38 @@ _If using the controller layer at http://github.com/lucasbasquerotto/ctl to depl
 The [Cloud Preparation Step](#cloud-preparation-step) needs a file in the following format located at `<project_base_dir>/files/ctl/vars.yml` to deploy a project:
 
 ```yaml
-ctxs:
-- ctx1
-- ctx2
-dev: true
-env_file: path/to/env.yml
+ctxs: []
+dev: 'true'
 env_params:
-    param1: value1
-    param2: value2
+  env_dir: common
 init:
-    container: lucasbasquerotto/cloud:1.3.6
-    container_type: docker
-    root: true
-    run_file: /usr/local/bin/run
-key: project-key
+  allow_container_type: false
+  container: lucasbasquerotto/cloud:1.4.9
+  container_type: docker
+  root: true
+  run_file: /usr/local/bin/run
+key: demo
+lax: true
+local: false
 migration: ''
 path_params:
-    path_env: repos/env
-    path_env_base: repos/env-base
-    path_map_repos:
-        app: repos/app
-        cloud: repos/cloud
-        custom_cloud: repos/custom-cloud
-        custom_pod: repos/custom-pod
-        env_base: repos/env-base
-        pod: repos/pod
-project_dir_rel: projects/project-key
+  path_env: repos/env
+project_dir_rel: projects/demo
 repo:
-    src: ssh://git@github.com/lucasbasquerotto/project-env-demo.git
-    ssh_file: ssh.key
-    version: master
+  env_file: common/demo.yml
+  src: https://github.com/lucasbasquerotto/env-base.git
+  ssh_file: ''
+  version: master
 repo_vault:
-    file: vault
-    force: true
-root_dir: <root_dir>
+  file: ''
+  force: false
 ```
 
 TODO explanation of the above
 
 ## Cloud Preparation Step
 
-This step receives a `project-dir` parameter with the [project base directory](#project-base-directory), then use the [Cloud Input Vars](#cloud-input-vars) at `<project_base_dir>/files/ctl/vars.yml` to load the [Project Environment](#project-environment), and, finally, for each context defined in the input vars (`ctxs`), clone the cloud repository for that context.
+This step receives a `project-dir` parameter with the [project base directory](#project-base-directory), then use the [Cloud Input Vars](#cloud-input-vars) at `<project_base_dir>/files/ctl/vars.yml` to load the [Project Environment](#project-environment), and, finally, for each context defined in the input vars (`ctxs`), clone the cloud repository for that context, as well as the repositories that will act as extensions (`env_repos`) for the cloud repository for the given context.
 
 This preparation step is commonly executted inside a container, runs only once for the project and is the same even if the cloud repositories for the contexts are different, so it's expected that all the contexts in a project are compatible with this preparation step, and any specific stuff related to the context is run in the [Cloud Context Preparation Step](#cloud-context-preparation-step).
 
@@ -144,41 +135,45 @@ These are the input variables used by the [Cloud Context Preparation Step](#clou
 _`<project_base_dir>/files/cloud/ctxs/<ctx>/vars.sh`_
 
 ```shell
-export repo_dir=''
-export ctx_dev_dir=''
-export vault_file=''
-export secrets_cloud_dir=''
-export dev_repos_dir=''
-export ctx=''
-export path_map_file=''
-export repo_run_file=''
-export project=''
-export ctx_dir=''
-export env_params_file=''
-export env_dev=''
-export env_dir=''
-export env_file=''
-export secrets_ctx_dir=''
+export commit=24c74d6130bc3602388769aad14cbca8092a20b5
+export ctx=demo
+export ctx_dev_dir=/main/dev/link/projects/demo/files/cloud/ctxs/demo
+export ctx_dir=/main/files/cloud/ctxs/demo
+export dev_repos_dir=/main/dev/link
+export env_dev=true
+export env_dir=/main/dev/link/repos/env
+export env_file=/main/dev/link/repos/env/common/demo.yml
+export env_lax=true
+export env_params_file=/main/files/cloud/env-params.yml
+export path_map_file=/main/files/cloud/path-map.yml
+export project=demo
+export repo_dir=/main/files/cloud/ctxs/demo/repo
+export repo_run_file=/main/files/cloud/ctxs/demo/repo/run
+export secrets_cloud_dir=/main/secrets/cloud
+export secrets_ctx_dir=/main/secrets/cloud/ctxs/demo
+export vault_file=/main/secrets/ctl/vault
 ```
 
 _`<project_base_dir>/files/cloud/ctxs/<ctx>/vars.yml`_
 
 ```yaml
-repo_dir: ''
-ctx_dev_dir: ''
-vault_file: ''
-secrets_cloud_dir: ''
-dev_repos_dir: ''
-ctx: ''
-path_map_file: ''
-repo_run_file: ''
-project: ''
-ctx_dir: ''
-env_params_file: ''
-env_dev: ''
-env_dir: ''
-env_file: ''
-secrets_ctx_dir: ''
+commit: 24c74d6130bc3602388769aad14cbca8092a20b5
+ctx: demo
+ctx_dev_dir: /main/dev/link/projects/demo/files/cloud/ctxs/demo
+ctx_dir: /main/files/cloud/ctxs/demo
+dev_repos_dir: /main/dev/link
+env_dev: 'true'
+env_dir: /main/dev/link/repos/env
+env_file: /main/dev/link/repos/env/common/demo.yml
+env_lax: 'true'
+env_params_file: /main/files/cloud/env-params.yml
+path_map_file: /main/files/cloud/path-map.yml
+project: demo
+repo_dir: /main/files/cloud/ctxs/demo/repo
+repo_run_file: /main/files/cloud/ctxs/demo/repo/run
+secrets_cloud_dir: /main/secrets/cloud
+secrets_ctx_dir: /main/secrets/cloud/ctxs/demo
+vault_file: /main/secrets/ctl/vault
 ```
 
 TODO explanation of the above
@@ -372,6 +367,6 @@ These sections are merged to result in a single parameter (`params`) property, w
 
 #TODO
 
-# Encrypt and Decrypt
+## Encrypt and Decrypt
 
 To encrypt and decrypt values and files, use `ansible-vault` as defined at http://github.com/lucasbasquerotto/ctl#encrypt-and-decrypt.
