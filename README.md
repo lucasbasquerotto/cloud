@@ -81,11 +81,10 @@ init:
   run_file: /usr/local/bin/run
 key: demo
 lax: true
-local: false
 migration: ''
 path_params:
   path_env: repos/env
-project_dir_rel: projects/demo
+project_dir_relpath: projects/demo
 repo:
   env_file: common/demo.yml
   src: https://github.com/lucasbasquerotto/env-base.git
@@ -96,7 +95,31 @@ repo_vault:
   force: false
 ```
 
-TODO explanation of the above
+_(The values above are the output after running `./run launch --dev demo` with the `vars.yml` in the main environment repository being the same as [this example](http://github.com/lucasbasquerotto/ctl#main-environment-vars-file---example).)_
+
+| Option | Description |
+| ------ | ----------- |
+| <nobr>`ctxs`</nobr> | Array with the contexts defined for the project. |
+| <nobr>`dev`</nobr> | Boolean (or string equivalent) to specify if the project will run in development mode. |
+| <nobr>`env_params`</nobr> | Object with the parameters specified in the `vars.yml` file in the [main environment repository](http://github.com/lucasbasquerotto/ctl#main-environment-repository). The parameters used will depend on the project and can be accessed in the [project environment file](#project-environment-file). |
+| <nobr>`init.allow_container_type`</nobr> | Boolean (or string equivalent) to specify if the container engine that will deploy the project is to be allowed even if it's not one of the supported engines (docker and podman). |
+| <nobr>`init.container`</nobr> | The container image that will deploy the project. |
+| <nobr>`init.container_type`</nobr> | The container engine that will run the container that will deploy the project. |
+| <nobr>`init.root`</nobr> | Boolean (or string equivalent) to specify if the container should be run as root. |
+| <nobr>`init.run_file`</nobr> | Path to the file inside the container that will serve as an entrypoint to deploy the project. |
+| <nobr>`key`</nobr> | Unique identifier of the project. |
+| <nobr>`lax`</nobr> | Indicates if files and directories created and copied during the deployment will have less strict permissions (when `true`, recommended when in development). |
+| <nobr>`migration`</nobr> | This will set the `migration` variable to be used to compare with the `migration` variable defined in the [project environment file](#project-environment-file), throwing an error in the preparation step, when the later value is defined and is different than the first `migration` variable. |
+| <nobr>`path_params.path_env`</nobr> | When specified, is the directory, relative to the project root directory, in which the [project environment repository](#project-environment-repository) will cloned when in development mode. |
+| <nobr>`path_params.path_env_base`</nobr> | When specified, is the directory, relative to the project root directory, in which the [project environment base repository](#project-environment-base-file) will cloned when in development mode. |
+| <nobr>`path_params.path_map_repos`</nobr> | Dictionary of directories in which each key represents a repository as defined in the `repos` section in the [project environment file](#project-environment-file), and the value is the directory, relative to the project root directory, in which the repository will cloned when in development mode. |
+| <nobr>`project_dir_relpath`</nobr> | Path, relative to the [controller root directory](http://github.com/lucasbasquerotto/ctl#root-directory), in which the artifacts created by this project are located. **This indicates where the project directory is located.**. |
+| <nobr>`repo.env_file`</nobr> | The location of the [project environment file](#project-environment-file), inside the project environment repository. |
+| <nobr>`repo.src`</nobr> | The source of the [project environment repository](#project-environment-repository). |
+| <nobr>`repo.ssh_file`</nobr> | When specified (non empty), is the path in which the ssh key file to be used to clone the repository (when private) is located (the original path is relative to the [main environment repository](http://github.com/lucasbasquerotto/ctl#main-environment-repository), but at this point the original file was already copied, and possibly decrypted, to a path inside the project directory, `project_base_dir`). |
+| <nobr>`repo.version`</nobr> | The version (branch/tag) of the [project environment repository](#project-environment-repository). |
+| <nobr>`repo_vault.file`</nobr> | Path to the vault file with the pass to decrypt the project encrypted values. |
+| <nobr>`repo_vault.force`</nobr> | Boolean (or string equivalent) to specify if the vault pass will be prompted if a vault file is not specified (when there isn't a vault file (`repo_vault.file` is empty), and `repo_vault.force` is `false`, the project mustn't have encrypted values, or an error will be thrown, when trying to decrypt them). |
 
 ## Cloud Preparation Step
 
@@ -176,7 +199,27 @@ secrets_ctx_dir: /main/secrets/cloud/ctxs/demo
 vault_file: /main/secrets/ctl/vault
 ```
 
-TODO explanation of the above
+| Option | Description |
+| ------ | ----------- |
+| <nobr>`commit`</nobr> | The commit of the [project environment repository](#project-environment). |
+| <nobr>`ctx`</nobr> | The environment context to be used in this step. |
+| <nobr>`ctx_dev_dir`</nobr> | The context directory path inside the container using the path after `dev_repos_dir` when in development mode (mainly used to determine the relative paths between mapped repositories (`path_map_file`) and files and directories inside the context directory, `ctx_dir`). |
+| <nobr>`ctx_dir`</nobr> | The context directory path inside the container. |
+| <nobr>`dev_repos_dir`</nobr> | Path, inside the container, of the [controller root directory](http://github.com/lucasbasquerotto/ctl#root-directory) when in development mode. |
+| <nobr>`env_dev`</nobr> | Boolean (or string equivalent) to specify if the project will run in development mode. |
+| <nobr>`env_dir`</nobr> | The environment repository directory path inside the container. |
+| <nobr>`env_file`</nobr> | The full path of the [project environment file](#project-environment-file), inside the container. |
+| <nobr>`env_lax`</nobr> | Indicates if files and directories created and copied during the deployment will have less strict permissions (when `true`; recommended when in development). |
+| <nobr>`env_params_file`</nobr> | Path, inside the container, of the `yaml` file that will have the value of `env_params` defined in the [Cloud Input Vars](#cloud-input-vars). |
+| <nobr>`path_map_file`</nobr> | Path, inside the container, of the `yaml` file that will have the value of `path_params.path_map_repos` defined in the [Cloud Input Vars](#cloud-input-vars). |
+| <nobr>`project`</nobr> | The project identifier, that has the value of `key` defined in the [Cloud Input Vars](#cloud-input-vars). |
+| <nobr>`repo_dir`</nobr> | The cloud repository directory path inside the container. |
+| <nobr>`repo_run_file`</nobr> | The file, inside the container, to run the cloud context steps ([Cloud Context Preparation Step](#cloud-context-preparation-step) and [Cloud Context Main Step](#cloud-context-main-step)).  |
+| <nobr>`secrets_cloud_dir`</nobr> | The path, inside the container, of the directories with the secrets of the cloud layer. |
+| <nobr>`secrets_ctx_dir`</nobr> | The path, inside the container, of the directories with the secrets of the current context in the cloud layer. |
+| <nobr>`vault_file`</nobr> | Path, inside the container, to the vault file with the pass to decrypt the project encrypted values. |
+
+The values of the files above are the output after running the [Cloud Preparation Step](#cloud-preparation-step) with the input variables in the [example](#cloud-input-vars) above.
 
 ## Cloud Context Preparation Step
 

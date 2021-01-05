@@ -127,7 +127,7 @@
       ctx_dir: "{{ project_ctx_base_dir }}"
       ctx_dev_dir: >-
         {{ project_dev_repos_dir }}/{{
-          project_env_init.project_dir_rel
+          project_env_init.project_dir_relpath
         }}/{{ project_ctx_base_dir_rel }}
       env_dir: "{{ project_env_dir }}"
       env_file: "{{ project_env_file }}"
