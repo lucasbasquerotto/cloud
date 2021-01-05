@@ -306,7 +306,7 @@ The following are the parameters that can be specified when deploying a project,
 
 ## Mergeable Parameters
 
-The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params` that can be merged and overriden. **These mergeable parameters can be very useful to achieve a DRY approach, avoiding lots of duplication, but should be used moderately, so as to not generate an illegible environment file with lots of indirections.**
+The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params` that can be merged and overriden. **These mergeable parameters can be very useful to achieve a DRY approach, avoiding lots of duplication, but should be used moderately and with a good understanding of what it does, so as to not generate an illegible environment file with lots of indirections.**
 
 The values specified in `params` will be considered as is.
 
@@ -318,7 +318,7 @@ services:
       param2: 2
 ```
 
-_The output is the same as the input._
+_The above remains unchanged when the parameters are processed._
 
 The values specified in `group_params` must be a dictionary in which the value of each property is a string that references a property in a group params dictionary that contains the values that will be mapped to the initial dictionary properties. The group params dictionary depends on the context that the `group_params` is specified (for example, if defined in a service, the group params dictionary is `service_group_params` defined at the topmost layer of the project environment variable; if defined in a node, will be `node_group_params`; and so on).
 
@@ -333,7 +333,7 @@ service_group_params:
   group_2: 4
 ```
 
-_Outputs:_
+_Is equivalent to:_
 
 ```yaml
 services:
@@ -351,7 +351,7 @@ The shared parameters are overriden in the order in which they are specified in 
 services:
   my_service:
     shared_params: ["shared_1", "shared_2"]
-shared_group_params:
+service_shared_params:
   shared_1:
     param1: 11
     param2: 12
@@ -360,7 +360,7 @@ shared_group_params:
     param3: 23
 ```
 
-_Outputs:_
+_Is equivalent to:_
 
 ```yaml
 services:
@@ -388,7 +388,7 @@ service_group_params:
   group_shared_2: 456
 ```
 
-_Outputs:_
+_Is equivalent to:_
 
 ```yaml
 services:
@@ -400,7 +400,134 @@ services:
 
 These sections are merged to result in a single parameter (`params`) property, with the precedence `shared_group_params` < `shared_params` < `group_params` < `params`, which means, for example, that what is defined in `params` will override the same parameter if specified in another section.
 
-#TODO
+```yaml
+services:
+  my_service:
+    params:
+      param1: "value_1"
+    group_params:
+      param1: "group_1"
+      param2: "group_2"
+    shared_params: ["shared_1", "shared_2"]
+    shared_group_params: "shared_group_1"
+service_shared_group_params:
+  shared_group_1:
+    param1: "group_shared_1"
+    param2: "group_shared_2"
+    param3: "group_shared_3"
+    param4: "group_shared_4"
+    param5: "group_shared_5"
+    param6: "group_shared_6"
+service_shared_params:
+  shared_1:
+    param1: "value_shared_1_1"
+    param2: "value_shared_1_2"
+    param3: "value_shared_1_3"
+    param4: "value_shared_1_4"
+  shared_2:
+    param4: "value_shared_2_4"
+    param5: "value_shared_2_5"
+service_group_params:
+  group_1: "value_group_1"
+  group_2: "value_group_2"
+  group_shared_1: "value_group_shared_1"
+  group_shared_2: "value_group_shared_2"
+  group_shared_3: "value_group_shared_3"
+  group_shared_4: "value_group_shared_4"
+  group_shared_5: "value_group_shared_5"
+  group_shared_6: "value_group_shared_6"
+```
+
+_Is equivalent to:_
+
+```yaml
+services:
+  my_service:
+    params:
+      param1: "value_1"
+      param2: "value_group_2"
+      param3: "value_shared_1_3"
+      param4: "value_shared_2_4"
+      param5: "value_shared_2_5"
+      param6: "value_group_shared_6"
+```
+
+Aside from merging the parameters defined in adjacent sections, the parameters can be overriden if the item that contains them are referenced in another place that allows to specify parameters for it. For example, when defining a list of services to be executed, instead of only the service name, mergeable parameters can also be defined for the service (as long as the service is not a list of services). The parameters defined here will have precedence over the parameters defined in the service directly:
+
+```yaml
+main:
+  my_context:
+    #...
+    initial_services:
+      - name: "my_service_01"
+        key: "my_service"
+        params:
+          param1: "overriden_value_1_1"
+        group_params:
+          param1: "overriden_group_1_1"
+          param2: "overriden_group_1_2"
+      - name: "my_service_02"
+        key: "my_service"
+        params:
+          param1: "overriden_value_2_1"
+services:
+  my_service:
+    #...
+    params:
+      param1: "value_1"
+    group_params:
+      param1: "group_1"
+      param2: "group_2"
+service_group_params:
+  group_1: "value_group_1"
+  group_2: "value_group_2"
+  overriden_group_1_1: "overriden_value_group_1_1"
+  overriden_group_1_2: "overriden_value_group_1_2"
+```
+
+_Is equivalent to:_
+
+```yaml
+main:
+  my_context:
+    #...
+    initial_services:
+      - name: "my_service_01"
+        key: "my_service"
+        params:
+          param1: "overriden_value_1_1"
+          param2: "overriden_value_group_1_2"
+      - name: "my_service_02"
+        key: "my_service"
+        params:
+          param1: "overriden_value_2_1"
+services:
+  my_service:
+    #...
+    params:
+      param1: "value_1"
+      param2: "value_group_2"
+```
+
+_Which is also equivalent to:_
+
+```yaml
+main:
+  my_context:
+    #...
+    initial_services: ["my_service_01", "my_service_02"]
+services:
+  my_service_01:
+    #...
+    params:
+      param1: "overriden_value_1_1"
+      param2: "overriden_value_group_1_2"
+  my_service_02:
+    #...
+    params:
+      param1: "overriden_value_2_1"
+      param2: "value_group_2"
+```
 
 ## Contents
 
