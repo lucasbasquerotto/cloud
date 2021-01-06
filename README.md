@@ -229,9 +229,9 @@ This step as [defined in this repository](prepare.ctx.yml) does the following ta
 
 2. Prepare the repositories defined in the `extra_repos` defined for the context in the environment file (`main.<ctx>.extra_repos`), which could be used, for example, to setup all the required repositories of a development environment to setup the workspace. It also clones the repositories of the pods defined for the nodes of the context (used when transfering templates of the pod to the actual pod repository in remote hosts, because Ansible requires that templates should be in the local machine, as well as some validations). This step doen't run when the `--prepare` and `--fast` flags are specified.
 
-3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#mergeable-parameters), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates schemas for services, nodes, tasks and pods, and do several other types of validations, like the existence of some files that will be transfered.
+3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#mergeable-parameters), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates schemas for services, nodes, tasks and pods, and do several other types of validations, like ensuring the existence of some files that will be transfered.
 
-4. Creates the hosts file to be used by Ansible when connecting to hosts (when new hosts are created dynamically, this file is updated) as well as the (optional) configuration file (`ansible.cfg`), that by default is the file [ansible/ansible.cfg](ansible/ansible.cfg), but can be overriden using the `cfg` property in the context object (in the environment file):
+4. Creates the hosts file to be used by Ansible when connecting to hosts (when new hosts are created dynamically, this file is updated) as well as the (optional) configuration file (`ansible.cfg`), that by default is the file [ansible/ansible.cfg](ansible/ansible.cfg), but can be overridden using the `cfg` property in the context object (in the environment file):
 
 ```yaml
 # ...
@@ -306,7 +306,7 @@ The following are the parameters that can be specified when deploying a project,
 
 ## Mergeable Parameters
 
-The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params` that can be merged and overriden. **These mergeable parameters can be very useful to achieve a DRY approach, avoiding lots of duplication, but should be used moderately and with a good understanding of what it does, so as to not generate an illegible environment file with lots of indirections.**
+The environment file accepts some sections with `params`, `group_params`, `shared_params` and `shared_group_params` that can be merged and overridden. These parameters are merged in the step **#3** of the [Cloud Context Preparation Step](#cloud-context-preparation-step). **These mergeable parameters can be very useful to achieve a DRY approach, avoiding lots of duplication, but should be used moderately and with a good understanding of what it does, so as to not generate an illegible environment file with lots of indirections.**
 
 The values specified in `params` will be considered as is.
 
@@ -345,7 +345,7 @@ services:
 
 The values specified in `shared_params` must be an array of strings in which each string references a property in a shared params dictionary that contains the values that will be mapped to the whole parameter. The shared params dictionary depends on the context that the `shared_params` is specified (for example, if defined in a service, the shared params dictionary is `service_shared_params` defined at the topmost layer of the project environment variable; if defined in a node, will be `node_shared_params`; and so on).
 
-The shared parameters are overriden in the order in which they are specified in the array, so the last one overrides all others, and the first is overriden by all others.
+The shared parameters are overridden in the order in which they are specified in the array, so the last one overrides all others, and the first is overridden by all others.
 
 ```yaml
 services:
@@ -452,7 +452,7 @@ services:
       param6: "value_group_shared_6"
 ```
 
-Aside from merging the parameters defined in adjacent sections, the parameters can be overriden if the item that contains them are referenced in another place that allows to specify parameters for it. For example, when defining a list of services to be executed, instead of only the service name, mergeable parameters can also be defined for the service (as long as the service is not a list of services). The parameters defined here will have precedence over the parameters defined in the service directly:
+Aside from merging the parameters defined in adjacent sections, the parameters can be overridden if the item that contains them are referenced in another place that allows to specify parameters for it. For example, when defining a list of services to be executed, instead of only the service name, mergeable parameters can also be defined for the service (as long as the service is not a list of services). The parameters defined here will have precedence over the parameters defined in the service directly:
 
 ```yaml
 main:
@@ -462,14 +462,14 @@ main:
       - name: "my_service_01"
         key: "my_service"
         params:
-          param1: "overriden_value_1_1"
+          param1: "overridden_value_1_1"
         group_params:
-          param1: "overriden_group_1_1"
-          param2: "overriden_group_1_2"
+          param1: "overridden_group_1_1"
+          param2: "overridden_group_1_2"
       - name: "my_service_02"
         key: "my_service"
         params:
-          param1: "overriden_value_2_1"
+          param1: "overridden_value_2_1"
 services:
   my_service:
     #...
@@ -481,8 +481,8 @@ services:
 service_group_params:
   group_1: "value_group_1"
   group_2: "value_group_2"
-  overriden_group_1_1: "overriden_value_group_1_1"
-  overriden_group_1_2: "overriden_value_group_1_2"
+  overridden_group_1_1: "overridden_value_group_1_1"
+  overridden_group_1_2: "overridden_value_group_1_2"
 ```
 
 _Is equivalent to:_
@@ -495,12 +495,12 @@ main:
       - name: "my_service_01"
         key: "my_service"
         params:
-          param1: "overriden_value_1_1"
-          param2: "overriden_value_group_1_2"
+          param1: "overridden_value_1_1"
+          param2: "overridden_value_group_1_2"
       - name: "my_service_02"
         key: "my_service"
         params:
-          param1: "overriden_value_2_1"
+          param1: "overridden_value_2_1"
 services:
   my_service:
     #...
@@ -520,20 +520,358 @@ services:
   my_service_01:
     #...
     params:
-      param1: "overriden_value_1_1"
-      param2: "overriden_value_group_1_2"
+      param1: "overridden_value_1_1"
+      param2: "overridden_value_group_1_2"
   my_service_02:
     #...
     params:
-      param1: "overriden_value_2_1"
+      param1: "overridden_value_2_1"
       param2: "value_group_2"
+```
+
+## Credentials
+
+In general, credentials are used similarly to `group_params` as described at [mergeable parameters](#mergeable-parameters), in which you define a dictionary in which the value of each property is mapped to the property in the `credentials` section with that name. Like the mergeable parameters, they are mapped in the step **#3** of the [Cloud Context Preparation Step](#cloud-context-preparation-step).
+
+_For example:_
+
+```yaml
+services:
+  my_service:
+    #...
+    credentials:
+      secret_01: "credential_01"
+      secret_02: "credential_02"
+credentials:
+  credential_01:
+    credential_01_param_01: "secret_value_01_01"
+    credential_01_param_02: "secret_value_01_02"
+  credential_02:
+    credential_02_param_01: "secret_value_02_01"
+    credential_02_param_02: "secret_value_02_02"
+```
+
+_Will turn into:_
+
+```yaml
+services:
+  my_service:
+    #...
+    credentials:
+      secret_01:
+        credential_01_param_01: "secret_value_01_01"
+        credential_01_param_02: "secret_value_01_02"
+      secret_02:
+        credential_02_param_01: "secret_value_02_01"
+        credential_02_param_02: "secret_value_02_02"
+```
+
+One exception is the `nodes` section, in which it's not a dictionary `credentials` but a single `credential` string property that is mapped to a credentials in the `credentials` section:
+
+```yaml
+nodes:
+  my_node:
+    #...
+    credential: "my_credential"
+credentials:
+  my_credential:
+    credential_01: "secret_value_01"
+    credential_02: "secret_value_02"
+```
+
+_Will turn into:_
+
+```yaml
+nodes:
+  my_node:
+    #...
+    credential:
+      credential_01: "secret_value_01"
+      credential_02: "secret_value_02"
 ```
 
 ## Contents
 
-#TODO
+When referring to `contents` here, the most common meaning is a string that can be huge, commonly stored in files, that can also be processed as templates (with jinja2), according to the parameters and credentials specified, as well as other internal contents that can be specified.
+
+### Content Type
+
+A content may be specified in different ways. It can be a string (`str`), a file, a (file) template or come from the `contents` section in the environment file, using the type `env`, and identifying with the `key` property (or the `name` property, if the `key` property is not specified).
+
+_For example:_
+
+Considering the following files:
+
+_path/to/content/file.txt:_
+
+```
+I'm a content
+This is a new line
+```
+
+_path/to/content/template.txt:_
+
+```
+I'm a {{ params.who_am_i }
+This is a new line
+```
+
+Then the following cases are the same, only specified in different ways:
+
+_Case 01:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      my_content:
+        type: "str"
+        params:
+          value: |
+            I'm a content
+            This is a new line
+```
+
+_Case 02:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      my_content: |
+        I'm a content
+        This is a new line
+```
+
+(This is a short version of the previous case. When the type of the content is a string, it considers its type as `str`, and `params.value` as the string value.)
+
+_Case 03:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      my_content:
+        file: "path/to/content/file.txt"
+```
+
+(When the type of the content is a dictionary, it considers its type as `file`)
+
+_Case 04:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      my_content:
+        type: "template"
+        file: "path/to/content/template.txt"
+        params:
+          who_am_i: "content"
+```
+
+_Case 05:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      my_content:
+        name: "my_env_content"
+        type: "env"
+contents:
+  my_env_content: |
+    I'm a content
+    This is a new line
+```
+
+### Content Origin
+
+The contents may come from different places, when its type is `file` or `template`, according to the origin specified (`custom`, `env` or `cloud`).
+
+- When `origin` is `env`, the file path is relative to the [project environment repository](#project-environment).
+- When `origin` is `cloud`, the file path is relative to the cloud repository (specified in the main/context section, in the `repo` property).
+- When `origin` is `custom` (default), the file path is relative do a path that depends on where it is used. For example, if specified in a pod, it will be relative to the pod repository; if specified in an [extra_repo](#cloud-context-preparation-step), it will be relative to that repository. When there isn't a specific path to be used, it's equivalent to `cloud` (for example, when used in a service or in a task at [run_stages](run-stages)).
+
+### Content Full Example
+
+Considering that the [project environment repository](#project-environment) has the following files:
+
+_path/to/content/file.txt:_
+
+```
+I'm a file content
+This is a new line
+```
+
+_path/to/content/template.txt:_
+
+```
+I'm a template content
+This is a new line
+
+Value of params.param_01: {{ params.param_01 }}
+Value of params.param_02: {{ params.param_02 }}
+
+Value of credentials.secret_01: {{ credentials.secret_01 }}
+Value of credentials.secret_02: {{ credentials.secret_02 }}
+
+Value of contents.inner_content_01:
+-----------------------------------
+{{ contents.inner_content_01 }}
+-----------------------------------
+
+Value of contents.inner_content_02:
+-----------------------------------
+{{ contents.inner_content_02 }}
+-----------------------------------
+```
+
+_path/to/content/template.inner.txt:_
+
+```
+I'm a template content inside another template content
+This is a new line
+Value of params.param_01: {{ params.param_01 }}
+Value of params.param_02: {{ params.param_02 }}
+```
+
+Then the following:
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      content_str: |
+        I'm a string content
+        This is a new line
+      content_file:
+        origin: "env"
+        file: "path/to/content/file.txt"
+      content_template:
+        type: "template"
+        origin: "env"
+        file: "path/to/content/template.txt"
+        credentials:
+          secret_01: "credential_01"
+          secret_02: "credential_02"
+        params:
+          param_01: "value_01"
+        group_params:
+          param_01: "group_01"
+          param_02: "group_02"
+        contents:
+          inner_content_01: "I'm a small string"
+          inner_content_02:
+            name: "my_inner_content_02"
+            key: "my_content"
+            type: "env"
+            params:
+              param_01: "overridden_value_01"
+contents:
+  my_content:
+    content_template:
+      type: "template"
+      origin: "env"
+      file: "path/to/content/template.inner.txt"
+      params:
+        param_01: "value_01"
+        param_02: "value_02"
+content_group_params:
+  group_01: "value_group_01"
+  group_02: "value_group_02"
+credentials:
+  credential_01: "secret_value_01"
+  credential_02: "secret_value_02"
+```
+
+(You can see about `group_params` and overridable parameters in the section about [mergeable parameters](#mergeable-parameters).)
+
+_Is equivalent to:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      content_str: |
+        I'm a string content
+        This is a new line
+      content_file:
+        origin: "env"
+        file: "path/to/content/file.txt"
+      content_template:
+        type: "template"
+        origin: "env"
+        file: "path/to/content/template.txt"
+        credentials:
+          secret_01: "credential_01"
+          secret_02: "credential_02"
+        params:
+          param_01: "value_01"
+          param_02: "value_group_02"
+        contents:
+          inner_content_01: "I'm a small string"
+          inner_content_02: |
+            I'm a template content inside another template content
+            This is a new line
+            Value of params.param_01: overridden_value_01
+            Value of params.param_02: value_02
+credentials:
+  credential_01: "secret_value_01"
+  credential_02: "secret_value_02"
+```
+
+_Which is also equivalent to:_
+
+```yaml
+services:
+  my_service:
+    #...
+    contents:
+      content_str: |
+        I'm a string content
+        This is a new line
+      content_file: |
+        I'm a file content
+        This is a new line
+      content_template: |
+        I'm a template content
+        This is a new line
+
+        Value of params.param_01: value_01
+        Value of params.param_02: value_group_02
+
+        Value of credentials.secret_01: secret_value_01
+        Value of credentials.secret_02: secret_value_02
+
+        Value of contents.inner_content_01:
+        -----------------------------------
+        I'm a small string
+        -----------------------------------
+
+        Value of contents.inner_content_02:
+        -----------------------------------
+        I'm a template content inside another template content
+        This is a new line
+        Value of params.param_01: overridden_value_01
+        Value of params.param_02: value_02
+        -----------------------------------
+```
+
+And can be accessed in the service task as `inner_service_contents.content_str`, `inner_service_contents.content_file` and `inner_service_contents.content_template`.
 
 ## Custom Schemas
+
+#TODO
+
+## Run Stages
 
 #TODO
 
