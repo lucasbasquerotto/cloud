@@ -40,7 +40,7 @@ docker run -it --rm -v /var/demo/env:/env -v /var/demo/data:/lrd local/demo
 
 **That's it. The project was deployed.**
 
-🚀 You can see examples of project deployment demos [here](#).
+🚀 You can see examples of project deployment demos [here](#TODO).
 
 The demos are great for what they are meant to be: demos, prototypes. **They shouldn't be used for development** (bad DX if you need real time changes without having to push and pull newer versions of repositories, furthermore you are unable to clone repositories in specific locations defined by you in the project folder). **They also shouldn't be used in production environments** due to bad security (the vault value used for decryption is `123456`, and changes to the [project environment repository](#project-environment) may be lost if you forget to push them).
 
