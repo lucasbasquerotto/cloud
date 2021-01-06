@@ -225,11 +225,11 @@ The values of the files above are the output after running the [Cloud Preparatio
 
 This step as [defined in this repository](prepare.ctx.yml) does the following tasks:
 
-1. Loads (from the environment repository) and validates the environment (`env`) variable schema (as defined in the corresponding [schema file](schemas/env.schema.yml)).
+1. Loads (from the environment repository) and validates the environment (`env`) variable [schema](#schemas) (as defined in the corresponding [schema file](schemas/env.schema.yml)).
 
 2. Prepare the repositories defined in the `extra_repos` defined for the context in the environment file (`main.<ctx>.extra_repos`), which could be used, for example, to setup all the required repositories of a development environment to setup the workspace. It also clones the repositories of the pods defined for the nodes of the context (used when transfering templates of the pod to the actual pod repository in remote hosts, because Ansible requires that templates should be in the local machine, as well as some validations). This step doen't run when the `--prepare` and `--fast` flags are specified.
 
-3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#mergeable-parameters), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates schemas for services, nodes, tasks and pods, and do several other types of validations, like ensuring the existence of some files that will be transfered.
+3. Defines and validates the context (`ctx_data`) variable, [merging and overriding parameters](#mergeable-parameters), defining the context ansible fact to be used for the next steps, so that those steps don't need to do it again. Validates [schemas](#schemas) for services, nodes, tasks and pods, and do several other types of validations, like ensuring the existence of some files that will be transfered.
 
 4. Creates the hosts file to be used by Ansible when connecting to hosts (when new hosts are created dynamically, this file is updated) as well as the (optional) configuration file (`ansible.cfg`), that by default is the file [ansible/ansible.cfg](ansible/ansible.cfg), but can be overridden using the `cfg` property in the context object (in the environment file):
 
@@ -867,9 +867,101 @@ services:
 
 And can be accessed in the service task as `inner_service_contents.content_str`, `inner_service_contents.content_file` and `inner_service_contents.content_template`.
 
-## Custom Schemas
+## Schemas
 
-#TODO
+Schemas are defined to validate the structure of data that will be used in a given context. Most schema validations are done in the preparation steps ([Cloud Preparation Step](#cloud-preparation-step) and [Cloud Context Preparation Step](#cloud-context-preparation-step), specially in the later).
+
+In most cases, schemas validate user defined data generated from [mergeable parameters](#mergeable-parameters), [credentials](#credentials), [contents](#contents), or a combination of them.
+
+For example, if you try to specify `test: "my value"` in the top-most layer of the project environment file, you will receive an error saying that the property `test` is invalid, because the environment variable will be validated using the schema defined at [schemas/env.schema.yml](schemas/env.schema.yml).
+
+The schema that validates the environment variable as a whole is fixed, but you can define custom schemas for specific cases, like services (when the service is not a list of services) and contents (when `type` is `template`). In the enviroment file, custom schemas are normally defined specifying the path to a custom schema file in a place that accepts a schema. Custom schemas are very useful because there are validations that depends on the environment, so they can't be known beforehand by the cloud layer.
+
+_For example:_
+
+Consider the following schema file:
+
+_my/schema.yml_
+
+```yaml
+root: "my_schema"
+schemas:
+  my_schema:
+    type: "dict"
+    props:
+      params:
+        schema: "params"
+        non_empty: true
+  params:
+    type: "dict"
+    props:
+      prop1:
+        type: "str"
+        non_empty: true
+```
+
+Then the following specification in the environment file:
+
+```yaml
+#...
+main:
+  my_context:
+    #...
+    initial_services:
+      - "my_service_01"
+      - "my_service_02"
+      - "my_service_03"
+      - "my_service_04"
+      - "my_service_05"
+      - "my_service_06"
+services:
+  my_service_01:
+    #...
+    schema: "my/schema.yml"
+    params:
+      prop1: "some value 01"
+  my_service_02:
+    #...
+    schema: "my/schema.yml"
+    params:
+      prop1: "some value 01 - 02"
+      prop2: "some value 02 - 02"
+  my_service_03:
+    #...
+    schema: "my/schema.yml"
+  my_service_04:
+    #...
+    schema: "my/schema.yml"
+    params:
+      prop1: ""
+  my_service_05:
+    #...
+    schema: "my/schema.yml"
+    params:
+      prop1: "some value 05"
+    contents:
+      my_content: "content value"
+  my_service_06:
+    #...
+    params:
+      prop1: "some value 05"
+    contents:
+      my_content: "content value"
+#...
+```
+
+Will have the following validation result:
+
+- ✔️ The service `my_service_01` is validated successfully.
+- ❌ The service `my_service_02` is validated unsuccessfully: `params.prop2` is present in the value being validated, but not specified in the schema.
+- ❌ The service `my_service_03` is validated unsuccessfully: `params.prop1` is not present in the value being validated, but is required (`non_empty`) by the schema.
+- ❌ The service `my_service_04` is validated unsuccessfully: `params.prop1` is not empty in the value being validated, but the schema requires it to not be empty (`non_empty`).
+- ❌ The service `my_service_05` is validated unsuccessfully: `contents` is present in the value being validated in the schema, only `params` (when validating a service, it is passed an object with its `params`, `credentials` and `contents`, unless they are not specified).
+- ⚠️ The service `my_service_06` is not validated (it's advisable to validate with a custom schema in this case, although it's not required).
+
+**Important:** Only sections used by the context are validated, so if `initial_services` was `["my_service_01", "my_service_06"]`, and the other services weren't used anywhere else in the context, there would be no errors.
+
+Before validating the value, the schema itself is validated (because the schema may be wrong, for example, due to a typo). To validate the schemas, the schema at [schemas/schema.yml](schemas/schema.yml) is used. **You can take a look at it to familiarize yourself with schemas, as well as know what can be defined in a schema and their meanings.**
 
 ## Run Stages
 
