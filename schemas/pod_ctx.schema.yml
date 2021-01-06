@@ -2,58 +2,97 @@ root: "pod_ctx"
 schemas:
   pod_ctx:
     type: "dict"
+    description: >-
+      schema that represents a pod context, which specifies files and templates
+      from the pod or environment repository to be moved to the pod repository
+      (and filled, in case of templates); it can also load other pod contexts
+      as children
     props:
       files:
         type: "list"
         elem_schema: "file"
+        description: >-
+          files present in the pod repository to be moved
+          (in most cases, not necessary)
       templates:
         type: "list"
         elem_schema: "template"
+        description: >-
+          templates present in the pod repository to be filled and moved
+          (with the complete content)
       env_files:
         type: "list"
         elem_schema: "file"
+        description: >-
+          same as files, but the base directory used to define the path
+          is where the environment repository is located
       env_templates:
         type: "list"
         elem_schema: "template"
+        description: >-
+          same as templates, but the base directory used to define the path
+          is where the environment repository is located
       children:
         type: "list"
         elem_schema: "child"
+        description: >-
+          other files present in the pod repository (that are pod sub-contexts)
+          to be loaded with more files and templates to fill and move
   file:
     type: "dict"
     props:
       src:
         type: "str"
+        description: "path to the source file"
       dest:
         type: "str"
+        description: "path to the destination file (in the pod repository)"
       mode:
         type: "int"
+        description: "the permissions the resulting file should have"
       dir_mode:
         type: "int"
+        description: >-
+          the permissions the resulting file parent directory should have
       when:
         type: "bool"
+        description: "don't move the file when false (the default is true)"
   template:
     type: "dict"
     props:
       src:
         type: "str"
+        description: "path to the source template file"
       dest:
         type: "str"
+        description: "path to the destination file (in the pod repository)"
       mode:
         type: "int"
+        description: "the permissions the resulting template file should have"
       dir_mode:
         type: "int"
+        description: >-
+          the permissions the resulting template file parent directory should have
       schema:
         type: "str"
+        description: "schema used to validate the template parameters"
       params:
         type: "unknown"
+        description: "parameters that can be accessed in the template file"
       when:
         type: "bool"
+        description: "don't move the file when false (the default is true)"
   child:
     type: "dict"
     props:
       name:
         type: "str"
+        description: "path to the child pod context file (in the pod repository)"
       params:
         type: "unknown"
+        description: >-
+          parameters that can be accessed by the child pod context file
       when:
         type: "bool"
+        description: >-
+          don't load the child pod context file when false (the default is true)

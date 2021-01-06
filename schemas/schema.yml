@@ -13,6 +13,8 @@ schemas:
   schema:
     type: "dict"
     props:
+      description:
+        type: "str"
       type:
         required: true
         schema: "type"
@@ -84,6 +86,8 @@ schemas:
   prop:
     type: "dict"
     props:
+      description:
+        type: "str"
       type:
         schema: "type"
       required:
