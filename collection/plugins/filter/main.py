@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, is_str
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 
 from ansible.errors import AnsibleError
@@ -18,6 +18,8 @@ class FilterModule(object):
   def filters(self):
     return {
         'params_mixer': self.params_mixer,
+        'simple_dict_prop': self.simple_dict_prop,
+        'simple_dict_prop_list': self.simple_dict_prop_list,
         'validate_connection': self.validate_connection,
     }
 
@@ -31,6 +33,33 @@ class FilterModule(object):
       raise AnsibleError(to_text(error_text(error_msgs, 'params_mixer')))
 
     return result
+
+  def simple_dict_prop(self, simple_dict, prop):
+    if simple_dict is None:
+      return None
+
+    if isinstance(simple_dict, dict):
+      return simple_dict
+
+    result = dict()
+    result[prop] = simple_dict
+
+    return result
+
+  def simple_dict_prop_list(self, input_list, prop):
+    if input_list is None:
+      return None
+
+    if not isinstance(input_list, list):
+      raise AnsibleError('[simple_dict_prop_list] value should be a list, ' +
+          'found: ' + str(type(input_list)))
+
+    result_list = map(
+        lambda item: self.simple_dict_prop(self, item, prop),
+        input_list
+    )
+
+    return result_list
 
   def validate_connection(self, node, env_info):
     node_name = node.get('name')
