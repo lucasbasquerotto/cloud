@@ -6,152 +6,249 @@ schemas:
       root:
         required: true
         type: "str"
+        description: "initial schema (to validate the whole value)"
       schemas:
         required: true
         type: "map"
         elem_schema: "schema"
+        description: "schema dictionary, in which the keys are the schema names"
   schema:
     type: "dict"
+    description: "schema for schema"
     props:
       description:
         type: "str"
+        description: "schema description"
       type:
         required: true
         schema: "type"
+        description: "schema type"
       required:
         type: "bool"
+        description: "the value must be defined"
       non_empty:
         type: "bool"
+        description: >-
+          the value mustn't be empty; a primitive value is empty
+          when its string representation is the empty string,
+          a dictionary is empty when it doesn't have properties/keys,
+          a list is empty when it doesn't have elements;
+          if the value is not defined, it is considered as empty
       choices:
         type: "list"
         elem_type: "primitive"
+        description: >-
+          the value to be validated must be one of the list values;
+          this option can be used only when the type is a primitive
       regex:
         type: "str"
+        description: "regex to validate a string value"
       min:
         type: "int"
+        description: >-
+          should be used only if the type is a string or a numeric value;
+          if it's a string, specify the minimum length it should have,
+          if it's a numeric value, specify the minimum acceptable value
       max:
         type: "int"
+        description: >-
+          should be used only if the type is a string or a numeric value;
+          if it's a string, specify the maximum length it should have,
+          if it's a numeric value, specify the maximum acceptable value
       alternative_type:
         schema: "type"
+        description: >-
+          alternative type to be used when the type is simple_dict,
+          when the value is not a dictionary, this is the type that
+          will be considered; a simple_dict must have this property
+          defined, or alternative_schema, but not both
       alternative_choices:
         type: "list"
         elem_type: "primitive"
+        description: "same as choices, but applied for alternative_type"
       alternative_regex:
         type: "str"
+        description: "same as regex, but applied for alternative_type"
       alternative_min:
         type: "int"
+        description: "same as min, but applied for alternative_type"
       alternative_max:
         type: "int"
+        description: "same as max, but applied for alternative_type"
       main_schema:
         type: "str"
+        description: >-
+          main schema to be used when the type is simple_dict,
+          when the value is a dictionary, this is the schema that
+          will be considered; a simple_dict mustn't have this property
+          defined together with props (props should be defined in the
+          mapped schema, if needed)
       alternative_schema:
         type: "str"
+        description: >-
+          alternative schema to be used when the type is simple_dict,
+          when the value is not a dictionary, this is the schema that
+          will be considered; a simple_dict must have this property
+          defined, or alternative_type, but not both
       elem_type:
         schema: "type"
-      elem_alternative_type:
-        schema: "type"
-      elem_alternative_choices:
-        type: "list"
-        elem_type: "primitive"
-      elem_alternative_regex:
-        type: "str"
-      elem_alternative_min:
-        type: "int"
-      elem_alternative_max:
-        type: "int"
-      elem_schema:
-        type: "str"
-      elem_main_schema:
-        type: "str"
-      elem_alternative_schema:
-        type: "str"
+        description: "same as type, but for list and map elements"
       elem_required:
         type: "bool"
+        description: "same as required, but for list and map elements"
       elem_non_empty:
         type: "bool"
+        description: "same as non_empty, but for list and map elements"
       elem_choices:
         type: "list"
         elem_type: "primitive"
+        description: "same as choices, but for list and map elements"
       elem_regex:
         type: "str"
+        description: "same as regex, but for list and map elements"
       elem_min:
         type: "int"
+        description: "same as min, but for list and map elements"
       elem_max:
         type: "int"
+        description: "same as max, but for list and map elements"
+      elem_alternative_type:
+        schema: "type"
+        description: "same as alternative_type, but for list and map elements"
+      elem_alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+        description: "same as alternative_choices, but for list and map elements"
+      elem_alternative_regex:
+        type: "str"
+        description: "same as alternative_regex, but for list and map elements"
+      elem_alternative_min:
+        type: "int"
+        description: "same as alternative_min, but for list and map elements"
+      elem_alternative_max:
+        type: "int"
+        description: "same as alternative_max, but for list and map elements"
+      elem_schema:
+        type: "str"
+        description: "same as schema, but for list and map elements"
+      elem_main_schema:
+        type: "str"
+        description: "same as main_schema, but for list and map elements"
+      elem_alternative_schema:
+        type: "str"
+        description: "same as alternative_schema, but for list and map elements"
       props:
         type: "map"
         elem_schema: "prop"
+        description: "dictionary with the value allowed properties"
       lax:
         type: "bool"
+        description: >-
+          boolean value that, when true, allow any property not defined in props
   prop:
     type: "dict"
     props:
       description:
         type: "str"
+        description: "same as schema.description, but for properties"
       type:
         schema: "type"
+        description: >-
+          same as schema.type, but for properties, except that it's not required;
+          type or schema must be defined, but not both
       required:
         type: "bool"
+        description: "same as schema.required, but for properties"
       non_empty:
         type: "bool"
+        description: "same as schema.non_empty, but for properties"
       choices:
         type: "list"
         elem_type: "primitive"
+        description: "same as schema.choices, but for properties"
       regex:
         type: "str"
+        description: "same as schema.regex, but for properties"
       min:
         type: "int"
+        description: "same as schema.min, but for properties"
       max:
         type: "int"
+        description: "same as schema.max, but for properties"
       alternative_type:
         schema: "type"
+        description: "same as schema.alternative_type, but for properties"
       alternative_choices:
         type: "list"
         elem_type: "primitive"
+        description: "same as schema.alternative_choices, but for properties"
       alternative_regex:
         type: "str"
+        description: "same as schema.alternative_regex, but for properties"
       alternative_min:
         type: "int"
+        description: "same as schema.alternative_min, but for properties"
       alternative_max:
         type: "int"
+        description: "same as schema.alternative_max, but for properties"
       schema:
         type: "str"
+        description: >-
+          property schema name (as defined at schemas[prop.schema]);
+          type or schema must be defined, but not both
       main_schema:
         type: "str"
+        description: "same as schema.main_schema, but for properties"
       alternative_schema:
         type: "str"
+        description: "same as schema.alternative_schema, but for properties"
       elem_type:
         schema: "type"
-      elem_alternative_type:
-        schema: "type"
-      elem_alternative_choices:
-        type: "list"
-        elem_type: "primitive"
-      elem_alternative_regex:
-        type: "str"
-      elem_alternative_min:
-        type: "int"
-      elem_alternative_max:
-        type: "int"
-      elem_schema:
-        type: "str"
-      elem_main_schema:
-        type: "str"
-      elem_alternative_schema:
-        type: "str"
+        description: "same as schema.elem_type, but for properties"
       elem_required:
         type: "bool"
+        description: "same as schema.elem_required, but for properties"
       elem_non_empty:
         type: "bool"
+        description: "same as schema.elem_non_empty, but for properties"
       elem_choices:
         type: "list"
         elem_type: "primitive"
+        description: "same as schema.elem_choices, but for properties"
       elem_regex:
         type: "str"
+        description: "same as schema.elem_regex, but for properties"
       elem_min:
         type: "int"
+        description: "same as schema.elem_min, but for properties"
       elem_max:
         type: "int"
+        description: "same as schema.elem_max, but for properties"
+      elem_alternative_type:
+        schema: "type"
+        description: "same as schema.elem_alternative_type, but for properties"
+      elem_alternative_choices:
+        type: "list"
+        elem_type: "primitive"
+        description: "same as schema.elem_alternative_choices, but for properties"
+      elem_alternative_regex:
+        type: "str"
+        description: "same as schema.elem_alternative_regex, but for properties"
+      elem_alternative_min:
+        type: "int"
+        description: "same as schema.elem_alternative_min, but for properties"
+      elem_alternative_max:
+        type: "int"
+        description: "same as schema.elem_alternative_max, but for properties"
+      elem_schema:
+        type: "str"
+        description: "same as schema.elem_schema, but for properties"
+      elem_main_schema:
+        type: "str"
+        description: "same as schema.elem_main_schema, but for properties"
+      elem_alternative_schema:
+        type: "str"
+        description: "same as schema.elem_alternative_schema, but for properties"
   type:
     type: "str"
     choices:
@@ -167,3 +264,22 @@ schemas:
       - "simple_map"
       - "list"
       - "simple_list"
+    description: |
+      specify expected type for the value:
+      - unknown: the type is unknown (is not validated)
+      - primitive: the value is not a dictionary nor a list
+      - str: the value is a string
+      - bool: the value is a boolean
+      - int: the value is an integer
+      - float: the value is a float point number
+      - dict: the value is a dictionary
+      - simple_dict: the value is a dictionary, otherwise it's what
+          is specified in alternative_type or alternative_schema
+      - map: the value is a dictionary with no known properties
+          (or the properties keys are not relevant), but the values
+          of those properties may be known and be of the same type/schema
+      - simple_map: the value is a map (dict), otherwise it's what
+          is specified in elem_type or elem_schema
+      - list: the value is a list
+      - simple_list: the value is a list, otherwise it's what
+          is specified in elem_type or elem_schema

@@ -17,178 +17,6 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     is_bool, is_int, is_float, is_str, load_cached_file, to_float, to_int
 )
 
-SCHEMA_BASE = """
-root: "schema_wrapper"
-schemas:
-  schema_wrapper:
-    type: "dict"
-    props:
-      root:
-        required: true
-        type: "str"
-      schemas:
-        required: true
-        type: "map"
-        elem_schema: "schema"
-  schema:
-    type: "dict"
-    props:
-      type:
-        required: true
-        schema: "type"
-      required:
-        type: "bool"
-      non_empty:
-        type: "bool"
-      choices:
-        type: "list"
-        elem_type: "primitive"
-      regex:
-        type: "str"
-      min:
-        type: "int"
-      max:
-        type: "int"
-      alternative_type:
-        schema: "type"
-      alternative_choices:
-        type: "list"
-        elem_type: "primitive"
-      alternative_regex:
-        type: "str"
-      alternative_min:
-        type: "int"
-      alternative_max:
-        type: "int"
-      main_schema:
-        type: "str"
-      alternative_schema:
-        type: "str"
-      elem_type:
-        schema: "type"
-      elem_alternative_type:
-        schema: "type"
-      elem_alternative_choices:
-        type: "list"
-        elem_type: "primitive"
-      elem_alternative_regex:
-        type: "str"
-      elem_alternative_min:
-        type: "int"
-      elem_alternative_max:
-        type: "int"
-      elem_schema:
-        type: "str"
-      elem_main_schema:
-        type: "str"
-      elem_alternative_schema:
-        type: "str"
-      elem_required:
-        type: "bool"
-      elem_non_empty:
-        type: "bool"
-      elem_choices:
-        type: "list"
-        elem_type: "primitive"
-      elem_regex:
-        type: "str"
-      elem_min:
-        type: "int"
-      elem_max:
-        type: "int"
-      props:
-        type: "map"
-        elem_schema: "prop"
-      lax:
-        type: "bool"
-  prop:
-    type: "dict"
-    props:
-      type:
-        schema: "type"
-      required:
-        type: "bool"
-      non_empty:
-        type: "bool"
-      choices:
-        type: "list"
-        elem_type: "primitive"
-      regex:
-        type: "str"
-      min:
-        type: "int"
-      max:
-        type: "int"
-      alternative_type:
-        schema: "type"
-      alternative_choices:
-        type: "list"
-        elem_type: "primitive"
-      alternative_regex:
-        type: "str"
-      alternative_min:
-        type: "int"
-      alternative_max:
-        type: "int"
-      schema:
-        type: "str"
-      main_schema:
-        type: "str"
-      alternative_schema:
-        type: "str"
-      elem_type:
-        schema: "type"
-      elem_alternative_type:
-        schema: "type"
-      elem_alternative_choices:
-        type: "list"
-        elem_type: "primitive"
-      elem_alternative_regex:
-        type: "str"
-      elem_alternative_min:
-        type: "int"
-      elem_alternative_max:
-        type: "int"
-      elem_schema:
-        type: "str"
-      elem_main_schema:
-        type: "str"
-      elem_alternative_schema:
-        type: "str"
-      elem_required:
-        type: "bool"
-      elem_non_empty:
-        type: "bool"
-      elem_choices:
-        type: "list"
-        elem_type: "primitive"
-      elem_regex:
-        type: "str"
-      elem_min:
-        type: "int"
-      elem_max:
-        type: "int"
-  type:
-    type: "str"
-    choices:
-      - "unknown"
-      - "primitive"
-      - "str"
-      - "bool"
-      - "int"
-      - "float"
-      - "dict"
-      - "simple_dict"
-      - "map"
-      - "simple_map"
-      - "list"
-      - "simple_list"
-"""
-
-
-def by_value(item):
-  return item[1]
-
 
 def validate_next_value(schema_data, value):
   schema_name = schema_data.get('name')
@@ -209,6 +37,7 @@ def validate_next_value(schema_data, value):
 
   if schema_info is None:
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         'msg: schema is not defined'
@@ -228,6 +57,7 @@ def validate_next_value(schema_data, value):
 
   if (not is_subelement) and (not is_prop) and (not is_simple) and ('schema' in schema_info):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         'msg: a schema definition should not have a schema property'
@@ -242,12 +72,14 @@ def validate_next_value(schema_data, value):
 
   if (not value_type) and (not next_schema):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         'msg: a definition should have either a type or schema property'
     ]]
   elif value_type and next_schema:
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         'msg: a definition should not have both type and schema properties'
@@ -256,67 +88,82 @@ def validate_next_value(schema_data, value):
   if not value_type:
     if choices:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have choices only when type is defined'
       ]]
     elif regex:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have regex only when type is defined'
       ]]
     elif minimum is not None:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have min only when type is defined'
       ]]
     elif maximum is not None:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have max only when type is defined'
       ]]
 
-  valid_primitive_types = ['str', 'int', 'float']
+  primitive_types = [
+      'primitive',
+      'str',
+      'bool',
+      'int',
+      'float',
+  ]
 
-  if value_type not in valid_primitive_types:
-    if choices:
+  if choices and (value_type not in primitive_types):
+    return [[
+        str('context: dynamic schema'),
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('type: ' + value_type),
+        'msg: value type is not primitive but has choices',
+    ]]
+
+  if regex and (value_type != 'str'):
+    return [[
+        str('context: dynamic schema'),
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('type: ' + value_type),
+        'msg: regex should only be specified for a string (str) type',
+    ]]
+
+  valid_min_max_types = ['str', 'int', 'float']
+
+  if value_type not in valid_min_max_types:
+    if minimum is not None:
       return [[
-          str('schema_name: ' + schema_name + schema_suffix),
-          str('at: ' + (schema_ctx or '<root>')),
-          str('type: ' + value_type),
-          'msg: choices is specified for an invalid type',
-          'allowed types:',
-          valid_primitive_types,
-      ]]
-    elif regex:
-      return [[
-          str('schema_name: ' + schema_name + schema_suffix),
-          str('at: ' + (schema_ctx or '<root>')),
-          str('type: ' + value_type),
-          'msg: regex is specified for an invalid type',
-          'allowed types:',
-          valid_primitive_types,
-      ]]
-    elif minimum is not None:
-      return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
           'msg: min is specified for an invalid type',
           'allowed types:',
-          valid_primitive_types,
+          valid_min_max_types,
       ]]
-    elif maximum is not None:
+
+    if maximum is not None:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
           'msg: max is specified for an invalid type',
           'allowed types:',
-          valid_primitive_types,
+          valid_min_max_types,
       ]]
 
   alternative_type = schema_info.get('alternative_type')
@@ -329,6 +176,7 @@ def validate_next_value(schema_data, value):
 
   if (value_type == 'simple_dict') and (not alternative_type) and (not alternative_schema):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -336,6 +184,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif main_schema and (value_type != 'simple_dict'):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -343,6 +192,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif alternative_type and (value_type != 'simple_dict'):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -350,6 +200,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif alternative_schema and (value_type != 'simple_dict'):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -357,6 +208,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif alternative_type and alternative_schema:
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -366,6 +218,7 @@ def validate_next_value(schema_data, value):
   if not alternative_type:
     if alternative_choices:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have alternative_choices only '
@@ -373,6 +226,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif alternative_regex:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have alternative_regex only '
@@ -380,6 +234,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif alternative_min:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have alternative_min only '
@@ -387,6 +242,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif alternative_max:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have alternative_max only '
@@ -427,6 +283,7 @@ def validate_next_value(schema_data, value):
   if value_type not in ['map', 'simple_map', 'list', 'simple_list']:
     if elem_type:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -435,6 +292,7 @@ def validate_next_value(schema_data, value):
 
     if elem_alternative_type:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -442,6 +300,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_choices:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -449,6 +308,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_regex:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -456,6 +316,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_min:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -463,6 +324,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_max:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -470,6 +332,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_schema_name:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -477,6 +340,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_main_schema:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -484,6 +348,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_schema_name:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -491,6 +356,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_required:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -498,6 +364,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_non_empty:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -505,6 +372,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_choices:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -512,6 +380,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_regex:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -519,6 +388,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_min:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -526,6 +396,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_max:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -542,6 +413,7 @@ def validate_next_value(schema_data, value):
       (not elem_alternative_schema_name)
   ):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('elem_type: ' + elem_type_default),
@@ -550,6 +422,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif elem_main_schema and (elem_type_default != 'simple_dict'):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('elem_type: ' + elem_type_default),
@@ -558,6 +431,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif elem_alternative_type and (elem_type_default != 'simple_dict'):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('elem_type: ' + elem_type_default),
@@ -566,6 +440,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif elem_alternative_schema_name and (elem_type_default != 'simple_dict'):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('elem_type: ' + elem_type_default),
@@ -574,6 +449,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif elem_alternative_type and elem_alternative_schema_name:
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('elem_type: ' + elem_type_default),
@@ -583,6 +459,7 @@ def validate_next_value(schema_data, value):
   if not elem_alternative_type:
     if elem_alternative_choices:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have elem_alternative_choices only '
@@ -590,6 +467,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_regex:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have elem_alternative_regex only '
@@ -597,6 +475,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_min:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have elem_alternative_min only '
@@ -604,6 +483,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_alternative_max:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           'msg: a definition should have elem_alternative_max only '
@@ -613,6 +493,7 @@ def validate_next_value(schema_data, value):
   if value_type in ['map', 'simple_map', 'list', 'simple_list']:
     if (not elem_type) and (not elem_schema_name):
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -621,6 +502,7 @@ def validate_next_value(schema_data, value):
       ]]
     elif elem_type and elem_schema_name:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -633,6 +515,7 @@ def validate_next_value(schema_data, value):
 
     if alternative_type and (alternative_type in invalid_alternative_types):
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -650,6 +533,7 @@ def validate_next_value(schema_data, value):
 
       if schema_info_aux_type and (schema_info_aux_type in invalid_alternative_types):
         return [[
+            str('context: dynamic schema'),
             str('schema_name: ' + schema_name + schema_suffix),
             str('at: ' + (schema_ctx or '<root>')),
             str('type: ' + value_type),
@@ -667,6 +551,7 @@ def validate_next_value(schema_data, value):
 
     if elem_type and (elem_type in invalid_elem_types):
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -683,6 +568,7 @@ def validate_next_value(schema_data, value):
 
       if schema_info_aux_type and (schema_info_aux_type in invalid_elem_types):
         return [[
+            str('context: dynamic schema'),
             str('schema_name: ' + schema_name + schema_suffix),
             str('at: ' + (schema_ctx or '<root>')),
             str('type: ' + value_type),
@@ -705,6 +591,7 @@ def validate_next_value(schema_data, value):
   ):
     if (value_type != 'simple_dict') or not main_schema:
       return [[
+          str('context: dynamic schema'),
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
@@ -713,6 +600,7 @@ def validate_next_value(schema_data, value):
 
   if props and is_prop:
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -720,6 +608,7 @@ def validate_next_value(schema_data, value):
     ]]
   elif props and (value_type not in ['dict', 'simple_dict']):
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
@@ -727,10 +616,36 @@ def validate_next_value(schema_data, value):
     ]]
   elif props and (value_type == 'simple_dict') and main_schema:
     return [[
+        str('context: dynamic schema'),
         str('schema_name: ' + schema_name + schema_suffix),
         str('at: ' + (schema_ctx or '<root>')),
         str('type: ' + value_type),
         'msg: props should not be defined for a simple_dict with main_schema'
+    ]]
+
+  if choices and regex:
+    return [[
+        str('context: dynamic schema'),
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('type: ' + value_type),
+        'msg: when choices is specified, regex cannot be specified',
+    ]]
+  elif choices and (minimum is not None):
+    return [[
+        str('context: dynamic schema'),
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('type: ' + value_type),
+        'msg: when choices is specified, min cannot be specified',
+    ]]
+  elif choices and (maximum is not None):
+    return [[
+        str('context: dynamic schema'),
+        str('schema_name: ' + schema_name + schema_suffix),
+        str('at: ' + (schema_ctx or '<root>')),
+        str('type: ' + value_type),
+        'msg: when choices is specified, max cannot be specified',
     ]]
 
   is_list = isinstance(value, list)
@@ -761,13 +676,6 @@ def validate_next_value(schema_data, value):
         ]]
 
   if value is not None:
-    if not value_type:
-      return [[
-          str('schema_name: ' + schema_name + schema_suffix),
-          str('at: ' + (schema_ctx or '<root>')),
-          'msg: type is not defined'
-      ]]
-
     if value_type in ['list']:
       if not is_list:
         return [[
@@ -865,14 +773,6 @@ def validate_next_value(schema_data, value):
             'msg: value expected to be a primitive'
         ]]
 
-    primitive_types = [
-        'primitive',
-        'str',
-        'bool',
-        'int',
-        'float',
-    ]
-
     if value_type in primitive_types and (str(value) != ''):
       if (value_type == 'bool') and (not isinstance(value, bool)):
         if not is_bool(value):
@@ -906,56 +806,18 @@ def validate_next_value(schema_data, value):
               'msg: value should be a float',
           ]]
 
-    if choices and regex:
+    if choices and (value not in choices):
       return [[
           str('schema_name: ' + schema_name + schema_suffix),
           str('at: ' + (schema_ctx or '<root>')),
           str('type: ' + value_type),
-          'msg: when choices is specified, regex cannot be specified',
+          str('value: ' + str(value)),
+          'msg: value is invalid',
+          'valid choices:',
+          choices
       ]]
-    elif choices and (minimum is not None):
-      return [[
-          str('schema_name: ' + schema_name + schema_suffix),
-          str('at: ' + (schema_ctx or '<root>')),
-          str('type: ' + value_type),
-          'msg: when choices is specified, min cannot be specified',
-      ]]
-    elif choices and (maximum is not None):
-      return [[
-          str('schema_name: ' + schema_name + schema_suffix),
-          str('at: ' + (schema_ctx or '<root>')),
-          str('type: ' + value_type),
-          'msg: when choices is specified, max cannot be specified',
-      ]]
-
-    if choices:
-      if value_type not in primitive_types:
-        return [[
-            str('schema_name: ' + schema_name + schema_suffix),
-            str('at: ' + (schema_ctx or '<root>')),
-            str('type: ' + value_type),
-            'msg: value type is not primitive but has choices',
-        ]]
-      elif value not in choices:
-        return [[
-            str('schema_name: ' + schema_name + schema_suffix),
-            str('at: ' + (schema_ctx or '<root>')),
-            str('type: ' + value_type),
-            str('value: ' + str(value)),
-            'msg: value is invalid',
-            'valid choices:',
-            choices
-        ]]
 
     if regex:
-      if value_type != 'str':
-        return [[
-            str('schema_name: ' + schema_name + schema_suffix),
-            str('at: ' + (schema_ctx or '<root>')),
-            str('type: ' + value_type),
-            'msg: value type should be str when regex is defined',
-        ]]
-
       pattern = re.compile(regex)
 
       if not pattern.search(value):
@@ -994,6 +856,7 @@ def validate_next_value(schema_data, value):
           ]]
       else:
         return [[
+            str('context: dynamic schema (unexpected)'),
             str('schema_name: ' + schema_name + schema_suffix),
             str('at: ' + (schema_ctx or '<root>')),
             str('type: ' + value_type),
@@ -1029,6 +892,7 @@ def validate_next_value(schema_data, value):
           ]]
       else:
         return [[
+            str('context: dynamic schema (unexpected)'),
             str('schema_name: ' + schema_name + schema_suffix),
             str('at: ' + (schema_ctx or '<root>')),
             str('type: ' + value_type),
