@@ -3,12 +3,12 @@ schemas:
   env:
     type: "dict"
     lax: true
-    description: "environment minimal schema"
+    description: "environment minimal schema for a deployment / project"
     props:
       name:
         non_empty: true
         type: "str"
-        description: "name of the deployment / project"
+        description: "name of the project"
       ctxs:
         required: true
         type: "list"
@@ -75,7 +75,7 @@ schemas:
       dir:
         non_empty: true
         type: "str"
-        description: "path to directory in which the directory will be cloned"
+        description: "path to directory in which the repository will be cloned"
   repo:
     type: "dict"
     description: "repository schema"
