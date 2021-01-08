@@ -1280,14 +1280,12 @@ def prepare_node(node_info, run_info):
           if dns_service:
             error_msgs += [[
                 str('node: ' + node_description),
-                'context: validate node (custom)',
                 'msg: dns_service is defined, but service is undefined'
             ]]
 
           if dns_service_params_list:
             error_msgs += [[
                 str('node: ' + node_description),
-                'context: validate node (custom)',
                 'msg: dns_service_params_list is defined, but service is undefined'
             ]]
         else:
@@ -1349,7 +1347,6 @@ def prepare_node(node_info, run_info):
             if dns_service_params_list:
               error_msgs += [[
                   str('node: ' + node_description),
-                  'context: validate node (custom)',
                   'msg: dns_service_params_list is defined, but dns_service is undefined'
               ]]
           elif instance_amount > 1:
