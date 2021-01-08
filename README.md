@@ -963,6 +963,10 @@ Will have the following validation result:
 
 Before validating the value, the schema itself is validated (because the schema may be wrong, for example, due to a typo). To validate the schemas, the schema at [schemas/schema.yml](schemas/schema.yml) is used. **You can take a look at it to familiarize yourself with schemas, as well as know what can be defined in a schema and their meanings.**
 
+## Extra Repositories
+
+#TODO
+
 ## Run Stages
 
 #TODO

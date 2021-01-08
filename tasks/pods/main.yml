@@ -68,7 +68,6 @@
     pod_host_user: "{{ pod_node_credential.host_user | default('') }}"
     pod_host_group: "{{ pod_node_credential.host_group | default(pod_host_user, true) }}"
     pod_fast: "{{ pod_item.fast_prepare | default(false, true) | bool }}"
-    pod_skip_unchanged: "{{ pod_item.skip_unchanged | default(false, true) | bool }}"
     pod_dirname: >-
       {{ pod_item.base_dir | default(pod_name, true) }}
     pod_local_repo_dir: "{{ pod_item.local_dir }}"

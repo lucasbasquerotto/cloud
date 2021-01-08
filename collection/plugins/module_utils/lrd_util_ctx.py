@@ -613,9 +613,8 @@ def prepare_pod(pod_info, parent_data, run_info):
             dev_extra_repos_dir, local_dir)
 
         flat = pod.get('flat')
-        base_dir = pod.get('base_dir') or pod_name
-        pod_dir = base_dir if flat else (base_dir + '/main')
-        pod_dir = local_dir if local else (parent_base_dir + '/' + pod_dir)
+        base_dir = pod.get('base_dir') or (parent_base_dir + '/' + pod_name)
+        pod_dir = local_dir if local else (base_dir if flat else (base_dir + '/main'))
         tmp_dir = (
             (dev_repos_dir + '/tmp/pods/' + pod_identifier)
             if local
@@ -624,7 +623,7 @@ def prepare_pod(pod_info, parent_data, run_info):
                 or (
                     (parent_base_dir + '/.pods/' + pod_name + '/tmp')
                     if flat
-                    else (parent_base_dir + '/' + base_dir + '/tmp')
+                    else (base_dir + '/tmp')
                 )
             )
         )
@@ -636,7 +635,7 @@ def prepare_pod(pod_info, parent_data, run_info):
                 or (
                     (parent_base_dir + '/.pods/' + pod_name + '/data')
                     if flat
-                    else (parent_base_dir + '/' + base_dir + '/data')
+                    else (base_dir + '/data')
                 )
             )
         )
@@ -653,7 +652,6 @@ def prepare_pod(pod_info, parent_data, run_info):
         result['root'] = to_bool(pod.get('root'))
         result['flat'] = to_bool(pod.get('flat'))
         result['fast_prepare'] = to_bool(pod.get('fast_prepare'))
-        result['skip_unchanged'] = to_bool(pod.get('skip_unchanged'))
 
         base_dir_prefix = local_dir + '/'
         pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
@@ -1571,7 +1569,7 @@ def prepare_task(task_info_dict, run_info):
             'valid task types:',
             valid_task_types,
         ]]
-      else:
+      else task_type != 'skip':
         allowed_props_map = dict(
             task=list([
                 'type',
@@ -1587,7 +1585,6 @@ def prepare_task(task_info_dict, run_info):
                 'shared_group_params',
             ]),
             shell=list(['type', 'cmd', 'root', 'poll']),
-            skip=list(['type']),
         )
 
         allowed_props = allowed_props_map.get(task_type)
@@ -1914,13 +1911,24 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
         node_pod_map[node_name] = pod_map
 
       is_all_nodes = run_stage_task.get('all_nodes')
+      node_info_list = run_stage_task.get('nodes')
       nodes_to_run = []
 
-      if is_all_nodes:
+      if (not is_all_nodes) and (node_info_list is None):
+        error_msgs += [[
+            str('run_stage_task: ' + run_stage_task_name),
+            str('task_name: ' + task_name),
+            'msg: all_nodes must be true or nodes must be defined',
+        ]]
+      elif (is_all_nodes is not None) and (node_info_list is not None):
+        error_msgs += [[
+            str('run_stage_task: ' + run_stage_task_name),
+            str('task_name: ' + task_name),
+            'msg: nodes and all_nodes specified for the task (specify only one)',
+        ]]
+      elif is_all_nodes:
         nodes_to_run = all_nodes
       else:
-        node_info_list = run_stage_task.get('nodes')
-
         for node_info in (node_info_list or []):
           node_name = (
               node_info.get('name')
