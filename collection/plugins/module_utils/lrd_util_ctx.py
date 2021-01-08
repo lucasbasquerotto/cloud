@@ -1296,13 +1296,33 @@ def prepare_node(node_info, run_info):
               node_info_dict.get('max_amount') or instance_amount)
           replicas = []
 
+          if instance_amount > instance_max_amount:
+            error_msgs += [[
+                str('node: ' + node_description),
+                str('amount: ' + str(instance_amount)),
+                str('max_amount: ' + str(instance_max_amount)),
+                'msg: the node replica amount is higher than the node max_amount'
+            ]]
+          elif instance_amount < 0:
+            error_msgs += [[
+                str('node: ' + node_description),
+                str('amount: ' + str(instance_amount)),
+                'msg: the node replica amount is less than 0'
+            ]]
+
+          hostname = node_info_dict.get('hostname')
+
+          if hostname and (hostname == node_name):
+            error_msgs += [[
+                str('node: ' + node_description),
+                'msg: the node hostname should be different than the node name'
+            ]]
+
           if instance_max_amount > 0:
             for idx in range(1, instance_max_amount + 1):
               name_suffix = ('-' + str(idx)) if idx > 1 else ''
               replica = dict(
-                  name=(
-                      node_info_dict.get('hostname') or (node_name + '-host')
-                  ) + name_suffix,
+                  name=(hostname or (node_name + '-host')) + name_suffix,
                   absent=None if (idx <= instance_amount) else True,
               )
               replicas += [replica]
