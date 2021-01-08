@@ -34,6 +34,15 @@
     project_ctx_main: "{{ project_env.main[project_ctx_key] }}"
   tags: ["no_print"]
 
+- name: "{{ project_ctx_title }} - validate ctl env (env vars) for the context"
+  lrd.cloud.schema:
+    schema_file: "{{ project_env_dir }}/{{ project_ctx_main.ctl_env_schema | default('') }}"
+    value: "{{ project_env_init.env_params | default({}) }}"
+  when: >-
+    (not (project_env_has_original | bool))
+    and
+    (((project_ctx_main.ctl_env_schema | default('')) != '')
+
 - name: "{{ project_ctx_title }} - validate original env for the context"
   lrd.cloud.schema:
     schema_file: "{{ project_env_dir }}/{{ project_ctx_main.original_env_schema | default('') }}"

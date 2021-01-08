@@ -103,8 +103,8 @@
     - name: "{{ project_env_title }} - project_env"
       set_fact:
         project_env: "{{ project_env_aux }}"
+        project_env_original: "{{ project_env_aux }}"
         project_env_has_original: false
-        project_env_original: {}
       vars:
         project_name: "{{ project_env_init.key }}"
         project_ctxs: "{{ project_env_init.ctxs | default([]) }}"
@@ -130,7 +130,6 @@
           set_fact:
             project_env_base_dir: "{{ project_env_dir + '/' + project_env.env.repo_dir }}"
             project_env_has_original: true
-            project_env_original: "{{ project_env }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - env base - repo (outer)"

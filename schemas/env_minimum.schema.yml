@@ -25,12 +25,18 @@ schemas:
           container image + tag that identifies the container in which
           the deployment will execute; when specified, throws an error if
           it's not specified in the controller parameters, or is different
+      ctl_env_schema:
+        type: "str"
+        description: >-
+          schema to validate the environment parameters defined for the project
+          in the main environment repository vars.yml file when defined in the
+          project environment repository file; will be applied for all contexts
       original_env_schema:
         type: "str"
         description: >-
           schema to validate the environment parameters defined for the project
-          in the main environment repository vars.yml file. Will be applied for
-          all contexts
+          in the project environment repository file when defined in the base
+          environment repository file; will be applied for all contexts
       main:
         non_empty: true
         type: "map"
@@ -58,12 +64,18 @@ schemas:
           list with repository names that extends the main repository of the cloud
           layer and the directories in which the repositories will be cloned
           (relative to the cloud repository)
+      ctl_env_schema:
+        type: "str"
+        description: >-
+          schema to validate the environment parameters defined for the project
+          in the main environment repository vars.yml file when defined in the
+          project environment repository file; will be applied only for this context
       original_env_schema:
         type: "str"
         description: >-
           schema to validate the environment parameters defined for the project
-          in the main environment repository vars.yml file. Will be applied only
-          for this context
+          in the project environment repository file when defined in the base
+          environment repository file; will be applied only for this context
   repo_info:
     type: "dict"
     description: "mapped repository (relative to a location) schema"
