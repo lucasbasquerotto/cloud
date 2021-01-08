@@ -698,6 +698,10 @@ The contents may come from different places, when its type is `file` or `templat
 - When `origin` is `cloud`, the file path is relative to the cloud repository (specified in the main/context section, in the `repo` property).
 - When `origin` is `custom` (default), the file path is relative do a path that depends on where it is used. For example, if specified in a pod, it will be relative to the pod repository; if specified in an [extra_repo](#cloud-context-preparation-step), it will be relative to that repository. When there isn't a specific path to be used, it's equivalent to `cloud` (for example, when used in a service or in a task at [run_stages](run-stages)).
 
+### Transfer Content
+
+Some sections in the environment file accepts a `transfer` property that is a list of objects whose source (`src`) is a content (will behave like the above), except that the content won't be loaded to a variable/fact. Instead, it will be transferred to the destination (`dest`) specified (with an optional `mode` property to define the permissions, and a `when` property, that defaults to `true`, that will skip the transfer when it's `false`, which can also be used when overriding a transfer that has the same destination, to skip the transference, in sections that allow override transfers, that can be seen in the sub-schemas `main_node_info`, `main_pod_params_info` and `node_pod_info` in the [schema for the environment file](schemas/env.schema.yml)).
+
 ### Content Full Example
 
 Considering that the [project environment repository](#project-environment) has the following files:
@@ -1059,7 +1063,7 @@ pods:
       app_dir: "app-dir"
 ```
 
-_path/to/ctx.yml (in the pod repository):_
+_path/to/ctx.yml ([pod context](#pod-context) file, in the pod repository):_
 
 ```yaml
 {% set var_app_repo_dir = params.extra_repos_dir_relpath + '/' + params.main.app_dir %}
@@ -1089,6 +1093,22 @@ services:
     volumes:
       - "$APP_REPO_DIR:/path/inside/container"
 ```
+
+## Pod Context
+
+A pod context (not to be confounded with the environment/cloud context defined in the `main` section) defines files and templates to be copied to the pod repository, as well as load other pod sub-contexts that define more files and templates (and possibly more pod sub-contexts).
+
+- A pod context is useful to avoid defining template parameters directly in the environment file and transfer with the `transfer` property, instead, the pod itself specifies the files that should be copied (this don't mean that the transfer option shouldn't be used, both can be used together).
+
+- It can specify files from the environment repository that the pod know that are required (like a file with credentials) and move them to the pod repository.
+
+- It's useful to avoid repetitions for different environments, instead most things are defined in the pod repository context file, and reused accross different environments, enjoying of the benefit of jinja2 to parse the context file (that, in the end, is a jinja2 template) with powerful template features.
+
+- It also avoids possible errors when defining files in wrong destinations in the environment file, or defining a file that is not used by the pod (thinking that it will be used).
+
+- Each template to be transferred can have a schema defined to validate the parameters structure, so as to avoid wrong data passed to the template (these schemas reside in the pod, and the validation will be done for all environments that use the pod, so that you don't have to add an additional schema file for each environment).
+
+#TODO example
 
 ## Run Stages
 
