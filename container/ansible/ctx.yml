@@ -34,6 +34,17 @@
     project_ctx_main: "{{ project_env.main[project_ctx_key] }}"
   tags: ["no_print"]
 
+- name: "{{ project_env_title }} - validate if ctl_env_schema is defined for the context"
+  fail:
+    msg: |
+      ctl_env_schema is defined for the context in the project base environment repository file
+      (should be in the original environment repository)
+      ctl_env_schema: {{ project_ctx_main.ctl_env_schema | default('') }}
+  when: >-
+    (project_env_has_original | bool)
+    and
+    ((project_ctx_main.ctl_env_schema | default('')) != '')
+
 - name: "{{ project_ctx_title }} - validate ctl env (env vars) for the context"
   lrd.cloud.schema:
     schema_file: "{{ project_env_dir }}/{{ project_ctx_main.ctl_env_schema | default('') }}"
@@ -41,7 +52,18 @@
   when: >-
     (not (project_env_has_original | bool))
     and
-    (((project_ctx_main.ctl_env_schema | default('')) != '')
+    ((project_ctx_main.ctl_env_schema | default('')) != '')
+
+- name: "{{ project_env_title }} - validate if original_env_schema is defined for the context"
+  fail:
+    msg: |
+      original_env_schema is defined for the context in the project environment repository file
+      (should be in an environment base repository)
+      original_env_schema: {{ project_ctx_main.original_env_schema | default('') }}
+  when: >-
+    (not (project_env_has_original | bool))
+    and
+    ((project_ctx_main.original_env_schema | default('')) != '')
 
 - name: "{{ project_ctx_title }} - validate original env for the context"
   lrd.cloud.schema:

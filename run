@@ -45,7 +45,7 @@ vault=()
 
 var_vault_file="$vault_file"
 var_repo_dir="$repo_dir"
-var_ctx_dir="$ctx_dir"
+var_secrets_ctx_dir="$secrets_ctx_dir"
 
 if [ -f "$var_vault_file" ]; then
     vault=( '--vault-id' "$var_vault_file" )
@@ -117,7 +117,7 @@ else
         ${vault[@]+"${vault[@]}"} \
         ${debug[@]+"${debug[@]}"} \
         ${other_args[@]+"${other_args[@]}"} \
-        -i "$var_ctx_dir/hosts" \
+        -i "$var_secrets_ctx_dir/hosts" \
         -e env_vars_file="$vars_file_yaml" \
         main.yml "${@}" || error "[error] run ctx"
 fi

@@ -7,6 +7,7 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=wrong-import-position
 # pylint: disable=import-error
+# pylint: disable=broad-except
 
 from __future__ import absolute_import, division, print_function
 
@@ -143,12 +144,24 @@ def main():
   error_msgs = list()
 
   if os.path.exists(schema_file):
-    schema = load_yaml_file(schema_file)
-    error_msgs_aux = validate_schema(schema, value, full_validation)
+    schema = None
 
-    for value in (error_msgs_aux or []):
-      new_value = [str('schema file: ' + schema_file)] + value
-      error_msgs += [new_value]
+    try:
+      schema = load_yaml_file(schema_file)
+    except Exception as error:
+      error_msgs = [[
+          str('file: ' + schema_file),
+          'msg: error when trying to the load schema file',
+          'error type: ' + str(type(error)),
+          'error details: ' + str(error),
+      ]]
+
+    if schema:
+      error_msgs_aux = validate_schema(schema, value, full_validation)
+
+      for value in (error_msgs_aux or []):
+        new_value = [str('schema file: ' + schema_file)] + value
+        error_msgs += [new_value]
   else:
     error_msgs += [[str('schema file not found: ' + schema_file)]]
 

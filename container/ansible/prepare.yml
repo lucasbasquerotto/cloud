@@ -162,6 +162,28 @@
 
     # validate environment
 
+    - name: "{{ project_env_title }} - validate if ctl_env_schema is defined"
+      fail:
+        msg: |
+          ctl_env_schema is defined in the project base environment repository file
+          (should be in the original environment repository)
+          ctl_env_schema: {{ project_env.ctl_env_schema | default('') }}
+      when: >-
+        (project_env_has_original | bool)
+        and
+        ((project_env.ctl_env_schema | default('')) != '')
+
+    - name: "{{ project_env_title }} - validate if original_env_schema is defined"
+      fail:
+        msg: |
+          original_env_schema is defined in the project environment repository file
+          (should be in the environment base repository)
+          original_env_schema: {{ project_env_original.original_env_schema | default('') }}
+      when: >-
+        (not (project_env_has_original | bool))
+        and
+        (project_env_original.original_env_schema | default('')) != ''
+
     - name: "{{ project_env_title }} - validate original env"
       lrd.cloud.schema:
         schema_file: "{{ project_env_dir }}/{{ project_env.original_env_schema | default('') }}"
