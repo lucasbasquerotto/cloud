@@ -2,7 +2,6 @@
 
 - name: "{{ pod_inner_title }} - pod_main_repo_dir"
   set_fact:
-    pod_skip: false
     pod_main_repo_dir: >-
       {{ pod_remote_base_dir
       }}{{ pod_item.flat | default(false, true) | bool | ternary('', '/main') }}
@@ -18,99 +17,22 @@
   when: pod_node_local | bool
   tags: ["no_print"]
 
-- block:
-    - name: "{{ pod_inner_title }} - pod_backup_dir"
-      set_fact:
-        pod_backup_dir: "{{ tmp_backup_dir }}"
-        pod_backup_file: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}"
-        pod_backup_file_tmp: "{{ tmp_backup_dir }}/{{ tmp_backup_file }}.tmp"
-      vars:
-        tmp_backup_dir: "{{ pod_tmp_base_dir }}/backup"
-        tmp_backup_file: "commit"
-      tags: ["no_print"]
-
-    - name: "{{ pod_inner_title }} - create the backup directory"
-      become: "{{ pod_item.root }}"
-      file:
-        path: "{{ pod_backup_dir }}"
-        state: directory
-        mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
-      tags: ["no_print_skipped"]
-
-    - name: "{{ pod_inner_title }} - create the temporary file to verify if there was a change"
-      become: "{{ pod_item.root }}"
-      copy:
-        content: "{{ env_commit }}"
-        dest: "{{ pod_backup_file_tmp }}"
-        owner: "{{ pod_host_user | default(omit, true) }}"
-        group: "{{ pod_host_group | default(omit, true) }}"
-        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
-      tags: ["no_print_skipped"]
-
-    - name: >-
-        {{ pod_inner_title }} - create the file to verify if there was a change,
-        if it was not created before
-      become: "{{ pod_item.root }}"
-      copy:
-        force: no
-        content: ""
-        dest: "{{ pod_backup_file }}"
-        owner: "{{ pod_host_user | default(omit, true) }}"
-        group: "{{ pod_host_group | default(omit, true) }}"
-        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
-      tags: ["no_print_skipped"]
-
-    - name: "{{ pod_inner_title }} - get the difference of the 2 files (old and current)"
-      become: "{{ pod_item.root }}"
-      command: "diff {{ pod_backup_file_tmp }} {{ pod_backup_file }}"
-      register: pod_diff
-      failed_when: pod_diff.rc > 1
-      changed_when: pod_diff.rc == 1
-      tags: ["no_print_skipped"]
-
-    - name: "{{ pod_inner_title }} - pod_skip"
-      set_fact:
-        pod_skip: "{{ not pod_diff.changed }}"
-      tags: ["no_print"]
-
-  when: pod_skip_unchanged | bool
+### Prepare the temporary directory (to catch errors before updating the real one) ###
+- name: "{{ pod_inner_title }} - prepare the temporary directory"
+  include_tasks: "tasks/pods/prepare.yml"
+  vars:
+    pod_prepare_title: "{{ pod_inner_title }} - tmp"
+    pod_repo_dir: "{{ pod_tmp_repo_dir }}"
+    pod_prepare_tmp: true
+  when: not (pod_fast | bool)
   tags: ["no_print_skipped"]
 
-### Continue the preparation only when changed from the previous ###
-
-- block:
-    ### Prepare the temporary directory (to catch errors before updating the real one) ###
-    - name: "{{ pod_inner_title }} - prepare the temporary directory"
-      include_tasks: "tasks/pods/prepare.yml"
-      vars:
-        pod_prepare_title: "{{ pod_inner_title }} - tmp"
-        pod_repo_dir: "{{ pod_tmp_repo_dir }}"
-        pod_prepare_tmp: true
-      when: not (pod_fast | bool)
-      tags: ["no_print_skipped"]
-
-    ### Prepare the real directory ###
-    - name: "{{ pod_inner_title }} - prepare the main directory"
-      include_tasks: "tasks/pods/prepare.yml"
-      vars:
-        pod_prepare_title: "{{ pod_inner_title }} - main"
-        pod_repo_dir: "{{ pod_main_repo_dir }}"
-
-    ### Register the current env commit ###
-    - name: >-
-        {{ pod_inner_title }} -
-        update the file to verify if there was a change (for newer runs)
-      become: "{{ pod_item.root }}"
-      copy:
-        remote_src: yes
-        src: "{{ pod_backup_file_tmp }}"
-        dest: "{{ pod_backup_file }}"
-        owner: "{{ pod_host_user | default(omit, true) }}"
-        group: "{{ pod_host_group | default(omit, true) }}"
-        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
-      when: pod_skip_unchanged | bool
-      tags: ["no_print_skipped"]
-  when: not (pod_skip | bool)
+### Prepare the real directory ###
+- name: "{{ pod_inner_title }} - prepare the main directory"
+  include_tasks: "tasks/pods/prepare.yml"
+  vars:
+    pod_prepare_title: "{{ pod_inner_title }} - main"
+    pod_repo_dir: "{{ pod_main_repo_dir }}"
 
 - name: "{{ pod_inner_title }} - skipped"
   debug:

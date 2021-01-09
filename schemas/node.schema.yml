@@ -110,11 +110,11 @@ schemas:
   content:
     type: "simple_dict"
     alternative_type: "str"
-    description: "content schema"
+    description: "content schema (used when content type is env)"
     props:
       type:
         type: "str"
-        choices: ["env", "str", "file", "template"]
+        choices: ["str", "file", "template", "env"]
         description: "content type"
       name:
         type: "str"
@@ -124,10 +124,10 @@ schemas:
         description: "content key (when type is env)"
       origin:
         type: "str"
-        choices: ["env", "cloud", "custom"]
+        choices: ["custom", "env", "cloud"]
         description: >-
-          content origin (the custom origin path will depend
-          on where the content is specified)
+          content origin; defaults to custom
+          (the custom origin path depends on where the content is specified)
       file:
         type: "str"
         description: "content file (when type is file or template)"

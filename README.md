@@ -698,6 +698,10 @@ The contents may come from different places, when its type is `file` or `templat
 - When `origin` is `cloud`, the file path is relative to the cloud repository (specified in the main/context section, in the `repo` property).
 - When `origin` is `custom` (default), the file path is relative do a path that depends on where it is used. For example, if specified in a pod, it will be relative to the pod repository; if specified in an [extra_repo](#cloud-context-preparation-step), it will be relative to that repository. When there isn't a specific path to be used, it's equivalent to `cloud` (for example, when used in a service or in a task at [run_stages](run-stages)).
 
+### Transfer Content
+
+Some sections in the environment file accepts a `transfer` property that is a list of objects whose source (`src`) is a content (will behave like the above), except that the content won't be loaded to a variable/fact. Instead, it will be transferred to the destination (`dest`) specified (with an optional `mode` property to define the permissions, and a `when` property, that defaults to `true`, that will skip the transfer when it's `false`, which can also be used when overriding a transfer that has the same destination, to skip the transference, in sections that allow override transfers, that can be seen in the sub-schemas `main_node_info`, `main_pod_params_info` and `node_pod_info` in the [schema for the environment file](schemas/env.schema.yml)).
+
 ### Content Full Example
 
 Considering that the [project environment repository](#project-environment) has the following files:
@@ -954,14 +958,157 @@ Will have the following validation result:
 
 - ✔️ The service `my_service_01` is validated successfully.
 - ❌ The service `my_service_02` is validated unsuccessfully: `params.prop2` is present in the value being validated, but not specified in the schema.
-- ❌ The service `my_service_03` is validated unsuccessfully: `params.prop1` is not present in the value being validated, but is required (`non_empty`) by the schema.
-- ❌ The service `my_service_04` is validated unsuccessfully: `params.prop1` is not empty in the value being validated, but the schema requires it to not be empty (`non_empty`).
-- ❌ The service `my_service_05` is validated unsuccessfully: `contents` is present in the value being validated in the schema, only `params` (when validating a service, it is passed an object with its `params`, `credentials` and `contents`, unless they are not specified).
+- ❌ The service `my_service_03` is validated unsuccessfully: `params` is not present in the value being validated, but is required (`non_empty`) by the schema.
+- ❌ The service `my_service_04` is validated unsuccessfully: `params.prop1` is empty in the value being validated, but the schema requires it to not be empty (`non_empty`).
+- ❌ The service `my_service_05` is validated unsuccessfully: `contents` is present in the value being validated, but in the schema only `params` is present (when validating a service, for example, it is passed an object with its `params`, `credentials` and `contents`, but only when they are specified).
 - ⚠️ The service `my_service_06` is not validated (it's advisable to validate with a custom schema in this case, although it's not required).
 
 **Important:** Only sections used by the context are validated, so if `initial_services` was `["my_service_01", "my_service_06"]`, and the other services weren't used anywhere else in the context, there would be no errors.
 
 Before validating the value, the schema itself is validated (because the schema may be wrong, for example, due to a typo). To validate the schemas, the schema at [schemas/schema.yml](schemas/schema.yml) is used. **You can take a look at it to familiarize yourself with schemas, as well as know what can be defined in a schema and their meanings.**
+
+## Extra Repositories
+
+The notation **extra repositories** is used to reference source control repositories that are cloned locally, defined in the `extra_repos` context property (in the main section).
+
+One useful way to use them is to prepare a development environment, creating a project that maps the repositories that will be used in that environment to the paths in which you want them to be mapped.
+
+_Here is a full example of an environment file:_
+
+```yaml
+name: "{{ params.name | default('repos') }}"
+ctxs: ["repos_ctx"]
+container: ""
+main:
+  repos_ctx:
+    repo: "cloud"
+    hosts: |
+      [main]
+      localhost ansible_connection=local
+      [host]
+    extra_repos:
+      - repo: "env_base"
+        dir: "env-base"
+      - repo: "custom_cloud"
+        dir: "custom-cloud"
+      - repo: "pod"
+        dir: "pod"
+      - repo: "custom_pod"
+        dir: "custom-pod"
+      - repo: "app"
+        dir: "app"
+      - repo: "container_images"
+        dir: "container-images"
+      - repo: "backups"
+        dir: "backups"
+repos:
+  env_base:
+    src: "https://github.com/lucasbasquerotto/env-base.git"
+    version: "master"
+  cloud:
+    src: "https://github.com/lucasbasquerotto/cloud.git"
+    version: "master"
+  custom_cloud:
+    src: "https://github.com/lucasbasquerotto/custom-cloud.git"
+    version: "master"
+  pod:
+    src: "https://github.com/lucasbasquerotto/pod.git"
+    version: "master"
+  custom_pod:
+    src: "https://github.com/lucasbasquerotto/custom-pod.git"
+    version: "master"
+  app:
+    src: "https://github.com/lucasbasquerotto/wordpress-docker.git"
+    version: "master"
+  container_images:
+    src: "https://github.com/lucasbasquerotto/container-images.git"
+    version: "master"
+  backups:
+    src: "https://github.com/lucasbasquerotto/backups.git"
+    version: "master"
+```
+
+Then, in the `vars.yml` file in the main environment repository, add the project:
+
+#TODO add repos project definition
+
+And run in development mode:
+
+```shell
+./ctl/launch -df repos
+```
+
+After that, the repositories specified in the `repos` section in the project environment file will be cloned in the paths specified in the `vars.yml` file (if some extra repository is not mapped in the `vars.yml` file, or if the project is deployed without the `-d`/`--dev` option, the repositories would be cloned in the directory for extra repositories for the project context, more specifically at `projects/repos/files/cloud/ctxs/repos_ctx/extra-repos/<extra_repo_dir>` in the controller root directory).
+
+Another use case for extra repositories is to reference repositories of the app layer in the pod layer when developing locally, so that you can map it to a pod container as a volume and execute a service with live changes, changing the code in the app repository, and seeing the changes without having to generate a new image.
+
+_Sample (extra repos with app directory and docker-compose):_
+
+_Project Environment File:_
+
+```yaml
+#...
+main:
+  my_context:
+    #...
+    extra_repos:
+      - repo: "app_dir"
+        dir: "app-dir"
+pods:
+  my_pod:
+    repo: "pod"
+    ctx: "path/to/ctx.yml"
+    fast_prepare: true
+    params:
+      app_dir: "app-dir"
+```
+
+_path/to/ctx.yml ([pod context](#pod-context) file, in the pod repository):_
+
+```yaml
+{% set var_app_repo_dir = params.extra_repos_dir_relpath + '/' + params.main.app_dir %}
+
+templates:
+
+- src: "templates/docker-compose.env"
+  dest: ".env"
+  params:
+    app_repo_dir: "{{ var_app_repo_dir }}"
+```
+
+(the parameter `extra_repos_dir_relpath` is always sent to the pod context)
+
+_templates/docker-compose.env (in the pod repository):_
+
+```yaml
+APP_REPO_DIR={{ params.app_repo_dir }}
+```
+
+_docker-compose.yml (excerpt, in the pod repository):_
+
+```yaml
+services:
+  my_service:
+    image: "my_image"
+    volumes:
+      - "$APP_REPO_DIR:/path/inside/container"
+```
+
+## Pod Context
+
+A pod context (not to be confounded with the environment/cloud context defined in the `main` section) defines files and templates to be copied to the pod repository, as well as load other pod sub-contexts that define more files and templates (and possibly more pod sub-contexts).
+
+- A pod context is useful to avoid defining template parameters directly in the environment file and transfer with the `transfer` property, instead, the pod itself specifies the files that should be copied (this don't mean that the transfer option shouldn't be used, both can be used together).
+
+- It can specify files from the environment repository that the pod know that are required (like a file with credentials) and move them to the pod repository.
+
+- It's useful to avoid repetitions for different environments, instead most things are defined in the pod repository context file, and reused accross different environments, enjoying of the benefit of jinja2 to parse the context file (that, in the end, is a jinja2 template) with powerful template features.
+
+- It also avoids possible errors when defining files in wrong destinations in the environment file, or defining a file that is not used by the pod (thinking that it will be used).
+
+- Each template to be transferred can have a schema defined to validate the parameters structure, so as to avoid wrong data passed to the template (these schemas reside in the pod, and the validation will be done for all environments that use the pod, so that you don't have to add an additional schema file for each environment).
+
+#TODO example
 
 ## Run Stages
 
