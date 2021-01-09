@@ -614,7 +614,8 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         flat = pod.get('flat')
         base_dir = pod.get('base_dir') or (parent_base_dir + '/' + pod_name)
-        pod_dir = local_dir if local else (base_dir if flat else (base_dir + '/main'))
+        pod_dir = local_dir if local else (
+            base_dir if flat else (base_dir + '/main'))
         tmp_dir = (
             (dev_repos_dir + '/tmp/pods/' + pod_identifier)
             if local
@@ -1569,7 +1570,7 @@ def prepare_task(task_info_dict, run_info):
             'valid task types:',
             valid_task_types,
         ]]
-      else task_type != 'skip':
+      elif task_type != 'skip':
         allowed_props_map = dict(
             task=list([
                 'type',
