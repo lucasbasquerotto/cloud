@@ -11,7 +11,7 @@
   vars:
     tmp_params:
       dns_type: "{{ tmp_item.dns_type }}"
-      data_list:
+      dns_values:
         - "{{ tmp_item.dns_value }}"
   loop:
     - name: "ipv4"

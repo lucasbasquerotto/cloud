@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, is_str
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 
 from ansible.errors import AnsibleError
@@ -52,10 +52,10 @@ class FilterModule(object):
 
     if not isinstance(input_list, list):
       raise AnsibleError('[simple_dict_prop_list] value should be a list, ' +
-          'found: ' + str(type(input_list)))
+                         'found: ' + str(type(input_list)))
 
     result_list = map(
-        lambda item: self.simple_dict_prop(self, item, prop),
+        lambda item: self.simple_dict_prop(item, prop),
         input_list
     )
 
