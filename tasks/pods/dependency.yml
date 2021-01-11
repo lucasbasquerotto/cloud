@@ -3,9 +3,9 @@
       set_fact:
         pod_dependency_index_aux: >-
           {{
-          (pod_dependency_ips | length) *
-          (instance_index | int) /
-          (pod_dependency_total_src_nodes | int)
+            (pod_dependency_ips | length) *
+              (instance_index | int) /
+                (pod_dependency_total_src_nodes | int)
           }}
       tags: ["no_print"]
 
@@ -18,11 +18,12 @@
       set_fact:
         pod_dependencies: >-
           {{
-          pod_dependencies +
-          [{
-          'host': pod_dependency_host,
-          'ip': pod_dependency_ips[pod_dependency_index | int]
-          }]
+            pod_dependencies
+            +
+            [{
+              'host': pod_dependency_host,
+              'ip': pod_dependency_ips[pod_dependency_index | int]
+            }]
           }}
       tags: ["no_print"]
 
@@ -30,10 +31,10 @@
       set_fact:
         pod_dependencies_ip_dict: >-
           {{
-          pod_dependencies_ip_dict | combine({
-          pod_dependency_host:
-          pod_dependency_ips[pod_dependency_index | int]
-          })
+            pod_dependencies_ip_dict | combine({
+              pod_dependency_host:
+              pod_dependency_ips[pod_dependency_index | int]
+            })
           }}
       tags: ["no_print"]
 
@@ -45,11 +46,12 @@
       set_fact:
         pod_dependencies: >-
           {{
-          pod_dependencies +
-          [{
-          'host': pod_dependency_host + '-' + pod_dependency_index,
-          'ip': pod_dependency_item
-          }]
+            pod_dependencies
+            +
+            [{
+              'host': pod_dependency_host + '-' + pod_dependency_index,
+              'ip': pod_dependency_item
+            }]
           }}
       loop: "{{ pod_dependency_ips | flatten(levels=1) }}"
       loop_control:
@@ -64,9 +66,9 @@
   set_fact:
     pod_dependencies_ips_dict: >-
       {{
-      pod_dependencies_ips_dict | combine({
-      pod_dependency_host:
-      pod_dependency_ips
-      })
+        pod_dependencies_ips_dict | combine({
+          pod_dependency_host:
+          pod_dependency_ips
+        })
       }}
   tags: ["no_print"]

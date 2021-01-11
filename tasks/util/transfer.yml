@@ -36,7 +36,7 @@
 # Create the destination directory
 
 - name: "{{ transfer_title }} - create the directory {{ transfer_dest | dirname }}"
-  become: "{{ transfer_become | default(omit, true) }}"
+  become: "{{ transfer_become | default(false) | bool }}"
   file:
     path: "{{ transfer_dest | dirname }}"
     state: directory
@@ -44,7 +44,7 @@
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - create the tmp directory {{ transfer_tmp_dest | dirname }}"
-  become: "{{ transfer_become | default(omit, true) }}"
+  become: "{{ transfer_become | default(false) | bool }}"
   file:
     path: "{{ transfer_tmp_dest | dirname }}"
     state: directory
@@ -55,7 +55,7 @@
 # String
 
 - name: "{{ transfer_title }} - copy the string content to {{ transfer_dest }}"
-  become: "{{ transfer_become | default(omit, true) }}"
+  become: "{{ transfer_become | default(false) | bool }}"
   copy:
     content: "{{ transfer_prepared_content.params.value }}"
     dest: "{{ transfer_dest }}"
@@ -69,7 +69,7 @@
 # File
 
 - name: "{{ transfer_title }} - copy the file content to {{ transfer_dest }}"
-  become: "{{ transfer_become | default(omit, true) }}"
+  become: "{{ transfer_become | default(false) | bool }}"
   copy:
     src: "{{ transfer_prepared_content.file }}"
     dest: "{{ transfer_dest }}"
@@ -83,7 +83,7 @@
 # Template
 
 - name: "{{ transfer_title }} - copy the template content to {{ transfer_dest }}"
-  become: "{{ transfer_become | default(omit, true) }}"
+  become: "{{ transfer_become | default(false) | bool }}"
   template:
     src: "{{ transfer_prepared_content.file }}"
     dest: "{{ transfer_tmp_dest }}"
@@ -128,7 +128,7 @@
 - name: >-
     {{ transfer_title }} -
     copy the normalized file created from the template
-  become: "{{ transfer_become | default(omit, true) }}"
+  become: "{{ transfer_become | default(false) | bool }}"
   copy:
     remote_src: true
     src: "{{ transfer_tmp_dest }}"

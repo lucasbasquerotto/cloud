@@ -20,7 +20,7 @@
 # create the directories
 
 - name: "{{ pod_transfer_title }} - create the directories"
-  become: "{{ pod_item.root }}"
+  become: "{{ pod_root | bool }}"
   file:
     state: directory
     path: "{{ pod_transfer_item.path }}"
@@ -38,7 +38,7 @@
 - name: >-
     {{ pod_transfer_title }} -
     transfer the templates to the specified tmp locations
-  become: "{{ pod_item.root }}"
+  become: "{{ pod_root | bool }}"
   template:
     src: "{{ pod_transfer_item.src }}"
     dest: "{{ pod_transfer_item.dest_tmp }}"
@@ -68,6 +68,7 @@
 - name: >-
     {{ pod_transfer_title }} -
     remove excess of blank lines of files created from the templates
+  become: "{{ pod_root | bool }}"
   replace:
     path: "{{ pod_transfer_item.dest_tmp }}"
     regexp: "{{ pod_transfer_template_regex }}"
@@ -82,7 +83,7 @@
 - name: >-
     {{ pod_transfer_title }} -
     copy the normalized files created from the templates
-  become: "{{ pod_item.root }}"
+  become: "{{ pod_root | bool }}"
   copy:
     remote_src: true
     src: "{{ pod_transfer_item.dest_tmp }}"
@@ -99,7 +100,7 @@
 # transfer the files
 
 - name: "{{ pod_transfer_title }} - copy the static files to the specified locations"
-  become: "{{ pod_item.root }}"
+  become: "{{ pod_root | bool }}"
   copy:
     remote_src: "{{ pod_transfer_item.remote_src | default(false) | bool }}"
     src: "{{ pod_transfer_item.src }}"

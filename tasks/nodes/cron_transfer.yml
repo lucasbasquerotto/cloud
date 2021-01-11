@@ -1,13 +1,13 @@
 # Cron File (Tmp)
 
 - name: "{{ cron_transfer_title }} - create the temporary directory"
-  become: "{{ cron_transfer_become | default(omit, true) }}"
+  become: "{{ cron_transfer_become | default(false) | bool }}"
   file:
     state: directory
     path: "{{ cron_tmp_dir }}"
 
 - name: "{{ cron_transfer_title }} - ensure the crontab file is present"
-  become: "{{ cron_transfer_become | default(omit, true) }}"
+  become: "{{ cron_transfer_become | default(false) | bool }}"
   copy:
     content: ""
     force: no
@@ -25,11 +25,12 @@
     transfer_tmp_dest: "{{ cron_tmp_dir }}/new.cron.tmp"
     transfer_user: "{{ cron_transfer_user | default('') }}"
     transfer_group: "{{ cron_transfer_group | default('') }}"
+    transfer_become: "{{ cron_transfer_become | default(false) }}"
     transfer_mode: "{{ cron_transfer_mode | default('') }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cron_transfer_title }} - copy the temporary cron files"
-  become: "{{ cron_transfer_become | default(omit, true) }}"
+  become: "{{ cron_transfer_become | default(false) | bool }}"
   copy:
     remote_src: true
     src: "{{ cron_transfer_item.src }}"
@@ -48,7 +49,7 @@
   changed_when: false
 
 - name: "{{ cron_transfer_title }} - remove the comments from cron files"
-  become: "{{ cron_transfer_become | default(omit, true) }}"
+  become: "{{ cron_transfer_become | default(false) | bool }}"
   lineinfile:
     path: "{{ cron_tmp_dir }}/{{ cron_transfer_item }}"
     state: absent
@@ -63,7 +64,7 @@
 # Cron File - Update When Changed
 
 - name: "{{ cron_transfer_title }} - get the difference of the 2 files (old and new)"
-  become: "{{ cron_transfer_become | default(omit, true) }}"
+  become: "{{ cron_transfer_become | default(false) | bool }}"
   command: "diff {{ cron_tmp_dir + '/old.tmp.cron' }} {{ cron_tmp_dir + '/new.tmp.cron' }}"
   register: cron_diff
   failed_when: cron_diff.rc > 1
@@ -73,7 +74,7 @@
     - name: >-
         {{ cron_transfer_title }} - ensure the crontab file is up-to-date
         ({{ cron_transfer_dest }})
-      become: "{{ cron_transfer_become | default(omit, true) }}"
+      become: "{{ cron_transfer_become | default(false) | bool }}"
       copy:
         remote_src: true
         src: "{{ cron_tmp_dir + '/new.cron' }}"
@@ -84,7 +85,7 @@
       register: cron_result
 
     - name: "{{ cron_transfer_title }} - ensure the crontab file is active"
-      become: "{{ cron_transfer_become | default(omit, true) }}"
+      become: "{{ cron_transfer_become | default(false) | bool }}"
       shell: "crontab '{{ cron_transfer_dest }}'"
       when: cron_result is changed
 

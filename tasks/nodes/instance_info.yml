@@ -8,7 +8,11 @@
     tmp_backup_file: "commit"
   tags: ["no_print"]
 
+- debug:
+    var: instance_info_node.root
+
 - name: "{{ instance_info_title }} - create the backup directory"
+  become: "{{ instance_info_node.root | default(false) | bool }}"
   file:
     path: "{{ instance_info_backup_dir }}"
     state: directory
@@ -19,6 +23,7 @@
 - name: >-
     {{ instance_info_title }} -
     create the temporary file to verify if there was a change in the commit
+  become: "{{ instance_info_node.root | default(false) | bool }}"
   copy:
     content: "{{ env_commit }}"
     dest: "{{ instance_info_backup_file_tmp }}"
@@ -30,6 +35,7 @@
     - name: >-
         {{ instance_info_title }} - create the file to verify if there was a change
         in the commit, if it was not created before
+      become: "{{ instance_info_node.root | default(false) | bool }}"
       copy:
         force: no
         content: ""
@@ -38,6 +44,7 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ instance_info_title }} - get the difference of the 2 commit files (old and current)"
+      become: "{{ instance_info_node.root | default(false) | bool }}"
       command: "diff {{ instance_info_backup_file_tmp }} {{ instance_info_backup_file }}"
       register: instance_info_diff
       failed_when: instance_info_diff.rc > 1
@@ -56,6 +63,7 @@
     {{ instance_info_title }} -
     update the file to verify if there was a change in the commit
     (for newer runs)
+  become: "{{ instance_info_node.root | default(false) | bool }}"
   copy:
     remote_src: yes
     src: "{{ instance_info_backup_file_tmp }}"

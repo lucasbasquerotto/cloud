@@ -1079,6 +1079,7 @@ def prepare_node(node_info, run_info):
             else (node.get('tmp_dir') or (base_dir + '/.tmp'))
         )
 
+        result['root'] = to_bool(node.get('root'))
         result['base_dir'] = base_dir
         result['node_dir'] = node_dir
         result['local_tmp_dir'] = local_tmp_dir

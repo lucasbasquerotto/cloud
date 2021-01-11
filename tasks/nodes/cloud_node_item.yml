@@ -54,7 +54,7 @@
         mode: 0600
       when: cloud_node_ssh_key_path != ''
       tags: ["no_print_skipped"]
-  when: (cloud_node_state | default('')) != 'absent'
+  when: cloud_node_item_state != 'absent'
 
 - name: "{{ cloud_node_item_title }} - run (outer)"
   include_tasks: "cloud_node_run.yml"

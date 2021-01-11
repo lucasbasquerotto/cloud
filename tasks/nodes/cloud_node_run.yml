@@ -8,7 +8,7 @@
     cloud_service_prepared_list: "{{ [tmp_service] }}"
     cloud_service_top: true
     cloud_service_tmp_dir: "{{ cloud_node_item.tmp_dir }}/services"
-    cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+    cloud_service_state: "{{ cloud_node_item_state }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_node_item_title }} - verify if there is a node result"

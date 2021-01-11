@@ -17,6 +17,7 @@
         repo_secrets_dir: "{{ pod_secrets_repos_dir }}/{{ pod_item.repo }}"
         repo_default_dir: "{{ pod_repo_dir }}"
         repo_dev_base_dir: "{{ env_dev_repos_dir }}"
+        repo_root: "{{ pod_root | bool }}"
         repo_dev: "{{ (env_dev | bool) and (pod_node_local | bool) }}"
         repo_lax: "{{ env_lax }}"
       tags: ["no_print"]
@@ -34,7 +35,7 @@
         loop_var: pod_prepare_item
         label: "{{ pod_prepare_item.repo }}"
       tags: ["no_print"]
-  when: (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false, true) | bool)
+  when: (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false) | bool)
 
 ### Transfer the pod artifacts (when ctx is defined in the pod) ###
 
@@ -56,6 +57,7 @@
     transfer_dest: "{{ pod_item.pod_dir }}/{{ pod_prepare_item.dest }}"
     transfer_tmp_dest: "{{ pod_item.tmp_dir }}/{{ pod_prepare_item.dest }}"
     transfer_custom_dir: "{{ pod_item.local_dir }}"
+    transfer_become: "{{ pod_root | bool }}"
     transfer_mode: >-
       {{ pod_prepare_item.mode | default(env_lax | bool | ternary(0644, 0600)) }}
   when: pod_prepare_item.when | default(true, true) | bool

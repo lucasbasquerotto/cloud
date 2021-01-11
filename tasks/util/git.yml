@@ -45,7 +45,8 @@
       }}
   tags: ["no_print"]
 
-- name: "{{ git_title }} - create the directories"
+- name: "{{ git_title }} - create the local directories"
+  delegate_to: "main"
   file:
     path: "{{ git_item.dir }}"
     state: directory
@@ -54,6 +55,19 @@
   loop:
     - { dir: "{{ git_ssh_src_dir }}", when: "{{ git_ssh_file != '' }}" }
     - { dir: "{{ git_secrets_dir }}", when: "{{ git_ssh_file != '' }}" }
+  loop_control:
+    loop_var: git_item
+    label: "{{ git_item.dir }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ git_title }} - create the directories"
+  become: "{{ git_root | default(false) | bool }}"
+  file:
+    path: "{{ git_item.dir }}"
+    state: directory
+    mode: "{{ git_lax | bool | ternary(0777, 0755) }}"
+  when: git_item.when | default(true, true) | bool
+  loop:
     - { dir: "{{ git_repo_dir }}" }
   loop_control:
     loop_var: git_item
@@ -61,6 +75,7 @@
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - copy the repo ssh file"
+  delegate_to: "main"
   copy:
     src: "{{ git_ssh_src_dir }}/{{ git_repo.ssh_file }}"
     dest: "{{ git_ssh_file }}"
@@ -69,6 +84,7 @@
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - git"
+  become: "{{ git_root | default(false) | bool }}"
   git:
     repo: "{{ git_repo.src }}"
     version: "{{ git_repo.version }}"

@@ -70,9 +70,9 @@
     name: "long_run"
   vars:
     long_run_title: >-
-        {{ cloud_run_title }} -
-        [pod] {{ cloud_run_pod.description }} -
-        run pod shell command
+      {{ cloud_run_title }} -
+      [pod] {{ cloud_run_pod.description }} -
+      run pod shell command
     long_run_become: "{{ cloud_run_task.root | default(false) }}"
     long_run_output_path: "{{ cloud_run_pod.tmp_dir + '/run/log' }}"
     long_run_output_file: "{{ cloud_run_file_name }}.log"

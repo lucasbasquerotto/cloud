@@ -4,7 +4,7 @@
   set_fact:
     pod_main_repo_dir: >-
       {{ pod_remote_base_dir
-      }}{{ pod_item.flat | default(false, true) | bool | ternary('', '/main') }}
+      }}{{ pod_item.flat | default(false) | bool | ternary('', '/main') }}
     pod_tmp_base_dir: "{{ pod_tmp_dir }}"
     pod_tmp_repo_dir: "{{ pod_tmp_dir + '/main' }}"
   tags: ["no_print"]
