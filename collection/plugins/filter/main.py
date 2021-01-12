@@ -18,6 +18,7 @@ class FilterModule(object):
   def filters(self):
     return {
         'params_mixer': self.params_mixer,
+        'simple_to_list': self.simple_to_list,
         'simple_dict_prop': self.simple_dict_prop,
         'simple_dict_prop_list': self.simple_dict_prop_list,
         'validate_connection': self.validate_connection,
@@ -33,6 +34,15 @@ class FilterModule(object):
       raise AnsibleError(to_text(error_text(error_msgs, 'params_mixer')))
 
     return result
+
+  def simple_to_list(self, simple_list):
+    if simple_list is None:
+      return []
+
+    if isinstance(simple_list, list):
+      return simple_list
+
+    return [simple_list]
 
   def simple_dict_prop(self, simple_dict, prop):
     if simple_dict is None:
