@@ -1,28 +1,10 @@
-### Set vars ###
-
-- name: "{{ pod_inner_title }} - pod_main_repo_dir"
-  set_fact:
-    pod_main_repo_dir: >-
-      {{ pod_remote_base_dir
-      }}{{ pod_item.flat | default(false) | bool | ternary('', '/main') }}
-    pod_tmp_base_dir: "{{ pod_tmp_dir }}"
-    pod_tmp_repo_dir: "{{ pod_tmp_dir + '/main' }}"
-  tags: ["no_print"]
-
-- name: "{{ pod_inner_title }} - pod_main_repo_dir (local)"
-  set_fact:
-    pod_main_repo_dir: "{{ pod_item.local_dir }}"
-    pod_tmp_base_dir: "{{ pod_item.local_dir + '/tmp' }}"
-    pod_tmp_repo_dir: "{{ pod_item.local_dir + '/tmp/pod' }}"
-  when: pod_node_local | bool
-  tags: ["no_print"]
-
 ### Prepare the temporary directory (to catch errors before updating the real one) ###
 - name: "{{ pod_inner_title }} - prepare the temporary directory"
   include_tasks: "tasks/pods/prepare.yml"
   vars:
     pod_prepare_title: "{{ pod_inner_title }} - tmp"
-    pod_repo_dir: "{{ pod_tmp_repo_dir }}"
+    pod_repo_dir: "{{ pod_tmp_dir }}/prepare-tmp"
+    pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/tmp"
     pod_prepare_tmp: true
   when: not (pod_fast | bool)
   tags: ["no_print_skipped"]
@@ -32,10 +14,5 @@
   include_tasks: "tasks/pods/prepare.yml"
   vars:
     pod_prepare_title: "{{ pod_inner_title }} - main"
-    pod_repo_dir: "{{ pod_main_repo_dir }}"
-
-- name: "{{ pod_inner_title }} - skipped"
-  debug:
-    msg: "variables unchanged (skipped preparation)"
-  when: pod_skip | bool
-  tags: ["no_print_skipped"]
+    pod_repo_dir: "{{ pod_item.pod_dir }}"
+    pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/main"

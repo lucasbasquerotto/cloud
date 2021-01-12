@@ -46,7 +46,7 @@
   tags: ["no_print"]
 
 - name: "{{ git_title }} - create the local directories"
-  delegate_to: "main"
+  delegate_to: "localhost"
   file:
     path: "{{ git_item.dir }}"
     state: directory
@@ -75,7 +75,7 @@
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - copy the repo ssh file"
-  delegate_to: "main"
+  delegate_to: "localhost"
   copy:
     src: "{{ git_ssh_src_dir }}/{{ git_repo.ssh_file }}"
     dest: "{{ git_ssh_file }}"

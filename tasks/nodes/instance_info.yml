@@ -8,9 +8,6 @@
     tmp_backup_file: "commit"
   tags: ["no_print"]
 
-- debug:
-    var: instance_info_node.root
-
 - name: "{{ instance_info_title }} - create the backup directory"
   become: "{{ instance_info_node.root | default(false) | bool }}"
   file:
