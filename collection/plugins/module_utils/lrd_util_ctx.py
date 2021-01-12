@@ -195,9 +195,17 @@ def prepare_service(service_info, run_info, top, service_names=None):
             if not os.path.exists(task_file):
               error_msgs_aux += [[str('task file not found: ' + task_file)]]
 
+          credentials_info_dict = service_info_dict.get('credentials')
+          credentials_dict = service.get('credentials')
+          credentials_env_dict = env.get('credentials')
+
+          if credentials_info_dict:
+            credentials_dict = merge_dicts(
+                credentials_dict, credentials_info_dict)
+
           params_args = dict(
-              group_params=service.get('credentials'),
-              group_params_dict=env.get('credentials'),
+              group_params=credentials_dict,
+              group_params_dict=credentials_env_dict,
           )
 
           info = mix(params_args)
@@ -264,6 +272,11 @@ def prepare_service(service_info, run_info, top, service_names=None):
 
           contents = service.get('contents')
           prepared_contents = dict()
+
+          contents_info = service_info_dict.get('contents')
+
+          if contents_info:
+            contents = merge_dicts(contents, contents_info)
 
           for content_key in sorted(list((contents or dict()).keys())):
             content = contents.get(content_key)
@@ -733,9 +746,24 @@ def prepare_pod(pod_info, parent_data, run_info):
         if prepared_transfer:
           result['prepared_transfer'] = prepared_transfer
 
+        credentials_info_dict = pod_info_dict.get('credentials')
+        credentials_dict = pod.get('credentials')
+        credentials_env_dict = env.get('credentials')
+
+        if credentials_info_dict:
+          credentials_dict = merge_dicts(
+              credentials_dict, credentials_info_dict)
+
+        if pod_ctx_info:
+          credentials_ctx_info_dict = pod_ctx_info.get('credentials')
+
+          if credentials_ctx_info_dict:
+            credentials_dict = merge_dicts(
+                credentials_dict, credentials_ctx_info_dict)
+
         params_args = dict(
-            group_params=pod.get('credentials'),
-            group_params_dict=env.get('credentials'),
+            group_params=credentials_dict,
+            group_params_dict=credentials_env_dict,
         )
 
         info = mix(params_args)
@@ -821,6 +849,16 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         contents = pod.get('contents')
         prepared_contents = dict()
+
+        contents_info = pod_info_dict.get('contents')
+
+        if contents_info:
+          contents = merge_dicts(contents, contents_info)
+
+        contents_ctx_info = (pod_ctx_info or dict()).get('contents')
+
+        if contents_ctx_info:
+          contents = merge_dicts(contents, contents_ctx_info)
 
         for content_key in sorted(list((contents or dict()).keys())):
           content = contents.get(content_key)
@@ -1091,10 +1129,17 @@ def prepare_node(node_info, run_info):
 
         credential = node.get('credential')
 
+        credential_info = node_info_dict.get('credential')
+        credential = node.get('credential')
+        credentials_env_dict = env.get('credentials')
+
+        if credential_info:
+          credential = credential_info
+
         if credential:
           params_args = dict(
               group_params=dict(credential=credential),
-              group_params_dict=env.get('credentials'),
+              group_params_dict=credentials_env_dict,
           )
 
           info = mix(params_args)
@@ -1623,9 +1668,17 @@ def prepare_task(task_info_dict, run_info):
                 'msg: required property is empty',
             ]]
 
+      credentials_info_dict = task_info_dict.get('credentials')
+      credentials_dict = task.get('credentials')
+      credentials_env_dict = env.get('credentials')
+
+      if credentials_info_dict:
+        credentials_dict = merge_dicts(
+            credentials_dict, credentials_info_dict)
+
       params_args = dict(
-          group_params=task.get('credentials'),
-          group_params_dict=env.get('credentials'),
+          group_params=credentials_dict,
+          group_params_dict=credentials_env_dict,
       )
 
       info = mix(params_args)
@@ -1711,6 +1764,11 @@ def prepare_task(task_info_dict, run_info):
 
       contents = task.get('contents')
       prepared_contents = dict()
+
+      contents_info = task_info_dict.get('contents')
+
+      if contents_info:
+        contents = merge_dicts(contents, contents_info)
 
       for content_key in sorted(list((contents or dict()).keys())):
         content = contents.get(content_key)
