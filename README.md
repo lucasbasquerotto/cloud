@@ -297,12 +297,12 @@ env:
 
 ## Cloud Next Parameters
 
-The following are the parameters that can be specified when deploying a project, specific to this layer:
+The following are the parameters that can be specified when deploying a project with the `-n`/`--next` flag, specific to this layer:
 
 | Option | Description |
 | ------ | ------- |
-| <nobr>`--end`</nobr> | Will destroy what was created by the deployment, the nodes and services, as long as the property `can_destroy` is defined and is `true` for them. It sends the state `absent` and expects that the nodes and services know how to handle this state. This is almost the same as running without the `--next` parameter as one of the launch parameters, and passing `--tags=destroy`, except that using `--end` won't register the commit of the project environment repository (used to skip newer deployments with the same commit, when not using the `--force` option) for this deployment (which is the expected). |
-| <nobr>`--ssh`</nobr> | Will ssh into the host specified by the context (`-c`/`--ctx`), node type (`-n`/`--node`) and index (`-i`/`--idx`), these params specified right after `--ssh`. When the context is not specified, if there is only one context in the deployment, this context will be used by default, otherwise an error will be thrown. When the node type is not specified, if there is only one node type in the context, this node type will be used by default, otherwise an error will be thrown. When the index is not specified, the default will be `1` (the first host with of the before mentioned node type). This ssh option can only be used after the preparation step is completed, and the hosts are defined in the hosts file (either directly or after a node service creates them). |
+| <nobr>`--end`</nobr> | Will destroy what was created by the deployment, the nodes and services, as long as the property `can_destroy` is defined and is `true` for them. It sends the state `absent` and expects that the nodes and services know how to handle this state. This is almost the same as running without the `--next` parameter as one of the launch parameters, and instead passing `--tags=destroy`, except that using `--end` won't register the commit of the project environment repository (used to skip newer deployments with the same commit, when not using the `--force` option) for this deployment (which is the expected behaviour, although in practice it probably won't matter). |
+| <nobr>`--ssh`</nobr> | Will ssh into the host specified by the context (`-c`/`--ctx`), node type (`-n`/`--node`) and index (`-i`/`--idx`), with these params specified right after `--ssh`. When the context is not specified, if there is only one context in the deployment, this context will be used by default, otherwise an error will be thrown. When the node type is not specified, if there is only one node type in the context, this node type will be used by default, otherwise an error will be thrown. When the index is not specified, the default will be `1` (the first host of the previously mentioned node type). This ssh option can only be used after the preparation step is completed at least once, and the hosts are defined in the hosts file (either directly or after a node service creates them). |
 
 ## Mergeable Parameters
 
@@ -1030,7 +1030,9 @@ repos:
 
 Then, in the `vars.yml` file in the main environment repository, add the project:
 
+```yaml
 #TODO add repos project definition
+```
 
 And run in development mode:
 
@@ -1038,7 +1040,7 @@ And run in development mode:
 ./ctl/launch -df repos
 ```
 
-After that, the repositories specified in the `repos` section in the project environment file will be cloned in the paths specified in the `vars.yml` file (if some extra repository is not mapped in the `vars.yml` file, or if the project is deployed without the `-d`/`--dev` option, the repositories would be cloned in the directory for extra repositories for the project context, more specifically at `projects/repos/files/cloud/ctxs/repos_ctx/extra-repos/<extra_repo_dir>` in the controller root directory).
+After that, the repositories specified in the `repos` section in the project environment file will be cloned in the paths specified in the `vars.yml` file (if some extra repository is not mapped in the `vars.yml` file, or if the project is deployed without the `-d`/`--dev` option, the repositories would be cloned in the directory for extra repositories for the project context, more specifically at `projects/repos/files/cloud/ctxs/repos_ctx/extra-repos/<extra_repo_dir>` in the controller root directory, although, in most cases, the extra repositories will probably be mapped to a specific directory).
 
 Another use case for extra repositories is to reference repositories of the app layer in the pod layer when developing locally, so that you can map it to a pod container as a volume and execute a service with live changes, changing the code in the app repository, and seeing the changes without having to generate a new image.
 
