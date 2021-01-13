@@ -24,8 +24,9 @@ def merge_dicts(*args):
 
   for current_dict in (args or []):
     if not new_dict:
-      new_dict = current_dict.copy()
+      new_dict = current_dict.copy() if (current_dict is not None) else None
     else:
+      current_dict = current_dict if (current_dict is not None) else dict()
       new_dict.update(current_dict)
 
   return new_dict

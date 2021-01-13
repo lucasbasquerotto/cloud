@@ -90,8 +90,10 @@ class LookupModule(LookupBase):
           content,
           env=env,
           run_info=run_info,
-          input_params=input_params,
-          custom_dir=custom_dir,
+          additional_info=dict(
+              input_params=input_params,
+              custom_dir=custom_dir,
+          ),
       )
 
       result_aux = result_info.get('result')

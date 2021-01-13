@@ -481,8 +481,10 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
                 transfer_content.get('src'),
                 env=env,
                 run_info=run_info,
-                input_params=input_params,
-                custom_dir=custom_dir,
+                additional_info=dict(
+                    input_params=input_params,
+                    custom_dir=custom_dir,
+                ),
             )
 
           prepared_content = info.get('result')
