@@ -1115,6 +1115,10 @@ A pod context (not to be confounded with the environment/cloud context defined i
 Considering a `test` project with the following pod specification in the [project environment base file](#project-environment-base-file):
 
 ```yaml
+#...
+meta:
+  lax: true
+  template_no_empty_lines: true
 main:
   pod_local:
     repo: "cloud"
