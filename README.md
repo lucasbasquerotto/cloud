@@ -1206,11 +1206,7 @@ children:
   params:
     main: {{ params.main | to_json }}
     custom:
-      value: |
-        param1: {{ params.main.pod_param_1 }}$
-        param2: {{ params.main.pod_param_2 }}$
-        param3: {{ params.main.pod_param_3 }}$
-        param4: {{ params.main.pod_param_4 | default('') }}
+      value: "{{ params.main.pod_param_3 }}"
 ```
 
 _test/ctx-child.yml (in the `custom_pod` repository):_
@@ -1278,8 +1274,6 @@ schemas:
       pod_param_3:
         type: "str"
         non_empty: true
-      pod_param_4:
-        type: "str"
   test:
     type: "simple_list"
     elem_schema: "test2"
@@ -1456,7 +1450,7 @@ _[dest] env/script.sh_
 ```shell
 #!/bin/bash
 # shellcheck disable=SC1083
-param_value='param1: sample value 1$ param2: sample value 2$ param3: sample value 3$ param4: '
+param_value='sample value 3'
 # shellcheck disable=SC2154
 echo "[template] param value = $param_value"
 ```
