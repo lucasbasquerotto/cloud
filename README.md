@@ -1112,9 +1112,26 @@ A pod context (not to be confounded with the environment/cloud context defined i
 
 ### Pod Context Example
 
-Considering the following pod in the [project environment base file](#project-environment-base-file):
+Considering a `test` project with the following pod specification in the [project environment base file](#project-environment-base-file):
 
 ```yaml
+main:
+  pod_local:
+    repo: "cloud"
+    env_repos:
+      - repo: "custom_cloud"
+        dir: "custom-cloud"
+    hosts: |
+      [main]
+      localhost ansible_connection=local
+      [host]
+    nodes:
+      - name: "test_simple_node_local"
+        key: "simple_local"
+        local: true
+nodes:
+  simple_local:
+    pods: ["simple"]
 pods:
   simple:
     repo: "custom_pod"
@@ -1132,7 +1149,16 @@ pods:
       pod_param_1: "sample value 1"
       pod_param_2: "sample value 2"
       pod_param_3: "sample value 3"
-#...
+repos:
+  cloud:
+    src: "https://github.com/lucasbasquerotto/cloud.git"
+    version: "master"
+  custom_cloud:
+    src: "https://github.com/lucasbasquerotto/custom-cloud.git"
+    version: "master"
+  custom_pod:
+    src: "https://github.com/lucasbasquerotto/custom-pod.git"
+    version: "master"
 ```
 
 And the following files:
@@ -1172,14 +1198,13 @@ templates:
 
 - src: "{{ var_main_dir }}/dynamic.tpl.yml"
   dest: "env/pod-data.test.yml"
-  params: {{ params.main | default({}) | to_json }}
+  params: {{ params | to_json }}
 
 children:
 
 - name: "{{ var_main_dir }}/ctx-child.yml"
   params:
     main: {{ params.main | to_json }}
-    lax: {{ params.lax }}
     custom:
       value: |
         param1: {{ params.main.pod_param_1 }}$
@@ -1216,8 +1241,8 @@ templates:
 
 - src: "{{ var_main_dir }}/template.sh"
   dest: "env/script.sh"
-  mode: "{{ params.lax | bool | ternary(777, 751) }}"
   schema: "{{ var_main_dir }}/template.schema.yml"
+  executable: true
   params:
     value: "{{ params.custom.value }}"
 ```
@@ -1350,20 +1375,36 @@ _[src] test/dynamic.tpl.yml (in the `custom_pod` repository)_
 _[dest] env/pod-data.test.yml_
 
 ```yaml
-env_files_dir: env-base/test/files
-pod_param_1: sample value 1
-pod_param_2: sample value 2
-pod_param_3: sample value 3
-test_schema:
-- 123
--   p1:
+contents: {}
+credentials: {}
+ctx_name: pod_local
+data_dir: ../../data/test-pod-local-pod_local-simple
+dependencies_data:
+    list: []
+    node_ip_dict: {}
+    node_ips_dict: {}
+dev: true
+env_name: test-pod-local
+extra_repos_dir_relpath: ../../projects/test-pod-local/files/cloud/ctxs/pod_local/extra-repos
+identifier: test-pod-local-pod_local-simple
+lax: true
+local: true
+main:
+    env_files_dir: env-base/test/files
+    pod_param_1: sample value 1
+    pod_param_2: sample value 2
+    pod_param_3: sample value 3
+    test_schema:
+    - 123
     -   p1:
-        - 456
-        -   p1: 111
-    - 10
-    -   p1: 123
-- 789
--   p1: 0
+        -   p1:
+            - 456
+            -   p1: 111
+        - 10
+        -   p1: 123
+    - 789
+    -   p1: 0
+pod_name: simple
 ```
 
 _[src] test/files/file.txt (in the environment base repository)_

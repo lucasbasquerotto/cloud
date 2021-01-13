@@ -14,7 +14,17 @@
     transfer_mode: >-
       {{
         prepare_repos_extra_repo_item.mode
-        | default(env_lax | bool | ternary(0644, 0600))
+        | default(
+          prepare_repos_extra_repo_item.executable | default(false) | bool | ternary(
+            env_lax | bool | ternary(0777, 0751),
+            env_lax | bool | ternary(0666, 0600)
+          )
+        )
+      }}
+    transfer_dir_mode: >-
+      {{
+        prepare_repos_extra_repo_item.mode
+        | default(env_lax | bool | ternary(0777, 0751))
       }}
   when: prepare_repos_extra_repo_item.when | default(true, true) | bool
   loop: "{{ prepare_repos_item.transfer | default([]) }}"

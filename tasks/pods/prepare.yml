@@ -58,8 +58,8 @@
     transfer_tmp_dest: "{{ pod_tmp_dir }}/{{ pod_prepare_item.dest }}"
     transfer_custom_dir: "{{ pod_item.local_dir }}"
     transfer_become: "{{ pod_root | bool }}"
-    transfer_mode: >-
-      {{ pod_prepare_item.mode | default(env_lax | bool | ternary(0644, 0600)) }}
+    transfer_mode: "{{ pod_prepare_item.mode }}"
+    transfer_dir_mode: "{{ pod_prepare_item.dir_mode }}"
   when: pod_prepare_item.when | default(true, true) | bool
   loop: "{{ pod_item.prepared_transfer | default([]) }}"
   loop_control:

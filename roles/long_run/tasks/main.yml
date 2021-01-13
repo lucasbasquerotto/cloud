@@ -1,6 +1,6 @@
 - name: "{{ long_run_title }} - long_run_before"
   set_fact:
-    long_run_before: "{{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
+    long_run_before: '{{ lookup(''pipe'', ''date "+%Y-%m-%d %H:%M:%S"'') }}'
   tags: ["no_print"]
 
 - name: "{{ long_run_title }} - create the needed directories"
@@ -8,10 +8,10 @@
   file:
     path: "{{ long_run_item }}"
     state: directory
-    mode: 0744
+    mode: 0751
   loop:
-  - "{{ long_run_output_path }}"
-  - "{{ long_run_tmp_path }}"
+    - "{{ long_run_output_path }}"
+    - "{{ long_run_tmp_path }}"
   loop_control:
     loop_var: long_run_item
 
@@ -29,7 +29,7 @@
       set -eou pipefail
       {{ long_run_cmd }}
     dest: "{{ long_run_tmp_path }}/{{ long_run_tmp_file }}"
-    mode: 0741
+    mode: 0751
 
 - name: >-
     [{{ long_run_title }}] - {{ long_run_path }} - start the execution of
@@ -70,4 +70,4 @@
 
 - name: "{{ long_run_title }} - time after execution"
   debug:
-    msg: "after: {{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
+    msg: 'after: {{ lookup(''pipe'', ''date "+%Y-%m-%d %H:%M:%S"'') }}'

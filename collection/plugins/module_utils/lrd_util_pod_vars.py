@@ -138,6 +138,7 @@ def load_ctx_file(current_file, is_env, data_info):
     env_lax = env_data.get('lax')
     default_dir_mode = 777 if env_lax else 751
     default_file_mode = 666 if env_lax else 640
+    default_file_executable_mode = default_dir_mode
 
     when = current_file.get('when')
 
@@ -169,7 +170,15 @@ def load_ctx_file(current_file, is_env, data_info):
             remote_src=not is_env,
             src=src,
             dest=dest,
-            mode=current_file.get('mode') or default_file_mode,
+            mode=(
+                current_file.get('mode')
+                or
+                (
+                    default_file_executable_mode
+                    if to_bool(current_file.get('executable'))
+                    else default_file_mode
+                )
+            ),
         )
         files += [file_to_add]
       else:
@@ -214,6 +223,7 @@ def load_ctx_template(current_template, is_env, data_info):
     env_lax = env_data.get('lax')
     default_dir_mode = 777 if env_lax else 751
     default_file_mode = 666 if env_lax else 640
+    default_file_executable_mode = default_dir_mode
 
     when = current_template.get('when')
 
@@ -289,7 +299,15 @@ def load_ctx_template(current_template, is_env, data_info):
             src=src,
             dest=dest,
             dest_tmp=dest_tmp,
-            mode=current_template.get('mode') or default_file_mode,
+            mode=(
+                current_template.get('mode')
+                or
+                (
+                    default_file_executable_mode
+                    if to_bool(current_template.get('executable'))
+                    else default_file_mode
+                )
+            ),
             params=template_params,
         )
         templates += [template_to_add]

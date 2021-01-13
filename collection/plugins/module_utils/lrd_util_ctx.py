@@ -460,6 +460,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
     current_content_dests = set()
 
     env = prepare_info.get('env')
+    env_data = prepare_info.get('env_data')
     custom_dir = prepare_info.get('custom_dir')
     run_info = prepare_info.get('run_info')
     all_content_dests = prepare_info.get('all_content_dests')
@@ -493,13 +494,23 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
           if error_msgs_aux_content:
             error_msgs_aux_item += error_msgs_aux_content
           else:
+            env_lax = env_data.get('lax')
+            default_dir_mode = 777 if env_lax else 751
+            default_file_mode = 666 if env_lax else 640
+            default_file_mode = (
+                default_dir_mode
+                if to_bool(transfer_content.get('executable'))
+                else default_file_mode
+            )
+
             result_item = dict(
                 src=prepared_content,
                 dest=dest,
                 user=transfer_content.get('user'),
                 group=transfer_content.get(
                     'group') or transfer_content.get('user'),
-                mode=transfer_content.get('mode'),
+                mode=transfer_content.get('mode') or default_file_mode,
+                dir_mode=transfer_content.get('dir_mode') or default_dir_mode,
                 when=to_bool(transfer_content.get('when')),
             )
 
@@ -697,6 +708,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         prepare_transfer_info = dict(
             env=env,
+            env_data=env_data,
             custom_dir=local_dir,
             run_info=run_info,
             all_content_dests=all_content_dests,
@@ -1177,6 +1189,7 @@ def prepare_node(node_info, run_info):
 
         prepare_transfer_info = dict(
             env=env,
+            env_data=env_data,
             run_info=run_info,
             all_content_dests=all_content_dests,
         )

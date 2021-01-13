@@ -48,10 +48,17 @@ schemas:
         type: "str"
         description: "path to the destination file (in the pod repository)"
       mode:
-        type: "int"
+        type: "str"
+        regex: "()|([0-7]{3})"
         description: "the permissions the resulting file should have"
+      executable:
+        type: "bool"
+        description: >-
+          when mode is not specified, the default mode for
+          the destination file will have the executable bits set (+x)
       dir_mode:
-        type: "int"
+        type: "str"
+        regex: "()|([0-7]{3})"
         description: >-
           the permissions the resulting file parent directory should have
       when:
@@ -67,10 +74,17 @@ schemas:
         type: "str"
         description: "path to the destination file (in the pod repository)"
       mode:
-        type: "int"
+        type: "str"
+        regex: "()|([0-7]{3})"
         description: "the permissions the resulting template file should have"
+      executable:
+        type: "bool"
+        description: >-
+          when mode is not specified, the default mode for
+          the destination file will have the executable bits set (+x)
       dir_mode:
-        type: "int"
+        type: "str"
+        regex: "()|([0-7]{3})"
         description: >-
           the permissions the resulting template file parent directory should have
       schema:

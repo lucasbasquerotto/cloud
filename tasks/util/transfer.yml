@@ -40,7 +40,7 @@
   file:
     path: "{{ transfer_dest | dirname }}"
     state: directory
-    mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+    mode: "{{ transfer_dir_mode | default(omit, true) }}"
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - create the tmp directory {{ transfer_tmp_dest | dirname }}"
@@ -48,7 +48,7 @@
   file:
     path: "{{ transfer_tmp_dest | dirname }}"
     state: directory
-    mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+    mode: "{{ transfer_dir_mode | default(omit, true) }}"
   when: transfer_prepared_content.type == 'template'
   tags: ["no_print"]
 
