@@ -1110,7 +1110,321 @@ A pod context (not to be confounded with the environment/cloud context defined i
 
 - Each template to be transferred can have a schema defined to validate the parameters structure, so as to avoid wrong data passed to the template (these schemas reside in the pod, and the validation will be done for all environments that use the pod, so that you don't have to add an additional schema file for each environment).
 
-#TODO example
+### Pod Context Example
+
+Considering the following pod in the [project environment base file](#project-environment-base-file):
+
+```yaml
+pods:
+  simple:
+    repo: "custom_pod"
+    ctx: "test/ctx-simple.yml"
+    schema: "test/schema.yml"
+    root: true
+    fast_prepare: true
+    params:
+      env_files_dir: "{{ params.env.repo_dir }}/test/files"
+      test_schema:
+        - 123
+        - { p1: [{ p1: [456, { p1: 111 }] }, 012, { p1: 123 }] }
+        - 789
+        - { p1: 000 }
+      pod_param_1: "sample value 1"
+      pod_param_2: "sample value 2"
+      pod_param_3: "sample value 3"
+#...
+```
+
+And the following files:
+
+_test/ctx-simple.yml (in the `custom_pod` repository):_
+
+```yaml
+{% set var_pod_kind = 'test' %}
+{% set var_main_base_dir = params.main.custom_dir | default('') %}
+{% set var_main_dir =
+  (var_main_base_dir != '')
+  | ternary(var_main_base_dir + '/', '')
+  + var_pod_kind
+%}
+
+env_templates:
+
+- src: "{{ params.main.env_files_dir }}/template.yml"
+  dest: "env/env-template.yml"
+  schema: "{{ params.main.env_files_dir }}/template.schema.yml"
+  params:
+    src: "{{ params.main.env_files_dir }}/template.yml"
+    dest: "env/env-template.yml"
+    schema: "{{ params.main.env_files_dir }}/template.schema.yml"
+    params:
+      prop1: 1
+      prop2:
+        prop2_1: "{{ params.main.pod_param_1 }}"
+        prop2_2: "{{ params.main.pod_param_2 }}"
+
+files:
+
+- src: "{{ var_main_dir }}/pod-file.txt"
+  dest: "env/file.main.txt"
+
+templates:
+
+- src: "{{ var_main_dir }}/dynamic.tpl.yml"
+  dest: "env/pod-data.test.yml"
+  params: {{ params.main | default({}) | to_json }}
+
+children:
+
+- name: "{{ var_main_dir }}/ctx-child.yml"
+  params:
+    main: {{ params.main | to_json }}
+    lax: {{ params.lax }}
+    custom:
+      value: |
+        param1: {{ params.main.pod_param_1 }}$
+        param2: {{ params.main.pod_param_2 }}$
+        param3: {{ params.main.pod_param_3 }}$
+        param4: {{ params.main.pod_param_4 | default('') }}
+```
+
+_test/ctx-child.yml (in the `custom_pod` repository):_
+
+```yaml
+{% set var_pod_kind = 'test' %}
+{% set var_main_base_dir = params.main.custom_dir | default('') %}
+{% set var_main_dir =
+  (var_main_base_dir != '')
+  | ternary(var_main_base_dir + '/', '')
+  + var_pod_kind
+%}
+
+env_files:
+
+- src: "{{ params.main.env_files_dir }}/file.txt"
+  dest: "env/env-file.txt"
+
+files:
+
+- src: "{{ var_main_dir }}/pod-file.txt"
+  dest: "env/file.child.txt"
+
+- src: "{{ var_main_dir }}/pod-file.txt"
+  dest: "env/file.child2.txt"
+
+templates:
+
+- src: "{{ var_main_dir }}/template.sh"
+  dest: "env/script.sh"
+  mode: "{{ params.lax | bool | ternary(777, 751) }}"
+  schema: "{{ var_main_dir }}/template.schema.yml"
+  params:
+    value: "{{ params.custom.value }}"
+```
+
+_test/simple.schema.yml (in the `custom_pod` repository):_
+
+```yaml
+root: "pod_schema"
+schemas:
+  pod_schema:
+    type: "dict"
+    props:
+      params:
+        schema: "params"
+        non_empty: true
+  params:
+    type: "dict"
+    props:
+      env_files_dir:
+        type: "str"
+        non_empty: true
+      custom_dir:
+        type: "str"
+      test_schema:
+        non_empty: true
+        schema: "test"
+      pod_param_1:
+        type: "str"
+        non_empty: true
+      pod_param_2:
+        type: "str"
+        non_empty: true
+      pod_param_3:
+        type: "str"
+        non_empty: true
+      pod_param_4:
+        type: "str"
+  test:
+    type: "simple_list"
+    elem_schema: "test2"
+  test2:
+    type: "simple_dict"
+    alternative_type: "int"
+    props:
+      p1:
+        type: "simple_map"
+        elem_schema: "test"
+```
+
+_test/files/template.schema.yml (in the environment base repository)_
+
+```yaml
+root: "env_template_params"
+schemas:
+  env_template_params:
+    type: "dict"
+    props:
+      src:
+        required: true
+        type: "str"
+      dest:
+        required: true
+        type: "str"
+      schema:
+        type: "str"
+      params:
+        required: true
+        type: "dict"
+```
+
+_test/template.schema.yml (in the `custom_pod` repository)_
+
+```yaml
+root: "pod_template_params"
+schemas:
+  pod_template_params:
+    type: "dict"
+    props:
+      value:
+        type: "str"
+        non_empty: true
+```
+
+Then the deployment will create the following files (the destination is always is the `custom_pod` repository directory):
+
+_[src] test/files/template.yml (in the environment base repository)_
+
+```yaml
+name: "test template"
+src: "{{ params.src }}"
+dest: "{{ params.dest }}"
+{{ { 'params': params.params } | to_nice_yaml }}
+```
+
+_[dest] env/env-template.yml_
+
+```yaml
+name: "test template"
+src: "env-base/test/files/template.yml"
+dest: "env/env-template.yml"
+params:
+    prop1: 1
+    prop2:
+        prop2_1: sample value 1
+        prop2_2: sample value 2
+```
+
+_[src] test/pod-file.txt (in the `custom_pod` repository)_
+
+```
+[Pod File Content]
+New line
+Last line
+```
+
+_[dest] env/file.main.txt_
+
+```
+[Pod File Content]
+New line
+Last line
+```
+
+_[src] test/dynamic.tpl.yml (in the `custom_pod` repository)_
+
+```yaml
+{{ params | to_nice_yaml }}
+```
+
+_[dest] env/pod-data.test.yml_
+
+```yaml
+env_files_dir: env-base/test/files
+pod_param_1: sample value 1
+pod_param_2: sample value 2
+pod_param_3: sample value 3
+test_schema:
+- 123
+-   p1:
+    -   p1:
+        - 456
+        -   p1: 111
+    - 10
+    -   p1: 123
+- 789
+-   p1: 0
+```
+
+_[src] test/files/file.txt (in the environment base repository)_
+
+```
+test file line 01
+line 02
+line 03
+```
+
+_[dest] env/env-file.txt_
+
+```
+test file line 01
+line 02
+line 03
+```
+
+_[src] test/pod-file.txt (in the `custom_pod` repository)_
+
+```
+[Pod File Content]
+New line
+Last line
+```
+
+_[dest] env/file.child.txt and env/file.child2.txt_
+
+```
+[Pod File Content]
+New line
+Last line
+```
+
+_[src] test/template.sh (in the `custom_pod` repository)_
+
+```shell
+#!/bin/bash
+
+# shellcheck disable=SC1083
+param_value={{ params.value | quote }}
+
+# shellcheck disable=SC2154
+echo "[template] param value = $param_value"
+```
+
+_[dest] env/script.sh_
+
+```shell
+#!/bin/bash
+# shellcheck disable=SC1083
+param_value='param1: sample value 1$ param2: sample value 2$ param3: sample value 3$ param4: '
+# shellcheck disable=SC2154
+echo "[template] param value = $param_value"
+```
+
+### Pod Context Example Notes
+
+#### 1. The `mode` property can be specified to define the file permissions
+
+#TODO
 
 ## Run Stages
 
