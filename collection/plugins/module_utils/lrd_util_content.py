@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
 import os
+import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     is_str, load_file, load_cached_file, merge_dicts
@@ -83,7 +84,8 @@ def load_content(content, env, run_info, input_params=None, custom_dir=None):
     error_msgs = [[
         'msg: error when trying to load the content',
         'error type: ' + str(type(error)),
-        'error details: ' + str(error),
+        'error details: ',
+        traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -372,7 +374,8 @@ def prepare_content(content, env, run_info, input_params=None, custom_dir=None, 
               error_msgs_aux += [[
                   'msg: error when trying to prepare the content child (env type)',
                   'error type: ' + str(type(error)),
-                  'error details: ' + str(error),
+                  'error details: ',
+                  traceback.format_exc(),
               ]]
 
             if params and not error_msgs_aux:
@@ -414,6 +417,7 @@ def prepare_content(content, env, run_info, input_params=None, custom_dir=None, 
     error_msgs = [[
         'msg: error when trying to prepare the content',
         'error type: ' + str(type(error)),
-        'error details: ' + str(error),
+        'error details: ',
+        traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)

@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
 import os
+import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     load_cached_file, load_yaml, to_bool
@@ -110,7 +111,8 @@ def load_vars(pod_info, run_info, meta_info=None):
     error_msgs = [[
         'msg: error when trying to load the pod ctx vars',
         'error type: ' + str(type(error)),
-        'error details: ' + str(error),
+        'error details: ',
+        traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -184,7 +186,8 @@ def load_ctx_file(current_file, is_env, data_info):
     error_msgs = [[
         'msg: error when trying to load the pod ctx file',
         'error type: ' + str(type(error)),
-        'error details: ' + str(error),
+        'error details: ',
+        traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -304,7 +307,8 @@ def load_ctx_template(current_template, is_env, data_info):
     error_msgs = [[
         'msg: error when trying to load the pod ctx template',
         'error type: ' + str(type(error)),
-        'error details: ' + str(error),
+        'error details: ',
+        traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -343,7 +347,8 @@ def load_next_vars(file_relpath, params, data_info):
             str('file: ' + file_relpath),
             'msg: error when trying to load the pod ctx file',
             'error type: ' + str(type(error)),
-            'error details: ' + str(error),
+            'error details: ',
+            traceback.format_exc(),
         ]]
         return dict(error_msgs=error_msgs)
 
@@ -357,7 +362,8 @@ def load_next_vars(file_relpath, params, data_info):
             'file content type: ' + str(type(res_str)),
             'msg: error when trying to process the pod ctx file',
             'error type: ' + str(type(error)),
-            'error details: ' + str(error),
+            'error details: ',
+            traceback.format_exc(),
         ]]
         return dict(error_msgs=error_msgs)
 
@@ -492,7 +498,8 @@ def load_next_vars(file_relpath, params, data_info):
           str('file: ' + (file_relpath or '')),
           'msg: error when trying to define the pod ctx vars',
           'error type: ' + str(type(error)),
-          'error details: ' + str(error),
+          'error details: ',
+          traceback.format_exc(),
       ]]
       return dict(error_msgs=error_msgs)
 
@@ -508,6 +515,7 @@ def load_next_vars(file_relpath, params, data_info):
         str('file: ' + (file_relpath or '')),
         'msg: unknown error when trying to define the pod ctx vars',
         'error type: ' + str(type(error)),
-        'error details: ' + str(error),
+        'error details: ',
+        traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
