@@ -1112,7 +1112,7 @@ A pod context (not to be confounded with the environment/cloud context defined i
 
 ### Pod Context Example
 
-Considering a `test` project with the following pod specification in the [project environment base file](#project-environment-base-file):
+Considering a project named `test-pod-local` with the following pod specification in the [project environment base file](#project-environment-base-file):
 
 ```yaml
 #...
@@ -1326,7 +1326,9 @@ schemas:
 
 Then the deployment will create the following files (the destination is always is the `custom_pod` repository directory):
 
-_[src] test/files/template.yml (in the environment base repository)_
+---
+
+_`[src]` test/files/template.yml (in the environment base repository)_
 
 ```yaml
 name: "test template"
@@ -1335,7 +1337,7 @@ dest: "{{ params.dest }}"
 {{ { 'params': params.params } | to_nice_yaml }}
 ```
 
-_[dest] env/env-template.yml_
+_`[dest]` env/env-template.yml_
 
 ```yaml
 name: "test template"
@@ -1348,8 +1350,12 @@ params:
         prop2_2: sample value 2
 ```
 
-_[src] test/pod-file.txt (in the `custom_pod` repository)_
-_[dest] env/file.main.txt_
+---
+
+_`[src]` test/pod-file.txt (in the `custom_pod` repository)_
+
+_`[dest]` env/file.main.txt_
+
 (files keep the same content)
 
 ```
@@ -1358,13 +1364,15 @@ New line
 Last line
 ```
 
-_[src] test/dynamic.tpl.yml (in the `custom_pod` repository)_
+---
+
+_`[src]` test/dynamic.tpl.yml (in the `custom_pod` repository)_
 
 ```yaml
 {{ params | to_nice_yaml }}
 ```
 
-_[dest] env/pod-data.test.yml_
+_`[dest]` env/pod-data.test.yml_
 
 ```yaml
 contents: {}
@@ -1399,7 +1407,13 @@ main:
 pod_name: simple
 ```
 
-_[src] test/files/file.txt (in the environment base repository)_
+---
+
+_`[src]` test/files/file.txt (in the environment base repository)_
+
+_`[dest]` env/env-file.txt_
+
+(files keep the same content)
 
 ```
 test file line 01
@@ -1407,17 +1421,14 @@ line 02
 line 03
 ```
 
-_[dest] env/env-file.txt_
+---
 
-```
-test file line 01
-line 02
-line 03
-```
+_`[src]` test/pod-file.txt (in the `custom_pod` repository)_
 
-_[src] test/pod-file.txt (in the `custom_pod` repository)_
-_[dest] env/file.child.txt_
-_[dest] env/file.child2.txt_
+_`[dest]` env/file.child.txt_
+
+_`[dest]` env/file.child2.txt_
+
 (files keep the same content)
 
 ```
@@ -1426,9 +1437,11 @@ New line
 Last line
 ```
 
-_[src] test/template.sh (in the `custom_pod` repository)_
+---
 
-```shell
+_`[src]` test/template.sh (in the `custom_pod` repository)_
+
+```bash
 #!/bin/bash
 
 # shellcheck disable=SC1083
@@ -1438,9 +1451,9 @@ param_value={{ params.value | quote }}
 echo "[template] param value = $param_value"
 ```
 
-_[dest] env/script.sh_
+_`[dest]` env/script.sh_
 
-```shell
+```bash
 #!/bin/bash
 # shellcheck disable=SC1083
 param_value='sample value 3'
@@ -1449,6 +1462,8 @@ echo "[template] param value = $param_value"
 ```
 
 _(The lines were removed because the property `meta.template_no_empty_lines` in the environment file is `true`)_
+
+---
 
 ### Pod Context Example Notes
 
@@ -1462,7 +1477,7 @@ _(The lines were removed because the property `meta.template_no_empty_lines` in 
 - `dev`: When `true`, specifies that the deployment is in development mode.
 - `env_name`: The environment name (specified in the `name` property in the environment file). In most cases, corresponds to the project name.
 - `extra_repos_dir_relpath`: Relative path to the [extra-repos directory](#extra-repositories).
-- `identifier`: The pod identifier, defined as `<env_name>-<ctx_name>-<pod_name>`, mainly used to avoid colisions between different pods in the same host (especially when deploying locally)
+- `identifier`: The pod identifier, defined as `<env_name>-<ctx_name>-<pod_name>`, mainly used to avoid colisions between different pods in the same host (especially when deploying locally).
 - `lax`: Indicates if the permissions should be less strict (useful, for example, when defining the `mode` for files and templates).
 - `local`: When `true`, means that the node in which the pod is being deployed is a local node (localhost).
 - `main`: The pod parameters (specified in the `params` property). The name `main` was chosen maily because the object that has all these properties (pod data) is called `params`.
@@ -1499,7 +1514,7 @@ templates:
 
 **2. Passing complex parameters:**
 
-The pod context file is a template, so complex parameters may not be passed as intended to templates and children, and even make the template as an invalid yaml file. To avoid such problems, and taking into accont that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass comples parameters, as well as multiline strings, as:
+The pod context file is a template, so complex parameters may not be passed as intended to templates and children, and even make the template as an invalid yaml file. To avoid such problems, and taking into account that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass complex parameters, as well as multiline strings, as:
 
 ```yaml
 #...
@@ -1515,7 +1530,7 @@ templates:
 
 The file permissions respects the following rules:
 
-When the `lax` property is defined in the [Cloud Input Vars](#cloud-input-vars) or in the [project environment file](#project-environment-file) (the later having higher precedence than the first) and has the value `true`, then:
+When the `lax` property is defined in the [Cloud Input Vars](#cloud-input-vars) or in the [Project Environment File](#project-environment-file) (the later having higher precedence than the previous) and has the value `true`, then:
 
 - Directories will have the permission `777`.
 - If the `executable` property is defined as `true`, files will have the permission `777`.
