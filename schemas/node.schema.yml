@@ -43,7 +43,7 @@ schemas:
         elem_schema: "dns"
         description: >-
           list with dns records to create A and AAAA records
-          (when dn_service is specified for the node); will use
+          (when dns_service is specified for the node); will use
           the node ips returned by the service that created the node
       host_test:
         schema: "host_test"
@@ -65,7 +65,7 @@ schemas:
     props:
       initial_connection_timeout:
         type: "int"
-        description: "timeout for the innitial connection to the host"
+        description: "timeout in seconds for the initial connection to the host"
       setup_log_file:
         type: "str"
         non_empty: true
@@ -80,7 +80,7 @@ schemas:
         description: "last line expected in the log file in the case of a successful setup"
       setup_finished_timeout:
         type: "int"
-        description: "timeout while waiting for the host setup to complete"
+        description: "timeout in seconds while waiting for the host setup to complete"
   cron:
     type: "dict"
     props:

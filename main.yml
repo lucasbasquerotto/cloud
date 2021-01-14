@@ -51,7 +51,7 @@
 ############################        NODES         #############################
 ###############################################################################
 
-- name: Play 02.01 - Cloud - Nodes - Create
+- name: Play 02.01 - Nodes - Create
   hosts: main
   tags:
     - init
@@ -87,7 +87,7 @@
 
 ###############################################################################
 
-- name: Play 02.02 - Cloud - Nodes - Wait for the hosts to be ready
+- name: Play 02.02 - Nodes - Wait for the hosts to be ready
   hosts: main,host
   tags:
     - init
@@ -164,7 +164,7 @@
 
 ###############################################################################
 
-- name: Play 02.03 - Cloud - Nodes - Prepare
+- name: Play 02.03 - Nodes - Prepare
   hosts: main,host
   tags:
     - init
@@ -270,7 +270,7 @@
 ##################          DEFINE THE CRON JOBS           ####################
 ###############################################################################
 
-- name: Play 05 - Define the cron jobs
+- name: Play 05 - Nodes - Define the cron jobs
   hosts: main,host
   tags:
     - init
@@ -318,7 +318,7 @@
 
 ###############################################################################
 
-- name: Play 02.03 - Cloud - Nodes - Finished
+- name: Play 02.03 - Nodes - Finish
   hosts: main,host
   tags:
     - init

@@ -256,7 +256,250 @@ main:
 
 ## Cloud Context Main Step
 
+The main step of the cloud context is the actual deployment of the project. It consists of the following internal steps:
+
+### Main Step - Load Environment
+
+This step loads the environment file and defines and validates the context (`ctx_data`) variable, just like the steps 1 and 3 of the [Cloud Context Preparation Step](#cloud-context-preparation-step), except that it doesn't validate the schemas. These variables are used by the next steps in the local host (ansible group `main`).
+
+### Main Step - Initial Services
+
+This step create the initial services declared for the context in the environment file (in the property `initial_services`). For example, the code below would create the services `service_1`, `service_2` and `service_3` for the context `my_ctx`.
+
+```yaml
+# ...
+main:
+  my_ctx:
+    repo: "cloud"
+    # ...
+    initial_services:
+      - "service_1"
+      - "service_2"
+      - "service_3"
+  # ...
+# ...
+services:
+  service_1:
+    #...
+  service_2:
+    #...
+  service_3:
+    #...
+```
+
+More information about services can be found [here](#services).
+
+### Main Step - Nodes - Create
+
+This step create the nodes declared for the context in the environment file. For example, the code below would create for the context `my_ctx`:
+
+- 1 host according to the `node_1` specification;
+- 1 host according to the `node_2` specification with the node type as `my_node_2` and named as `my-host`;
+- 3 hosts according to the `node_3` specification.
+
+```yaml
+main:
+  my_context:
+    repo: "cloud"
+    env_repos:
+      - repo: "custom_cloud"
+        dir: "custom-cloud"
+    hosts:
+      type: "template"
+      file: "files/hosts.tpl.ini"
+      schema: "files/hosts.schema.yml"
+    nodes:
+      - "node_1"
+      - name: "my_node_2"
+        key: "node_2"
+        hostname: "my-host"
+      - name: "node_3"
+        amount: 3
+nodes:
+  node_1:
+    service: "my_node_service"
+    base_dir: "/var/cloud"
+    credential: "host1"
+    root: true
+    shared_params: ["host_test"]
+  node_2:
+    service: "my_node_service"
+    base_dir: "/var/cloud"
+    credential: "host2"
+    root: true
+    shared_params: ["host_test"]
+  node_3:
+    service: "my_node_service"
+    base_dir: "/var/cloud"
+    credential: "host3"
+    root: true
+    shared_params: ["host_test"]
+node_shared_params:
+  host_test:
+    setup_log_file: "/var/log/setup.log"
+    setup_finished_log_regex: "^Setup Finished.*$"
+    setup_success_log_last_line: "Setup Finished - Success"
+    initial_connection_timeout: 90
+    setup_finished_timeout: 300
+services:
+  my_node_service:
+    #...
+credentials:
+  host1:
+    host_user: "my-user1"
+    host_pass: "p4$$w0rd1"
+    ssh_file: "path/to/my-ssh-key-file1"
+  host2:
+    host_user: "my-user2"
+    host_pass: "p4$$w0rd2"
+    ssh_file: "path/to/my-ssh-key-file2"
+  host3:
+    host_user: "my-user3"
+    host_pass: "p4$$w0rd3"
+    ssh_file: "path/to/my-ssh-key-file3"
+```
+
+The example above would call the same [service](#services) to create the hosts, then it would include the hosts in the hosts file to be used by ansible. It would result in a hosts file like the following:
+
+```ini
+[main]
+localhost ansible_connection=local
+
+[host:children]
+node_1
+my_node_2
+node_3
+
+[node_1]
+node-1-host ansible_host=<ip> ansible_user=my-user1 ansible_become_pass=p4$$w0rd1 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file1 instance_type=node_1 instance_index=1 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+
+[my_node_2]
+my-host ansible_host=<ip> ansible_user=my-user2 ansible_become_pass=p4$$w0rd2 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file2 instance_type=my_node_2 instance_index=1 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+
+[node_3]
+node-3-host ansible_host=<ip> ansible_user=my-user3 ansible_become_pass=p4$$w0rd3 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3 instance_type=node_3 instance_index=1 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+node-3-host-2 ansible_host=<ip> ansible_user=my-user3 ansible_become_pass=p4$$w0rd3 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3 instance_type=node_3 instance_index=2 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+node-3-host-3 ansible_host=<ip> ansible_user=my-user3 ansible_become_pass=p4$$w0rd3 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3 instance_type=node_3 instance_index=3 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+```
+
+The nodes accept a [dns_service](schemas/env.schema.yml) property (along with the `service` property) to define dns records for the created host if only one node replica (host) was created, according to the records defined in the property [dns_service_params_list](schemas/node.schema.yml).
+
+These hosts will then be accessed in the next steps. More information about the services that can create nodes can be seen [here](#services).
+
+### Main Step - Nodes - Wait for the hosts to be ready
+
+This step waits for the created hosts (in the step [Nodes - Create](#main-step---nodes---create)) based on the information in the property [host_test](schemas/node.schema.yml) in the node:
+
+- `initial_connection_timeout`: Timeout (in seconds) for the initial connection to the host.
+
+- `setup_log_file`: Log file used to verify if the host setup was completed.
+
+- `setup_finished_log_regex`: Regex applied to the log file used to determine if the setup ended.
+
+- `setup_success_log_last_line`: Last line expected in the log file in the case of a successful setup.
+
+- `setup_finished_timeout`: Timeout (in seconds) while waiting for the host setup to complete.
+
+After connecting to the host, and verifying that the setup was successful, it then compares the environment repository commit with the commit registered in the previous deployment, to skip the deployment for the host if the commits are the same (see [Nodes - Wait for the hosts to be ready](#main-step---nodes---finish)).
+
+You can force the deployment for the hosts even if the commit is the same, if the `force` flag was specified (explained at the [Cloud Preparation Step](#cloud-preparation-step)).
+
+### Main Step - Nodes - Prepare
+
+This step transfer the files defined in the `transfer` property in the node. The base directory for the contents to be transferred (when type is `custom`) is the cloud directory. More information about transferences of contents [here](#transfer-contents).
+
+
+The destination will be the node directory, which is the workdir/chdir for the node tasks that run in the [run stages](#main-step---run-stages).
+
+### Main Step - Prepare the Pods
+
 TODO
+
+- Pod Context
+- Transfer
+- Temporary
+
+### Main Step - Run Stages
+
+TODO
+
+- Run Stages
+
+### Main Step - Nodes - Define the cron jobs
+
+This step creates the cron files at the designated locations (defined in the [cron](schemas/node.schema.yml) property in the node), and then start the cron service if the property `cron_start` in the node is `true`.
+
+### Main Step - Nodes - Finish
+
+This step creates a file in the node with the environment repository commit, to skip newer deployments with the same commit (see [Main Step - Nodes - Wait for the hosts to be ready](#main-step---nodes---wait-for-the-hosts-to-be-ready)).
+
+### Main Step - Final Services
+
+This step is almost the same as the [Initial Services](#main-step---initial-services), except that it runs at the end of the deployment and is based on the property `final_services` (instead of `initial_services`).
+
+### Main Step - Delete Temporary Cloud Instances
+
+This step destroys/undeploys the nodes and services created/deployed in the previous steps, as long as they where defined with the property `tmp` as `true` (defaults to `false`).
+
+_Example:_
+
+```yaml
+# ...
+main:
+  my_ctx:
+    repo: "cloud"
+    # ...
+    initial_services:
+      - name: "service_1"
+        tmp: true
+      - "service_2"
+      - name: "service_3"
+        tmp: true
+      - name: "service_4"
+    nodes:
+      - name: "node_1"
+        tmp: true
+      - "node_2"
+      - name: "node_3"
+      - name: "node_4"
+        tmp: true
+    final_services:
+      - name: "service_5"
+        tmp: true
+      - "service_6"
+# ...
+services:
+  service_1:
+    #...
+  service_2:
+    #...
+  service_3:
+    #...
+  service_4:
+    #...
+  service_5:
+    #...
+  service_6:
+    #...
+nodes:
+  node_1:
+    #...
+  node_2:
+    #...
+  node_3:
+    #...
+  node_4:
+    #...
+# ...
+```
+
+In the example above, the services `service_1`, `service_3` and `service_5` will be undeployed, and the nodes `node_1` and `node_4` will be destroyed (will be executed with the state property as `absent`). The `tmp` property shouldn't be defined in the service or node definition itself, but in the list of services or nodes in the context dictionary
+
+### Main Step - Delete everything that was created previously
+
+This step destroys/undeploys the nodes and services as long as they where defined with the property `can_destroy` as `true` (defaults to `false`). This property is defined in the same way as the `tmp` property is defined in the [previous step](#main-step---delete-temporary-cloud-instances).
+
+**This step only runs if the [--end flag](#cloud-next-parameters) (or `--tags=destroy`) is passed during the launch.**
 
 # Project Environment
 
@@ -303,6 +546,16 @@ The following are the parameters that can be specified when deploying a project 
 | ------ | ------- |
 | <nobr>`--end`</nobr> | Will destroy what was created by the deployment, the nodes and services, as long as the property `can_destroy` is defined and is `true` for them. It sends the state `absent` and expects that the nodes and services know how to handle this state. This is almost the same as running without the `--next` parameter as one of the launch parameters, and instead passing `--tags=destroy`, except that using `--end` won't register the commit of the project environment repository (used to skip newer deployments with the same commit, when not using the `--force` option) for this deployment (which is the expected behaviour, although in practice it probably won't matter). |
 | <nobr>`--ssh`</nobr> | Will ssh into the host specified by the context (`-c`/`--ctx`), node type (`-n`/`--node`) and index (`-i`/`--idx`), with these params specified right after `--ssh`. When the context is not specified, if there is only one context in the deployment, this context will be used by default, otherwise an error will be thrown. When the node type is not specified, if there is only one node type in the context, this node type will be used by default, otherwise an error will be thrown. When the index is not specified, the default will be `1` (the first host of the previously mentioned node type). This ssh option can only be used after the preparation step is completed at least once, and the hosts are defined in the hosts file (either directly or after a node service creates them). |
+
+_Example:_
+
+```bash
+# Connects through SSH if there's only 1 context in the project, and only 1 node in the context
+./ctl/launch --next <project_name> --ssh
+
+# Destroys the nodes and services
+./ctl/launch --next <project_name> --end
+```
 
 ## Mergeable Parameters
 
@@ -700,7 +953,35 @@ The contents may come from different places, when its type is `file` or `templat
 
 ### Transfer Content
 
-Some sections in the environment file accepts a `transfer` property that is a list of objects whose source (`src`) is a content (will behave like the above), except that the content won't be loaded to a variable/fact. Instead, it will be transferred to the destination (`dest`) specified (with an optional `mode` property to define the permissions, and a `when` property, that defaults to `true`, that will skip the transfer when it's `false`, which can also be used when overriding a transfer that has the same destination, to skip the transference, in sections that allow override transfers, that can be seen in the sub-schemas `main_node_info`, `main_pod_params_info` and `node_pod_info` in the [schema for the environment file](schemas/env.schema.yml)).
+Some sections in the environment file accepts a `transfer` property that is a list of objects whose source (`src`) is a [content](#contents) (will behave like the above), except that the content won't be loaded to a variable/fact. Instead, it will be transferred to the destination (`dest`) specified (with an optional `mode` property to define the permissions, an `executable` property to define that the file should be executable when `mode` is not defined, and a `when` property, that defaults to `true`, that will skip the transfer when it's `false`, which can also be used when overriding a transfer that has the same destination, to skip the transference, in sections that allow override transfers, that can be seen in the sub-schemas `main_node_info`, `main_pod_params_info` and `node_pod_info` in the [schema for the environment file](schemas/env.schema.yml)).
+
+(#transfer-content).
+
+The file permissions respects the following rules:
+
+When the `lax` property is defined in the [Cloud Input Vars](#cloud-input-vars) or in the [Project Environment File](#project-environment-file) (the later having higher precedence than the previous) and has the value `true`, then:
+
+- Directories will have the permission `777`.
+- If the `executable` property is defined as `true`, files will have the permission `777`.
+- If the `executable` property is defined as `false` (default), files will have the permission `666`.
+
+Otherwise, when `lax` is `false` (default):
+
+- Directories will have the permission `751`.
+- If the `executable` property is defined as `true`, files will have the permission `751`.
+- If the `executable` property is defined as `false` (default), files will have the permission `640`.
+
+The `mode` property can be specified to define the file permissions explicitly (it has the highest precedence). Example:
+
+```yaml
+- dest: "path/to/dest/file.txt"
+  src: |
+    This is a string content
+    This is a new line
+  mode: "666"
+```
+
+The destination depends on where the `transfer` property is defined.
 
 ### Content Full Example
 
@@ -1548,19 +1829,7 @@ templates:
 
 **3. File permissions:**
 
-The file permissions respects the following rules:
-
-When the `lax` property is defined in the [Cloud Input Vars](#cloud-input-vars) or in the [Project Environment File](#project-environment-file) (the later having higher precedence than the previous) and has the value `true`, then:
-
-- Directories will have the permission `777`.
-- If the `executable` property is defined as `true`, files will have the permission `777`.
-- If the `executable` property is defined as `false` (default), files will have the permission `666`.
-
-Otherwise, when `lax` is `false` (default):
-
-- Directories will have the permission `751`.
-- If the `executable` property is defined as `true`, files will have the permission `751`.
-- If the `executable` property is defined as `false` (default), files will have the permission `640`.
+The file permissions respects the same rules defined in the section about [transference of contents](#transfer-content).
 
 The `mode` property can be specified to define the file permissions explicitly (it has the highest precedence). Example:
 
@@ -1573,7 +1842,7 @@ The `mode` property can be specified to define the file permissions explicitly (
 
 **4. Schemas:**
 
-You can specify schemas for your pod context templates, to validate their parameters.
+You can specify [schemas](#schemas) for your pod context templates, to validate their parameters.
 
 In the example above there was the following `test_schema` parameter specified for the pod:
 
@@ -1669,6 +1938,10 @@ test_schema: [{ map_prop_outside_p1: 123 }] # error
 ```
 
 This example is just a demonstration of the flexibility that can be achieved with schemas, it's not meant to be used in a real project.
+
+## Services
+
+#TODO
 
 ## Run Stages
 
