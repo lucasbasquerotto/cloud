@@ -1623,9 +1623,9 @@ schemas:
         elem_schema: "test"
 ```
 
-This is a complex schema case that can allow different arguments based on its type. More specifically, the `test` inner schema allow both the value to be both a list of values or a single (entire) value that correspond to the `test2` inner schema specification, and this schema do a similar approach allowing the value to be either an integer value (end of the chain), or a dictionary with a `p1` property, that is itself either a single (entire) value or a dictionary of properties whose values correspond to the `test` inner schema specification.
+This is a complex schema case that allows (possibly very) different values based on its type. More specifically, the `test` inner schema allows the value to be both a list of values or a single (entire) value that correspond to the `test2` inner schema specification, and this schema do a similar approach allowing the value to be either an integer value (end of the chain), or a dictionary with a `p1` property, that is itself either a single (entire) value or a dictionary of properties (with any name; a `map`) whose values correspond to the `test` inner schema specification (creating a recursion between the inner schemas).
 
-This means that the following values are valid (are accepted by the schema):
+This means that the following values are valid (accepted by the schema):
 
 ```yaml
 test_schema: 111
@@ -1654,7 +1654,7 @@ test_schema:
 # and so on...
 ```
 
-But at the same time you the schema will validate and throw errors for invalid values:
+But at the same time the schema will validate and throw errors for invalid values:
 
 ```yaml
 test_schema: 'abc' # error
