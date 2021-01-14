@@ -1349,14 +1349,8 @@ params:
 ```
 
 _[src] test/pod-file.txt (in the `custom_pod` repository)_
-
-```
-[Pod File Content]
-New line
-Last line
-```
-
 _[dest] env/file.main.txt_
+(files keep the same content)
 
 ```
 [Pod File Content]
@@ -1422,14 +1416,9 @@ line 03
 ```
 
 _[src] test/pod-file.txt (in the `custom_pod` repository)_
-
-```
-[Pod File Content]
-New line
-Last line
-```
-
-_[dest] env/file.child.txt and env/file.child2.txt_
+_[dest] env/file.child.txt_
+_[dest] env/file.child2.txt_
+(files keep the same content)
 
 ```
 [Pod File Content]
@@ -1459,9 +1448,93 @@ param_value='sample value 3'
 echo "[template] param value = $param_value"
 ```
 
+_(The lines were removed because the property `meta.template_no_empty_lines` in the environment file is `true`)_
+
 ### Pod Context Example Notes
 
-#### 1. The `mode` property can be specified to define the file permissions
+**1. The pod data variable (`params`) accessed in the context file has the following properties:**
+
+- `contents`: The pod contents (specified in the `contents` property). There is none in this example.
+- `credentials`: The pod credentials (specified in the `credentials` property). There is none in this example.
+- `ctx_name`: The context name (specified in the `main` section in the environment file).
+- `data_dir`: The path of the pod data directory (for local pods, it's the relative path).
+- `dependencies_data`: The node dependencies. There is none in this example.
+- `dev`: When `true`, specifies that the deployment is in development mode.
+- `env_name`: The environment name (specified in the `name` property in the environment file). In most cases, corresponds to the project name.
+- `extra_repos_dir_relpath`: Relative path to the [extra-repos directory](#extra-repositories).
+- `identifier`: The pod identifier, defined as `<env_name>-<ctx_name>-<pod_name>`, mainly used to avoid colisions between different pods in the same host (especially when deploying locally)
+- `lax`: Indicates if the permissions should be less strict (useful, for example, when defining the `mode` for files and templates).
+- `local`: When `true`, means that the node in which the pod is being deployed is a local node (localhost).
+- `main`: The pod parameters (specified in the `params` property). The name `main` was chosen maily because the object that has all these properties (pod data) is called `params`.
+- `pod_name`: The name of the pod.
+
+The pod data property can only be accessed out-of-the-box in the context file. To access it in sub-context files, you have to pass it as a parameter. Example (passing as a `pod_data` parameter):
+
+_test/ctx-simple.yml:_
+
+```yaml
+#...
+
+children:
+
+- name: "{{ var_main_dir }}/ctx-child.yml"
+  params:
+    pod_data: {{ params | to_json }}
+    main: {{ params.main | to_json }}
+    custom:
+      value: "{{ params.main.pod_param_3 }}"
+```
+
+_test/ctx-child.yml:_
+
+```yaml
+#...
+
+templates:
+
+- src: "..."
+  dest: "..."
+  params: {{ params.pod_data | to_json }}
+```
+
+**2. Passing complex parameters:**
+
+The pod context file is a template, so complex parameters may not be passed as intended to templates and children, and even make the template as an invalid yaml file. To avoid such problems, and taking into accont that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass comples parameters, as well as multiline strings, as:
+
+```yaml
+#...
+
+templates:
+
+- src: "..."
+  dest: "..."
+  params: {{ my_complex_param | to_json }}
+```
+
+**3. File permissions:**
+
+The file permissions respects the following rules:
+
+When the `lax` property is defined in the [Cloud Input Vars](#cloud-input-vars) or in the [project environment file](#project-environment-file) (the later having higher precedence than the first) and has the value `true`, then:
+
+- Directories will have the permission `777`.
+- If the `executable` property is defined as `true`, files will have the permission `777`.
+- If the `executable` property is defined as `false` (default), files will have the permission `666`.
+
+Otherwise, when `lax` is `false` (default):
+
+- Directories will have the permission `751`.
+- If the `executable` property is defined as `true`, files will have the permission `751`.
+- If the `executable` property is defined as `false` (default), files will have the permission `640`.
+
+The `mode` property can be specified to define the file permissions explicitly (has the highest precedence). Example:
+
+```yaml
+- src: "{{ var_main_dir }}/dynamic.tpl.yml"
+  dest: "env/pod-data.test.yml"
+  mode: "{{ params.lax | bool | ternary('666', '600') }}"
+  params: {{ params | to_json }}
+```
 
 #TODO
 
