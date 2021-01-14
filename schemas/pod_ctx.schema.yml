@@ -4,8 +4,8 @@ schemas:
     type: "dict"
     description: >-
       schema that represents a pod context, which specifies files and templates
-      from the pod or environment repository to be moved to the pod repository
-      (and filled, in case of templates); it can also load other pod contexts
+      from the pod or environment repository to be moved to the pod directory
+      (and parsed, in case of templates); it can also load other pod contexts
       as children
     props:
       files:

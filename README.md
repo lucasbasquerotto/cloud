@@ -1098,17 +1098,35 @@ services:
 
 ## Pod Context
 
-A pod context (not to be confounded with the environment/cloud context defined in the `main` section) defines files and templates to be copied to the pod repository, as well as load other pod sub-contexts that define more files and templates (and possibly more pod sub-contexts).
+A pod context (not to be confounded with the environment/cloud context defined in the `main` section) defines files and templates to be copied to the pod repository, and also loads other pod sub-contexts that define more files and templates (and possibly more pod sub-contexts).
 
-- A pod context is useful to avoid defining template parameters directly in the environment file and transfer with the `transfer` property, instead, the pod itself specifies the files that should be copied (this don't mean that the transfer option shouldn't be used, both can be used together).
+- A pod context is useful to avoid defining template parameters directly in the environment file and transfer with the `transfer` property; instead, the pod itself specifies the files that should be copied (this don't mean that the transfer option shouldn't be used, both can be used together).
 
 - It can specify files from the environment repository that the pod know that are required (like a file with credentials) and move them to the pod repository.
 
-- It's useful to avoid repetitions for different environments, instead most things are defined in the pod repository context file, and reused accross different environments, enjoying of the benefit of jinja2 to parse the context file (that, in the end, is a jinja2 template) with powerful template features.
+- It's useful to avoid repetitions for different environments, because most things can be defined in the pod repository context file, and reused accross different environments, enjoying the benefit of jinja2 to parse the context file (that, in the end, is a jinja2 template) with powerful template features.
 
 - It also avoids possible errors when defining files in wrong destinations in the environment file, or defining a file that is not used by the pod (thinking that it will be used).
 
 - Each template to be transferred can have a schema defined to validate the parameters structure, so as to avoid wrong data passed to the template (these schemas reside in the pod, and the validation will be done for all environments that use the pod, so that you don't have to add an additional schema file for each environment).
+
+- More than one item (file or template) to be transferred with the same destination will generate an error (to avoid possibly wrong configurations).
+
+- The order in which the items will be transferred is not, necessarily, the order in which they were defined (in practice this won't matter, taking into account that they can't have the same destination)
+
+The key items that can be defined in a pod context file are:
+
+- `env_files`: list of files with paths relative to the environment directory, that will be copied to the specified destinations, relative to the pod directory.
+
+- `env_templates`: list of template files with paths relative to the environment directory, that will be copied to the specified destinations, relative to the pod directory. The templates will be rendered with jinja2, using the variables passed in the `params` property.
+
+- `files`: same as `env_files`, but the source paths (as well as the destination paths) are relative to the pod directory.
+
+- `templates`: same as `env_templates`, but the source paths (as well as the destination paths) are relative to the pod directory.
+
+- `children`: list of pod sub-contexts that will also be processed to define the files and templates to be transferred to the pod directory. The parameters that the sub-contexts can access should be provided by the parent context using the `params` property.
+
+More details can be seen in the [pod context schema file](schemas/pod_ctx.schema.yml).
 
 ### Pod Context Example
 
@@ -1140,7 +1158,7 @@ pods:
   simple:
     repo: "custom_pod"
     ctx: "test/ctx-simple.yml"
-    schema: "test/schema.yml"
+    schema: "test/simple.schema.yml"
     root: true
     fast_prepare: true
     params:
@@ -1164,6 +1182,8 @@ repos:
     src: "https://github.com/lucasbasquerotto/custom-pod.git"
     version: "master"
 ```
+
+_(In a **project environment base file**, you can reference the project environment base directory, inside the project environment directory, using `params.env.repo_dir`; so, the path to the test files directory (`env_files_dir`), in the example above, was specified as `{{ params.env.repo_dir }}/test/files`. If the file was the **project environment file** instead, then you could define the path as just `test/files`)_
 
 And the following files:
 
@@ -1471,19 +1491,19 @@ _(The lines were removed because the property `meta.template_no_empty_lines` in 
 
 - `contents`: The pod contents (specified in the `contents` property). There is none in this example.
 - `credentials`: The pod credentials (specified in the `credentials` property). There is none in this example.
-- `ctx_name`: The context name (specified in the `main` section in the environment file).
+- `ctx_name`: The context name (specified in the `main` section in the environment file). This is the name of the environment/cloud context, not the pod context.
 - `data_dir`: The path of the pod data directory (for local pods, it's the relative path).
 - `dependencies_data`: The node dependencies. There is none in this example.
 - `dev`: When `true`, specifies that the deployment is in development mode.
 - `env_name`: The environment name (specified in the `name` property in the environment file). In most cases, corresponds to the project name.
 - `extra_repos_dir_relpath`: Relative path to the [extra-repos directory](#extra-repositories).
-- `identifier`: The pod identifier, defined as `<env_name>-<ctx_name>-<pod_name>`, mainly used to avoid colisions between different pods in the same host (especially when deploying locally).
+- `identifier`: The pod identifier, defined as `<env_name>-<ctx_name>-<pod_name>`, mainly used to avoid name collisions between different pods in the same host (especially when deploying locally).
 - `lax`: Indicates if the permissions should be less strict (useful, for example, when defining the `mode` for files and templates).
 - `local`: When `true`, means that the node in which the pod is being deployed is a local node (localhost).
-- `main`: The pod parameters (specified in the `params` property). The name `main` was chosen maily because the object that has all these properties (pod data) is called `params`.
+- `main`: The pod parameters (specified in the `params` property). The name `main` was chosen mainly because the object that has all these properties (pod data) is called `params`, so you would call `params.main` instead of `params.params`.
 - `pod_name`: The name of the pod.
 
-The pod data property can only be accessed out-of-the-box in the context file. To access it in sub-context files, you have to pass it as a parameter. Example (passing as a `pod_data` parameter):
+The pod data variable (explained above and printed in the file `env/pod-data.test.yml` of the example) can only be accessed out-of-the-box in the context file. To access it in sub-context files, you have to pass it as a parameter. Example (passing as a `pod_data` parameter):
 
 _test/ctx-simple.yml:_
 
@@ -1514,7 +1534,7 @@ templates:
 
 **2. Passing complex parameters:**
 
-The pod context file is a template, so complex parameters may not be passed as intended to templates and children, and even make the template as an invalid yaml file. To avoid such problems, and taking into account that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass complex parameters, as well as multiline strings, as:
+The pod context file is a template, so complex parameters may not be passed as intended to its items parameters (as templates and children), and even make the template as an invalid yaml file (causing errors when trying to load it). To avoid such problems, and taking into account that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass complex parameters, as well as multiline strings, as:
 
 ```yaml
 #...
@@ -1542,7 +1562,7 @@ Otherwise, when `lax` is `false` (default):
 - If the `executable` property is defined as `true`, files will have the permission `751`.
 - If the `executable` property is defined as `false` (default), files will have the permission `640`.
 
-The `mode` property can be specified to define the file permissions explicitly (has the highest precedence). Example:
+The `mode` property can be specified to define the file permissions explicitly (it has the highest precedence). Example:
 
 ```yaml
 - src: "{{ var_main_dir }}/dynamic.tpl.yml"
@@ -1551,7 +1571,104 @@ The `mode` property can be specified to define the file permissions explicitly (
   params: {{ params | to_json }}
 ```
 
-#TODO
+**4. Schemas:**
+
+You can specify schemas for your pod context templates, to validate their parameters.
+
+In the example above there was the following `test_schema` parameter specified for the pod:
+
+```yaml
+#...
+schema: "test/simple.schema.yml"
+params:
+  #...
+  test_schema:
+    - 123
+    - { p1: [{ p1: [456, { p1: 111 }] }, 012, { p1: 123 }] }
+    - 789
+    - { p1: 000 }
+  #...
+```
+
+And the following schema file:
+
+_test/simple.schema.yml (in the `custom_pod` repository):_
+
+```yaml
+root: "pod_schema"
+schemas:
+  pod_schema:
+    type: "dict"
+    props:
+      params:
+        schema: "params"
+        non_empty: true
+  params:
+    type: "dict"
+    props:
+      #...
+      test_schema:
+        non_empty: true
+        schema: "test"
+      #...
+  test:
+    type: "simple_list"
+    elem_schema: "test2"
+  test2:
+    type: "simple_dict"
+    alternative_type: "int"
+    props:
+      p1:
+        type: "simple_map"
+        elem_schema: "test"
+```
+
+This is a complex schema case that can allow different arguments based on its type. More specifically, the `test` inner schema allow both the value to be both a list of values or a single (entire) value that correspond to the `test2` inner schema specification, and this schema do a similar approach allowing the value to be either an integer value (end of the chain), or a dictionary with a `p1` property, that is itself either a single (entire) value or a dictionary of properties whose values correspond to the `test` inner schema specification.
+
+This means that the following values are valid (are accepted by the schema):
+
+```yaml
+test_schema: 111
+
+test_schema: [222]
+
+test_schema: { p1: 333 }
+
+test_schema: [{ p1: 444 }, 555]
+
+test_schema: { p1: { map_prop: 666 } }
+
+test_schema:
+  p1:
+    map_prop_1:
+      - 777
+      - { p1: 888 }
+    map_prop_2: 999
+
+test_schema:
+  - 123
+  - { p1: [{ p1: [456, { p1: 111 }] }, 012, { p1: 123 }] }
+  - 789
+  - { p1: 000 }
+
+# and so on...
+```
+
+But at the same time you the schema will validate and throw errors for invalid values:
+
+```yaml
+test_schema: 'abc' # error
+
+test_schema: [] # error
+
+test_schema: {} # error
+
+test_schema: { p2: 321 } # error
+
+test_schema: [{ map_prop_outside_p1: 123 }] # error
+```
+
+This example is just a demonstration of the flexibility that can be achieved with schemas, it's not meant to be used in a real project.
 
 ## Run Stages
 
