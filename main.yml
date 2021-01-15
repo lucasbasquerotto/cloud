@@ -238,7 +238,6 @@
             pod_node: "{{ main_item }}"
             pod_title: "{{ env_title }} - prepare pod - node [{{ pod_node.description }}]"
             pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
-            pod_secrets_repos_dir: "{{ env_secrets_cloud_dir }}/repos"
           loop: "{{ ctx_data.nodes | default([]) }}"
           loop_control:
             loop_var: main_item

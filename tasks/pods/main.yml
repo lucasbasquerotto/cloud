@@ -69,6 +69,7 @@
     pod_host_group: "{{ pod_node_credential.host_group | default(pod_host_user, true) }}"
     pod_root: "{{ pod_item.root | default(pod_node.root | default(false)) }}"
     pod_fast: "{{ pod_item.fast_prepare | default(false) }}"
+    pod_secrets_repos_dir: "{{ pod_item.tmp_dir }}/secrets/repos"
     pod_dependencies_data:
       list: "{{ pod_dependencies }}"
       node_ip_dict: "{{ pod_dependencies_ip_dict }}"

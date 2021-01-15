@@ -116,9 +116,32 @@
         timeout: "{{ host_test_setup_finished_timeout }}"
         path: "{{ host_test_setup_log_file }}"
         search_regex: "{{ host_test_setup_finished_log_regex }}"
-        msg: >
-          Timeout to find "{{ host_test_setup_finished_log_regex }}"
-          inside file "{{ host_test_setup_log_file }}"
+      register: host_test_timeout_var
+      ignore_errors: true
+
+    - name: "{{ host_test_title }} - block - retrieve the full log and fail due to setup timeout"
+      block:
+        - name: >-
+            {{ host_test_title }} - setup timeout -
+            retrieve the full log ({{ host_test_setup_log_file }})
+          shell: cat "{{ host_test_setup_log_file }}"
+          register: host_test_full_log_var
+          changed_when: false
+
+        - name: "{{ host_test_title }} - setup timeout - host_test_full_log"
+          set_fact:
+            host_test_full_log: "{{ host_test_full_log_var.stdout }}"
+          tags: ["no_print"]
+
+        - name: "{{ host_test_title }} - fail due to setup timeout"
+          fail:
+            msg: |
+              Timeout to find "{{ host_test_setup_finished_log_regex }}" in file
+              File: {{ host_test_setup_log_file }}
+              Full Log:
+              {{ host_test_full_log }}
+      when: host_test_timeout_var.failed
+      tags: ["no_print_skipped"]
 
     # Verify Successful Setup
 
@@ -127,23 +150,41 @@
         - name: "{{ host_test_title }} - retrieve last line of {{ host_test_setup_log_file }}"
           shell: tail -n 1 "{{ host_test_setup_log_file }}"
           register: host_test_last_line_var
-          changed_when: False
+          changed_when: false
 
         - name: "{{ host_test_title }} - host_test_last_line"
           set_fact:
             host_test_last_line: "{{ host_test_last_line_var.stdout }}"
+            host_test_full_log: ""
           tags: ["no_print"]
 
         - debug:
             msg: "last_line='{{ host_test_last_line }}'"
 
-        - name: "{{ host_test_title }} - verify if the setup was finished successfully"
-          fail:
-            msg: |
-              The last line of the setup log file is not the expected value.
-              Last line: {{ host_test_last_line }}
-              Should be: {{ host_test_setup_success_log_last_line }}
+        - name: "{{ host_test_title }} - block - retrieve the full log and fail due to setup error"
+          block:
+            - name: >-
+                {{ host_test_title }} - setup error -
+                retrieve the full log ({{ host_test_setup_log_file }})
+              shell: cat "{{ host_test_setup_log_file }}"
+              register: host_test_full_log_var
+              changed_when: false
+
+            - name: "{{ host_test_title }} - setup error - host_test_full_log"
+              set_fact:
+                host_test_full_log: "{{ host_test_full_log_var.stdout }}"
+              tags: ["no_print"]
+
+            - name: "{{ host_test_title }} - fail due to setup error"
+              fail:
+                msg: |
+                  The last line of the setup log file is not the expected value.
+                  Last line: {{ host_test_last_line }}
+                  Should be: {{ host_test_setup_success_log_last_line }}
+                  Full Log:
+                  {{ host_test_full_log }}
           when: host_test_last_line != host_test_setup_success_log_last_line
+          tags: ["no_print_skipped"]
 
       when: host_test_setup_success_log_last_line != ''
 

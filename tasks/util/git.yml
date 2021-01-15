@@ -54,7 +54,6 @@
   when: git_item.when | default(true, true) | bool
   loop:
     - { dir: "{{ git_ssh_src_dir }}", when: "{{ git_ssh_file != '' }}" }
-    - { dir: "{{ git_secrets_dir }}", when: "{{ git_ssh_file != '' }}" }
   loop_control:
     loop_var: git_item
     label: "{{ git_item.dir }}"
@@ -68,6 +67,7 @@
     mode: "{{ git_lax | bool | ternary(0777, 0755) }}"
   when: git_item.when | default(true, true) | bool
   loop:
+    - { dir: "{{ git_secrets_dir }}", when: "{{ git_ssh_file != '' }}" }
     - { dir: "{{ git_repo_dir }}" }
   loop_control:
     loop_var: git_item
@@ -75,7 +75,6 @@
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - copy the repo ssh file"
-  delegate_to: "localhost"
   copy:
     src: "{{ git_ssh_src_dir }}/{{ git_repo.ssh_file }}"
     dest: "{{ git_ssh_file }}"

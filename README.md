@@ -406,18 +406,17 @@ You can force the deployment for the hosts even if the commit is the same, if th
 
 ### Main Step - Nodes - Prepare
 
-This step transfer the files defined in the `transfer` property in the node. The base directory for the contents to be transferred (when type is `custom`) is the cloud directory. More information about transferences of contents [here](#transfer-contents).
-
+This step transfer the files defined in the `transfer` property in the node. The base directory for the contents to be transferred (when type is `custom`) is the cloud directory. More information about transferences of contents can be seen [here](#transfer-contents).
 
 The destination will be the node directory, which is the workdir/chdir for the node tasks that run in the [run stages](#main-step---run-stages).
 
 ### Main Step - Prepare the Pods
 
-TODO
+This step transfer the files and templates referenced in the [pod context](#pod-context) file to the specified locations in the pod repository directory, possibly using the parameters, contents and credentials defined for the pod.
 
-- Pod Context
-- Transfer
-- Temporary
+After transfering the files defined in the pod context, this step transfer the files defined in the `transfer` property in the pod. The base directory for the contents to be transferred (when type is `custom`), as well as the destination base directory, is the pod directory. More information about transferences of contents can be seen [here](#transfer-contents).
+
+In this step, the transference of the files specified both in the pod context as well as in the pod `transfer` property go first to a temporary directory, and after that, to the real destinations. This is done mainly to avoid errors in the transference letting the pod directory in an inconsistent state. The tempoarary step can be skipped defining the pod property `fast_prepare` as `true` (recommended in development environments, for faster deployments).
 
 ### Main Step - Run Stages
 
@@ -1944,6 +1943,53 @@ This example is just a demonstration of the flexibility that can be achieved wit
 #TODO
 
 ## Run Stages
+
+```yaml
+main:
+  my_context:
+    repo: "cloud"
+    env_repos:
+      - repo: "custom_cloud"
+        dir: "custom-cloud"
+    nodes:
+      - "node_1"
+      - name: "node_2"
+        amount: 3
+        max_amount: 5
+    run_stages:
+      - tasks:
+          - name: "test_task_cloud"
+            all_nodes: true
+            node_task: true
+            credentials:
+              overridden: "test_task_overridden"
+              run_stage: "test_task_run_stage"
+            params:
+              prop4: "overridden_cloud_1_4"
+            shared_params: ["test_task_overridden_1"]
+            contents:
+              content_task_run_stage: |
+                Content Tasks Cloud Run Stage
+                Line 02
+              content_task_overridden: |
+                Content Tasks Cloud Overridden
+                Line 02
+          - name: "test"
+            nodes:
+              - name: "node_1"
+                pods: ["pod_1"]
+            pod_task: true
+          - name: "test_skip"
+            all_nodes: true
+            node_task: true
+      - tasks:
+          - name: "test_task_env"
+            nodes: ["node_1"]
+            node_task: true
+          - name: "test_task_pod"
+            all_nodes: true
+            pod_task: true
+```
 
 #TODO
 
