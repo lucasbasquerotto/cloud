@@ -44,6 +44,87 @@ docker run -it --rm -v /var/demo/env:/env -v /var/demo/data:/lrd local/demo
 
 The demos are great for what they are meant to be: demos, prototypes. **They shouldn't be used for development** (bad DX if you need real time changes without having to push and pull newer versions of repositories, furthermore you are unable to clone repositories in specific locations defined by you in the project folder). **They also shouldn't be used in production environments** due to bad security (the vault value used for decryption is `123456`, and changes to the [project environment repository](#project-environment) may be lost if you forget to push them).
 
+# Table of Contents
+
+- [Deploying a Project](#deploying-a-project)
+
+  - [Project Base Directory](#project-base-directory)
+
+  - [Cloud Input Vars](#cloud-input-vars)
+
+  - [Cloud Preparation Step](#cloud-preparation-step)
+
+  - [Cloud Context Input Vars](#cloud-context-input-vars)
+
+  - [Cloud Context Preparation Step](#cloud-context-preparation-step)
+
+  - [Cloud Context Main Step](#cloud-context-main-step)
+
+    - [Main Step - Load Environment](#main-step---load-environment)
+
+    - [Main Step - Initial Services](#main-step---initial-services)
+
+    - [Main Step - Nodes - Create](#main-step---nodes---create)
+
+    - [Main Step - Nodes - Wait for the hosts to be ready](#main-step---nodes---wait-for-the-hosts-to-be-ready)
+
+    - [Main Step - Nodes - Prepare](#main-step---nodes---prepare)
+
+    - [Main Step - Prepare the Pods](#main-step---prepare-the-pods)
+
+    - [Main Step - Run Stages](#main-step---run-stages)
+
+    - [Main Step - Nodes - Define the cron jobs](#main-step---nodes---define-the-cron-jobs)
+
+    - [Main Step - Nodes - Finish](#main-step---nodes---finish)
+
+    - [Main Step - Final Services](#main-step---final-services)
+
+    - [Main Step - Delete Temporary Cloud Instances](#main-step---delete-temporary-cloud-instances)
+
+    - [Main Step - Delete everything that was created previously](#main-step---delete-everything-that-was-created-previously)
+
+- [Project Environment](#project-environment)
+
+  - [Project Environment File](#project-environment-file)
+
+  - [Project Environment Base File](#project-environment-base-file)
+
+- [Useful Information](#useful-information)
+
+  - [Cloud Next Parameters](#cloud-next-parameters)
+
+  - [Mergeable Parameters](#mergeable-parameters)
+
+  - [Credentials](#credentials)
+
+  - [Contents](#contents)
+
+    - [Content Type](#content-type)
+
+    - [Content Origin](#content-origin)
+
+    - [Transfer Content](#transfer-content)
+
+    - [Content Full Example](#content-full-example)
+
+  - [Schemas](#schemas)
+
+  - [Extra Repositories](#extra-repositories)
+
+  - [Pod Context](#pod-context)
+
+    - [Pod Context Example](#pod-context-example)
+
+    - [Pod Context Example Notes](#pod-context-example-notes)
+
+  - [Services](#services)
+
+  - [Run Stages](#run-stages)
+
+  - [Encrypt and Decrypt](#encrypt-and-decrypt)
+
+
 # Deploying a Project
 
 The deployment of a project in this layer is done, by default, in 3 steps.
