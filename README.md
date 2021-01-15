@@ -2019,7 +2019,290 @@ This example is just a demonstration of the flexibility that can be achieved wit
 
 ## Services
 
-#TODO
+Services are basically ansible tasks defined in the [services](#services) section of the environment file, able to receive [parameters](#mergeable-parameters), [credentials](#credentials) and [contents](#contents) that can be accessed using jinja2 inside the task.
+
+The services can be specified as a single service, or as a list of services, the later defined with a `list` property with the value equal to `true`. Services in a list to be executed are expanded if they are lists themselves, and their children are also expanded successively, in such a way that the order is preserved, until it reaches non-list services (or a service list without services defined). The expanded list can't have services with the same name, otherwise an error is thrown.
+
+The non-list services should define a `task` property with the path to the service in the repository in which the service file resides, with the `base_dir` property having the path to the repository (relative to the main cloud repository). The service can have a `schema` property specifying the [schema](#schemas) used to validate the service data. It's recommended to specify a `namespace` because the ansible facts are global for a given host, so, [if a service called another](#child-services), it could cause a variable defined in a service being overriden by another service, before the first service finishes, causing errors (possibly) hard to identify.
+
+_Example of a service definition:_
+
+```yaml
+name: "{{ params.name | default('test') }}"
+ctxs: "{{ params.ctxs | default([]) }}"
+main:
+  my_ctx:
+    repo: "cloud"
+    env_repos:
+      - repo: "custom_cloud"
+        dir: "custom-cloud"
+    hosts: |
+      [main]
+      localhost ansible_connection=local
+      [host]
+    initial_services: ["service_1"]
+services:
+  service_1:
+    base_dir: "custom-cloud"
+    namespace: "ext_demo"
+    task: "test/services/general/01.yml"
+    schema: "test/services/general/01.schema.yml"
+    credentials:
+      service_credential_1: "my_credential_1"
+      service_credential_2: "my_credential_2"
+    params:
+      param1: "value 1"
+    contents:
+      my_content_1: |
+        My Content 01
+        Line 02
+      my_content_2: |
+        My Content 02
+        Line 02
+credentials:
+  my_credential_1: "my secret 1"
+  my_credential_2: "my secret 2"
+```
+
+The allowed properties in a service definition as well as their descriptions are defined in the [environment schema file](schemas/env.schema.yml).
+
+The recommended structure of a service task file is:
+
+```yaml
+# Prepare
+
+- name: "{{ inner_service_title }} - validate namespace (required)"
+  fail:
+    msg: "namespace not specified (expected: 'ext_demo')"
+  when: inner_service_namespace == ''
+  tags: ["no_print"]
+
+- name: "{{ inner_service_title }} - validate namespace (ext_demo)"
+  fail:
+    msg: |
+      incorrect namespace
+      expected: 'ext_demo'
+      received: '{{ inner_service_namespace }}'
+  when: inner_service_namespace != 'ext_demo'
+  tags: ["no_print"]
+
+- name: "{{ inner_service_title }} - demo - vars"
+  set_fact:
+    ext_demo_title: "{{ inner_service_title }} - demo"
+    ext_demo_params: "{{ inner_service_params }}"
+    ext_demo_credentials: "{{ inner_service_credentials }}"
+    ext_demo_contents: "{{ inner_service_contents }}"
+    ext_demo_state: "{{ inner_service_state }}"
+    ext_demo_base_dir_prefix: "{{ inner_service_base_dir_prefix }}"
+    ext_demo_tmp_dir: "{{ inner_service_tmp_dir }}"
+    ext_demo_result: {}
+  tags: ["no_print"]
+
+# Input
+
+- name: "{{ ext_demo_title }} - input"
+  set_fact:
+    ext_demo_input_service_result: >-
+      {{
+        cloud_service_result_map[ext_demo_params.input_service | default('')]
+        | default({})
+      }}
+  tags: ["no_print"]
+
+# Main
+
+#>>> Do the task stuff here <<<#
+
+# Set Result
+
+- name: "{{ ext_demo_title }} - set result"
+  set_fact:
+    cloud_service_result: "{{ ext_demo_result }}"
+  tags: ["no_print"]
+```
+
+The structure consists of the following sections:
+
+- **Prepare:** validate the namespace (make it required) and assign the variables received (with the `inner_service` prefix) to variables whose prefix is the namespace (in this example, `ext_demo`). It's recommended to also define the resulting variable (in this case, `ext_demo_result`) as an empty dictionary, to make sure that it's defined and that its result isn't garbage from previous runs from services with the same name executed before in another service list. The received variables are as follows:
+
+  - `inner_service_title`: The service title, recommended to be added with a brief description of the service to show in the logs when assigned to the namespaced variable.
+  - `inner_service_params`: The service [parameters](#mergeable-parameters).
+  - `inner_service_credentials`: The service [credentials](#credentials).
+  - `inner_service_contents`: The service [contents](#contents).
+  - `inner_service_state`: The service state (`present` or `absent`, to deploy or undeploy the service, respectively).
+  - `inner_service_base_dir_prefix`: The base directory of the service, useful when including ansible roles, whose path will be relative to the cloud main repository.
+  - `inner_service_tmp_dir`: Temporary directory that can be used by the service to store files.
+
+- **Input:** retrieve the result of another service as input for the current service. **This section is optional and shouldn't be required by most services.** It's very important to receive the service name as a parameter instead of having it hardcoded (as showed above, with the parameter `input_service`, although the parameter name could be different). The service could even retrieve the result of more than one service. It's recommended to avoid making services depending on others (that is, avoid using this `input` section), to avoid a setup more complex than it could be, unless the alternatives aren't better.
+
+- **Main:** it's the service task properly said, the other sections are mainly to avoid the service variables being overriden, and to retrieve the results of previous services when needed, besides defining a convention for the service file.
+
+- **Set Result:** Define the result of the service (it's recommended to have it, even if the service generates no result, to clear (hypothetical) garbage left by previous services with the same name and avoid a (wrongly) configured service that was expecting a value from the current service retrieve the garbage).
+
+A service can save their result in a `cloud_service_result` variable, that can be accessed from a new service in the list by calling `cloud_service_result_map[<service_name>]` in it. The service name is the name of the service that gave the result, so it's advisable that in such cases, in which the value of one service will be used by the next, to use the property `single` in the **services list item** to specify that the service shouldn't be a list and throw an error if it's a list (otherwise the name may end up being of a child service, not known directly by the list). Furthermore, the name of the previous service (whose result will be used) should be a parameter of the service that will retrieve the result (instead of having it hardcoded), because **the actual service names should be declared only in the environment file**, the services should know other services names only by the received parameters.
+
+### Sequential Services
+
+_Example of a list of services that depend on previous services:_
+
+```yaml
+services:
+  test_sequence:
+    list: true
+    services:
+      - name: "test_before_sequence"
+        key: "test_before"
+        single: true
+      - name: "test_adapter_sequence"
+        key: "test_adapter"
+        single: true
+        params:
+          input_service: "test_before_sequence"
+      - name: "test_after_sequence"
+        key: "test_after"
+        params:
+          input_service: "test_adapter_sequence"
+  test_before:
+    #...
+  test_adapter:
+    #...
+  test_after:
+    #...
+```
+
+The example above has a service `test_before_sequence` that registers a result, the service `test_adapter_sequence` gets the result of `test_before_sequence` and converts it in a format that can be used by `test_after_sequence`, and this last service gets the result of the adapter. Take a look at the `input_service` parameter in the services `test_adapter_sequence` and `test_after_sequence` that specifies the name of the service whose result will be retrieved.
+
+In the `test_before_sequence` file the result would be defined as:
+
+```yaml
+#...
+
+# Set Result
+
+- name: "{{ ext_test_before_title }} - set result"
+  set_fact:
+    cloud_service_result: "{{ ext_test_before_result }}"
+  tags: ["no_print"]
+```
+
+In the `test_adapter_sequence` file the input value would be retrieved and the result would be defined as:
+
+```yaml
+#...
+
+# Input
+
+- name: "{{ ext_test_adapter_title }} - input"
+  set_fact:
+    ext_test_adapter_input_service_result: >-
+      {{ cloud_service_result_map[ext_test_adapter_params.input_service] }}
+  tags: ["no_print"]
+
+#...
+
+# Set Result
+
+- name: "{{ ext_test_adapter_title }} - set result"
+  set_fact:
+    cloud_service_result: "{{ ext_test_adapter_result }}"
+  tags: ["no_print"]
+```
+
+In the `test_after_sequence` file the input value would be retrieved as:
+
+```yaml
+#...
+
+# Input
+
+- name: "{{ ext_test_after_title }} - input"
+  set_fact:
+    ext_test_after_input_service_result: >-
+      {{
+        cloud_service_result_map[ext_test_after_params.input_service | default('')]
+        | default({})
+      }}
+  tags: ["no_print"]
+
+#...
+```
+
+In the above code, the `default` filters indicate that this service also accepts no input from the input service, or that there might not even be an input service (the `input_service` parameter might be empty).
+
+### Child Services
+
+Services can call other services inside it by including the ansible task `tasks/services/cloud_service.yml` and passing the list of services that should run, like the following service task example (excerpt):
+
+```yaml
+#...
+
+- name: "{{ ext_test_top_title }} - call the service"
+  include_tasks: "tasks/services/cloud_service.yml"
+  vars:
+    cloud_service_title: "{{ ext_test_top_title }} - inner service"
+    cloud_service_list:
+      name: "my_service_name"
+      key: "{{ ext_test_top_params.bottom_service }}"
+      single: true
+    cloud_service_tmp_dir: "{{ ext_test_top_tmp_dir }}/services"
+
+- name: "{{ ext_test_top_title }} - get result"
+  set_fact:
+    ext_test_top_service_result: >-
+      {{ cloud_service_result_inner_map['my_service_name'] }}
+  tags: ["no_print"]
+
+#...
+```
+
+When the result of the child service is used by the parent, it's important to define `single` as `true` to make sure that the service is not a service list (so that the result can be retrieved with the service name). The result of children services can be accessed through the variable `cloud_service_result_inner_map[<service_name>]` (instead of `cloud_service_result_map[<service_name>]` for sequential services). If the result of the child service is not important, the `single` property is unnecessary. In the example above, the service name doesn't need to come from a parameter (recommended for sequential services) because the child service name is known by the caller (`my_service_name`).
+
+In a list of services, 2 services can't have the same name, but child (and descendant) services can have the same name; what they can't have is the same namespace (sibling services in a list can have the same namespace, but not the same name).
+
+### Custom Services
+
+The creation of custom services is basically the creation of a (ansible) task in some source control repository. To use a custom service, you just need to define the repository as an [extension of the cloud repository](#cloud-preparation-step), and then define the service property `base_dir` as the repository directory (relative to the cloud repository), like in the example below:
+
+```yaml
+name: "{{ params.name | default('demo') }}"
+ctxs: ["my_ctx"]
+main:
+  my_ctx:
+    repo: "cloud"
+    env_repos:
+      - repo: "ext_cloud_1"
+        dir: "ext-cloud-1"
+      - repo: "ext_cloud_2"
+        dir: "ext-cloud-2"
+    hosts: |
+      [main]
+      localhost ansible_connection=local
+      [host]
+    initial_services:
+      - "service_1"
+      - "service_2"
+services:
+  service_1:
+    base_dir: "ext-cloud-1"
+    task: "path/to/task.yml"
+  service_2:
+    base_dir: "ext-cloud-2"
+    task: "path/to/task.yml"
+repos:
+  cloud:
+    src: "https://github.com/lucasbasquerotto/cloud.git"
+    version: "<cloud_branch_or_tag>"
+  ext_cloud_1:
+    src: "https://domain.com/my-org/repo1.git"
+    version: "<branch_or_tag_1>"
+  ext_cloud_2:
+    src: "https://domain.com/my-org/repo2.git"
+    version: "<branch_or_tag_2>"
+```
+
+As you can see in the example above, there might be more than 1 cloud repository extension, and each one can be used by a different service, making the creation and use of new services very easy.
+
+**The official cloud repository extension** is https://github.com/lucasbasquerotto/custom-cloud, and can be used in the same way as the above example. **This repository has several services that can manage the creation of VPNs, DNS Records, Cloud Instances (Nodes), Buckets (S3) and more.**
 
 ## Run Stages
 
