@@ -1238,7 +1238,7 @@ In most cases, schemas validate user defined data generated from [mergeable para
 
 For example, if you try to specify `test: "my value"` in the top-most layer of the project environment file, you will receive an error saying that the property `test` is invalid, because the environment variable will be validated using the schema defined at [schemas/env.schema.yml](schemas/env.schema.yml).
 
-The schema that validates the environment variable as a whole is fixed, but you can define custom schemas for specific cases, like services (when the service is not a list of services) and contents (when `type` is `template`). In the enviroment file, custom schemas are normally defined specifying the path to a custom schema file in a place that accepts a schema. Custom schemas are very useful because there are validations that depends on the environment, so they can't be known beforehand by the cloud layer.
+The schema that validates the environment variable as a whole is fixed, but you can define custom schemas for specific cases, like services (when the service is not a list of services) and contents (when `type` is `template`). In the environment file, custom schemas are normally defined specifying the path to a custom schema file in a place that accepts a schema. Custom schemas are very useful because there are validations that depends on the environment, so they can't be known beforehand by the cloud layer.
 
 _For example:_
 
