@@ -1933,7 +1933,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
     result['name'] = run_stage_task_name
 
     try:
-      task_name = run_stage_task.get('name')
+      task_name = run_stage_task.get('name') or ''
 
       if not task_name:
         error_msgs += [[
@@ -1941,25 +1941,14 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
             'msg: task name relative to the run stage task not specified'
         ]]
 
-      stage_node_task = run_stage_task.get('node_task')
-      stage_pod_task = run_stage_task.get('pod_task')
+      task_target = run_stage_task.get('task_target') or ''
+      result['task_target'] = task_target
 
-      result['node_task'] = stage_node_task
-      result['pod_task'] = stage_pod_task
-
-      if (not stage_node_task) and (not stage_pod_task):
+      if not task_target:
         error_msgs += [[
             str('run_stage_task: ' + run_stage_task_name),
             str('task_name: ' + task_name),
-            'msg: please, specify if the task is for the nodes or pods',
-            'additional info: node_task and pod_task are both false',
-        ]]
-      elif stage_node_task and stage_pod_task:
-        error_msgs += [[
-            str('run_stage_task: ' + run_stage_task_name),
-            str('task_name: ' + task_name),
-            'msg: the task must be for the nodes or pods, but not both'
-            'additional info: node_task and pod_task are both true',
+            'msg: task target not specified'
         ]]
 
       all_nodes = []
@@ -1972,7 +1961,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
         pods_aux = []
         pod_map = dict()
 
-        if stage_pod_task:
+        if task_target == 'pod':
           for pod in (node.get('pods') or []):
             pod_name = pod.get('name')
 
@@ -2118,7 +2107,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
             else:
               task_file_paths = set()
 
-              if stage_node_task:
+              if task_target == 'node':
                 error_msgs_aux += [
                     [str('msg: node task with pod target_origin: ' + task_file)]
                 ]

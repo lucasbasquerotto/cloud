@@ -43,8 +43,7 @@
             cloud_run_title: "{{ main_tmp_label }}"
             cloud_run_task: "{{ main_tmp_task }}"
             cloud_run_node: "{{ main_tmp_node }}"
-            cloud_run_node_task: "{{ main_tmp_stage_task.node_task | default(false) }}"
-            cloud_run_pod_task: "{{ main_tmp_stage_task.pod_task | default(false) }}"
+            cloud_run_task_target: "{{ main_tmp_stage_task.task_target }}"
           loop: >-
             {{ ctx_data.run_stages[<<{ loop.index - 1 }>>].tasks | default([]) | subelements('nodes') }}
           loop_control:

@@ -489,7 +489,7 @@ You can force the deployment for the hosts even if the commit is the same, if th
 
 This step transfer the files defined in the `transfer` property in the node. The base directory for the contents to be transferred (when type is `custom`) is the cloud directory. More information about transferences of contents can be seen [here](#transfer-contents).
 
-The destination will be the node directory, which is the workdir/chdir for the node tasks that run in the [run stages](#main-step---run-stages).
+The destination will be the node directory, which is the workdir/chdir for the node tasks that run in the [run stages](#run-stages).
 
 ### Main Step - Prepare the Pods
 
@@ -501,9 +501,7 @@ In this step, the transference of the files specified both in the pod context as
 
 ### Main Step - Run Stages
 
-TODO
-
-- Run Stages
+This step executes tasks in all hosts according to the `run_stages` specification for the environment context. More information about run stages can be found [here](#run-stages).
 
 ### Main Step - Nodes - Define the cron jobs
 
@@ -1029,7 +1027,7 @@ The contents may come from different places, when its type is `file` or `templat
 
 - When `origin` is `env`, the file path is relative to the [project environment repository](#project-environment).
 - When `origin` is `cloud`, the file path is relative to the cloud repository (specified in the main/context section, in the `repo` property).
-- When `origin` is `custom` (default), the file path is relative do a path that depends on where it is used. For example, if specified in a pod, it will be relative to the pod repository; if specified in an [extra_repo](#cloud-context-preparation-step), it will be relative to that repository. When there isn't a specific path to be used, it's equivalent to `cloud` (for example, when used in a service or in a task at [run_stages](run-stages)).
+- When `origin` is `custom` (default), the file path is relative do a path that depends on where it is used. For example, if specified in a pod, it will be relative to the pod repository; if specified in an [extra_repo](#cloud-context-preparation-step), it will be relative to that repository. When there isn't a specific path to be used, it's equivalent to `cloud` (for example, when used in a service or in a task at [run_stages](#run-stages)).
 
 ### Transfer Content
 
@@ -2025,6 +2023,24 @@ This example is just a demonstration of the flexibility that can be achieved wit
 
 ## Run Stages
 
+This step executes tasks in all hosts according to the `run_stages` specification for the environment context. A **run stage task** is a task that will run in one or more nodes/hosts, or pods in these hosts, according to the value of the property `task_target`, which can be defined as `node` or `pod`.
+
+The task will run in the nodes specified in the `nodes` property in the run stage task **when `task_target` is `node`**, unless the property `all_nodes` is `true`, in which case it will run in all nodes defined in the context.
+
+The task will run by default in all the pods present in the nodes specified in the `nodes` property in the run stage task **when `task_target` is `pod`**, unless the property `all_nodes` is `true`, in which case it will run in all nodes defined in the context. When the `nodes` property is specified, it can be either a string with the node names (which will include all the node pods), or a dictionary with a `name` property for the node name, and a `pods` property for the pods names (a list of strings).
+
+The types of tasks (defined in the `type` property in the tasks) can be the following:
+
+- `skip`: do nothing; skips the task.
+
+- `task`: will run the task as an included ansible task (similarly to what happens with [services](#services)). The task can receive [parameters](#mergeable-parameters), [credentials](#credentials) and [contents](#contents), which can be accessed using jinja2 inside the task.
+
+- `shell`: will run a command in the host, with the workdir/chdir defined by the `task_target` (can be either the node directory or the pod repository directory in the host).
+
+TODO: run stages: parallel tasks (for different hosts) and sequential stages
+
+_Example:_
+
 ```yaml
 main:
   my_context:
@@ -2039,15 +2055,15 @@ main:
         max_amount: 5
     run_stages:
       - tasks:
-          - name: "test_task_cloud"
+          - name: "test_params"
             all_nodes: true
-            node_task: true
+            task_target: "node"
             credentials:
-              overridden: "test_task_overridden"
-              run_stage: "test_task_run_stage"
+              overridden: "test_run_stage_overridden"
+              run_stage: "test_run_stage_run_stage"
             params:
               prop4: "overridden_cloud_1_4"
-            shared_params: ["test_task_overridden_1"]
+            shared_params: ["test_run_stage_overridden_1"]
             contents:
               content_task_run_stage: |
                 Content Tasks Cloud Run Stage
@@ -2055,24 +2071,157 @@ main:
               content_task_overridden: |
                 Content Tasks Cloud Overridden
                 Line 02
-          - name: "test"
+          - name: "test_echo"
             nodes:
               - name: "node_1"
                 pods: ["pod_1"]
-            pod_task: true
+            task_target: "pod"
           - name: "test_skip"
             all_nodes: true
-            node_task: true
+            task_target: "node"
       - tasks:
-          - name: "test_task_env"
+          - name: "test_1"
+            key: "test_echo"
             nodes: ["node_1"]
-            node_task: true
-          - name: "test_task_pod"
+            task_target: "node"
+          - name: "test_2"
+            key: "test_echo"
             all_nodes: true
-            pod_task: true
+            task_target: "pod"
+nodes:
+  node_1:
+    #...
+    pods: ["pod_1", "pod_2", "pod_3"]
+  node_2:
+    #...
+    pods: ["pod_1", "pod_2"]
+pods:
+  pod_1:
+    #...
+  pod_2:
+    #...
+tasks:
+  test_params:
+    type: "task"
+    root: true
+    file: "custom-cloud/test/run-tasks/task.yml"
+    schema: "custom-cloud/test/run-tasks/task.schema.yml"
+    credentials:
+      prop1: "test_run_stage_prop1_cloud"
+      prop2: "test_run_stage_prop2"
+      prop4: "test_run_stage_prop4"
+      prop5: "test_run_stage_prop5"
+      overridden: "test_run_stage_prop1_cloud"
+    shared_params: ["test_run_stage", "test_run_stage_cloud"]
+    group_params:
+      prop3: "test_run_stage_prop3"
+    contents:
+      content_task: |
+        Content Tasks Cloud
+        Line 02
+      content_task_overridden: |
+        Content Tasks Cloud Original
+        Line 02
+  test_echo:
+    type: "shell"
+    cmd: >-
+      echo "test: $(pwd)"
+  test_skip:
+    type: "skip"
+task_shared_params:
+  test_run_stage:
+    prop1: "value1"
+    prop2:
+      inner_prop1: "inner_value1"
+      inner_prop2:
+        inner_prop1: "innermost2_2_value1"
+      inner_prop3:
+        inner_prop1: "innermost2_3_value1"
+  test_run_stage_cloud:
+    prop1: "value1_cloud"
+  test_run_stage_overridden_1:
+    prop4: "overridden_shared_1_4"
+    prop5: "overridden_shared_1_5"
+task_group_params:
+  test_run_stage_prop3:
+    inner_prop1: "inner3_value1"
+    inner_prop2: "inner3_value2"
+credentials:
+  test_run_stage_prop1_cloud: "value1_credential_cloud"
+  test_run_stage_prop2:
+    inner_prop1: "inner2_secret1"
+  test_run_stage_prop4: "value4_credential"
+  test_run_stage_prop5: "value5_credential"
+  test_run_stage_overridden: "value_credential_overridden"
+  test_run_stage_run_stage: "value_credential_run_stage"
 ```
 
+The run stages defined above will:
+
+**1. [Stage 1 - Task 1] Run the task `test_params` in all hosts**
+
+The task will run in the single host defined by `node_1` and in the 3 hosts defined by `node_2`. The task is defined as follows:
+
+```yaml
+- name: "{{ params.title }} - task params, credentials & contents (cloud)"
+  set_fact:
+    task_params: "{{ params.task.params | default({}) }}"
+    task_credentials: "{{ params.task.credentials | default({}) }}"
+    task_contents: "{{ params.task.contents | default({}) }}"
+  tags: ["no_print"]
+
+- name: "{{ params.title }} - print params (cloud)"
+  debug:
+    var: task_params
+
+- name: "{{ params.title }} - print credentials (cloud)"
+  debug:
+    var: task_credentials
+
+- name: "{{ params.title }} - print contents (cloud)"
+  debug:
+    var: task_contents
+```
+
+The only thing the task does is print its parameters, credentials and contents:
+
+_Task Parameters:_
+
+```yaml
 #TODO
+```
+
+_Task Credentials:_
+
+```yaml
+#TODO
+```
+
+_Task Contents:_
+
+```yaml
+#TODO
+```
+
+**2. [Stage 1 - Task 2] Run the task `test_echo` in the specified pod**
+
+The task will run in the single host defined by `node_1`, for the single pod defined by `pod_1`. It will only print `test: $(pwd)`, which will be expanded to `test: <pod_dir>`, in which `pod_dir` is the pod repository directory.
+
+The default location of the pod repository directory is `<node_base_dir>/<pod_name>/main` (in which `node_base_dir` is the value of the property `base_dir` defined in the node), but may change based on the values of the properties `base_dir` and `flat` in the pod definition; these properties and their descriptions can be seen in the [schema for the environment file](schemas/env.schema.yml)).
+
+**3. [Stage 1 - Task 3] Run the task `test_skip`, that just skips the execution**
+
+The task runs for all hosts, but because its type is `skip`, it does nothing.
+
+**4. [Stage 2 - Task 1] Run the task `test_echo` in the specified node**
+
+The task will run in the single host defined by `node_1`. It will only print `test: $(pwd)`, which will be expanded to `test: <node_dir>`, in which `node_dir` is the node directory.
+
+The default location of the node directory is `<node_base_dir>/.node` (in which `node_base_dir` is the value of the property `base_dir` defined in the node), but may change based on the value of the property `node_dir` in the node definition (which specifies the full path of the node directory); these properties (`base_dir` and `node_dir`) and their descriptions can be seen in the [schema for the environment file](schemas/env.schema.yml)).
+
+**5. [Stage 2 - Task 2] Run the task `test_echo` in all pods of all nodes**
+
+The task will run for all the pods (`pod_1`, `pod_2` and `pod_3`) in the single host defined by `node_1`, and for all the pods (`pod_1` and `pod_2`) in the 3 hosts defined by `node_2`. It will only print `test: $(pwd)`, which will be expanded to `test: <pod_dir>`, in which `pod_dir` is the pod repository directory, as explained above.
 
 ## Encrypt and Decrypt
 
