@@ -86,8 +86,6 @@ class FilterModule(object):
             (
                 (not local_node)
                 and
-                (not local_connection)
-                and
                 (node_name == instance_type)
             )
         )

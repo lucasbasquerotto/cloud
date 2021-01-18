@@ -4,38 +4,39 @@
   set_fact:
     pod_prepare_repo: >-
       {{ env.repos[pod_item.repo] }}
+    pod_prepare_clone_repo: >-
+      {{ (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false) | bool) }}
   tags: ["no_print"]
 
-- name: "{{ pod_prepare_title }} - repos"
-  block:
-    - name: "{{ pod_prepare_title }} - pod - repo (outer)"
-      include_tasks: "tasks/util/repo.yml"
-      vars:
-        repo_title: "{{ pod_prepare_title }} - pod - repo"
-        repo_main: "{{ pod_prepare_repo }}"
-        repo_ssh_src_dir: "{{ env_dir }}"
-        repo_secrets_dir: "{{ pod_secrets_repos_dir }}/{{ pod_item.repo }}"
-        repo_default_dir: "{{ pod_repo_dir }}"
-        repo_dev_base_dir: "{{ env_dev_repos_dir }}"
-        repo_root: "{{ pod_root | bool }}"
-        repo_dev: "{{ (env_dev | bool) and (pod_node_local | bool) }}"
-        repo_lax: "{{ env_lax }}"
-      tags: ["no_print"]
+- name: "{{ pod_prepare_title }} - pod - repo (outer)"
+  include_tasks: "tasks/util/repo.yml"
+  vars:
+    repo_title: "{{ pod_prepare_title }} - pod - repo"
+    repo_main: "{{ pod_prepare_repo }}"
+    repo_ssh_src_dir: "{{ env_dir }}"
+    repo_secrets_dir: "{{ pod_secrets_repos_dir }}/{{ pod_item.repo }}"
+    repo_default_dir: "{{ pod_repo_dir }}"
+    repo_dev_base_dir: "{{ env_dev_repos_dir }}"
+    repo_root: "{{ pod_root | bool }}"
+    repo_dev: "{{ (env_dev | bool) and (pod_node_local | bool) }}"
+    repo_lax: "{{ env_lax }}"
+  when: pod_prepare_clone_repo | bool
+  tags: ["no_print"]
 
-    ### Create the environment pod repositories in the env folders (when defined) ###
+### Create the environment pod repositories in the env folders (when defined) ###
 
-    - name: "{{ pod_prepare_title }}"
-      include_tasks: "tasks/pods/env_repos.yml"
-      vars:
-        pod_prepare_env_repo_name: "{{ pod_prepare_item.repo }}"
-        pod_prepare_env_repo: >-
-          {{ env.repos[pod_prepare_item.repo] }}
-      loop: "{{ pod_item.env_repos | default([], true) }}"
-      loop_control:
-        loop_var: pod_prepare_item
-        label: "{{ pod_prepare_item.repo }}"
-      tags: ["no_print"]
-  when: (not (pod_node_local | bool)) or (pod_prepare_tmp | default(false) | bool)
+- name: "{{ pod_prepare_title }}"
+  include_tasks: "tasks/pods/env_repos.yml"
+  vars:
+    pod_prepare_env_repo_name: "{{ pod_prepare_item.repo }}"
+    pod_prepare_env_repo: >-
+      {{ env.repos[pod_prepare_item.repo] }}
+  loop: "{{ pod_item.env_repos | default([], true) }}"
+  loop_control:
+    loop_var: pod_prepare_item
+    label: "{{ pod_prepare_item.repo }}"
+  when: pod_prepare_clone_repo | bool
+  tags: ["no_print"]
 
 ### Transfer the pod artifacts (when ctx is defined in the pod) ###
 

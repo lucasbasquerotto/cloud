@@ -51,6 +51,11 @@
 
     # project hosts file (inventory)
 
+    - name: "{{ env_title }} - project_ctx_nodes"
+      set_fact:
+        project_ctx_nodes: "{{ ctx_data.nodes | default([]) | map(attribute='name') | list }}"
+      tags: ["no_print"]
+
     - name: "{{ env_title }} - create the hosts backup file, if it doesn't exist"
       copy:
         force: no
@@ -70,6 +75,52 @@
         transfer_tmp_dest: "{{ env_vars.secrets_ctx_dir }}/tmp/hosts.tmp"
         transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
       tags: ["no_print_skipped"]
+
+    - name: >-
+        {{ env_title }} - hosts file -
+        ensure the inventory contains {{ '[' + tmp_item + ']' }} - check
+      lineinfile:
+        name: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
+        line: "{{ '[' + tmp_item + ']' }}"
+        state: present
+      loop: "{{ project_ctx_nodes }}"
+      loop_control:
+        loop_var: tmp_item
+      check_mode: yes
+      register: project_ctx_host_info_list
+      tags: ["no_print_skipped"]
+
+    - name: >-
+        {{ env_title }} - hosts file -
+        ensure the inventory contains the nodes names - unknown error
+      fail:
+        msg: |
+          Unknow Error (inventory file with line {{ '[' + tmp_item + ']' }}):
+          {{ tmp_result }}
+      vars:
+        tmp_result: "{{ project_ctx_host_info_list.results[tmp_idx] }}"
+      loop: "{{ project_ctx_nodes }}"
+      loop_control:
+        index_var: tmp_idx
+        loop_var: tmp_item
+      when: tmp_result is failed
+      tags: ["no_print"]
+
+    - name: >-
+        {{ env_title }} - hosts file -
+        ensure the inventory contains the nodes names - fail
+      fail:
+        msg: >-
+          Ensure the inventory file (hosts) contains a line with
+          {{ '[' + tmp_item + ']' }}
+      vars:
+        tmp_result: "{{ project_ctx_host_info_list.results[tmp_idx] }}"
+      loop: "{{ project_ctx_nodes }}"
+      loop_control:
+        index_var: tmp_idx
+        loop_var: tmp_item
+      when: tmp_result is changed
+      tags: ["no_print"]
 
     - name: "{{ env_title }} - get the difference of the 2 hosts files (backup and tmp)"
       command: "diff {{ env_vars.secrets_ctx_dir }}/hosts.tmp {{ env_vars.secrets_ctx_dir }}/hosts.backup"
