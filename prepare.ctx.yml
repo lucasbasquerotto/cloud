@@ -53,7 +53,14 @@
 
     - name: "{{ env_title }} - project_ctx_nodes"
       set_fact:
-        project_ctx_nodes: "{{ ctx_data.nodes | default([]) | map(attribute='name') | list }}"
+        project_ctx_nodes: >-
+          {{
+            ctx_data.nodes
+            | default([])
+            | selectattr('local', 'equalto', False)
+            | map(attribute='name')
+            | list
+          }}
       tags: ["no_print"]
 
     - name: "{{ env_title }} - create the hosts backup file, if it doesn't exist"
