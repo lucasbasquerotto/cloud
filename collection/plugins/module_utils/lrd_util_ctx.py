@@ -564,6 +564,7 @@ def prepare_pod(pod_info, parent_data, run_info):
     pod_ctx_info_dict = parent_data.get('pod_ctx_info_dict')
     local = parent_data.get('local') or False
     parent_base_dir = parent_data.get('base_dir')
+    dependencies_data = parent_data.get('dependencies_data')
 
     env_data = run_info.get('env_data')
     validate_ctx = run_info.get('validate')
@@ -940,7 +941,10 @@ def prepare_pod(pod_info, parent_data, run_info):
         if validate_ctx and not error_msgs_aux:
           try:
             result_info = load_vars(
-                pod_info=dict(pod=result),
+                pod_info=dict(
+                    pod=result,
+                    dependencies_data=dependencies_data,
+                ),
                 run_info=run_info,
                 meta_info=dict(no_ctx_msg=True),
             )
@@ -1342,10 +1346,11 @@ def prepare_node(node_info, run_info):
         instance_amount = int(node_info_dict.get('amount') or 1)
         instance_max_amount = int(
             node_info_dict.get('max_amount') or instance_amount)
+        dependencies = node_info_dict.get('dependencies')
 
         result['amount'] = instance_amount
         result['max_amount'] = instance_max_amount
-        result['dependencies'] = node_info_dict.get('dependencies')
+        result['dependencies'] = dependencies
 
         credential = node.get('credential')
 
@@ -1668,6 +1673,15 @@ def prepare_node(node_info, run_info):
         pod_ctx_info_dict = node_info_dict.get('pods')
 
         if pods:
+          dependencies_names = sorted(list((dependencies or dict()).keys()))
+          dependencies_data = dict()
+
+          for dependency_name in dependencies_names:
+            dependencies_data[dependency_name] = dict(
+                type='ip',
+                host='127.0.0.1',
+                host_list=['127.0.0.1'],
+            )
 
           node_data = dict(
               pod_ctx_info_dict=pod_ctx_info_dict,
@@ -1675,6 +1689,7 @@ def prepare_node(node_info, run_info):
               base_dir=base_dir,
               parent_type='node',
               parent_description=node_description,
+              dependencies_data=dependencies_data,
           )
           info = prepare_pods(pods, node_data, run_info)
 
