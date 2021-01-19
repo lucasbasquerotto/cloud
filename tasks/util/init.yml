@@ -1,4 +1,4 @@
-- name: "{{ env_title | default('[env]') }} gathering facts"
+- name: "{{ env_title | default('[env] setup') }} - gathering facts"
   setup:
   when: init_run_setup | default(false) | bool
   tags: ["no_print_skipped"]
@@ -10,7 +10,18 @@
   when: env is not defined
   tags: ["no_print"]
 
+- name: "{{ env_title }} - init_failed_hosts"
+  set_fact:
+    init_failed_hosts: "{{ ansible_play_hosts_all | difference(ansible_play_hosts) }}"
+  tags: ["no_print"]
+
 - name: "{{ env_title }} - ctx (outer)"
   include_tasks: "tasks/util/ctx.yml"
   when: ctx is not defined
   tags: ["no_print"]
+
+- name: "{{ env_title }} - fail when localhost failed"
+  fail:
+    msg: "localhost (in ansible group 'main') failed"
+  when: "'localhost' in init_failed_hosts"
+  tags: ["no_print_skipped"]
