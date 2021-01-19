@@ -31,9 +31,6 @@ schemas:
       ssh_file:
         type: "str"
         description: "ssh key file used to connect to the node (host)"
-      host_ssh_public_keys_path:
-        type: "str"
-        description: "public ssh keys that the node allows access from"
   params:
     type: "dict"
     description: "node params schema"

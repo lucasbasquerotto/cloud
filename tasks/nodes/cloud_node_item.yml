@@ -1,25 +1,5 @@
 # Main Vars and Validations
 
-- name: >-
-    {{ cloud_node_item_title }} -
-    ensure the inventory contains {{ '[' + cloud_node_name + ']' }} - check
-  lineinfile:
-    name: "{{ inventory_file }}"
-    line: "{{ '[' + cloud_node_name + ']' }}"
-    state: present
-  check_mode: yes
-  register: cloud_node_conf
-  failed_when: cloud_node_conf is failed
-  tags: ["no_print_skipped"]
-
-- name: >-
-    {{ cloud_node_item_title }} -
-    ensure the inventory contains {{ '[' + cloud_node_name + ']' }} - fail
-  fail:
-    msg: "Ensure the inventory file contains a line with {{ '[' + cloud_node_name + ']' }}"
-  when: cloud_node_conf is changed
-  tags: ["no_print"]
-
 - name: "{{ cloud_node_item_title }} - cloud_node_credential"
   set_fact:
     cloud_node_credential: "{{ cloud_node_item.credential | default({}) }}"
