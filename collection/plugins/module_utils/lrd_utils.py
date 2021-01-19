@@ -145,6 +145,12 @@ def to_float(val):
     return None
 
 
+def to_default_float(val, default_val):
+  result = to_float(val)
+  result = result if (result is not None) else default_val
+  return result
+
+
 def to_int(val):
   if val is None:
     return None
@@ -157,3 +163,9 @@ def to_int(val):
       return None
   else:
     return None
+
+
+def to_default_int(val, default_val):
+  result = to_int(val)
+  result = result if (result is not None) else default_val
+  return result
