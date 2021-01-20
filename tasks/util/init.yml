@@ -25,3 +25,11 @@
     msg: "localhost (in ansible group 'main') failed"
   when: "'localhost' in init_failed_hosts"
   tags: ["no_print_skipped"]
+
+- name: "{{ env_title }} - hosts data (outer)"
+  include_tasks: "tasks/util/hosts_data.yml"
+  when: >-
+    (init_load_hosts_data | default(false) | bool)
+    and
+    (ctx_node_dependencies is not defined)
+  tags: ["no_print"]

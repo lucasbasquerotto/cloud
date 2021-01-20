@@ -1047,9 +1047,10 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
       error_msgs_node = []
 
       try:
-        node_dependencies = list()
+        node_dependencies = dict()
         prepared_node = prepared_node_dict.get(node_name)
-        dependencies = prepared_node.get(dependencies)
+        dependencies = prepared_node.get('dependencies')
+        active_hosts_amount = len(prepared_node.get('active_hosts') or [])
 
         if dependencies:
           for dependency_name in sorted(list(dependencies.keys())):
@@ -1111,7 +1112,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
 
             if dependency_hosts and (dependency_type == 'node'):
               target_node_names = dependency_hosts
-              dependency_hosts += []
+              dependency_hosts = []
 
               for target_node_name in (target_node_names or []):
                 target_prepared_node = prepared_node_dict.get(target_node_name)
@@ -1130,7 +1131,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
             dependency_limit = int(dependency_limit if (
                 dependency_limit is not None) else 1)
             dependency_required_amount = to_default_int(
-                dependency.get('required_amount'), 0)
+                dependency.get('required'), 0)
             dependency_real_limit = dependency_hosts if (dependency_limit == -1) else min(
                 dependency_limit, len(dependency_hosts)
             )
@@ -1176,12 +1177,13 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
 
             result_item = dict(
                 type=dependency_type,
-                required_amount=dependency_required_amount,
+                required=dependency_required_amount,
                 limit=dependency_real_limit,
                 node_ip_type=dependency.get('node_ip_type'),
                 hosts=dependency_hosts,
                 protocol=dependency.get('protocol'),
                 port=dependency.get('port'),
+                local=target_prepared_node.get('local')
             )
 
             result_item_keys = list(result_item.keys())
@@ -1190,7 +1192,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
               if result_item.get(key) is None:
                 result_item.pop(key, None)
 
-            node_dependencies += [result_item]
+            node_dependencies[dependency_name] = result_item
 
             for value in error_msgs_dependency:
               new_value = [
@@ -1199,7 +1201,10 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
               ] + value
               error_msgs_node += [new_value]
 
-        result[node_name] = node_dependencies
+        result[node_name] = dict(
+            active_hosts_amount=active_hosts_amount,
+            dependencies=node_dependencies,
+        )
       except Exception as error:
         error_msgs_node += [[
             'msg: error when trying to prepare the node dependency',
@@ -1591,6 +1596,7 @@ def prepare_node(node_info, run_info):
               name_suffix = ('-' + str(idx)) if idx > 1 else ''
               absent = None if (idx <= instance_amount) else True
               real_hostname = (hostname or (node_name + '-host')) + name_suffix
+              real_hostname = real_hostname.replace('_', '-')
               replica = dict(
                   name=real_hostname,
                   absent=absent,
@@ -2695,10 +2701,21 @@ def prepare_ctx(ctx_name, run_info):
                 node_names += [node_name]
                 prepared_node_dict[node_name] = prepared_node
 
-              node_dependencies = prepare_node_dependencies(
+              info = prepare_node_dependencies(
                   node_names, prepared_node_dict
               )
-              result['node_dependencies'] = node_dependencies
+
+              node_dependencies = info.get('result')
+              error_msgs_aux = info.get('error_msgs') or list()
+
+              if error_msgs_aux:
+                nodes_errors = error_msgs_aux
+
+                for value in error_msgs_aux:
+                  new_value = ['context: prepare node dependencies'] + value
+                  error_msgs += [new_value]
+              else:
+                result['node_dependencies'] = node_dependencies
 
         ctx_final_services = ctx.get('final_services')
 

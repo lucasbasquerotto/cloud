@@ -66,7 +66,7 @@ The demos are great for what they are meant to be: demos, prototypes. **They sho
 
     - [Main Step - Nodes - Create](#main-step---nodes---create)
 
-    - [Main Step - Nodes - Wait for the hosts to be ready](#main-step---nodes---wait-for-the-hosts-to-be-ready)
+    - [Main Step - Nodes - Setup](#main-step---nodes---setup)
 
     - [Main Step - Nodes - Prepare](#main-step---nodes---prepare)
 
@@ -467,7 +467,7 @@ The nodes accept a [dns_service](schemas/env.schema.yml) property (along with th
 
 These hosts will then be accessed in the next steps. More information about the services that can create nodes can be seen [here](#services).
 
-### Main Step - Nodes - Wait for the hosts to be ready
+### Main Step - Nodes - Setup
 
 This step waits for the created hosts (in the step [Nodes - Create](#main-step---nodes---create)) based on the information in the property [host_test](schemas/node.schema.yml) in the node:
 
@@ -481,7 +481,7 @@ This step waits for the created hosts (in the step [Nodes - Create](#main-step--
 
 - `setup_finished_timeout`: Timeout (in seconds) while waiting for the host setup to complete.
 
-After connecting to the host, and verifying that the setup was successful, it then compares the environment repository commit with the commit registered in the previous deployment, to skip the deployment for the host if the commits are the same (see [Nodes - Wait for the hosts to be ready](#main-step---nodes---finish)).
+After connecting to the host, and verifying that the setup was successful, it then compares the environment repository commit with the commit registered in the previous deployment, to skip the deployment for the host if the commits are the same (see [Nodes - Setup](#main-step---nodes---finish)).
 
 You can force the deployment for the hosts even if the commit is the same, if the `force` flag was specified (explained at the [Cloud Preparation Step](#cloud-preparation-step)).
 
@@ -509,7 +509,7 @@ This step creates the cron files at the designated locations (defined in the [cr
 
 ### Main Step - Nodes - Finish
 
-This step creates a file in the node with the environment repository commit, to skip newer deployments with the same commit (see [Main Step - Nodes - Wait for the hosts to be ready](#main-step---nodes---wait-for-the-hosts-to-be-ready)).
+This step creates a file in the node with the environment repository commit, to skip newer deployments with the same commit (see [Main Step - Nodes - Setup](#main-step---nodes---setup)).
 
 ### Main Step - Final Services
 

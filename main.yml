@@ -87,15 +87,17 @@
 
 ###############################################################################
 
-- name: Play 02.02 - Nodes - Wait for the hosts to be ready
+- name: Play 02.02 - Nodes - Setup
   hosts: main,host
   tags:
     - init
     - nodes
-    - wait_nodes
+    - nodes_setup
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
+      vars:
+        init_load_hosts_data: true
       tags: ["no_print"]
 
     - name: "{{ env_title }} - validate instance type (required)"
@@ -105,11 +107,11 @@
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.before_wait_nodes }}"
+      include_tasks: "{{ ctx_data.hooks.before_nodes_setup }}"
       when: >-
         (env_can_run_node | bool)
         and
-        ((ctx_data.hooks.before_wait_nodes | default('')) != '')
+        ((ctx_data.hooks.before_nodes_setup | default('')) != '')
       tags: ["no_print"]
 
     - name: "{{ env_title }} - host test (outer)"
@@ -158,13 +160,13 @@
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
-      include_tasks: "{{ ctx_data.hooks.after_wait_nodes }}"
+      include_tasks: "{{ ctx_data.hooks.after_nodes_setup }}"
       when: >-
         (not (instance_info_skip | bool))
         and
         (env_can_run_node | bool)
         and
-        ((ctx_data.hooks.after_wait_nodes | default('')) != '')
+        ((ctx_data.hooks.after_nodes_setup | default('')) != '')
       tags: ["no_print"]
 
 ###############################################################################
