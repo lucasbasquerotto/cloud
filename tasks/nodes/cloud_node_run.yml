@@ -53,6 +53,8 @@
 
 - name: "{{ cloud_node_item_title }} - dns (outer)"
   include_tasks: "cloud_node_dns.yml"
+  vars:
+    cloud_node_dns_host: "{{ cloud_node_active_hosts[0] | default({}) }}"
   loop: "{{ cloud_node_params.dns_service_params_list | default([]) }}"
   loop_control:
     loop_var: cloud_node_dns_item

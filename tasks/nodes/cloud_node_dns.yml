@@ -15,10 +15,10 @@
   loop:
     - name: "ipv4"
       dns_type: "A"
-      dns_value: "{{ cloud_node_active_hosts[0].public_ipv4 | default('') }}"
+      dns_value: "{{ cloud_node_dns_host.public_ipv4 | default('') }}"
     - name: "ipv6"
       dns_type: "AAAA"
-      dns_value: "{{ cloud_node_active_hosts[0].public_ipv6 | default('') }}"
+      dns_value: "{{ cloud_node_dns_host.public_ipv6 | default('') }}"
   loop_control:
     loop_var: tmp_item
   when: >-
