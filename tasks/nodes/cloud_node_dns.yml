@@ -4,7 +4,7 @@
       {{
         cloud_node_dns_services + [{
           'name': 'cloud-node-dns-service-' + tmp_item.name,
-          'key': cloud_node_node.dns_service,
+          'key': cloud_node_item.dns_service,
           'params': cloud_node_dns_item | combine(tmp_params)
         }]
       }}

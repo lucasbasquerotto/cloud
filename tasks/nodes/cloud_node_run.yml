@@ -60,7 +60,7 @@
     loop_var: cloud_node_dns_item
     label: "{{ cloud_node_dns_item.record | default('') }}"
   when: >-
-    (cloud_node_node.dns_service | default('') != '')
+    (cloud_node_item.dns_service | default('') != '')
     and
     ((cloud_node_active_hosts | length) = 1)
     and
