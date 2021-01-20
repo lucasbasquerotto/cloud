@@ -2,17 +2,19 @@
 
 - name: "{{ pod_transfer_title }} - pod_vars"
   set_fact:
-    pod_transfer_directories: "{{ pod_transfer_vars.directories }}"
-    pod_transfer_templates: "{{ pod_transfer_vars.templates }}"
-    pod_transfer_files: "{{ pod_transfer_vars.files }}"
+    pod_transfer_directories: "{{ tmp_transfer_vars.directories }}"
+    pod_transfer_templates: "{{ tmp_transfer_vars.templates }}"
+    pod_transfer_files: "{{ tmp_transfer_vars.files }}"
   vars:
-    pod_transfer_vars: >-
+    tmp_dependencies_data: >-
+      {{ ctx_node_dependencies[pod_node_name][instance_index | default(1, true)] }}
+    tmp_transfer_vars: >-
       {{
         lookup(
           'lrd.cloud.pod_vars',
           pod_item,
           env_data=env_data,
-          dependencies_data=pod_dependencies_data,
+          dependencies_data=tmp_dependencies_data,
         )
       }}
   tags: ["no_print"]

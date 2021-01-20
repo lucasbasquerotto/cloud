@@ -1497,7 +1497,7 @@ def prepare_node(node_info, run_info):
 
           for dependency_name in dependencies_names:
             dependencies_data[dependency_name] = dict(
-                type='ip',
+                original_type='ip',
                 host='127.0.0.1',
                 host_list=['127.0.0.1'],
             )
