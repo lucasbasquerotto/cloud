@@ -29,10 +29,6 @@
     loop_var: tmp_item
 
 - debug:
-    var: ctx_data.nodes
-  when: inventory_hostname == 'localhost'
-
-- debug:
     var: ctx_data.node_dependencies
   when: inventory_hostname == 'localhost'
 

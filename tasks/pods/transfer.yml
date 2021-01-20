@@ -7,7 +7,10 @@
     pod_transfer_files: "{{ tmp_transfer_vars.files }}"
   vars:
     tmp_dependencies_data: >-
-      {{ ctx_node_dependencies[pod_node_name][instance_index | default(1, true)] }}
+      {{ ctx_node_dependencies[pod_node_name][
+          (instance_index | default(1, true) | int) - 1
+        ]
+      }}
     tmp_transfer_vars: >-
       {{
         lookup(
