@@ -1128,12 +1128,17 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                   ) or []
 
             dependency_limit = dependency.get('limit')
-            dependency_limit = int(dependency_limit if (
-                dependency_limit is not None) else 1)
+            dependency_limit = int(
+                dependency_limit
+                if (dependency_limit is not None)
+                else 1
+            )
             dependency_required_amount = to_default_int(
                 dependency.get('required'), 0)
-            dependency_real_limit = dependency_hosts if (dependency_limit == -1) else min(
-                dependency_limit, len(dependency_hosts)
+            dependency_real_limit = (
+                len(dependency_hosts)
+                if (dependency_limit == -1)
+                else min(dependency_limit, len(dependency_hosts))
             )
 
             if dependency_limit < -1:
@@ -1143,15 +1148,18 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
               ]]
             elif (dependency_required_amount != 0) and dependency_limit == 0:
               error_msgs_dependency += [[
-                  str('dependency required amount: ' +
-                      str(dependency_required_amount)),
+                  str(
+                      'dependency required amount: '
+                      + str(dependency_required_amount)
+                  ),
                   'msg: dependency limit is defined as 0, but is required',
               ]]
             elif (dependency_required_amount != 0) and dependency_real_limit == 0:
               error_msgs_dependency += [[
-                  str('dependency required amount: ' +
-                      str(dependency_required_amount)
-                      ),
+                  str(
+                      'dependency required amount: '
+                      + str(dependency_required_amount)
+                  ),
                   'msg: dependency is required, but number of hosts defined is 0',
               ]]
 
@@ -1166,12 +1174,14 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                 (dependency_real_limit < dependency_required_amount)
             ):
               error_msgs_dependency += [[
-                  str('dependency required amount: ' +
-                      str(dependency_required_amount)
-                      ),
-                  str('target host amount: ' +
-                      str(dependency_real_limit)
-                      ),
+                  str(
+                      'dependency required amount: '
+                      + str(dependency_required_amount)
+                  ),
+                  str(
+                      'target host amount: '
+                      + str(dependency_real_limit)
+                  ),
                   'msg: dependency real limit is less than the required amount',
               ]]
 

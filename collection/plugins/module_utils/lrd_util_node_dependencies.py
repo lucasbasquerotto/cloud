@@ -86,10 +86,11 @@ def prepare_host_dependencies(node_dependencies, hosts_data):
                     dependency_hosts = new_dependency_hosts
 
                   hosts_amount = len(dependency_hosts)
+                  result_host_idx = 0
+                  initial_idx = 0
 
                   if hosts_amount > 0:
                     result_host_idx = (instance_index - 1) % hosts_amount
-                    result_host = dependency_hosts[result_host_idx]
 
                     half_limit = int(dependency_limit % 2)
                     initial_idx = max(result_host_idx - half_limit, 0)
@@ -117,27 +118,23 @@ def prepare_host_dependencies(node_dependencies, hosts_data):
                           str('amount found: ' + str(real_hosts_amount)),
                           'msg: the number of hosts is less than the required amount',
                       ]]
-                  else:
-                    # TODO remove
-                    error_msgs_dependency += [[
-                        str('required amount: ' + str(required_amount)),
-                        str('amount found: ' + str(real_hosts_amount)),
-                        str('amount expected: ' + str(hosts_amount)),
-                        'msg: test at the host dependency data',
-                    ]]
 
                   if dependency_type in ['node', 'ip']:
                     result_hosts_aux = result_hosts
                     result_hosts = []
 
                     for host_aux in result_hosts_aux:
-                      if protocol:
-                        host_aux = protocol + "://" + host_aux
+                      if host_aux:
+                        if protocol:
+                          host_aux = protocol + "://" + host_aux
 
-                      if port:
-                        host_aux += port
+                        if port:
+                          host_aux += ":" + port
 
                       result_hosts += [host_aux]
+
+                  if result_hosts:
+                    result_host = dependency_hosts[result_host_idx - initial_idx]
 
                   dependency_result[dependency_name] = dict(
                       type=dependency_type,
