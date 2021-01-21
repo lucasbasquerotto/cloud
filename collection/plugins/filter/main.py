@@ -20,7 +20,7 @@ from ansible.module_utils._text import to_text
 class FilterModule(object):
   def filters(self):
     return {
-        'dependencies_data': self.dependencies_data,
+        'node_dependencies': self.node_dependencies,
         'params_mixer': self.params_mixer,
         'simple_to_list': self.simple_to_list,
         'simple_dict_prop': self.simple_dict_prop,
@@ -28,7 +28,7 @@ class FilterModule(object):
         'validate_connection': self.validate_connection,
     }
 
-  def dependencies_data(self, node_dependencies, hosts_data):
+  def node_dependencies(self, node_dependencies, hosts_data):
     info = prepare_host_dependencies(node_dependencies, hosts_data)
 
     result = info.get('result')

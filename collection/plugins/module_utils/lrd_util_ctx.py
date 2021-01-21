@@ -578,7 +578,7 @@ def prepare_pod(pod_info, parent_data, run_info):
     pod_ctx_info_dict = parent_data.get('pod_ctx_info_dict')
     local = parent_data.get('local') or False
     parent_base_dir = parent_data.get('base_dir')
-    dependencies_data = parent_data.get('dependencies_data')
+    dependencies = parent_data.get('dependencies')
 
     env_data = run_info.get('env_data')
     validate_ctx = run_info.get('validate')
@@ -959,7 +959,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             result_info = load_vars(
                 pod_info=dict(
                     pod=result,
-                    dependencies_data=dependencies_data,
+                    dependencies=dependencies,
                 ),
                 run_info=run_info,
                 meta_info=dict(no_ctx_msg=True),
@@ -1518,10 +1518,10 @@ def prepare_node(node_info, run_info):
 
         if pods:
           dependencies_names = sorted(list((dependencies or dict()).keys()))
-          dependencies_data = dict()
+          dependencies = dict()
 
           for dependency_name in dependencies_names:
-            dependencies_data[dependency_name] = dict(
+            dependencies[dependency_name] = dict(
                 original_type='ip',
                 host='127.0.0.1',
                 host_list=['127.0.0.1'],
@@ -1533,7 +1533,7 @@ def prepare_node(node_info, run_info):
               base_dir=base_dir,
               parent_type='node',
               parent_description=node_description,
-              dependencies_data=dependencies_data,
+              dependencies=dependencies,
           )
           info = prepare_pods(pods, node_data, run_info)
 

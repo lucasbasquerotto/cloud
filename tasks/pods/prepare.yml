@@ -55,6 +55,8 @@
     transfer_title: "{{ pod_prepare_title }} - transfer #{{ pod_prepare_idx + 1 }}"
     transfer_prepared: true
     transfer_content: "{{ pod_prepare_item.src }}"
+    transfer_input:
+      dependencies: "{{ pod_node_dependencies }}"
     transfer_dest: "{{ pod_repo_dir }}/{{ pod_prepare_item.dest }}"
     transfer_tmp_dest: "{{ pod_tmp_dir }}/{{ pod_prepare_item.dest }}"
     transfer_custom_dir: "{{ pod_item.local_dir }}"

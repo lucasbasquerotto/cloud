@@ -1758,10 +1758,7 @@ contents: {}
 credentials: {}
 ctx_name: pod_local
 data_dir: ../../data/test-pod-local-pod_local-simple
-dependencies_data:
-    list: []
-    node_ip_dict: {}
-    node_ips_dict: {}
+dependencies: {}
 dev: true
 env_name: test-pod-local
 extra_repos_dir_relpath: ../../projects/test-pod-local/files/cloud/ctxs/pod_local/extra-repos
@@ -1852,7 +1849,7 @@ _(The lines were removed because the property `meta.template_no_empty_lines` in 
 - `credentials`: The pod credentials (specified in the `credentials` property). There is none in this example.
 - `ctx_name`: The context name (specified in the `main` section in the environment file). This is the name of the environment/cloud context, not the pod context.
 - `data_dir`: The path of the pod data directory (for local pods, it's the relative path).
-- `dependencies_data`: The node dependencies. There is none in this example.
+- `dependencies`: The node dependencies. There is none in this example.
 - `dev`: When `true`, specifies that the deployment is in development mode.
 - `env_name`: The environment name (specified in the `name` property in the environment file). In most cases, corresponds to the project name.
 - `extra_repos_dir_relpath`: Relative path to the [extra-repos directory](#extra-repositories).

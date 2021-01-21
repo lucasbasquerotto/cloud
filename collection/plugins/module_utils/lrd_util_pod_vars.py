@@ -24,7 +24,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import
 def load_vars(pod_info, run_info, meta_info=None):
   try:
     pod = pod_info.get('pod')
-    dependencies_data = pod_info.get('dependencies_data', dict())
+    dependencies = pod_info.get('dependencies', dict())
 
     plugin = run_info.get('plugin')
     ansible_vars = run_info.get('ansible_vars')
@@ -60,7 +60,7 @@ def load_vars(pod_info, run_info, meta_info=None):
         contents=pod.get('contents', {}),
         data_dir=pod.get('data_dir'),
         extra_repos_dir_relpath=pod.get('extra_repos_dir_relpath'),
-        dependencies_data=dependencies_data,
+        dependencies=dependencies,
     )
 
     previous = dict(

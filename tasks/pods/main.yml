@@ -8,53 +8,6 @@
     pod_node_base_dir: "{{ pod_node.base_dir | default('') }}"
   tags: ["no_print"]
 
-# Dependencies
-
-- name: "{{ pod_title }}- pod_dependencies"
-  set_fact:
-    pod_dependencies: []
-    pod_dependencies_ip_dict: {}
-    pod_dependencies_ips_dict: {}
-  tags: ["no_print"]
-
-- name: "{{ pod_title }} - node dependencies (outer)"
-  include_tasks: "tasks/pods/dependency.yml"
-  vars:
-    pod_dependency_title: >-
-      {{ pod_title }} - dependency[{{ pod_node_item.host }}]
-    pod_dependency_host: "{{ pod_node_item.host }}"
-    pod_dependency_node: "{{ pod_node_item.node }}"
-    pod_dependency_all: "{{ pod_node_item.all | default(false) | bool }}"
-    pod_dependency_field: >-
-      {{
-        pod_node_item.public | default(false) | bool
-        | ternary('instance_public_ipv4', 'instance_private_ip')
-      }}
-    pod_dependency_total_src_nodes: "{{ groups[pod_node_name] | length }}"
-    pod_dependency_ips: >-
-      {{
-        groups[pod_dependency_node]
-        | map('extract', hostvars, [pod_dependency_field]) | list
-      }}
-  loop: "{{ pod_node.dependencies | default([], true) | list }}"
-  loop_control:
-    loop_var: pod_node_item
-  when: not (pod_node_local | bool)
-  tags: ["no_print"]
-
-- name: "{{ pod_title }} - define the dependencies ips"
-  become: true
-  lineinfile:
-    dest: "/etc/hosts"
-    regexp: ".*{{ pod_node_item.host }}$"
-    line: "{{ pod_node_item.ip }} {{ pod_node_item.host }}"
-    state: present
-  loop: "{{ pod_dependencies }}"
-  loop_control:
-    loop_var: pod_node_item
-    label: "{{ pod_node_item.host }}"
-  tags: ["no_print_skipped"]
-
 # Pods
 
 - name: "{{ pod_title }} - pods (outer)"
@@ -70,10 +23,12 @@
     pod_root: "{{ pod_item.root | default(pod_node.root | default(false)) }}"
     pod_fast: "{{ pod_item.fast_prepare | default(false) }}"
     pod_secrets_repos_dir: "{{ pod_item.tmp_dir }}/secrets/repos"
-    pod_dependencies_data:
-      list: "{{ pod_dependencies }}"
-      node_ip_dict: "{{ pod_dependencies_ip_dict }}"
-      node_ips_dict: "{{ pod_dependencies_ips_dict }}"
+    pod_node_dependencies: >-
+      {{
+        ctx_node_dependencies[pod_node_name][
+          (instance_index | default(1, true) | int) - 1
+        ] | default({})
+      }}
   loop: "{{ pod_node.pods | default([], true) }}"
   loop_control:
     loop_var: pod_item
