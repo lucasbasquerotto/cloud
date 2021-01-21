@@ -1396,7 +1396,7 @@ def prepare_node(node_info, run_info):
           if dns_service_params_list:
             error_msgs += [[
                 str('node: ' + node_description),
-                'msg: dns_service_params_list is defined, but service is undefined'
+                'msg: dns_service_params_list is defined with records, but service is undefined'
             ]]
         else:
           replicas = []
@@ -1468,19 +1468,15 @@ def prepare_node(node_info, run_info):
             if dns_service_params_list:
               error_msgs += [[
                   str('node: ' + node_description),
-                  'msg: dns_service_params_list is defined, but dns_service is undefined'
+                  'msg: dns records defined (dns_service_params_list), but dns_service is undefined'
               ]]
-          elif instance_amount > 1:
+          elif dns_service_params_list and (instance_amount > 1):
             error_msgs += [[
                 str('node: ' + node_description),
-                'msg: dns service defined for node with more than 1 replica'
+                'msg: dns service with records defined (dns_service_params_list) '
+                + 'for node with more than 1 replica'
             ]]
-          elif not dns_service_params_list:
-            error_msgs += [[
-                str('node: ' + node_description),
-                'msg: dns service defined for node with dns_service_params_list undefined or empty'
-            ]]
-          else:
+          elif dns_service_params_list:
             services_info = []
 
             for idx, dns_service_params in enumerate(dns_service_params_list, start=1):
