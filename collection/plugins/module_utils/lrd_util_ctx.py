@@ -664,8 +664,10 @@ def prepare_pod(pod_info, parent_data, run_info):
         flat = pod.get('flat')
         base_dir = None if local else (
             pod.get('base_dir') or (parent_base_dir + '/' + pod_name))
+        pod_dir_relpath = pod.get('pod_dir_relpath') or 'main'
         pod_dir = local_dir if local else (
-            base_dir if flat else (base_dir + '/main'))
+            base_dir if flat else (base_dir + '/' + pod_dir_relpath)
+        )
         tmp_dir = (
             (dev_repos_dir + '/tmp/pods/' + pod_identifier)
             if local
@@ -1075,6 +1077,14 @@ def prepare_node(node_info, run_info):
     if not node_name:
       error_msgs += [['msg: node name not specified']]
       return dict(result=result, error_msgs=error_msgs)
+    elif node_name == 'main':
+      error_msgs += [[
+          str('node: ' + node_description),
+          'msg: the node name value, which will correspond to the ansible group, '
+          + 'is "main", which is a reserved group for the local host; please, choose '
+          + 'other name'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
 
     result['name'] = node_name
     result['key'] = node_key
@@ -1414,6 +1424,7 @@ def prepare_node(node_info, run_info):
             ]]
 
           active_hosts = []
+          all_hosts = []
 
           if instance_max_amount > 0:
             for idx in range(1, instance_max_amount + 1):
@@ -1427,10 +1438,13 @@ def prepare_node(node_info, run_info):
               )
               replicas += [replica]
 
+              all_hosts += [real_hostname]
+
               if not absent:
                 active_hosts += [real_hostname]
 
             result['active_hosts'] = active_hosts
+            result['all_hosts'] = all_hosts
 
             service_info = dict(
                 name=service,
@@ -2517,6 +2531,24 @@ def prepare_ctx(ctx_name, run_info):
             result['nodes'] = prepared_nodes
 
             if prepared_nodes:
+              all_hosts_dict = dict()
+
+              for prepared_node in prepared_nodes:
+                node_description = prepared_node.get('description')
+
+                for host in (prepared_node.get('all_hosts') or []):
+                  if host in all_hosts_dict.keys():
+                    previous_node_description = all_hosts_dict[host]
+
+                    error_msgs += [[
+                        str('node1: ' + str(previous_node_description)),
+                        str('node2: ' + str(node_description)),
+                        str('host: ' + str(host)),
+                        'msg: there are 2 hosts with the same name in different nodes',
+                    ]]
+                  else:
+                    all_hosts_dict[host] = node_description
+
               node_names = []
               prepared_node_dict = dict()
 

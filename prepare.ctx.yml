@@ -85,7 +85,7 @@
 
     - name: >-
         {{ env_title }} - hosts file -
-        ensure the inventory contains {{ '[' + tmp_item + ']' }} - check
+        ensure the inventory contains the nodes names - check
       lineinfile:
         name: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
         line: "{{ '[' + tmp_item + ']' }}"
@@ -118,8 +118,8 @@
         ensure the inventory contains the nodes names - fail
       fail:
         msg: >-
-          Ensure the inventory file (hosts) contains a line with
-          {{ '[' + tmp_item + ']' }}
+          Ensure the inventory file (hosts) contains a line with the node name
+          (ansible group): {{ '[' + tmp_item + ']' }}
       vars:
         tmp_result: "{{ project_ctx_host_info_list.results[tmp_idx] }}"
       loop: "{{ project_ctx_nodes }}"
