@@ -30,12 +30,18 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
         node_dependencies = dict()
         prepared_node = prepared_node_dict.get(node_name)
         dependencies = prepared_node.get('dependencies')
+        local = to_bool(prepared_node.get('local'))
         active_hosts_amount = len(prepared_node.get('active_hosts') or [])
+        active_hosts_amount = active_hosts_amount if (not local) else (
+            active_hosts_amount
+            if (active_hosts_amount > 0)
+            else 1
+        )
 
         if dependencies:
           for dependency_name in sorted(list(dependencies.keys())):
             dependency = dependencies.get(dependency_name)
-            local = False
+            target_local = False
             error_msgs_dependency = []
 
             if is_str(dependency) or isinstance(dependency, list):
@@ -113,7 +119,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                   dependency_hosts += target_prepared_node.get(
                       'active_hosts'
                   ) or []
-                  local = target_prepared_node.get('local')
+                  target_local = target_prepared_node.get('local')
 
             if not error_msgs_dependency:
               dependency_limit = dependency.get('limit')
@@ -183,7 +189,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                   hosts=dependency_hosts,
                   protocol=dependency.get('protocol'),
                   port=dependency.get('port'),
-                  local=local,
+                  local=target_local,
               )
 
               result_item_keys = list(result_item.keys())

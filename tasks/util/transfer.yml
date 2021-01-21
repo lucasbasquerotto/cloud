@@ -22,6 +22,17 @@
   when: not (transfer_prepared | default(false) | bool)
   tags: ["no_print"]
 
+- name: "{{ transfer_title }} - define transfer input"
+  set_fact:
+    transfer_input: "{{ transfer_prepared_content.input }}"
+  when: >-
+    (transfer_prepared_content.type == 'template')
+    and
+    (transfer_input is not defined)
+    and
+    (transfer_prepared_content.input is defined)
+  tags: ["no_print"]
+
 - name: "{{ transfer_title }} - prepare the content"
   fail:
     msg: |
@@ -82,7 +93,9 @@
 
 # Template
 
-- name: "{{ transfer_title }} - copy the template content to {{ transfer_dest }}"
+- name: >-
+    {{ transfer_title }} - copy the template content to
+    the temporary destination ({{ transfer_tmp_dest }})
   become: "{{ transfer_become | default(false) | bool }}"
   template:
     src: "{{ transfer_prepared_content.file }}"
@@ -91,7 +104,7 @@
     group: "{{ transfer_group | default(omit, true) }}"
     mode: "{{ transfer_mode | default(omit, true) }}"
   vars:
-    input: "{{ transfer_prepared_content.input | default({}) }}"
+    input: "{{ transfer_input | default({}) }}"
     params: "{{ transfer_prepared_content.params | default({}) }}"
     credentials: "{{ transfer_prepared_content.credentials | default({}) }}"
     contents: "{{ transfer_prepared_content.contents | default({}) }}"
@@ -128,6 +141,7 @@
 - name: >-
     {{ transfer_title }} -
     copy the normalized file created from the template
+    to {{ transfer_dest }}
   become: "{{ transfer_become | default(false) | bool }}"
   copy:
     remote_src: true
