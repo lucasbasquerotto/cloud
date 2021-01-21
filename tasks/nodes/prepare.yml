@@ -1,3 +1,14 @@
+- name: "{{ node_prepare_title }} - create the node directories"
+  file:
+    path: "{{ node_prepare_item }}"
+    state: directory
+    mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+  loop:
+    - "{{ node_prepare_node.node_dir }}"
+    - "{{ node_prepare_node.tmp_dir }}"
+  loop_control:
+    loop_var: node_prepare_item
+
 - name: "{{ node_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:

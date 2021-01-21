@@ -1,14 +1,5 @@
 # get the pod vars
 
-- debug:
-    var: ctx_node_dependencies[pod_node_name]
-
-- debug:
-    var: >-
-      ctx_node_dependencies[pod_node_name][
-        (instance_index | default(1, true) | int) - 1
-      ]
-
 - name: "{{ pod_transfer_title }} - pod_vars"
   set_fact:
     pod_transfer_directories: "{{ tmp_transfer_vars.directories }}"
@@ -19,7 +10,7 @@
       {{
         ctx_node_dependencies[pod_node_name][
           (instance_index | default(1, true) | int) - 1
-        ]
+        ] | default({})
       }}
     tmp_transfer_vars: >-
       {{

@@ -91,10 +91,13 @@ def prepare_service(service_info, run_info, top, service_names=None):
         result['absent'] = absent
         service_info_dict.pop('absent', None)
 
+        tmp = None
+        can_destroy = None
+
         if top:
-          result['tmp'] = to_bool(service_info_dict.get('tmp'))
+          tmp = to_bool(service_info_dict.get('tmp'))
           service_info_dict.pop('tmp', None)
-          result['can_destroy'] = to_bool(service_info_dict.get('can_destroy'))
+          can_destroy = to_bool(service_info_dict.get('can_destroy'))
           service_info_dict.pop('can_destroy', None)
 
         if is_list:
@@ -180,6 +183,9 @@ def prepare_service(service_info, run_info, top, service_names=None):
         error_msgs_aux = []
 
         if not is_list:
+          result['tmp'] = tmp
+          result['can_destroy'] = can_destroy
+
           task = service.get('task')
           result['task'] = task
           result['namespace'] = service.get('namespace')
@@ -374,6 +380,11 @@ def prepare_service(service_info, run_info, top, service_names=None):
               error_msgs += [new_value]
 
             if not error_msgs_children:
+              if result_children:
+                for result_child in result_children:
+                  result_child['tmp'] = tmp
+                  result_child['can_destroy'] = can_destroy
+
               result['is_list'] = True
               result['services'] = result_children
 

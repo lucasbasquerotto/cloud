@@ -183,7 +183,7 @@
       template:
         src: "{{ project_ctx_run_src }}"
         dest: "{{ project_ctx_run_tmp_dest }}"
-        mode: "{{ env_lax | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
         block_end_string: "%>>"
         block_start_string: "<<%"
         variable_end_string: "}>>"
@@ -226,4 +226,4 @@
         remote_src: false
         src: "{{ project_ctx_run_tmp_dest }}"
         dest: "{{ project_ctx_run_dest }}"
-        mode: "{{ env_lax | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | bool | ternary(0666, 0600) }}"

@@ -40,7 +40,6 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_initial_services }}"
@@ -78,7 +77,6 @@
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_node_state: "present"
       when: (main_tmp_nodes | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_nodes }}"
@@ -409,7 +407,6 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_final_services }}"
@@ -449,7 +446,6 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy (tmp)] nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
@@ -467,7 +463,6 @@
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_node_state: "absent"
       when: (main_tmp_nodes | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy (tmp)] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
@@ -485,7 +480,6 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_delete_tmp }}"
@@ -524,7 +518,6 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy] nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
@@ -542,7 +535,6 @@
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_node_state: "absent"
       when: (main_tmp_nodes | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - [destroy] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
@@ -560,7 +552,6 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
       when: (main_tmp_services | length) > 0
-      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_delete_main }}"

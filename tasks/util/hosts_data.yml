@@ -27,19 +27,8 @@
   loop: "{{ ansible_play_hosts_all }}"
   loop_control:
     loop_var: tmp_item
-
-- debug:
-    var: ctx_data.node_dependencies
-  when: inventory_hostname == 'localhost'
-
-- debug:
-    var: ctx_hosts_data
-  when: inventory_hostname == 'localhost'
+  tags: ["no_print"]
 
 - name: "{{ env_title }} - generate the node dependencies data - init"
   set_fact:
     ctx_node_dependencies: "{{ ctx_data.node_dependencies | lrd.cloud.dependencies_data(ctx_hosts_data) }}"
-
-- debug:
-    var: ctx_node_dependencies
-  when: inventory_hostname == 'localhost'
