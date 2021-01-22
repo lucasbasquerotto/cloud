@@ -28,7 +28,3 @@
   loop_control:
     loop_var: tmp_item
   tags: ["no_print"]
-
-- name: "{{ env_title }} - generate the node dependencies data - init"
-  set_fact:
-    ctx_node_dependencies: "{{ ctx_data.node_dependencies | lrd.cloud.node_dependencies(ctx_hosts_data) }}"

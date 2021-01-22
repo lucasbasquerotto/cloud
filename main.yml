@@ -95,7 +95,7 @@
   tasks:
     - include_tasks: "tasks/util/init.yml"
       vars:
-        init_load_hosts_data: true
+        init_load_node_dependencies: true
       tags: ["no_print"]
 
     - name: "{{ env_title }} - validate instance type (required)"

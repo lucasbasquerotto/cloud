@@ -2570,6 +2570,36 @@ def prepare_ctx(ctx_name, run_info):
               else:
                 result['node_dependencies'] = node_dependencies
 
+                for node_name in sorted(list(node_dependencies.keys() or {})):
+                  single_node_dependencies_info = node_dependencies.get(
+                      node_name)
+                  dependencies = single_node_dependencies_info.get(
+                      'dependencies'
+                  )
+                  dependencies_type_node_amount = len(filter(
+                      lambda d: d.get('type') == 'node',
+                      dependencies.values()
+                  ))
+                  has_node_dependency = dependencies_type_node_amount > 0
+                  result['has_node_dependency'] = has_node_dependency
+
+                  env_meta = env.get('meta') or dict()
+                  no_node_type_dependency = env_meta.get(
+                      'no_node_type_dependency'
+                  )
+
+                  if has_node_dependency and no_node_type_dependency:
+                    error_msgs += [[
+                        str('node name: ' + str(node_name)),
+                        'context: node dependencies (node type forbidden)',
+                        str(
+                            'msg: there are ' +
+                            str(dependencies_type_node_amount)
+                            + ' node dependencies with type "node", but this type'
+                            + ' is forbidden due to the environment meta flag'
+                            + ' "no_node_type_dependency"'),
+                    ]]
+
         ctx_final_services = ctx.get('final_services')
 
         if ctx_final_services:

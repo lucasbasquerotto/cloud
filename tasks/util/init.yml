@@ -29,7 +29,31 @@
 - name: "{{ env_title }} - hosts data (outer)"
   include_tasks: "tasks/util/hosts_data.yml"
   when: >-
-    (init_load_hosts_data | default(false) | bool)
+    (init_load_node_dependencies | default(false) | bool)
+    and
+    (ctx_node_dependencies is not defined)
+    and
+    (ctx_data.has_node_dependency | default(false) | bool)
+  tags: ["no_print"]
+
+- name: "{{ env_title }} - generate the node dependencies"
+  set_fact:
+    ctx_node_dependencies: >-
+      {{
+        ctx_data.node_dependencies
+        | lrd.cloud.node_dependencies(
+          ctx_hosts_data | default({}),
+          instance_type=instance_type
+        )
+      }}
+  when: >-
+    (init_load_node_dependencies | default(false) | bool)
     and
     (ctx_node_dependencies is not defined)
   tags: ["no_print"]
+
+- debug:
+    var: ctx_node_dependencies
+  when: >-
+    (init_load_node_dependencies | default(false) | bool)
+  tags: ["no_print_skipped"]
