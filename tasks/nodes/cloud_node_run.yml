@@ -51,24 +51,69 @@
 
 # DNS
 
-- name: "{{ cloud_node_item_title }} - dns (outer)"
-  include_tasks: "cloud_node_dns.yml"
+- name: "{{ cloud_node_item_title }} - node dns list (init)"
+  set_fact:
+    cloud_node_dns_list: []
+    cloud_node_dns_list_aux: []
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - node dns list (fill)"
+  set_fact:
+    cloud_node_dns_list_aux: "{{ tmp_dns_list_aux }}"
   vars:
-    cloud_node_dns_host: "{{ cloud_node_active_hosts[0] | default({}) }}"
-  loop: "{{ cloud_node_params.dns_service_params_list | default([]) }}"
+    tmp_dns_absent: >-
+      {{
+        cloud_node_item.prepared_dns_services | default([])
+        | selectattr('can_destroy', 'defined')
+        | selectattr('can_destroy', 'equalto', True)
+        | list
+      }}
+    tmp_dns_state: "{{ cloud_node_state | default('present', true) }}"
+    tmp_dns_list_aux: >-
+      {{
+        (tmp_dns_state == 'present') | ternary(
+          cloud_node_item.prepared_dns_services | default([]),
+          tmp_dns_absent
+        )
+      }}
+  when: (cloud_node_item.prepared_dns_services | default([]) | length) > 0
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - node dns list (params - ips)"
+  set_fact:
+    cloud_node_dns_list: "{{ cloud_node_dns_list + [tmp_dns_item_to_add] }}"
+  vars:
+    tmp_dns_host: "{{ cloud_node_active_hosts[0] | default({}) }}"
+    tmp_dns_ini_params: "{{ cloud_node_dns_item.params | default({}) }}"
+    tmp_dns_type: "{{ tmp_dns_ini_params.dns_type | default('') }}"
+    tmp_dns_ipv4: "{{ tmp_dns_host.public_ipv4 | default('') }}"
+    tmp_dns_ipv6: "{{ tmp_dns_host.public_ipv6 | default('') }}"
+    tmp_dns_value: >-
+      {{
+        (tmp_dns_type == 'A') | ternary(
+          tmp_dns_ipv4,
+          (tmp_dns_type == 'AAAA') | ternary(tmp_dns_ipv6, '')
+        )
+      }}
+    tmp_dns_params: >-
+      {{ tmp_dns_ini_params | combine({ 'value': tmp_dns_value }) }}
+    tmp_dns_item_to_add: >-
+      {{ cloud_node_dns_item | combine({ 'params': tmp_dns_params }) }}
+  loop: "{{ cloud_node_dns_list_aux }}"
   loop_control:
     loop_var: cloud_node_dns_item
-    label: "{{ cloud_node_dns_item.record | default('') }}"
-  when: >-
-    (cloud_node_item.dns_service | default('') != '')
-    and
-    ((cloud_node_active_hosts | length) = 1)
-    and
-    (
-      ((cloud_node_state | default('present', true)) == 'present')
-      or
-      (cloud_node_dns_item.can_destroy | default(false) | bool)
-    )
+    label: "{{ cloud_node_dns_item.name | default('') }}"
+  tags: ["no_print"]
+
+- name: "{{ cloud_node_item_title }} - node dns service (outer)"
+  include_tasks: "tasks/services/cloud_service.yml"
+  vars:
+    cloud_service_title: "{{ cloud_node_item_title }} - node dns service"
+    cloud_service_list: "{{ cloud_node_dns_list }}"
+    cloud_service_top: true
+    cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
+    cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+  when: (cloud_node_dns_list | length) > 0
   tags: ["no_print_skipped"]
 
 ### Hosts File (Inventory) ###

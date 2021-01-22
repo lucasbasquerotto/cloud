@@ -104,6 +104,10 @@ schemas:
       ttl:
         type: "int"
         description: "dns record ttl"
+      can_destroy:
+        type: "bool"
+        description: >-
+          specifies if the dns record should be deleted when the node is destroyed
   content:
     type: "simple_dict"
     alternative_type: "str"

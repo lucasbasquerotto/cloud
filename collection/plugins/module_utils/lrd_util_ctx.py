@@ -1488,6 +1488,7 @@ def prepare_node(node_info, run_info):
                 service_info = dict(
                     name=dns_service + name_suffix,
                     key=dns_service,
+                    can_destroy=to_bool(dns_service_params.get('can_destroy')),
                     params=dict(
                         record=dns_service_params.get('record'),
                         ttl=dns_service_params.get('ttl'),
