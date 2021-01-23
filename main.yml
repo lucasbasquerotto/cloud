@@ -310,7 +310,7 @@
         cron_node: "{{ main_item }}"
         cron_node_name: "{{ cron_node.name }}"
         cron_title: "{{ env_title }} - cron - node [{{ cron_node.description }}]"
-        cron_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes//{{ cron_node_name }}/cron"
+        cron_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes/{{ cron_node_name }}/cron"
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:
         loop_var: main_item
