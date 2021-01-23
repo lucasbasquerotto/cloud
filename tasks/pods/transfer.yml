@@ -17,6 +17,12 @@
       }}
   tags: ["no_print"]
 
+- debug:
+    var: pod_transfer_templates
+
+- debug:
+    var: pod_node_dependencies
+
 # create the directories
 
 - name: "{{ pod_transfer_title }} - create the directories"

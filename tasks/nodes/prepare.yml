@@ -13,11 +13,7 @@
   include_tasks: "tasks/util/transfer.yml"
   vars:
     node_prepare_dependencies: >-
-      {{
-        ctx_node_dependencies[node_prepare_node.name][
-          (instance_index | default(1, true) | int) - 1
-        ] | default({})
-      }}
+      {{ ctx_node_dependencies[node_prepare_node.name] | default({}) }}
     transfer_title: "{{ node_prepare_title }} - transfer #{{ node_prepare_idx + 1 }}"
     transfer_prepared: true
     transfer_content: "{{ node_prepare_item.src }}"

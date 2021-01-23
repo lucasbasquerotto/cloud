@@ -43,7 +43,8 @@
         ctx_data.node_dependencies
         | lrd.cloud.node_dependencies(
           ctx_hosts_data | default({}),
-          instance_type=instance_type
+          instance_type=instance_type,
+          instance_index=instance_index
         )
       }}
   when: >-
@@ -51,9 +52,3 @@
     and
     (ctx_node_dependencies is not defined)
   tags: ["no_print"]
-
-- debug:
-    var: ctx_node_dependencies
-  when: >-
-    (init_load_node_dependencies | default(false) | bool)
-  tags: ["no_print_skipped"]

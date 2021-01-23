@@ -28,11 +28,12 @@ class FilterModule(object):
         'validate_connection': self.validate_connection,
     }
 
-  def node_dependencies(self, node_dependencies, hosts_data, instance_type):
+  def node_dependencies(self, node_dependencies, hosts_data, instance_type, instance_index):
     info = prepare_host_dependencies(
         node_dependencies=node_dependencies,
         hosts_data=hosts_data,
         instance_type=instance_type,
+        instance_index=instance_index,
     )
 
     result = info.get('result')

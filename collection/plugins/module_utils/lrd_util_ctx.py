@@ -1515,14 +1515,24 @@ def prepare_node(node_info, run_info):
 
         if pods:
           dependencies_names = sorted(list((dependencies or dict()).keys()))
+          original_dependencies = dependencies
           dependencies = dict()
 
           for dependency_name in dependencies_names:
-            dependencies[dependency_name] = dict(
-                original_type='ip',
-                host='127.0.0.1',
-                host_list=['127.0.0.1'],
-            )
+            dependency = original_dependencies.get(dependency_name)
+
+            if dependency.get('type') != 'node':
+              dependencies[dependency_name] = dependency
+            else:
+              required_amount = int(dependency.get('required_amount') or 0)
+              amount = required_amount if (required_amount > 0) else 1
+              host_ip = '127.0.0.1'
+              host_list = [host_ip for v in range(amount)]
+              dependencies[dependency_name] = dict(
+                  original_type='ip',
+                  host=host_ip,
+                  host_list=host_list,
+              )
 
           node_data = dict(
               pod_ctx_info_dict=pod_ctx_info_dict,
