@@ -1,4 +1,5 @@
 - name: "{{ node_prepare_title }} - create the node directories"
+  become: "{{ node_prepare_node.root | default(false) }}"
   file:
     path: "{{ node_prepare_item }}"
     state: directory
