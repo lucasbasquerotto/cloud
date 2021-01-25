@@ -1,0 +1,34 @@
+#################################################################################
+### Fails if there is a node dependency in which the required amount of hosts ###
+### is higher than the actual amount of reacheble hosts                       ###
+#################################################################################
+
+- name: "{{ params.title }} - wait dependencies hosts (outer)"
+  include_tasks: "dependencies_item.yml"
+  vars:
+    ext_run_dependencies_params: "{{ params.task.params }}"
+    ext_run_dependencies_item_value: "{{ ext_run_dependencies_item.value }}"
+    ext_run_dependencies_title: >-
+      {{ params.title }} - wait dependencies hosts -
+      dependency [{{ ext_run_dependencies_item.key }}]
+  loop: "{{ params.dependencies | default({}) | dict2items | list }}"
+  when: (ext_run_dependencies_item_value.required_amount | int) > 0
+  loop_control:
+    loop_var: ext_run_dependencies_item
+    label: "{{ ext_run_dependencies_item.key }}"
+
+- name: "{{ params.title }} - debug"
+  debug:
+    var: ext_run_dependencies_item.value
+  loop: "{{ params.dependencies | default({}) | dict2items | list }}"
+  loop_control:
+    loop_var: ext_run_dependencies_item
+    label: "{{ ext_run_dependencies_item.key }}"
+
+- name: "{{ params.title }} - debug2"
+  debug:
+    var: params.dependencies | default({}) | dict2items | list
+
+- name: "{{ params.title }} - debug3"
+  debug:
+    var: params.dependencies

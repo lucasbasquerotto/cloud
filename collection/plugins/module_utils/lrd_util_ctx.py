@@ -1521,6 +1521,12 @@ def prepare_node(node_info, run_info):
           for dependency_name in dependencies_names:
             dependency = original_dependencies.get(dependency_name)
 
+            if is_str(dependency):
+              dependency = dict(
+                  type='url',
+                  host=dependency,
+              )
+
             if dependency.get('type') != 'node':
               dependencies[dependency_name] = dependency
             else:
@@ -1532,6 +1538,7 @@ def prepare_node(node_info, run_info):
                   original_type='ip',
                   host=host_ip,
                   host_list=host_list,
+                  required_amount=required_amount,
               )
 
           node_data = dict(

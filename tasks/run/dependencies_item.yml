@@ -1,0 +1,79 @@
+#################################################################################
+### Fails if there is a node dependency in which the required amount of hosts ###
+### is higher than the actual amount of reacheble hosts                       ###
+#################################################################################
+
+- name: >
+    {{ ext_run_dependencies_title }} - wait
+    {{ ext_run_dependencies_params.timeout | default(30) }} seconds
+    for the connection to the host to become reachable/usable
+  wait_for:
+    host: "{{ ext_run_dependencies_host | urlsplit('hostname') }}"
+    port: >-
+      {{
+        ext_run_dependencies_host
+        | urlsplit('port')
+        | default((ext_run_dependencies_host is match("https[:].*")) | ternary(443, 80), true)
+      }}
+    sleep: 1
+    timeout: "{{ ext_run_dependencies_params.timeout | default(30) | int }}"
+  loop: "{{ ext_run_dependencies_item_value.host_list | default([]) }}"
+  loop_control:
+    loop_var: ext_run_dependencies_host
+  register: ext_run_dependencies_var
+  ignore_errors: true
+
+- name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_errors (init)"
+  set_fact:
+    ext_run_dependencies_inner_errors: 0
+    ext_run_dependencies_inner_msgs: "Unreachable hosts:"
+  tags: ["no_print"]
+
+- name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_errors (fill)"
+  set_fact:
+    ext_run_dependencies_inner_errors: "{{ (ext_run_dependencies_inner_errors | int) + 1 }}"
+    ext_run_dependencies_inner_msgs: |
+      {{ ext_run_dependencies_inner_msgs }}
+      ---
+      [{{ ext_run_dependencies_inner_item.ext_run_dependencies_host }}]
+      {{ ext_run_dependencies_inner_item.msg | default('') }}
+  when: ext_run_dependencies_inner_item.failed
+  loop: "{{ ext_run_dependencies_var.results }}"
+  loop_control:
+    loop_var: ext_run_dependencies_inner_item
+  tags: ["no_print"]
+
+- name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_successful"
+  set_fact:
+    ext_run_dependencies_inner_successful: >-
+      {{
+        (ext_run_dependencies_item_value.host_list | default([]) | length)
+        -
+        (ext_run_dependencies_inner_errors | int)
+      }}
+  tags: ["no_print"]
+
+- name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_msgs (end)"
+  set_fact:
+    ext_run_dependencies_inner_msgs: |
+      {{ ext_run_dependencies_inner_msgs }}
+      ---
+      Node: {{ params.node }}
+      Dependency: {{ ext_run_dependencies_item.key }}
+      Required amount: {{ ext_run_dependencies_item_value.required_amount }}
+      Successful: {{ ext_run_dependencies_inner_successful }}
+      Failed: {{ ext_run_dependencies_inner_errors }}
+  when: >-
+    (ext_run_dependencies_inner_successful | int)
+    <
+    (ext_run_dependencies_item_value.required_amount | int)
+  tags: ["no_print"]
+
+- name: "{{ ext_run_dependencies_title }} - fail due to unreachable hosts"
+  fail:
+    msg: "{{ ext_run_dependencies_inner_msgs }}"
+  when: >-
+    (ext_run_dependencies_inner_successful | int)
+    <
+    (ext_run_dependencies_item_value.required_amount | int)
+  tags: ["no_print"]

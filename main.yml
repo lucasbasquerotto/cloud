@@ -91,6 +91,10 @@
     - init
     - nodes
     - nodes_setup
+    - prepare_nodes
+    - prepare_pods
+    - run
+    - cron
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"

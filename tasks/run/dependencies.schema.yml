@@ -1,0 +1,18 @@
+root: "dependencies_schema"
+schemas:
+  dependencies_schema:
+    type: "dict"
+    description: >-
+      schema for the task that verifies if the hosts defined for
+      the node dependencies are reachable
+    props:
+      params:
+        schema: "dependencies_params"
+        description: "parameters for the task"
+  dependencies_params:
+    type: "dict"
+    description: "task parameters schema"
+    props:
+      timeout:
+        type: "int"
+        description: "seconds to wait for the host to be reachable; defaults to 30"

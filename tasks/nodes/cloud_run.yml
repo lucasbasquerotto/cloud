@@ -15,9 +15,11 @@
     tmp_base_dir_prefix: "{{ (tmp_target_origin != 'env') | ternary('', env_dir + '/') }}"
     params:
       title: "{{ cloud_run_title }} - run node file [{{ cloud_run_task.file }}]"
+      node: "{{ cloud_run_node.description }}"
       task: "{{ cloud_run_task }}"
       chdir: "{{ cloud_run_node.node_dir }}"
       tmp_dir: "{{ cloud_run_node.tmp_dir }}"
+      dependencies: "{{ ctx_node_dependencies[cloud_run_node.name] | default({}) }}"
   when: (cloud_run_task.type == 'task') and (cloud_run_task_target == 'node')
   tags: ["no_print_skipped"]
 
@@ -39,9 +41,12 @@
         {{ cloud_run_title }} -
         [pod] {{ cloud_run_pod.description }} -
         run pod file [{{ cloud_run_task.file }}]
+      node: "{{ cloud_run_node.description }}"
+      pod: "{{ cloud_run_pod.description }}"
       task: "{{ cloud_run_task }}"
       chdir: "{{ cloud_run_pod.pod_dir }}"
       tmp_dir: "{{ cloud_run_pod.tmp_dir + '/run' }}"
+      dependencies: "{{ ctx_node_dependencies[cloud_run_node.name] | default({}) }}"
   loop: "{{ cloud_run_node.pods | default([], true) }}"
   loop_control:
     loop_var: cloud_run_pod

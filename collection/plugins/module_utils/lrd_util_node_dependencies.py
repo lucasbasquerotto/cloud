@@ -64,6 +64,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                 ],
                 ip=[
                     'type',
+                    'required_amount',
                     'limit',
                     'host',
                     'protocol',
@@ -71,6 +72,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                 ],
                 url=[
                     'type',
+                    'required_amount',
                     'limit',
                     'host',
                     'protocol',
@@ -334,7 +336,7 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
                         dependency_hosts[initial_idx:final_idx_next] or []
                     )
 
-                    real_hosts_amount = final_idx_next - initial_idx
+                  real_hosts_amount = len(result_hosts)
 
                   if required_amount == -1:
                     if real_hosts_amount < dependency_limit:
@@ -371,10 +373,14 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
                   if result_hosts:
                     result_host = result_hosts[result_host_idx - initial_idx]
 
+                  if required_amount == -1:
+                    required_amount = real_hosts_amount
+
                   dependency_result[dependency_name] = dict(
                       original_type=dependency_type,
                       host=result_host,
                       host_list=result_hosts,
+                      required_amount=required_amount,
                   )
               except Exception as error:
                 error_msgs_dependency += [[
