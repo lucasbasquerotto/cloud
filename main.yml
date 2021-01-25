@@ -116,25 +116,25 @@
         ((ctx_data.hooks.before_nodes_setup | default('')) != '')
       tags: ["no_print"]
 
-    - name: "{{ env_title }} - host test (outer)"
-      include_tasks: "tasks/nodes/host_test.yml"
+    - name: "{{ env_title }} - nodes setup (outer)"
+      include_tasks: "tasks/nodes/node_setup.yml"
       vars:
-        host_test_node: "{{ main_item }}"
-        host_test_title: >-
-          {{ env_title }} - host test -
-          instance [{{ host_test_node.description }} -
+        node_setup_node: "{{ main_item }}"
+        node_setup_title: >-
+          {{ env_title }} - node setup -
+          instance [{{ node_setup_node.description }} -
           {{ inventory_hostname }}]
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:
         loop_var: main_item
-        label: "{{ host_test_node.description }}"
+        label: "{{ node_setup_node.description }}"
       when: >-
-        (host_test_node | lrd.cloud.validate_connection(env_info))
+        (node_setup_node | lrd.cloud.validate_connection(env_info))
         and
         (
           (ansible_connection != 'local')
           or
-          (host_test_node.local_host_test | default(false, true) | bool)
+          (node_setup_node.local_node_setup | default(false, true) | bool)
         )
       tags: ["no_print_skipped"]
 

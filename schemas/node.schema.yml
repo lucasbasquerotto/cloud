@@ -42,8 +42,8 @@ schemas:
           list with dns records to create A and AAAA records
           (when dns_service is specified for the node); will use
           the node ips returned by the service that created the node
-      host_test:
-        schema: "host_test"
+      node_setup:
+        schema: "node_setup"
         description: >-
           tests to verify if can connect to the host and
           if the host was initialized successfully
@@ -54,7 +54,7 @@ schemas:
       cron_start:
         type: "bool"
         description: "specify if the cron service must be started (when stopped)"
-  host_test:
+  node_setup:
     type: "dict"
     description: >-
       tests to verify if can connect to the host and

@@ -402,21 +402,21 @@ nodes:
     base_dir: "/var/cloud"
     credential: "host1"
     root: true
-    shared_params: ["host_test"]
+    shared_params: ["node_setup"]
   node_2:
     service: "my_node_service"
     base_dir: "/var/cloud"
     credential: "host2"
     root: true
-    shared_params: ["host_test"]
+    shared_params: ["node_setup"]
   node_3:
     service: "my_node_service"
     base_dir: "/var/cloud"
     credential: "host3"
     root: true
-    shared_params: ["host_test"]
+    shared_params: ["node_setup"]
 node_shared_params:
-  host_test:
+  node_setup:
     setup_log_file: "/var/log/setup.log"
     setup_finished_log_regex: "^Setup Finished.*$"
     setup_success_log_last_line: "Setup Finished - Success"
@@ -469,7 +469,7 @@ These hosts will then be accessed in the next steps. More information about the 
 
 ### Main Step - Nodes - Setup
 
-This step waits for the created hosts (in the step [Nodes - Create](#main-step---nodes---create)) based on the information in the property [host_test](schemas/node.schema.yml) in the node:
+This step waits for the created hosts (in the step [Nodes - Create](#main-step---nodes---create)) based on the information in the property [node_setup](schemas/node.schema.yml) in the node:
 
 - `initial_connection_timeout`: Timeout (in seconds) for the initial connection to the host.
 

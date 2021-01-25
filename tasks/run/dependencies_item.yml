@@ -7,16 +7,40 @@
     {{ ext_run_dependencies_title }} - wait
     {{ ext_run_dependencies_params.timeout | default(30) }} seconds
     for the connection to the host to become reachable/usable
+    (require at least {{ ext_run_dependencies_item_value.required_amount }}
+    successful connections)
   wait_for:
-    host: "{{ ext_run_dependencies_host | urlsplit('hostname') }}"
-    port: >-
-      {{
-        ext_run_dependencies_host
-        | urlsplit('port')
-        | default((ext_run_dependencies_host is match("https[:].*")) | ternary(443, 80), true)
-      }}
+    host: "{{ tmp_hostname }}"
+    port: "{{ tmp_port }}"
     sleep: 1
     timeout: "{{ ext_run_dependencies_params.timeout | default(30) | int }}"
+  vars:
+    tmp_hostname: >-
+      {{
+        (ext_run_dependencies_host != '')
+        | ternary(
+          ext_run_dependencies_host
+            | urlsplit('hostname')
+            | default(ext_run_dependencies_host | urlsplit('path'), true),
+          ''
+        )
+
+      }}
+    tmp_default_port: >-
+      {{
+        (ext_run_dependencies_host is match("https[:].*"))
+        | ternary(
+          443,
+          (ext_run_dependencies_host != '')
+            | ternary(80, '')
+        )
+      }}
+    tmp_port: >-
+      {{
+        ext_run_dependencies_host
+          | urlsplit('port')
+          | default(tmp_default_port, true)
+      }}
   loop: "{{ ext_run_dependencies_item_value.host_list | default([]) }}"
   loop_control:
     loop_var: ext_run_dependencies_host
@@ -32,7 +56,7 @@
 - name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_errors (fill)"
   set_fact:
     ext_run_dependencies_inner_errors: "{{ (ext_run_dependencies_inner_errors | int) + 1 }}"
-    ext_run_dependencies_inner_msgs: |
+    ext_run_dependencies_inner_msgs: |-
       {{ ext_run_dependencies_inner_msgs }}
       ---
       [{{ ext_run_dependencies_inner_item.ext_run_dependencies_host }}]

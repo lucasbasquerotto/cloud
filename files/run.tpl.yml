@@ -35,12 +35,12 @@
             main_tmp_task: "{{ main_tmp_stage_task.task }}"
             main_tmp_node: "{{ main_item.1 }}"
             main_tmp_label: >-
-              [stage] {{ main_tmp_stage_name }} -
+              [run_stage] {{ main_tmp_stage_name }} -
               [stage_task] {{ main_tmp_stage_task.name }} -
               [task] {{ main_tmp_task.description }} -
               [node] {{ main_tmp_node.description }}
             cloud_run_stage_name: "{{ main_tmp_stage_name }}"
-            cloud_run_title: "{{ main_tmp_label }}"
+            cloud_run_title: "{{ env_title }} - {{ main_tmp_label }}"
             cloud_run_task: "{{ main_tmp_task }}"
             cloud_run_node: "{{ main_tmp_node }}"
             cloud_run_task_target: "{{ main_tmp_stage_task.task_target }}"

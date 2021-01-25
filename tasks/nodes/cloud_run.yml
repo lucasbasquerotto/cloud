@@ -14,7 +14,7 @@
     tmp_target_origin: "{{ cloud_run_task.target_origin | default('') }}"
     tmp_base_dir_prefix: "{{ (tmp_target_origin != 'env') | ternary('', env_dir + '/') }}"
     params:
-      title: "{{ cloud_run_title }} - run node file [{{ cloud_run_task.file }}]"
+      title: "{{ cloud_run_title }} - run node task file [{{ cloud_run_task.file }}]"
       node: "{{ cloud_run_node.description }}"
       task: "{{ cloud_run_task }}"
       chdir: "{{ cloud_run_node.node_dir }}"
@@ -40,7 +40,7 @@
       title: >-
         {{ cloud_run_title }} -
         [pod] {{ cloud_run_pod.description }} -
-        run pod file [{{ cloud_run_task.file }}]
+        run pod task file [{{ cloud_run_task.file }}]
       node: "{{ cloud_run_node.description }}"
       pod: "{{ cloud_run_pod.description }}"
       task: "{{ cloud_run_task }}"

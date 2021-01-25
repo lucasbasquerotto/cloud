@@ -16,19 +16,4 @@
   loop_control:
     loop_var: ext_run_dependencies_item
     label: "{{ ext_run_dependencies_item.key }}"
-
-- name: "{{ params.title }} - debug"
-  debug:
-    var: ext_run_dependencies_item.value
-  loop: "{{ params.dependencies | default({}) | dict2items | list }}"
-  loop_control:
-    loop_var: ext_run_dependencies_item
-    label: "{{ ext_run_dependencies_item.key }}"
-
-- name: "{{ params.title }} - debug2"
-  debug:
-    var: params.dependencies | default({}) | dict2items | list
-
-- name: "{{ params.title }} - debug3"
-  debug:
-    var: params.dependencies
+  tags: ["no_print_skipped"]

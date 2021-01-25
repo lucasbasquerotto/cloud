@@ -1177,10 +1177,10 @@ def prepare_node(node_info, run_info):
         result['node_dir'] = node_dir
         result['local_tmp_dir'] = local_tmp_dir
         result['tmp_dir'] = tmp_dir
-        result['local_host_test'] = to_bool(
-            node_info_dict.get('local_host_test'))
-        result['local_host_test_error'] = node_info_dict.get(
-            'local_host_test_error')
+        result['local_node_setup'] = to_bool(
+            node_info_dict.get('local_node_setup'))
+        result['local_node_setup_error'] = node_info_dict.get(
+            'local_node_setup_error')
 
         instance_amount = int(node_info_dict.get('amount') or 1)
         instance_max_amount = int(
@@ -1339,7 +1339,7 @@ def prepare_node(node_info, run_info):
                 error_msgs_aux += [new_value]
 
               if (not error_msgs_aux_validate) and (not local):
-                required_props = ['host_test']
+                required_props = ['node_setup']
 
                 for key in required_props:
                   if is_empty(node_params.get(key)):

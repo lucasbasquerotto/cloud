@@ -1,100 +1,100 @@
 # Vars & Validation
 
-- name: "{{ host_test_title }} - host_test_node_name"
+- name: "{{ node_setup_title }} - node_setup_node_name"
   set_fact:
-    host_test_node_name: "{{ host_test_node.name }}"
+    node_setup_node_name: "{{ node_setup_node.name }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }} - validate instance type - node name"
+- name: "{{ node_setup_title }} - validate instance type - node name"
   fail:
-    msg: "instance_type ({{ instance_type }}) should be {{ host_test_node_name }}"
-  when: (host_test_node_name != instance_type) and (ansible_connection != 'local')
+    msg: "instance_type ({{ instance_type }}) should be {{ node_setup_node_name }}"
+  when: (node_setup_node_name != instance_type) and (ansible_connection != 'local')
   tags: ["no_print"]
 
 # Node Params
 
-- name: "{{ host_test_title }} - host_test_node_params"
+- name: "{{ node_setup_title }} - node_setup_node_params"
   set_fact:
-    host_test_node_params: "{{ host_test_node.params | default({}) }}"
+    node_setup_node_params: "{{ node_setup_node.params | default({}) }}"
   tags: ["no_print"]
 
 # Main Params
 
-- name: "{{ host_test_title }} - host_test_vars"
+- name: "{{ node_setup_title }} - node_setup_vars"
   set_fact:
-    host_test_vars: "{{ host_test_node_params.host_test | default({}) }}"
+    node_setup_vars: "{{ node_setup_node_params.node_setup | default({}) }}"
   tags: ["no_print"]
 
-- name: "{{ host_test_title }} - host_test_vars"
+- name: "{{ node_setup_title }} - node_setup_vars"
   block:
     # Inner Params
 
-    - name: "{{ host_test_title }} - host_test_setup_log_file"
+    - name: "{{ node_setup_title }} - node_setup_setup_log_file"
       set_fact:
-        host_test_setup_log_file: "{{ host_test_vars.setup_log_file }}"
-        host_test_setup_finished_log_regex: "{{ host_test_vars.setup_finished_log_regex }}"
-        host_test_setup_success_log_last_line: >-
-          {{ host_test_vars.setup_success_log_last_line }}
-        host_test_initial_connection_timeout: >-
-          {{ host_test_vars.initial_connection_timeout | default(300) }}
-        host_test_setup_finished_timeout: >-
-          {{ host_test_vars.setup_finished_timeout | default(300) }}
+        node_setup_setup_log_file: "{{ node_setup_vars.setup_log_file }}"
+        node_setup_setup_finished_log_regex: "{{ node_setup_vars.setup_finished_log_regex }}"
+        node_setup_setup_success_log_last_line: >-
+          {{ node_setup_vars.setup_success_log_last_line }}
+        node_setup_initial_connection_timeout: >-
+          {{ node_setup_vars.initial_connection_timeout | default(300) }}
+        node_setup_setup_finished_timeout: >-
+          {{ node_setup_vars.setup_finished_timeout | default(300) }}
       tags: ["no_print"]
 
     # Wait Host
 
     - name: >
-        {{ host_test_title }} - wait {{ host_test_initial_connection_timeout }}
+        {{ node_setup_title }} - wait {{ node_setup_initial_connection_timeout }}
         seconds for target connection to become reachable/usable
       wait_for_connection:
         delay: 0
         sleep: 1
-        timeout: "{{ host_test_initial_connection_timeout | int }}"
+        timeout: "{{ node_setup_initial_connection_timeout | int }}"
       when: ansible_connection != 'local'
 
-    - name: "{{ host_test_title }} - Gathering facts"
+    - name: "{{ node_setup_title }} - Gathering facts"
       setup:
 
     # Wait Setup
 
-    - name: "{{ host_test_title }} - block - local"
+    - name: "{{ node_setup_title }} - block - local"
       block:
-        - name: "{{ host_test_title }} - host_test_local_msg"
+        - name: "{{ node_setup_title }} - node_setup_local_msg"
           set_fact:
-            host_test_local_success_msg: |
+            node_setup_local_success_msg: |
               [info] simulated message - line 01
               [info] simulated message - line 02
               [info] simulated message - line 03
               [success] simulated message - line 04
-              {{ host_test_setup_success_log_last_line }}
-            host_test_local_error_msg: |
+              {{ node_setup_setup_success_log_last_line }}
+            node_setup_local_error_msg: |
               [info] simulated message - line 01
               [info] simulated message - line 02
               [info] simulated message - line 03
-              {{ host_test_setup_success_log_last_line }}
+              {{ node_setup_setup_success_log_last_line }}
               [error] simulated error message - last line
           tags: ["no_print"]
 
         - name: >
-            {{ host_test_title }} - create the directory "{{ host_test_setup_log_file | dirname }}"
+            {{ node_setup_title }} - create the directory "{{ node_setup_setup_log_file | dirname }}"
             to simulate success locally
           file:
-            path: "{{ host_test_setup_log_file | dirname }}"
+            path: "{{ node_setup_setup_log_file | dirname }}"
             state: directory
             mode: "{{ (env_lax | bool) | ternary(0777, 0751) }}"
           tags: ["no_print_skipped"]
 
         - name: >
-            {{ host_test_title }} - create the file "{{ host_test_setup_log_file }}"
+            {{ node_setup_title }} - create the file "{{ node_setup_setup_log_file }}"
             to simulate success locally
           copy:
-            dest: "{{ host_test_setup_log_file }}"
+            dest: "{{ node_setup_setup_log_file }}"
             content: >-
               {{
-                ((host_test_node.local_host_test_error | default('')) == 'msg')
+                ((node_setup_node.local_node_setup_error | default('')) == 'msg')
                 | ternary(
-                  host_test_local_error_msg,
-                  host_test_local_success_msg
+                  node_setup_local_error_msg,
+                  node_setup_local_success_msg
                 )
               }}
             mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
@@ -103,92 +103,92 @@
       when: >-
         (ansible_connection == 'local')
         and
-        ((host_test_node.local_host_test_error | default('')) != 'timeout')
+        ((node_setup_node.local_node_setup_error | default('')) != 'timeout')
       tags: ["no_print_skipped"]
 
     - name: >
-        {{ host_test_title }} - make sure the file "{{ host_test_setup_log_file }}"
-        has "{{ host_test_setup_finished_log_regex }}" in it
-        (wait {{ host_test_setup_finished_timeout }} seconds)
+        {{ node_setup_title }} - make sure the file "{{ node_setup_setup_log_file }}"
+        has "{{ node_setup_setup_finished_log_regex }}" in it
+        (wait {{ node_setup_setup_finished_timeout }} seconds)
       wait_for:
         delay: 0
         sleep: 1
-        timeout: "{{ host_test_setup_finished_timeout }}"
-        path: "{{ host_test_setup_log_file }}"
-        search_regex: "{{ host_test_setup_finished_log_regex }}"
-      register: host_test_timeout_var
+        timeout: "{{ node_setup_setup_finished_timeout }}"
+        path: "{{ node_setup_setup_log_file }}"
+        search_regex: "{{ node_setup_setup_finished_log_regex }}"
+      register: node_setup_timeout_var
       ignore_errors: true
 
-    - name: "{{ host_test_title }} - block - retrieve the full log and fail due to setup timeout"
+    - name: "{{ node_setup_title }} - block - retrieve the full log and fail due to setup timeout"
       block:
         - name: >-
-            {{ host_test_title }} - setup timeout -
-            retrieve the full log ({{ host_test_setup_log_file }})
-          shell: cat "{{ host_test_setup_log_file }}"
-          register: host_test_full_log_var
+            {{ node_setup_title }} - setup timeout -
+            retrieve the full log ({{ node_setup_setup_log_file }})
+          shell: cat "{{ node_setup_setup_log_file }}"
+          register: node_setup_full_log_var
           changed_when: false
 
-        - name: "{{ host_test_title }} - setup timeout - host_test_full_log"
+        - name: "{{ node_setup_title }} - setup timeout - node_setup_full_log"
           set_fact:
-            host_test_full_log: "{{ host_test_full_log_var.stdout }}"
+            node_setup_full_log: "{{ node_setup_full_log_var.stdout }}"
           tags: ["no_print"]
 
-        - name: "{{ host_test_title }} - fail due to setup timeout"
+        - name: "{{ node_setup_title }} - fail due to setup timeout"
           fail:
             msg: |
-              Timeout to find "{{ host_test_setup_finished_log_regex }}" in file
-              File: {{ host_test_setup_log_file }}
+              Timeout to find "{{ node_setup_setup_finished_log_regex }}" in file
+              File: {{ node_setup_setup_log_file }}
               Full Log:
-              {{ host_test_full_log }}
-      when: host_test_timeout_var.failed
+              {{ node_setup_full_log }}
+      when: node_setup_timeout_var.failed
       tags: ["no_print_skipped"]
 
     # Verify Successful Setup
 
-    - name: "{{ host_test_title }} - block - verify last line"
+    - name: "{{ node_setup_title }} - block - verify last line"
       block:
-        - name: "{{ host_test_title }} - retrieve last line of {{ host_test_setup_log_file }}"
-          shell: tail -n 1 "{{ host_test_setup_log_file }}"
-          register: host_test_last_line_var
+        - name: "{{ node_setup_title }} - retrieve last line of {{ node_setup_setup_log_file }}"
+          shell: tail -n 1 "{{ node_setup_setup_log_file }}"
+          register: node_setup_last_line_var
           changed_when: false
 
-        - name: "{{ host_test_title }} - host_test_last_line"
+        - name: "{{ node_setup_title }} - node_setup_last_line"
           set_fact:
-            host_test_last_line: "{{ host_test_last_line_var.stdout }}"
-            host_test_full_log: ""
+            node_setup_last_line: "{{ node_setup_last_line_var.stdout }}"
+            node_setup_full_log: ""
           tags: ["no_print"]
 
         - debug:
-            msg: "last_line='{{ host_test_last_line }}'"
+            msg: "last_line='{{ node_setup_last_line }}'"
 
-        - name: "{{ host_test_title }} - block - retrieve the full log and fail due to setup error"
+        - name: "{{ node_setup_title }} - block - retrieve the full log and fail due to setup error"
           block:
             - name: >-
-                {{ host_test_title }} - setup error -
-                retrieve the full log ({{ host_test_setup_log_file }})
-              shell: cat "{{ host_test_setup_log_file }}"
-              register: host_test_full_log_var
+                {{ node_setup_title }} - setup error -
+                retrieve the full log ({{ node_setup_setup_log_file }})
+              shell: cat "{{ node_setup_setup_log_file }}"
+              register: node_setup_full_log_var
               changed_when: false
 
-            - name: "{{ host_test_title }} - setup error - host_test_full_log"
+            - name: "{{ node_setup_title }} - setup error - node_setup_full_log"
               set_fact:
-                host_test_full_log: "{{ host_test_full_log_var.stdout }}"
+                node_setup_full_log: "{{ node_setup_full_log_var.stdout }}"
               tags: ["no_print"]
 
-            - name: "{{ host_test_title }} - fail due to setup error"
+            - name: "{{ node_setup_title }} - fail due to setup error"
               fail:
                 msg: |
                   The last line of the setup log file is not the expected value.
-                  Last line: {{ host_test_last_line }}
-                  Should be: {{ host_test_setup_success_log_last_line }}
+                  Last line: {{ node_setup_last_line }}
+                  Should be: {{ node_setup_setup_success_log_last_line }}
                   Full Log:
-                  {{ host_test_full_log }}
-          when: host_test_last_line != host_test_setup_success_log_last_line
+                  {{ node_setup_full_log }}
+          when: node_setup_last_line != node_setup_setup_success_log_last_line
           tags: ["no_print_skipped"]
 
-      when: host_test_setup_success_log_last_line != ''
+      when: node_setup_setup_success_log_last_line != ''
 
   when: >-
-    (host_test_node_params.host_test is defined)
+    (node_setup_node_params.node_setup is defined)
     and
-    (not (host_test_vars.skip | default(false) | bool))
+    (not (node_setup_vars.skip | default(false) | bool))
