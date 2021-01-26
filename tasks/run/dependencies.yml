@@ -3,13 +3,13 @@
 ### is higher than the actual amount of reacheble hosts                       ###
 #################################################################################
 
-- name: "{{ params.title }} - wait dependencies hosts (outer)"
+- name: "{{ params.title }} - wait dependencies (outer)"
   include_tasks: "dependencies_item.yml"
   vars:
     ext_run_dependencies_params: "{{ params.task.params }}"
     ext_run_dependencies_item_value: "{{ ext_run_dependencies_item.value }}"
     ext_run_dependencies_title: >-
-      {{ params.title }} - wait dependencies hosts -
+      {{ params.title }} - wait dependencies -
       dependency [{{ ext_run_dependencies_item.key }}]
   loop: "{{ params.dependencies | default({}) | dict2items | list }}"
   when: (ext_run_dependencies_item_value.required_amount | int) > 0
