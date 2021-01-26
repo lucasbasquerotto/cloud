@@ -158,7 +158,8 @@
             node_setup_full_log: ""
           tags: ["no_print"]
 
-        - debug:
+        - name: "{{ node_setup_title }} - print the last line of the setup log"
+          debug:
             msg: "last_line='{{ node_setup_last_line }}'"
 
         - name: "{{ node_setup_title }} - block - retrieve the full log and fail due to setup error"

@@ -9,3 +9,5 @@
           validate=(ctx_validate | default(false) | bool)
         )
       }}
+  when: ctx_data is not defined
+  tags: ["no_print_skipped"]
