@@ -65,6 +65,7 @@
   loop: "{{ ext_run_dependencies_var.results }}"
   loop_control:
     loop_var: ext_run_dependencies_inner_item
+    label: "dependency [{{ ext_run_dependencies_inner_item.ext_run_dependencies_host }}]"
   tags: ["no_print"]
 
 - name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_successful"

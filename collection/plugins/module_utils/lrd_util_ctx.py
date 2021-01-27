@@ -2554,6 +2554,7 @@ def prepare_ctx(ctx_name, run_info):
           else:
             prepared_nodes = result_aux
             result['nodes'] = prepared_nodes
+            has_node_dependency = None
 
             if prepared_nodes:
               all_hosts_dict = dict()
@@ -2608,8 +2609,8 @@ def prepare_ctx(ctx_name, run_info):
                       lambda d: d.get('type') == 'node',
                       dependencies.values()
                   ))
-                  has_node_dependency = dependencies_type_node_amount > 0
-                  result['has_node_dependency'] = has_node_dependency
+                  has_node_dependency_aux = dependencies_type_node_amount > 0
+                  has_node_dependency = has_node_dependency or has_node_dependency_aux
 
                   env_meta = env.get('meta') or dict()
                   no_node_type_dependency = env_meta.get(
@@ -2627,6 +2628,8 @@ def prepare_ctx(ctx_name, run_info):
                             + ' is forbidden due to the environment meta flag'
                             + ' "no_node_type_dependency"'),
                     ]]
+
+            result['has_node_dependency'] = has_node_dependency
 
         ctx_final_services = ctx.get('final_services')
 
