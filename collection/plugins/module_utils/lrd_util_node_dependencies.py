@@ -290,8 +290,13 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
                       dependency_host_data = hosts_data.get(dependency_host)
 
                       if dependency_host_data:
+                        node_ip_type_prop = (
+                            'private_ip'
+                            if (node_ip_type == 'private')
+                            else node_ip_type
+                        )
                         new_dependency_host = dependency_host_data.get(
-                            node_ip_type
+                            node_ip_type_prop
                         )
                         local_target = to_bool(
                             dependency_host_data.get('local')
