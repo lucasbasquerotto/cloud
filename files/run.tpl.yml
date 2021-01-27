@@ -5,20 +5,42 @@
 
 <<% if (var_run_stage.tasks | default([], true) | length) > 0 %>>
 
+<<% set var_run_stage_option_names = [
+    'any_errors_fatal',
+    'ignore_errors',
+    'ignore_unreachable',
+    'max_fail_percentage',
+    'serial',
+    'strategy',
+    'throttle',
+    'timeout'
+  ]
+%>>
+
 <<% if not (ns_outer_run.first | bool) %>>
 ###############################################################################
 <<% endif %>>
 
 - name: Play 04.<<{ loop.index }>> - Run Stage (<<{ var_run_stage.name }>>)
   hosts: <<{ var_run_stage.hosts | join(',') }>>
-  strategy: free
+
+  <<% for var_run_stage_option_name in var_run_stage_option_names %>>
+
+  <<% if var_run_stage[var_run_stage_option_name] is defined %>>
+
+  <<{ var_run_stage_option_name + ':' + ' ' + (var_run_stage[var_run_stage_option_name] | to_json) }>>
+
+  <<% endif %>>
+
+  <<% endfor %>>
+
   tags:
   - init
   - run
   gather_facts: no
   tasks:
 
-    <<% if ns_outer_run.first | bool %>>
+    <<% if var_run_stage.gather_facts | default(false) | bool %>>
 
     - include_tasks: "tasks/util/init.yml"
       when: ansible_connection != 'local'

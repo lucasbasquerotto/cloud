@@ -2290,15 +2290,6 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
       if not run_stage_name:
         error_msgs += [['msg: run stage default name not defined']]
         return dict(result=result, error_msgs=error_msgs)
-
-      run_stage_tasks_input = run_stage_info.get('tasks')
-
-      if run_stage_tasks_input is None:
-        error_msgs += [[
-            str('run_stage: ' + run_stage_name),
-            'msg: run stage tasks not specified'
-        ]]
-        return dict(result=result, error_msgs=error_msgs)
     else:
       run_stage_name = run_stage_info
 
@@ -2315,16 +2306,36 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
         ]]
         return dict(result=result, error_msgs=error_msgs)
 
-      run_stage_tasks_input = run_stages_dict.get(run_stage_name)
+      run_stage_info = run_stages_dict.get(run_stage_name)
 
-      if run_stage_tasks_input is None:
+      if run_stage_info is None:
         error_msgs += [[
             str('run_stage: ' + run_stage_name),
             'msg: run stage not specified for the environment'
         ]]
         return dict(result=result, error_msgs=error_msgs)
 
+
+    run_stage_tasks_input = run_stage_info.get('tasks')
+
+    if run_stage_tasks_input is None:
+      error_msgs += [[
+          str('run_stage: ' + run_stage_name),
+          'msg: run stage tasks not specified'
+      ]]
+      return dict(result=result, error_msgs=error_msgs)
+
     result['name'] = run_stage_name
+
+    result['any_errors_fatal'] = run_stage_info.get('any_errors_fatal')
+    result['gather_facts'] = run_stage_info.get('gather_facts')
+    result['ignore_errors'] = run_stage_info.get('ignore_errors')
+    result['ignore_unreachable'] = run_stage_info.get('ignore_unreachable')
+    result['max_fail_percentage'] = run_stage_info.get('max_fail_percentage')
+    result['serial'] = run_stage_info.get('serial')
+    result['strategy'] = run_stage_info.get('strategy')
+    result['throttle'] = run_stage_info.get('throttle')
+    result['timeout'] = run_stage_info.get('timeout    ')
 
     try:
       hosts = set()
