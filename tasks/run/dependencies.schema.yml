@@ -15,4 +15,4 @@ schemas:
     props:
       timeout:
         type: "int"
-        description: "seconds to wait for the host to be reachable; defaults to 30"
+        description: "seconds to wait for the host to be reachable; defaults to 10"

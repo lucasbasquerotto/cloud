@@ -2545,11 +2545,11 @@ More information about run stages, which properties can be defined for them and 
 
 ## Node Dependencies
 
-Node dependencies can be defined for a node in the same place you can define its name, in the context section, and can point to a url, ip or another node.
+Node dependencies can be defined for a node in the same place you can define its name, in the context section, and **can point to a url, ip or another node**.
 
-A `host` property must be specified, and can be either a string or a list of string, with the values related to its type (if the type is `node`, it must be node names in the same context). This host property refers to the **target hosts** (defined in the dependencies), as oposed to the **origin hosts**, which are the hosts related to the node that have the dependencies specified (if `node_1` has `amount` equal to `3`, there will be `3` origin hosts for the specified node).
+A `host` property must be specified, and can be either a string or a list of strings, with the values related to its type (if the type is `node`, it must be node names in the same context). This host property refers to the **target hosts** (defined in the dependencies), as opposed to **origin hosts**, which are the hosts related to the node that have the dependencies specified (if `node_1` has `amount` equal to `3`, there will be `3` origin hosts for the specified node). The origin hosts may also be called as node replicas and will become the ansible hosts during the deployment. This `host` property isn't related to ansible hosts (unless the dependency type is `node`).
 
-A `limit` property can be specified to define the limit of target hosts for each origin host in the node in which the dependency is specified (acoording to the `amount` property for the node). The default is `1`, meaning that the list with the (target) host dependencies will have only one item, which is defined by the origin host index. The actual target hosts defined will cicle through the list with all the target hosts according to the limit, going from the end to the beginning if the limit goes beyound the end, as if the host list is circular, but **without** including the same list indexes twice. Besides the target hosts list, there will also be a single target host mapped to each host (depending on the context that the dependencies will be used, it may require a single host and this single host may be used in such case, instead of getting a host from a list).
+A `limit` property can be specified to define the limit of target hosts for each origin host in the node in which the dependency is specified (according to the `amount` property for the node). The default is `1`, meaning that the list with the (target) host dependencies will have only one item, which is defined by the origin host index. The actual target hosts for each origin host are defined by going through the list with all the target hosts according to the limit, going from the end to the beginning if the limit goes beyond the end, as if the host list is circular, but **without** including the same list indexes twice. Besides the target hosts list, there will also be a single target host mapped to each host (depending on the context that the dependencies will be used, it may require a single host and this single host may be used in such case, making it more convenient, instead of getting a host from a list). This single host may or may not be in the list (there will be a `single_host_included` boolean property in the resulting dependency that will be `true` if the single host is included in the list). If the limit is higher than the amount of hosts defined, then the resulting target hosts for each origin host will be all the target hosts defined in the dependency.
 
 _Example:_
 
@@ -2559,6 +2559,7 @@ main:
     #...
     nodes:
       - name: "node_1"
+        key: "my_node"
         amount: 10
         dependencies:
           dependency_1:
@@ -2573,6 +2574,21 @@ main:
               - "target-host-6"
               - "target-host-7"
               - "target-host-8"
+          dependency_2: "http://mydomain.com"
+          dependency_3:
+            type: "ip"
+            host: "1.2.3.4"
+          dependency_4:
+            type: "node"
+            node_ip_type: "ipv4"
+            host: "node_2"
+            limit: 2
+      - name: "node_2"
+        key: "my_node"
+        amount: 3
+nodes:
+  my_node:
+    #...
 #...
 ```
 
@@ -2604,13 +2620,31 @@ The above is what will be defined in the `host_list` property for the dependency
 
 _(It's basically a 1-on-1 mapping with the host index, starting again when the index reach the target host amount, for every cycle)_
 
+The above example will generate the following variable (ansible fact) in the host `node-1-host` (it will be similar for the other hosts):
+
+```yaml
+ctx_node_dependencies:
+    node_1:
+      dependency_1:
+        host: target-host-1
+        host_list:
+        - target-host-1
+        - target-host-2
+        - target-host-3
+        original_type: url
+        required_amount: 8
+        single_host_included: true
+```
+
+The dependencies for `node_1` can be retrieved with `ctx_node_dependencies['node_1']`, and this object is also present at `input.dependencies` when [transferring](#transfer-content) the `node_1` contents or pod contents, and in the [pod context file](#pod-context) for the `node_1` pods.
+
 ### Node Dependencies Task (Run Stage Task)
 
-There is a task that can be used to verify if the target hosts defined for the dependencies are reachable, returning an error if less than the required amount specified is reachable.
+There is a task ([tasks/run/dependencies.yml](tasks/run/dependencies.yml)) that can be used to verify if the target hosts defined for the dependencies are reachable, returning an error if less than the required amount specified is reachable.
 
-The property `required_amount` validates that the number of hosts defined is more or equal than the value defined for it, otherwise an error is thrown, but this is not very useful because the dependencies are mainly defined in the environemnt file, so the amount is already known beforehand, except when `type` is `node`, in which case it will depend on the number of hosts created for the node (type), although this also could be infered before the deployment according to the `amount` property specified for the target node.
+The property `required_amount` (defaults to `0`) in a node dependency ensures that the number of (target) hosts defined is more or equal than the value defined for it, otherwise an error is thrown, but this is not very useful because the dependencies are mainly defined in the environemnt file, so the amount is already known beforehand, except when `type` is `node`, in which case it will depend on the number of hosts created for the node (type), although this also could be inferred before the deployment according to the `amount` property specified for the target node.
 
-What is more useful than know if the number of defined hosts is more than the required amount specified, is to know if the number of **reachable** hosts is more than the required amount specified. To do that, the task [tasks/run/dependencies.yml](tasks/run/dependencies.yml) can be defined in a run stage task, as follows:
+What is more useful than know if the number of defined hosts is more than the required amount specified, is to know if the number of **reachable** hosts is more than the required amount specified. To do that, the task can be defined in a run stage task, as follows:
 
 ```yaml
 main:
@@ -2618,14 +2652,15 @@ main:
     #...
     nodes:
       - name: "node_1"
+        key: "my_node"
         amount: 10
         dependencies:
           dependency_1:
             type: "url"
             host:
-              - "github.com"
+              - "https://github.com"
               - "google.com"
-              - "unknown.invalid"
+              - "unknown.invalid:8080"
             limit: -1
             required_amount: 2
           dependency_2:
@@ -2651,11 +2686,24 @@ tasks:
       timeout: 5
 ```
 
-In the example above, the dependency `dependency_1` limit is `-1`, meaning that all (3) target hosts will be defined as dependencies for each and all (10) origin hosts of `node_1`. Each host of node 1 will pass the validation if at least 2 hosts of `dependency_1` is reachable (if `github.com` and `google.com` are reachable, but `unknown.invalid` isn't reachable, it will still complete the task successfully).
+The connection is established assuming that the port is `80` if not defined in the host (the port can be defined in the `port` property, and, in the case of a dependency with type `url`, can instead be defined in the `host` property, along with the domain and optionally the protocol). An exception is if the host protocol is `https` and the port is not defined, in this case it will consider the port to be `443`.
 
-The connection is established assuming that the port is `80` if not defined in the host (the port can be defined in the `port` property, and in the case of a dependency with type `url`, in the `host` property, along with the domain and optionally the protocol).
+In the example above, the dependency `dependency_1` limit is `-1`, meaning that all (3) target hosts will be defined as dependencies for each and all (10) origin hosts of `node_1`. Each (origin) host of `node_1` will pass the validation if at least 2 (target) hosts of `dependency_1` are reachable (if `github.com:443` and `google.com:80` are reachable, but `unknown.invalid:8080` isn't reachable, it will still complete the task successfully).
 
-A value of `-1` can be defined for `required_amount`, meaning that all hosts must be reachable.
+A value of `-1` can be defined for `required_amount`, meaning that all hosts must be reachable. If this was the value of `required_amount` in the example above, the task would fail even if only `unknown.invalid:8080` isn't reachable, with the error:
+
+```yaml
+Unreachable hosts:
+---
+[unknown.invalid:8080]
+Timeout when waiting for unknown.invalid:8080
+---
+Node: node_1 (my_node)
+Dependency: dependency_1
+Required amount: 3
+Successful: 2
+Failed: 1
+```
 
 The task will validate the hosts defined in the `host_list` property (the list of hosts delimited by `limit`). If you want to verify the host defined in the `host` property, make sure to specify the `limit` as `1`, or not specify it at all (because the default is `1`).
 
