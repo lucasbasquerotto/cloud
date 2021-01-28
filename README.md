@@ -1550,7 +1550,7 @@ _test/ctx-simple.yml (in the `custom_pod` repository):_
 
 ```yaml
 {% set var_pod_kind = 'test' %}
-{% set var_main_base_dir = params.main.custom_dir | default('') %}
+{% set var_main_base_dir = params.custom_dir | default('') %}
 {% set var_main_dir =
   (var_main_base_dir != '')
   | ternary(var_main_base_dir + '/', '')
@@ -1559,18 +1559,18 @@ _test/ctx-simple.yml (in the `custom_pod` repository):_
 
 env_templates:
 
-- src: "{{ params.main.env_files_dir }}/template.yml"
+- src: "{{ params.env_files_dir }}/template.yml"
   dest: "env/env-template.yml"
-  schema: "{{ params.main.env_files_dir }}/template.schema.yml"
+  schema: "{{ params.env_files_dir }}/template.schema.yml"
   params:
-    src: "{{ params.main.env_files_dir }}/template.yml"
+    src: "{{ params.env_files_dir }}/template.yml"
     dest: "env/env-template.yml"
-    schema: "{{ params.main.env_files_dir }}/template.schema.yml"
+    schema: "{{ params.env_files_dir }}/template.schema.yml"
     params:
       prop1: 1
       prop2:
-        prop2_1: "{{ params.main.pod_param_1 }}"
-        prop2_2: "{{ params.main.pod_param_2 }}"
+        prop2_1: "{{ params.pod_param_1 }}"
+        prop2_2: "{{ params.pod_param_2 }}"
 
 files:
 
@@ -1581,22 +1581,26 @@ templates:
 
 - src: "{{ var_main_dir }}/dynamic.tpl.yml"
   dest: "env/pod-data.test.yml"
-  params: {{ params | to_json }}
+  params:
+    params: {{ params | to_json }}
+    credentials: {{ credentials | to_json }}
+    contents: {{ contents | to_json }}
+    input: {{ input | to_json }}
 
 children:
 
 - name: "{{ var_main_dir }}/ctx-child.yml"
   params:
-    main: {{ params.main | to_json }}
+    params: {{ params | to_json }}
     custom:
-      value: "{{ params.main.pod_param_3 }}"
+      value: "{{ params.pod_param_3 }}"
 ```
 
 _test/ctx-child.yml (in the `custom_pod` repository):_
 
 ```yaml
 {% set var_pod_kind = 'test' %}
-{% set var_main_base_dir = params.main.custom_dir | default('') %}
+{% set var_main_base_dir = params.custom_dir | default('') %}
 {% set var_main_dir =
   (var_main_base_dir != '')
   | ternary(var_main_base_dir + '/', '')
@@ -1605,7 +1609,7 @@ _test/ctx-child.yml (in the `custom_pod` repository):_
 
 env_files:
 
-- src: "{{ params.main.env_files_dir }}/file.txt"
+- src: "{{ params.env_files_dir }}/file.txt"
   dest: "env/env-file.txt"
 
 files:
@@ -1623,7 +1627,7 @@ templates:
   schema: "{{ var_main_dir }}/template.schema.yml"
   executable: true
   params:
-    value: "{{ params.custom.value }}"
+    value: "{{ custom.value }}"
 ```
 
 _test/simple.schema.yml (in the `custom_pod` repository):_
@@ -1756,16 +1760,18 @@ _`[dest]` env/pod-data.test.yml_
 ```yaml
 contents: {}
 credentials: {}
-ctx_name: pod_local
-data_dir: ../../data/test-pod-local-pod_local-simple
-dependencies: {}
-dev: true
-env_name: test-pod-local
-extra_repos_dir_relpath: ../../projects/test-pod-local/files/cloud/ctxs/pod_local/extra-repos
-identifier: test-pod-local-pod_local-simple
-lax: true
-local: true
-main:
+input:
+    ctx_name: pod_local
+    data_dir: ../../data/test-pod-local-pod_local-simple
+    dependencies: {}
+    dev: true
+    env_name: test-pod-local
+    extra_repos_dir_relpath: ../../projects/test-pod-local/files/cloud/ctxs/pod_local/extra-repos
+    identifier: test-pod-local-pod_local-simple
+    lax: true
+    local: true
+    pod_name: simple
+params:
     env_files_dir: env-base/test/files
     pod_param_1: sample value 1
     pod_param_2: sample value 2
@@ -1780,7 +1786,6 @@ main:
         -   p1: 123
     - 789
     -   p1: 0
-pod_name: simple
 ```
 
 ---
@@ -1843,10 +1848,8 @@ _(The lines were removed because the property `meta.template_no_empty_lines` in 
 
 ### Pod Context Example Notes
 
-**1. The pod data variable (`params`) accessed in the context file has the following properties:**
+**1. The pod `input` variable (that are passed together with the variables `params`, `credentials` and `contents`) accessed in the context file has the following properties:**
 
-- `contents`: The pod contents (specified in the `contents` property). There is none in this example.
-- `credentials`: The pod credentials (specified in the `credentials` property). There is none in this example.
 - `ctx_name`: The context name (specified in the `main` section in the environment file). This is the name of the environment/cloud context, not the pod context.
 - `data_dir`: The path of the pod data directory (for local pods, it's the relative path).
 - `dependencies`: The node dependencies. There is none in this example.
@@ -1856,10 +1859,9 @@ _(The lines were removed because the property `meta.template_no_empty_lines` in 
 - `identifier`: The pod identifier, defined as `<env_name>-<ctx_name>-<pod_name>`, mainly used to avoid name collisions between different pods in the same host (especially when deploying locally).
 - `lax`: Indicates if the permissions should be less strict (useful, for example, when defining the `mode` for files and templates).
 - `local`: When `true`, means that the node in which the pod is being deployed is a local node (localhost).
-- `main`: The pod parameters (specified in the `params` property). The name `main` was chosen mainly because the object that has all these properties (pod data) is called `params`, so you would call `params.main` instead of `params.params`.
 - `pod_name`: The name of the pod.
 
-The pod data variable (explained above and printed in the file `env/pod-data.test.yml` of the example) can only be accessed out-of-the-box in the context file. To access it in sub-context files, you have to pass it as a parameter. Example (passing as a `pod_data` parameter):
+The pod data variables (with the `input` variable explained above and printed in the file `env/pod-data.test.yml` of the example) can only be accessed out-of-the-box in the context file. To access it in sub-context files, you have to pass it as a parameter. For example:
 
 _test/ctx-simple.yml:_
 
@@ -1870,10 +1872,12 @@ children:
 
 - name: "{{ var_main_dir }}/ctx-child.yml"
   params:
-    pod_data: {{ params | to_json }}
-    main: {{ params.main | to_json }}
+    params: {{ params | to_json }}
+    credentials: {{ credentials | to_json }}
+    contents: {{ contents | to_json }}
+    input: {{ input | to_json }}
     custom:
-      value: "{{ params.main.pod_param_3 }}"
+      value: "{{ params.pod_param_3 }}"
 ```
 
 _test/ctx-child.yml:_
@@ -1885,12 +1889,16 @@ templates:
 
 - src: "..."
   dest: "..."
-  params: {{ params.pod_data | to_json }}
+  params:
+    params: {{ params | to_json }}
+    credentials: {{ credentials | to_json }}
+    contents: {{ contents | to_json }}
+    input: {{ input | to_json }}
 ```
 
 **2. Passing complex parameters:**
 
-The pod context file is a template, so complex parameters may not be passed as intended to its items parameters (as templates and children), and even make the template as an invalid yaml file (causing errors when trying to load it). To avoid such problems, and taking into account that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass complex parameters, as well as multiline strings, as:
+The pod context file is a string template, so complex parameters may not be passed as intended to its items parameters (as templates and children), and even make the template as an invalid yaml file (causing errors when trying to load it). To avoid such problems, and taking into account that yaml is a superset of json, and that the filter `to_json` generates a one-line json, you can pass complex parameters, as well as multiline strings, as:
 
 ```yaml
 #...
@@ -1911,8 +1919,12 @@ The `mode` property can be specified to define the file permissions explicitly (
 ```yaml
 - src: "{{ var_main_dir }}/dynamic.tpl.yml"
   dest: "env/pod-data.test.yml"
-  mode: "{{ params.lax | bool | ternary('666', '600') }}"
-  params: {{ params | to_json }}
+  mode: "{{ input.lax | bool | ternary('666', '600') }}"
+  params:
+    params: {{ params | to_json }}
+    credentials: {{ credentials | to_json }}
+    contents: {{ contents | to_json }}
+    input: {{ input | to_json }}
 ```
 
 **4. Schemas:**

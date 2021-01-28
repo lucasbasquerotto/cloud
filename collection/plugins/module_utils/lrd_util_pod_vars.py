@@ -47,7 +47,7 @@ def load_vars(pod_info, run_info, meta_info=None):
       )
       return dict(result=result)
 
-    params = dict(
+    input_params = dict(
         identifier=pod.get('identifier'),
         env_name=env_data.get('env').get('name'),
         ctx_name=env_data.get('ctx_name'),
@@ -55,12 +55,16 @@ def load_vars(pod_info, run_info, meta_info=None):
         local=pod.get('local'),
         dev=env_data.get('dev'),
         lax=env_data.get('lax'),
-        main=pod.get('params', {}),
-        credentials=pod.get('credentials', {}),
-        contents=pod.get('contents', {}),
         data_dir=pod.get('data_dir'),
         extra_repos_dir_relpath=pod.get('extra_repos_dir_relpath'),
         dependencies=dependencies,
+    )
+
+    ctx_params = dict(
+        params=pod.get('params', {}),
+        credentials=pod.get('credentials', {}),
+        contents=pod.get('contents', {}),
+        input=input_params,
     )
 
     previous = dict(
@@ -79,7 +83,7 @@ def load_vars(pod_info, run_info, meta_info=None):
 
     res = load_next_vars(
         file_relpath=pod_ctx_file,
-        params=params,
+        ctx_params=ctx_params,
         data_info=data_info,
     )
 
@@ -342,7 +346,7 @@ def load_ctx_template(current_template, is_env, data_info):
     return dict(error_msgs=error_msgs)
 
 
-def load_next_vars(file_relpath, params, data_info):
+def load_next_vars(file_relpath, ctx_params, data_info):
   error_msgs = list()
 
   try:
@@ -371,7 +375,7 @@ def load_next_vars(file_relpath, params, data_info):
       res_str = None
 
       try:
-        res_str = lookup(plugin, ansible_vars, file, dict(params=params))
+        res_str = lookup(plugin, ansible_vars, file, ctx_params)
       except Exception as error:
         error_msgs += [[
             str('file: ' + file_relpath),
@@ -498,7 +502,7 @@ def load_next_vars(file_relpath, params, data_info):
 
                 res_child = load_next_vars(
                     file_relpath=child_name,
-                    params=child_params,
+                    ctx_params=child_params,
                     data_info=data_info,
                 )
 

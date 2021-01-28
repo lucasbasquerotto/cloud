@@ -52,7 +52,3 @@
     and
     (ctx_node_dependencies is not defined)
   tags: ["no_print"]
-
-- debug:
-    var: ctx_node_dependencies
-  when: ctx_node_dependencies is defined

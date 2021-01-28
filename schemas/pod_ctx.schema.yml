@@ -82,6 +82,9 @@ schemas:
         description: >-
           when mode is not specified, the default mode for
           the destination file will have the executable bits set (+x)
+      no_empty_lines:
+        type: "bool"
+        description: "remove empty lines when transferring templates"
       dir_mode:
         type: "str"
         regex: "^([0-7]{3})?$"
