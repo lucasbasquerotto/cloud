@@ -2317,7 +2317,11 @@ The types of tasks (defined in the `type` property in the tasks) can be the foll
 
 - `shell`: will run a command in the host, with the workdir/chdir defined by the `task_target` (can be either the node directory or the pod repository directory in the host).
 
-TODO: run stages: parallel tasks (for different hosts) and sequential stages
+The tasks defined in the same stage will run in parallel for different hosts as long as those hosts run the same task and according the number of forks (maximum hosts in parallel) defined in the ansible configuration file. The default number of forks is 5.
+
+The ansible configuration file content is defined in the `cfg` property in the context definition (in the `main` section in the environment file), otherwise the contents of the configuration file at [ansible/ansible.cfg](ansible/ansible.cfg) will be used by default.
+
+For faster deployments, you can make different tasks run in different hosts without waiting for previous tasks to end in other hosts using the `free` strategy (the default strategy is `linear`), defined for the whole stage (which will turn into an ansible play), **but take into account that the execution logs order will be messed up, and some tasks won't be printed in the logs**.
 
 _Example:_
 
@@ -2334,7 +2338,8 @@ main:
         amount: 3
         max_amount: 5
     run_stages:
-      - tasks:
+      - strategy: "linear"
+        tasks:
           - name: "test_params"
             all_nodes: true
             task_target: "node"
@@ -2502,6 +2507,10 @@ The default location of the node directory is `<node_base_dir>/.node` (in which 
 **5. [Stage 2 - Task 2] Run the task `test_echo` in all pods of all nodes**
 
 The task will run for all the pods (`pod_1`, `pod_2` and `pod_3`) in the single host defined by `node_1`, and for all the pods (`pod_1` and `pod_2`) in the 3 hosts defined by `node_2`. It will only print `test: $(pwd)`, which will be expanded to `test: <pod_dir>`, in which `pod_dir` is the pod repository directory, as explained above.
+
+---
+
+More information about run stages, which properties can be defined for them and what they do can be seen in the [environment schema file](schemas/env.schema.yml), especially in the `run_stage` sub-schema.
 
 ## Encrypt and Decrypt
 
