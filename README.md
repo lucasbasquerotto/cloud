@@ -2469,24 +2469,50 @@ The task will run in the single host defined by `node_1` and in the 3 hosts defi
     var: task_contents
 ```
 
-The only thing the task does is print its parameters, credentials and contents:
+The only thing the task does is print its parameters, credentials and contents. The following is what is printed for both `node_1` and `node_2` (because the values are the same):
 
 _Task Parameters:_
 
 ```yaml
-#TODO
+prop1: value1_cloud
+prop2:
+  inner_prop1: inner_value1
+  inner_prop2:
+    inner_prop1: innermost2_2_value1
+  inner_prop3:
+    inner_prop1: innermost2_3_value1
+prop3:
+  inner_prop1: inner3_value1
+  inner_prop2:
+    inner_prop1: innermost3_2_value1
+prop4: overridden_cloud_1_4
+prop5: overridden_shared_1_5
 ```
 
 _Task Credentials:_
 
 ```yaml
-#TODO
+overridden: value_credential_overridden
+prop1: value1_credential_cloud
+prop2:
+  inner_prop1: inner2_secret1
+prop4: value4_credential
+prop5: value5_credential
+run_stage: value_credential_run_stage
 ```
 
 _Task Contents:_
 
 ```yaml
-#TODO
+content_task: |-
+  Content Tasks Cloud
+  Line 02
+content_task_overridden: |-
+  Content Tasks Cloud Overridden
+  Line 02
+content_task_run_stage: |-
+  Content Tasks Cloud Run Stage
+  Line 02
 ```
 
 **2. [Stage 1 - Task 2] Run the task `test_echo` in the specified pod**
@@ -2495,9 +2521,11 @@ The task will run in the single host defined by `node_1`, for the single pod def
 
 The default location of the pod repository directory is `<node_base_dir>/<pod_name>/main` (in which `node_base_dir` is the value of the property `base_dir` defined in the node), but may change based on the values of the properties `base_dir` and `flat` in the pod definition; these properties and their descriptions can be seen in the [schema for the environment file](schemas/env.schema.yml)).
 
+If the node in which the pod is present is local, it will print the local pod directory instead (inside the container). It should be something like: `/main/files/cloud/ctxs/my_context/pods/pod_1` (for `pod_1`, mapped to the pod key, not the name, in case the name is defferent than the key, because different nodes may have pods with the same name, but the same pod key will have always the same repository) or, if the pod repository is mapped to another directory, something like `/main/dev/repos/pod` (assuming it's mapped to the directory `repos/pod`).
+
 **3. [Stage 1 - Task 3] Run the task `test_skip`, that just skips the execution**
 
-The task runs for all hosts, but because its type is `skip`, it does nothing.
+The task runs for all hosts, but because its type is `skip`, it does nothing (is skipped).
 
 **4. [Stage 2 - Task 1] Run the task `test_echo` in the specified node**
 
@@ -2505,9 +2533,11 @@ The task will run in the single host defined by `node_1`. It will only print `te
 
 The default location of the node directory is `<node_base_dir>/.node` (in which `node_base_dir` is the value of the property `base_dir` defined in the node), but may change based on the value of the property `node_dir` in the node definition (which specifies the full path of the node directory); these properties (`base_dir` and `node_dir`) and their descriptions can be seen in the [schema for the environment file](schemas/env.schema.yml)).
 
+If the node is local, it will print the local node directory instead (inside the container). It should be something like: `/main/files/cloud/ctxs/my_context/nodes/node_1` (it uses the node name `node_1`, even if the node key is different, because any context will always have nodes with different names, but the node key may be the same; this local node directory is created only when the node is local).
+
 **5. [Stage 2 - Task 2] Run the task `test_echo` in all pods of all nodes**
 
-The task will run for all the pods (`pod_1`, `pod_2` and `pod_3`) in the single host defined by `node_1`, and for all the pods (`pod_1` and `pod_2`) in the 3 hosts defined by `node_2`. It will only print `test: $(pwd)`, which will be expanded to `test: <pod_dir>`, in which `pod_dir` is the pod repository directory, as explained above.
+The task will run for all the pods (`pod_1`, `pod_2` and `pod_3`) in the single host defined by `node_1`, and for all the pods (`pod_1` and `pod_2`) in the 3 hosts defined by `node_2` (if the node is local, it will run only once for `node_2`, because it executes only in the host `localhost` in the ansible group `main`). It will only print `test: $(pwd)`, which will be expanded to `test: <pod_dir>`, in which `pod_dir` is the pod repository directory, as explained above.
 
 ---
 
@@ -2516,6 +2546,118 @@ More information about run stages, which properties can be defined for them and 
 ## Node Dependencies
 
 Node dependencies can be defined for a node in the same place you can define its name, in the context section, and can point to a url, ip or another node.
+
+A `host` property must be specified, and can be either a string or a list of string, with the values related to its type (if the type is `node`, it must be node names in the same context). This host property refers to the **target hosts** (defined in the dependencies), as oposed to the **origin hosts**, which are the hosts related to the node that have the dependencies specified (if `node_1` has `amount` equal to `3`, there will be `3` origin hosts for the specified node).
+
+A `limit` property can be specified to define the limit of target hosts for each origin host in the node in which the dependency is specified (acoording to the `amount` property for the node). The default is `1`, meaning that the list with the (target) host dependencies will have only one item, which is defined by the origin host index. The actual target hosts defined will cicle through the list with all the target hosts according to the limit, going from the end to the beginning if the limit goes beyound the end, as if the host list is circular, but **without** including the same list indexes twice. Besides the target hosts list, there will also be a single target host mapped to each host (depending on the context that the dependencies will be used, it may require a single host and this single host may be used in such case, instead of getting a host from a list).
+
+_Example:_
+
+```yaml
+main:
+  my_context:
+    #...
+    nodes:
+      - name: "node_1"
+        amount: 10
+        dependencies:
+          dependency_1:
+            type: "url"
+            limit: 3
+            host:
+              - "target-host-1"
+              - "target-host-2"
+              - "target-host-3"
+              - "target-host-4"
+              - "target-host-5"
+              - "target-host-6"
+              - "target-host-7"
+              - "target-host-8"
+#...
+```
+
+In the example above, there are 10 origin hosts for `node_1` (`amount=10`) and for the dependency `dependency_1` there is a list of 8 target hosts (`target-host-1`, `target-host-2`, ..., `target-host-8`) and `limit` is `3`, then the target hosts related to the `dependency_1` for `node_1` will be:
+
+- origin host #1 (`node-1-host`): `target-host-1`, `target-host-2`, `target-host-3`
+- origin host #2 (`node-1-host-2`): `target-host-4`, `target-host-5`, `target-host-6`
+- origin host #3 (`node-1-host-3`): `target-host-7`, `target-host-8`, `target-host-1`
+- origin host #4 (`node-1-host-4`): `target-host-2`, `target-host-3`, `target-host-4`
+- origin host #5 (`node-1-host-5`): `target-host-5`, `target-host-6`, `target-host-7`
+- origin host #6 (`node-1-host-6`): `target-host-8`, `target-host-1`, `target-host-2`
+- origin host #7 (`node-1-host-7`): `target-host-3`, `target-host-4`, `target-host-5`
+- origin host #8 (`node-1-host-8`): `target-host-6`, `target-host-7`, `target-host-8`
+- origin host #9 (`node-1-host-9`): `target-host-1`, `target-host-2`, `target-host-3`
+- origin host #10 (`node-1-host-10`): `target-host-4`, `target-host-5`, `target-host-6`
+
+The above is what will be defined in the `host_list` property for the dependency `dependency_1` for the node `node_1`, and the following is the `host` property (single host).
+
+- origin host #1 (`node-1-host`): `target-host-1`
+- origin host #2 (`node-1-host-2`): `target-host-2`
+- origin host #3 (`node-1-host-3`): `target-host-3`
+- origin host #4 (`node-1-host-4`): `target-host-4`
+- origin host #5 (`node-1-host-5`): `target-host-5`
+- origin host #6 (`node-1-host-6`): `target-host-6`
+- origin host #7 (`node-1-host-7`): `target-host-7`
+- origin host #8 (`node-1-host-8`): `target-host-8`
+- origin host #9 (`node-1-host-9`): `target-host-1`
+- origin host #10 (`node-1-host-10`): `target-host-2`
+
+_(It's basically a 1-on-1 mapping with the host index, starting again when the index reach the target host amount, for every cycle)_
+
+### Node Dependencies Task (Run Stage Task)
+
+There is a task that can be used to verify if the target hosts defined for the dependencies are reachable, returning an error if less than the required amount specified is reachable.
+
+The property `required_amount` validates that the number of hosts defined is more or equal than the value defined for it, otherwise an error is thrown, but this is not very useful because the dependencies are mainly defined in the environemnt file, so the amount is already known beforehand, except when `type` is `node`, in which case it will depend on the number of hosts created for the node (type), although this also could be infered before the deployment according to the `amount` property specified for the target node.
+
+What is more useful than know if the number of defined hosts is more than the required amount specified, is to know if the number of **reachable** hosts is more than the required amount specified. To do that, the task [tasks/run/dependencies.yml](tasks/run/dependencies.yml) can be defined in a run stage task, as follows:
+
+```yaml
+main:
+  my_context:
+    #...
+    nodes:
+      - name: "node_1"
+        amount: 10
+        dependencies:
+          dependency_1:
+            type: "url"
+            host:
+              - "github.com"
+              - "google.com"
+              - "unknown.invalid"
+            limit: -1
+            required_amount: 2
+          dependency_2:
+            #...
+          dependency_3:
+            #...
+      - name: "node_2"
+        #...
+      - name: "node_3"
+        #...
+    run_stages:
+      - tasks:
+          - name: "task_dependencies"
+            all_nodes: true
+            task_target: "node"
+#...
+tasks:
+  task_dependencies:
+    type: "task"
+    file: "tasks/run/dependencies.yml"
+    schema: "tasks/run/dependencies.schema.yml"
+    params:
+      timeout: 5
+```
+
+In the example above, the dependency `dependency_1` limit is `-1`, meaning that all (3) target hosts will be defined as dependencies for each and all (10) origin hosts of `node_1`. Each host of node 1 will pass the validation if at least 2 hosts of `dependency_1` is reachable (if `github.com` and `google.com` are reachable, but `unknown.invalid` isn't reachable, it will still complete the task successfully).
+
+The connection is established assuming that the port is `80` if not defined in the host (the port can be defined in the `port` property, and in the case of a dependency with type `url`, in the `host` property, along with the domain and optionally the protocol).
+
+A value of `-1` can be defined for `required_amount`, meaning that all hosts must be reachable.
+
+The task will validate the hosts defined in the `host_list` property (the list of hosts delimited by `limit`). If you want to verify the host defined in the `host` property, make sure to specify the `limit` as `1`, or not specify it at all (because the default is `1`).
 
 ## Encrypt and Decrypt
 

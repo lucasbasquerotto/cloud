@@ -31,6 +31,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
         prepared_node = prepared_node_dict.get(node_name)
         dependencies = prepared_node.get('dependencies')
         local = to_bool(prepared_node.get('local'))
+        origin_hosts_amount = prepared_node.get('amount') or 1
         active_hosts_amount = len(prepared_node.get('active_hosts') or [])
         active_hosts_amount = active_hosts_amount if (not local) else (
             active_hosts_amount
@@ -185,6 +186,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
 
               result_item = dict(
                   type=dependency_type,
+                  origin_amount=origin_hosts_amount,
                   required_amount=dependency_required_amount,
                   limit=dependency_real_limit,
                   node_ip_type=dependency.get('node_ip_type'),
@@ -324,22 +326,41 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
                   result_host_idx = 0
                   initial_idx = 0
                   final_idx_next = 0
+                  single_host_included = True
 
                   if hosts_amount > 0:
                     result_host_idx = (instance_index - 1) % hosts_amount
 
-                    half_limit = int(dependency_limit / 2)
-                    initial_idx = max(result_host_idx - half_limit, 0)
-                    final_idx_next = min(
-                        initial_idx + dependency_limit, hosts_amount
+                    initial_idx = min(
+                        (result_host_idx * dependency_limit) % hosts_amount,
+                        hosts_amount
                     )
+                    final_idx_next = min(
+                        initial_idx + dependency_limit,
+                        hosts_amount
+                    )
+                    final_idx_next_round = 0
 
                     if final_idx_next == hosts_amount:
-                      initial_idx = max(final_idx_next - dependency_limit, 0)
+                      final_idx_next_round = min(
+                          dependency_limit - (final_idx_next - initial_idx),
+                          initial_idx
+                      )
 
-                    result_hosts = (
-                        dependency_hosts[initial_idx:final_idx_next] or []
-                    )
+                    if initial_idx < final_idx_next:
+                      result_hosts = dependency_hosts[initial_idx:final_idx_next]
+
+                    if final_idx_next_round:
+                      result_hosts += dependency_hosts[0:final_idx_next_round]
+
+                    if result_hosts:
+                      single_host_included = (
+                          (initial_idx <= result_host_idx)
+                          and
+                          (result_host_idx < final_idx_next)
+                      ) or (
+                          result_host_idx < final_idx_next_round
+                      )
 
                   real_hosts_amount = len(result_hosts)
 
@@ -366,17 +387,12 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
                   result_hosts = []
 
                   for host_aux in result_hosts_aux:
-                    if host_aux:
-                      if protocol:
-                        host_aux = protocol + "://" + host_aux
-
-                      if port:
-                        host_aux += ":" + port
-
+                    host_aux = fill_host(host_aux, protocol, port)
                     result_hosts += [host_aux]
 
                   if result_hosts:
-                    result_host = result_hosts[result_host_idx - initial_idx]
+                    result_host = dependency_hosts[result_host_idx]
+                    result_host = fill_host(result_host, protocol, port)
 
                   if required_amount == -1:
                     required_amount = real_hosts_amount
@@ -385,6 +401,7 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
                       original_type=dependency_type,
                       host=result_host,
                       host_list=result_hosts,
+                      single_host_included=single_host_included,
                       required_amount=required_amount,
                   )
               except Exception as error:
@@ -442,3 +459,14 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
         traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
+
+
+def fill_host(host, protocol, port):
+  if host:
+    if protocol:
+      host = protocol + "://" + host
+
+    if port:
+      host += ":" + port
+
+  return host
