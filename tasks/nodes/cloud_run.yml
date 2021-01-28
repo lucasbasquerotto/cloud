@@ -67,6 +67,7 @@
     long_run_path: "{{ cloud_run_node.node_dir }}"
     long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
     long_run_cmd: "{{ cloud_run_task.cmd }}"
+    long_run_sync: "{{ cloud_run_task.sync | default(false) }}"
   when: (cloud_run_task.type == 'shell') and (cloud_run_task_target == 'node')
   tags: ["no_print_skipped"]
 
@@ -86,6 +87,7 @@
     long_run_path: "{{ cloud_run_pod.pod_dir }}"
     long_run_poll: "{{ cloud_run_task.poll | default(2) }}"
     long_run_cmd: "{{ cloud_run_task.cmd }}"
+    long_run_sync: "{{ cloud_run_task.sync | default(false) }}"
   loop: "{{ cloud_run_node.pods | default([], true) }}"
   loop_control:
     loop_var: cloud_run_pod

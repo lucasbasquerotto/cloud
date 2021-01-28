@@ -1,0 +1,38 @@
+- name: "{{ transfer_title }} - transfer_prepared_list (prepare)"
+  set_fact:
+    transfer_prepared_list: []
+  tags: ["no_print"]
+
+- name: "{{ transfer_title }} - transfer_prepared_list (fill)"
+  set_fact:
+    transfer_prepared_list: >-
+      {{ transfer_prepared_list + [tmp_prepared_item] }}
+  vars:
+    tmp_content: >-
+      {{
+        lookup(
+          'lrd.cloud.prepare_content',
+          tmp_item.content,
+          env_data=env_data,
+          env=transfer_env | default(env, true),
+          input=transfer_input | default(omit, true),
+          custom_dir=transfer_custom_dir | default(''),
+          validate=transfer_validate | default(true, true),
+        )
+      }}
+    tmp_prepared_item: >-
+      {{
+        tmp_item | combine({
+          'content': tmp_content,
+          'input': (tmp_content.type == 'template')
+            | ternary(
+              transfer_input | default(tmp_content.input | default({})),
+              {}
+            )
+        })
+      }}
+  loop: "{{ transfer_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  tags: ["no_print"]

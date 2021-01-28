@@ -40,7 +40,7 @@
   set_fact:
     ctx_node_dependencies: >-
       {{
-        ctx_data.node_dependencies
+        ctx_data.node_dependencies | default({})
         | lrd.cloud.node_dependencies(
           ctx_hosts_data | default({}),
           instance_type=instance_type,

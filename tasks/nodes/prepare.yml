@@ -10,25 +10,40 @@
   loop_control:
     loop_var: node_prepare_item
 
+- name: "{{ node_prepare_title }} - node_prepare_transfer_list (init)"
+  set_fact:
+    node_prepare_transfer_list: []
+  tags: ["no_print"]
+
+- name: "{{ node_prepare_title }} - node_prepare_transfer_list (fill)"
+  set_fact:
+    node_prepare_transfer_list: >-
+      {{ node_prepare_transfer_list + [tmp_transfer_item] }}
+  vars:
+    tmp_no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
+    tmp_transfer_item:
+      content: "{{ tmp_item.src }}"
+      dest: "{{ node_prepare_node.node_dir }}/{{ tmp_item.dest }}"
+      tmp_dest: "{{ node_prepare_node.tmp_dir }}/{{ tmp_item.dest }}"
+      mode: "{{ tmp_item.mode }}"
+      dir_mode: "{{ tmp_item.dir_mode }}"
+      no_empty_lines: "{{ tmp_item.no_empty_lines | default(tmp_no_empty_lines) }}"
+  when: tmp_item.when | default(true, true) | bool
+  loop: "{{ node_prepare_node.prepared_transfer | default([]) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  tags: ["no_print"]
+
 - name: "{{ node_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
-    node_prepare_dependencies: >-
-      {{ ctx_node_dependencies[node_prepare_node.name] | default({}) }}
-    transfer_title: "{{ node_prepare_title }} - transfer #{{ node_prepare_idx + 1 }}"
-    transfer_prepared: true
-    transfer_content: "{{ node_prepare_item.src }}"
-    transfer_input:
-      dependencies: "{{ node_prepare_dependencies }}"
-    transfer_dest: "{{ node_prepare_node.node_dir }}/{{ node_prepare_item.dest }}"
-    transfer_tmp_dest: "{{ node_prepare_node.tmp_dir }}/{{ node_prepare_item.dest }}"
+    transfer_title: "{{ node_prepare_title }} - transfer"
     transfer_become: "{{ node_prepare_node.root | default(false) }}"
-    transfer_mode: "{{ node_prepare_item.mode }}"
-    transfer_dir_mode: "{{ node_prepare_item.dir_mode }}"
-  when: node_prepare_item.when | default(true, true) | bool
-  loop: "{{ node_prepare_node.prepared_transfer | default([]) }}"
-  loop_control:
-    index_var: node_prepare_idx
-    loop_var: node_prepare_item
-    label: "{{ node_prepare_idx }}"
+    transfer_list: "{{ node_prepare_transfer_list }}"
+    transfer_prepared: true
+    transfer_input:
+      dependencies: >-
+        {{ ctx_node_dependencies[node_prepare_node.name] | default({}) }}
+  when: (node_prepare_transfer_list | length) > 0
   tags: ["no_print_skipped"]

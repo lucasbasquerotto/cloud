@@ -54,25 +54,17 @@
   changed_when: false
   tags: ["no_print_skipped"]
 
-- name: "{{ pod_transfer_title }} - pod_transfer_template_regex"
-  set_fact:
-    pod_transfer_template_regex: "^\\s*$"
-  tags: ["no_print"]
-
-- name: "{{ pod_transfer_title }} - pod_transfer_template_regex"
-  set_fact:
-    pod_transfer_template_regex: "\\n\\s*$"
-  when: env.meta.template_no_empty_lines | default(false) | bool
-  tags: ["no_print"]
-
 - name: >-
     {{ pod_transfer_title }} -
     remove excess of blank lines of files created from the templates
   become: "{{ pod_root | bool }}"
   replace:
     path: "{{ pod_transfer_item.dest_tmp }}"
-    regexp: "{{ pod_transfer_template_regex }}"
+    regexp: "^\\s*\\n"
     replace: ""
+  vars:
+    tmp_no_empty_lines: "{{ pod_transfer_item.no_empty_lines | default(false) }}"
+  when: tmp_no_empty_lines | bool
   loop: "{{ pod_transfer_templates | default([], true) }}"
   loop_control:
     loop_var: pod_transfer_item

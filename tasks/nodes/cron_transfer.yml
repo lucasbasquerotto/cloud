@@ -19,14 +19,16 @@
   include_tasks: "tasks/util/transfer.yml"
   vars:
     transfer_title: "{{ cron_transfer_title }} - transfer new content (tmp)"
-    transfer_prepared: true
-    transfer_content: "{{ cron_transfer_src }}"
-    transfer_dest: "{{ cron_tmp_dir }}/new.cron"
-    transfer_tmp_dest: "{{ cron_tmp_dir }}/new.cron.tmp"
+    transfer_become: "{{ cron_transfer_become | default(false) }}"
     transfer_user: "{{ cron_transfer_user | default('') }}"
     transfer_group: "{{ cron_transfer_group | default('') }}"
-    transfer_become: "{{ cron_transfer_become | default(false) }}"
-    transfer_mode: "{{ cron_transfer_mode | default('') }}"
+    transfer_prepared: true
+    transfer_list:
+      - content: "{{ cron_transfer_src }}"
+        dest: "{{ cron_tmp_dir }}/new.cron"
+        tmp_dest: "{{ cron_tmp_dir }}/new.cron.tmp"
+        mode: "{{ cron_transfer_mode | default('') }}"
+        no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cron_transfer_title }} - copy the temporary cron files"

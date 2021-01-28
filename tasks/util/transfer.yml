@@ -1,155 +1,166 @@
 - name: "{{ transfer_title }} - transfer_prepared_content"
   set_fact:
-    transfer_prepared_content: "{{ transfer_content }}"
+    transfer_prepared_list: "{{ transfer_list }}"
+    transfer_diff_str: {}
+    transfer_diff_file: {}
+    transfer_diff_template: {}
   tags: ["no_print"]
 
 # Prepare (if needed)
 
-- name: "{{ transfer_title }} - prepare the content"
-  set_fact:
-    transfer_prepared_content: >-
-      {{
-        lookup(
-          'lrd.cloud.prepare_content',
-          transfer_content,
-          env_data=env_data,
-          env=transfer_env | default(env, true),
-          input=transfer_input | default(omit, true),
-          custom_dir=transfer_custom_dir | default(''),
-          validate=transfer_validate | default(true, true),
-        )
-      }}
+- name: "{{ transfer_title }} - prepare the list with the input"
+  include_tasks: "tasks/util/transfer_prepare.yml"
   when: not (transfer_prepared | default(false) | bool)
   tags: ["no_print"]
 
-- name: "{{ transfer_title }} - define transfer input"
-  set_fact:
-    transfer_input: "{{ transfer_prepared_content.input }}"
-  when: >-
-    (transfer_prepared_content.type == 'template')
-    and
-    (transfer_input is not defined)
-    and
-    (transfer_prepared_content.input is defined)
-  tags: ["no_print"]
-
-- name: "{{ transfer_title }} - prepare the content"
+- name: "{{ transfer_title }} - prepare the content - verify type"
   fail:
     msg: |
       invalid prepared content type:
-      type: {{ transfer_prepared_content.type }}
+      type: {{ tmp_item.content.type }}
       allowed: {{ tmp_allowed | to_json }}
   vars:
     tmp_allowed: ["file", "template", "str"]
-  when: transfer_prepared_content.type not in tmp_allowed
+  when: tmp_item.content.type not in tmp_allowed
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
   tags: ["no_print"]
 
 # Create the destination directory
 
-- name: "{{ transfer_title }} - create the directory {{ transfer_dest | dirname }}"
+- name: "{{ transfer_title }} - create the directories"
   become: "{{ transfer_become | default(false) | bool }}"
   file:
-    path: "{{ transfer_dest | dirname }}"
+    path: "{{ tmp_item.dest | dirname }}"
     state: directory
-    mode: "{{ transfer_dir_mode | default(omit, true) }}"
+    mode: "{{ tmp_item.dir_mode | default(omit, true) }}"
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
   tags: ["no_print"]
 
-- name: "{{ transfer_title }} - create the tmp directory {{ transfer_tmp_dest | dirname }}"
+- name: "{{ transfer_title }} - create the tmp directories"
   become: "{{ transfer_become | default(false) | bool }}"
   file:
-    path: "{{ transfer_tmp_dest | dirname }}"
+    path: "{{ tmp_item.tmp_dest | dirname }}"
     state: directory
-    mode: "{{ transfer_dir_mode | default(omit, true) }}"
-  when: transfer_prepared_content.type == 'template'
+    mode: "{{ tmp_item.dir_mode | default(omit, true) }}"
+  when: tmp_item.content.type == 'template'
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
   tags: ["no_print"]
 
 # String
 
-- name: "{{ transfer_title }} - copy the string content to {{ transfer_dest }}"
+- name: "{{ transfer_title }} - copy the string contents"
   become: "{{ transfer_become | default(false) | bool }}"
   copy:
-    content: "{{ transfer_prepared_content.params.value }}"
-    dest: "{{ transfer_dest }}"
+    content: "{{ tmp_item.content.params.value }}"
+    dest: "{{ tmp_item.dest }}"
     owner: "{{ transfer_user | default(omit, true) }}"
     group: "{{ transfer_group | default(omit, true) }}"
-    mode: "{{ transfer_mode | default(omit, true) }}"
-  register: transfer_diff
-  when: transfer_prepared_content.type == 'str'
+    mode: "{{ tmp_item.mode | default(omit, true) }}"
+  when: tmp_item.content.type == 'str'
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  register: transfer_diff_str
   tags: ["no_print_skipped"]
 
 # File
 
-- name: "{{ transfer_title }} - copy the file content to {{ transfer_dest }}"
+- name: "{{ transfer_title }} - copy the file contents"
   become: "{{ transfer_become | default(false) | bool }}"
   copy:
-    src: "{{ transfer_prepared_content.file }}"
-    dest: "{{ transfer_dest }}"
+    src: "{{ tmp_item.content.file }}"
+    dest: "{{ tmp_item.dest }}"
     owner: "{{ transfer_user | default(omit, true) }}"
     group: "{{ transfer_group | default(omit, true) }}"
-    mode: "{{ transfer_mode | default(omit, true) }}"
-  register: transfer_diff
-  when: transfer_prepared_content.type == 'file'
+    mode: "{{ tmp_item.mode | default(omit, true) }}"
+  when: tmp_item.content.type == 'file'
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  register: transfer_diff_file
   tags: ["no_print_skipped"]
 
 # Template
 
 - name: >-
-    {{ transfer_title }} - copy the template content to
-    the temporary destination ({{ transfer_tmp_dest }})
+    {{ transfer_title }} - copy the template contents to
+    the temporary destinations
   become: "{{ transfer_become | default(false) | bool }}"
   template:
-    src: "{{ transfer_prepared_content.file }}"
-    dest: "{{ transfer_tmp_dest }}"
+    src: "{{ tmp_item.content.file }}"
+    dest: "{{ tmp_item.tmp_dest }}"
     owner: "{{ transfer_user | default(omit, true) }}"
     group: "{{ transfer_group | default(omit, true) }}"
-    mode: "{{ transfer_mode | default(omit, true) }}"
+    mode: "{{ tmp_item.mode | default(omit, true) }}"
   vars:
-    input: "{{ transfer_input | default({}) }}"
-    params: "{{ transfer_prepared_content.params | default({}) }}"
-    credentials: "{{ transfer_prepared_content.credentials | default({}) }}"
-    contents: "{{ transfer_prepared_content.contents | default({}) }}"
-  when: transfer_prepared_content.type == 'template'
+    input: "{{ transfer_input | default(tmp_item.content.input | default({})) }}"
+    params: "{{ tmp_item.content.params | default({}) }}"
+    credentials: "{{ tmp_item.content.credentials | default({}) }}"
+    contents: "{{ tmp_item.content.contents | default({}) }}"
+  when: tmp_item.content.type == 'template'
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.tmp_dest }}"
   changed_when: false
   tags: ["no_print_skipped"]
 
-- name: "{{ transfer_title }} - transfer_template_regex"
-  set_fact:
-    transfer_template_regex: "^\\s*$"
-  when: transfer_prepared_content.type == 'template'
-  tags: ["no_print"]
-
-- name: "{{ transfer_title }} - transfer_template_regex"
-  set_fact:
-    transfer_template_regex: "\\n\\s*$"
-  when: >-
-    (transfer_prepared_content.type == 'template')
-    and
-    (env.meta.template_no_empty_lines | default(false) | bool)
-  tags: ["no_print"]
-
 - name: >-
-    {{ transfer_title }} -
-    remove excess of blank lines of the file created from the template
+    {{ transfer_title }} - remove the excess of blank lines
+    of the files created from the templates
   replace:
-    path: "{{ transfer_tmp_dest }}"
-    regexp: "{{ transfer_template_regex }}"
+    path: "{{ tmp_item.tmp_dest }}"
+    regexp: "^\\s*\\n"
     replace: ""
-  when: transfer_prepared_content.type == 'template'
+  when: >-
+    (tmp_item.content.type == 'template')
+    and
+    (tmp_item.no_empty_lines | default(false) | bool)
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.tmp_dest }}"
   changed_when: false
   tags: ["no_print_skipped"]
 
 - name: >-
     {{ transfer_title }} -
-    copy the normalized file created from the template
-    to {{ transfer_dest }}
+    copy the normalized files created from the templates
   become: "{{ transfer_become | default(false) | bool }}"
   copy:
     remote_src: true
-    src: "{{ transfer_tmp_dest }}"
-    dest: "{{ transfer_dest }}"
+    src: "{{ tmp_item.tmp_dest }}"
+    dest: "{{ tmp_item.dest }}"
     owner: "{{ transfer_user | default(omit, true) }}"
     group: "{{ transfer_group | default(omit, true) }}"
-    mode: "{{ transfer_mode | default(omit, true) }}"
-  when: transfer_prepared_content.type == 'template'
-  register: transfer_diff
+    mode: "{{ tmp_item.mode | default(omit, true) }}"
+  when: tmp_item.content.type == 'template'
+  loop: "{{ transfer_prepared_list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  register: transfer_diff_template
   tags: ["no_print_skipped"]
+
+- name: "{{ transfer_title }} - transfer_diff"
+  set_fact:
+    transfer_diff: >-
+      {{
+        (transfer_diff_str.results | default([]) )
+        +
+        (transfer_diff_file.results | default([]) )
+        +
+        (transfer_diff_template.results | default([]) )
+      }}
+  tags: ["no_print"]

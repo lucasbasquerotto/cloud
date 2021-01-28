@@ -1706,6 +1706,7 @@ def prepare_task(task_info_dict, run_info):
     result['file'] = task.get('file')
     result['cmd'] = task.get('cmd')
     result['poll'] = task.get('poll')
+    result['sync'] = to_bool(task.get('sync'))
     result['root'] = to_bool(task.get('root'))
 
     try:
@@ -1733,7 +1734,7 @@ def prepare_task(task_info_dict, run_info):
                 'shared_params',
                 'shared_group_params',
             ]),
-            shell=list(['type', 'cmd', 'root', 'poll']),
+            shell=list(['type', 'cmd', 'root', 'poll', 'sync']),
         )
 
         allowed_props = allowed_props_map.get(task_type)
@@ -2314,7 +2315,6 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
             'msg: run stage not specified for the environment'
         ]]
         return dict(result=result, error_msgs=error_msgs)
-
 
     run_stage_tasks_input = run_stage_info.get('tasks')
 

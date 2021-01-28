@@ -49,24 +49,40 @@
 
 ### Transfer the pod contents ###
 
+- name: "{{ pod_prepare_title }} - pod_prepare_transfer_list (init)"
+  set_fact:
+    pod_prepare_transfer_list: []
+  tags: ["no_print"]
+
+- name: "{{ pod_prepare_title }} - pod_prepare_transfer_list (fill)"
+  set_fact:
+    pod_prepare_transfer_list: >-
+      {{ pod_prepare_transfer_list + [tmp_transfer_item] }}
+  vars:
+    tmp_no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
+    tmp_transfer_item:
+      content: "{{ tmp_item.src }}"
+      dest: "{{ pod_repo_dir }}/{{ tmp_item.dest }}"
+      tmp_dest: "{{ pod_tmp_dir }}/{{ tmp_item.dest }}"
+      mode: "{{ tmp_item.mode }}"
+      dir_mode: "{{ tmp_item.dir_mode }}"
+      no_empty_lines: "{{ tmp_item.no_empty_lines | default(tmp_no_empty_lines) }}"
+  when: tmp_item.when | default(true, true) | bool
+  loop: "{{ pod_item.prepared_transfer | default([]) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  tags: ["no_print"]
+
 - name: "{{ pod_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
-    transfer_title: "{{ pod_prepare_title }} - transfer #{{ pod_prepare_idx + 1 }}"
+    transfer_title: "{{ pod_prepare_title }} - transfer"
+    transfer_become: "{{ pod_root | bool }}"
     transfer_prepared: true
-    transfer_content: "{{ pod_prepare_item.src }}"
+    transfer_list: "{{ pod_prepare_transfer_list }}"
     transfer_input:
       dependencies: "{{ pod_node_dependencies }}"
-    transfer_dest: "{{ pod_repo_dir }}/{{ pod_prepare_item.dest }}"
-    transfer_tmp_dest: "{{ pod_tmp_dir }}/{{ pod_prepare_item.dest }}"
     transfer_custom_dir: "{{ pod_item.local_dir }}"
-    transfer_become: "{{ pod_root | bool }}"
-    transfer_mode: "{{ pod_prepare_item.mode }}"
-    transfer_dir_mode: "{{ pod_prepare_item.dir_mode }}"
-  when: pod_prepare_item.when | default(true, true) | bool
-  loop: "{{ pod_item.prepared_transfer | default([]) }}"
-  loop_control:
-    index_var: pod_prepare_idx
-    loop_var: pod_prepare_item
-    label: "{{ pod_prepare_idx }}"
+  when: (pod_prepare_transfer_list | length) > 0
   tags: ["no_print_skipped"]

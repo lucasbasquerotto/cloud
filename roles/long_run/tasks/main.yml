@@ -46,7 +46,11 @@
   args:
     executable: /bin/bash
     chdir: "{{ long_run_path }}"
-  async: "{{ long_run_timeout | int }}"
+  async: >-
+    {{
+      long_run_sync | default(false) | bool
+      | ternary(omit, long_run_timeout | int)
+    }}
   poll: 0
   register: "long_run_register"
 
@@ -63,6 +67,7 @@
     watch_job: "long_run_register"
     watch_timeout: "{{ long_run_timeout | int }}"
     watch_poll: "{{ long_run_poll | int }}"
+  when: not (long_run_sync | default(false) | bool)
 
 - name: "{{ long_run_title }} - time before execution"
   debug:

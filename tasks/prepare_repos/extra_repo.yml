@@ -1,37 +1,48 @@
 # transfer
 
+- name: "{{ prepare_repos_extra_repo_title }} - prepare_repos_extra_repo_transfer_list (init)"
+  set_fact:
+    prepare_repos_extra_repo_transfer_list: []
+  tags: ["no_print"]
+
+- name: "{{ prepare_repos_extra_repo_title }} - prepare_repos_extra_repo_transfer_list (fill)"
+  set_fact:
+    prepare_repos_extra_repo_transfer_list: >-
+      {{ prepare_repos_extra_repo_transfer_list + [tmp_transfer_item] }}
+  vars:
+    tmp_no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
+    tmp_transfer_item:
+      content: "{{ tmp_item.src }}"
+      dest: >-
+        {{ prepare_repos_extra_repo_dir }}/{{ tmp_item.dest }}
+      tmp_dest: >-
+        {{ prepare_repos_extra_repo_tmp_dir }}/{{ tmp_item.dest }}
+      mode: >-
+        {{
+          tmp_item.mode | default(
+            tmp_item.executable | default(false) | bool | ternary(
+              env_lax | bool | ternary(0777, 0751),
+              env_lax | bool | ternary(0666, 0600)
+            )
+          )
+        }}
+      dir_mode: >-
+        {{ tmp_item.mode | default(env_lax | bool | ternary(0777, 0751)) }}
+      no_empty_lines: "{{ tmp_item.no_empty_lines | default(tmp_no_empty_lines) }}"
+  when: tmp_item.when | default(true, true) | bool
+  loop: "{{ prepare_repos_item.transfer | default([]) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.dest }}"
+  tags: ["no_print"]
+
 - name: "{{ prepare_repos_extra_repo_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
-    transfer_title: >-
-      {{ prepare_repos_extra_repo_title }} - transfer #{{ prepare_repos_extra_repo_idx + 1 }}
-    transfer_content: "{{ prepare_repos_extra_repo_item.src }}"
-    transfer_dest: >-
-      {{ prepare_repos_extra_repo_dir }}/{{ prepare_repos_extra_repo_item.dest }}
-    transfer_tmp_dest: >-
-      {{ prepare_repos_extra_repo_tmp_dir }}/{{ prepare_repos_extra_repo_item.dest }}
+    transfer_title: "{{ prepare_repos_extra_repo_title }} - transfer"
+    transfer_list: "{{ prepare_repos_extra_repo_transfer_list }}"
     transfer_custom_dir: "{{ prepare_repos_extra_repo_dir }}"
-    transfer_mode: >-
-      {{
-        prepare_repos_extra_repo_item.mode
-        | default(
-          prepare_repos_extra_repo_item.executable | default(false) | bool | ternary(
-            env_lax | bool | ternary(0777, 0751),
-            env_lax | bool | ternary(0666, 0600)
-          )
-        )
-      }}
-    transfer_dir_mode: >-
-      {{
-        prepare_repos_extra_repo_item.mode
-        | default(env_lax | bool | ternary(0777, 0751))
-      }}
-  when: prepare_repos_extra_repo_item.when | default(true, true) | bool
-  loop: "{{ prepare_repos_item.transfer | default([]) }}"
-  loop_control:
-    index_var: prepare_repos_extra_repo_idx
-    loop_var: prepare_repos_extra_repo_item
-    label: "{{ prepare_repos_extra_repo_idx }}"
+  when: (prepare_repos_extra_repo_transfer_list | length) > 0
   tags: ["no_print_skipped"]
 
 # links

@@ -218,6 +218,12 @@ def load_ctx_template(current_template, is_env, data_info):
 
     env_dir = env_data.get('env_dir')
     env_lax = env_data.get('lax')
+
+    env = env_data.get('env')
+    env_template_no_empty_lines = (env.get('meta') or dict()).get(
+        'template_no_empty_lines'
+    )
+
     default_dir_mode = 777 if env_lax else 751
     default_file_mode = 666 if env_lax else 640
     default_file_executable_mode = default_dir_mode
@@ -235,6 +241,11 @@ def load_ctx_template(current_template, is_env, data_info):
 
       dest_dir = os.path.dirname(dest)
       dest_tmp_dir = os.path.dirname(dest_tmp)
+
+      no_empty_lines = to_bool(
+          current_template.get('no_empty_lines'),
+          to_bool(env_template_no_empty_lines),
+      )
 
       if validate and not os.path.exists(local_src):
         error_msgs += [[
@@ -296,6 +307,7 @@ def load_ctx_template(current_template, is_env, data_info):
             src=src,
             dest=dest,
             dest_tmp=dest_tmp,
+            no_empty_lines=no_empty_lines,
             mode=(
                 current_template.get('mode')
                 or

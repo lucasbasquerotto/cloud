@@ -41,13 +41,15 @@
     - name: "{{ env_title }} - cfg file (outer)"
       include_tasks: "tasks/util/transfer.yml"
       vars:
-        tmp_default:
+        prepare_tmp_default:
           file: "ansible/ansible.cfg"
         transfer_title: "{{ env_title }} - cfg file"
-        transfer_content: "{{ ctx_data.cfg | default(tmp_default, true) }}"
-        transfer_dest: "ansible/ansible.generated.cfg"
-        transfer_tmp_dest: "{{ env_vars.ctx_dir }}/tmp/ansible.generated.cfg"
-        transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+        transfer_list:
+          - content: "{{ ctx_data.cfg | default(prepare_tmp_default, true) }}"
+            dest: "ansible/ansible.generated.cfg"
+            tmp_dest: "{{ env_vars.ctx_dir }}/tmp/ansible.generated.cfg"
+            mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+            no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
 
     # project hosts file (inventory)
 
@@ -75,12 +77,14 @@
       include_tasks: "tasks/util/transfer.yml"
       vars:
         transfer_title: "{{ env_title }} - hosts file"
-        transfer_content: "{{ ctx_data.hosts }}"
         transfer_input:
           nodes: "{{ ctx_data.nodes | default([]) }}"
-        transfer_dest: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
-        transfer_tmp_dest: "{{ env_vars.secrets_ctx_dir }}/tmp/hosts.tmp"
-        transfer_mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+        transfer_list:
+          - content: "{{ ctx_data.hosts }}"
+            dest: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
+            tmp_dest: "{{ env_vars.secrets_ctx_dir }}/tmp/hosts.tmp"
+            mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+            no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
       tags: ["no_print_skipped"]
 
     - name: >-
@@ -197,24 +201,13 @@
           path_map: "<<{ env_path_map }>>"
       changed_when: false
 
-    - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (keep empty lines)"
-      set_fact:
-        project_ctx_run_regex: "^\\s*$"
-      tags: ["no_print"]
-
-    - name: "{{ project_ctx_run_title }} - project_ctx_run_regex (remove empty lines)"
-      set_fact:
-        project_ctx_run_regex: "\\n\\s*$"
-      when: env.meta.template_no_empty_lines | default(false) | bool
-      tags: ["no_print"]
-
     - name: >-
         {{ project_ctx_run_title }} -
         remove excess of blank lines of the file created from the template
         ({{ project_ctx_run_tmp_dest }})
       replace:
         path: "{{ project_ctx_run_tmp_dest }}"
-        regexp: "{{ project_ctx_run_regex }}"
+        regexp: "^\\s*\\n"
         replace: ""
       changed_when: false
 
