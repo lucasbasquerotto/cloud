@@ -2578,10 +2578,13 @@ main:
           dependency_3:
             type: "ip"
             host: "1.2.3.4"
+            protocol: "ssh"
+            port: 22
           dependency_4:
             type: "node"
             node_ip_type: "ipv4"
             host: "node_2"
+            protocol: "https"
             limit: 2
       - name: "node_2"
         key: "my_node"
@@ -2632,7 +2635,29 @@ ctx_node_dependencies:
         - target-host-2
         - target-host-3
         original_type: url
-        required_amount: 8
+        required_amount: 0
+        single_host_included: true
+      dependency_2:
+        host: http://mydomain.com
+        host_list:
+        - http://mydomain.com
+        original_type: url
+        required_amount: 0
+        single_host_included: true
+      dependency_3:
+        host: ssh://1.2.3.4:22
+        host_list:
+        - ssh://1.2.3.4:22
+        original_type: ip
+        required_amount: 0
+        single_host_included: true
+      dependency_4:
+        host: https://1.1.1.1
+        host_list:
+        - https://1.1.1.1
+        - https://2.2.2.2
+        original_type: node
+        required_amount: 0
         single_host_included: true
 ```
 
