@@ -11,7 +11,7 @@
   copy:
     content: ""
     force: no
-    dest: "{{ cron_transfer_dest }}"
+    dest: "{{ cron_tmp_dir }}/backup.cron"
     owner: "{{ cron_transfer_user | default(omit, true) }}"
     group: "{{ cron_transfer_group | default(omit, true) }}"
 
@@ -22,6 +22,8 @@
     transfer_become: "{{ cron_transfer_become | default(false) }}"
     transfer_user: "{{ cron_transfer_user | default('') }}"
     transfer_group: "{{ cron_transfer_group | default('') }}"
+    transfer_input:
+      node: "{{ cron_node }}"
     transfer_prepared: true
     transfer_list:
       - content: "{{ cron_transfer_src }}"
@@ -42,7 +44,7 @@
     mode: 0600
   loop:
     - name: "old.tmp.cron"
-      src: "{{ cron_transfer_dest }}"
+      src: "{{ cron_tmp_dir }}/backup.cron"
     - name: "new.tmp.cron"
       src: "{{ cron_tmp_dir }}/new.cron"
   loop_control:
@@ -84,12 +86,20 @@
         owner: "{{ cron_transfer_user | default(omit, true) }}"
         group: "{{ cron_transfer_group | default(omit, true) }}"
         mode: 0600
-      register: cron_result
 
     - name: "{{ cron_transfer_title }} - ensure the crontab file is active"
       become: "{{ cron_transfer_become | default(false) | bool }}"
       shell: "crontab '{{ cron_transfer_dest }}'"
-      when: cron_result is changed
 
+    - name: "{{ cron_transfer_title }} - copy the new cron file as backup"
+      become: "{{ cron_transfer_become | default(false) | bool }}"
+      copy:
+        remote_src: true
+        src: "{{ cron_transfer_dest }}"
+        dest: "{{ cron_tmp_dir + '/backup.cron' }}"
+        owner: "{{ cron_transfer_user | default(omit, true) }}"
+        group: "{{ cron_transfer_group | default(omit, true) }}"
+        mode: 0600
+      changed_when: false
   when: cron_diff.changed
   tags: ["no_print_skipped"]

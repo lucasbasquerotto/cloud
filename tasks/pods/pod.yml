@@ -16,3 +16,4 @@
     pod_prepare_title: "{{ pod_inner_title }} - main"
     pod_repo_dir: "{{ pod_item.pod_dir }}"
     pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/main"
+  tags: ["no_print_skipped"]
