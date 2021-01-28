@@ -33,6 +33,21 @@
 
 # Pods Repos (Local)
 
+# - name: "{{ prepare_repos_title }} - local repos - validate nodes"
+#   fail:
+#     msg: |
+#       node:
+#       pod:
+#       msg: pod is not defined
+#   vars:
+#     tmp_node_name: "{{ prepare_repos_item.name | default(prepare_repos_item) }}"
+#     tmp_node_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name | default(prepare_repos_item)) }}"
+#     tmp_node: "{{ prepare_repos_nodes_dict[prepare_repos_node_key] }}"
+#   loop: "{{ prepare_repos_nodes }}"
+#   loop_control:
+#     loop_var: tmp_item
+#   tags: ["no_print"]
+
 - name: "{{ prepare_repos_title }} - prepare_repos_pods_list - init"
   set_fact:
     prepare_repos_pods_list: []
@@ -40,26 +55,43 @@
 
 - name: "{{ prepare_repos_title }} - prepare_repos_pods_list - fill"
   set_fact:
-    prepare_repos_pods_list: "{{ prepare_repos_pods_list + (prepare_repos_node.pods | default([])) }}"
+    prepare_repos_pods_list: "{{ prepare_repos_pods_list + (tmp_node.pods | default([])) }}"
   vars:
-    prepare_repos_node_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name) | default(prepare_repos_item) }}"
-    prepare_repos_node: "{{ prepare_repos_nodes_dict[prepare_repos_node_key] }}"
+    tmp_node_key: "{{ tmp_item.key | default(tmp_item.name | default(tmp_item)) }}"
+    tmp_node: "{{ prepare_repos_nodes_dict[tmp_node_key] | default({}) }}"
+  when: prepare_repos_nodes_dict[tmp_node_key] is defined
   loop: "{{ prepare_repos_nodes }}"
   loop_control:
-    loop_var: prepare_repos_item
+    loop_var: tmp_item
   tags: ["no_print"]
+
+# - name: "{{ prepare_repos_title }} - local repos - validate pods"
+#   fail:
+#     msg: |
+#       node:
+#       pod:
+#       msg: pod is not defined
+#   vars:
+#     prepare_repos_layer_name: "{{ prepare_repos_item.name | default(prepare_repos_item) }}"
+#     prepare_repos_layer_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name | default(prepare_repos_item)) }}"
+#   when: prepare_repos_pods_dict[prepare_repos_layer_key] is not defined
+#   loop: "{{ prepare_repos_pods_list }}"
+#   loop_control:
+#     loop_var: prepare_repos_item
+#   tags: ["no_print"]
 
 - name: "{{ prepare_repos_title }} - local repos - pods"
   include_tasks: "tasks/prepare_repos/layer.yml"
   vars:
     prepare_repos_layer_name: "{{ prepare_repos_item.name | default(prepare_repos_item) }}"
-    prepare_repos_layer_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name) | default(prepare_repos_item) }}"
-    prepare_repos_layer: "{{ prepare_repos_pods_dict[prepare_repos_layer_key] }}"
+    prepare_repos_layer_key: "{{ prepare_repos_item.key | default(prepare_repos_item.name | default(prepare_repos_item)) }}"
+    prepare_repos_layer: "{{ prepare_repos_pods_dict[prepare_repos_layer_key] | default({}) }}"
     prepare_repos_layer_title: >-
       {{ prepare_repos_title }} - local repos - pod
       [{{ prepare_repos_layer_name }} ({{ prepare_repos_layer.repo }})]
     prepare_repos_layer_dest: >-
       {{ prepare_repos_pods_dir + '/' + prepare_repos_layer_name }}
+  when: prepare_repos_pods_dict[prepare_repos_layer_key] is defined
   loop: "{{ prepare_repos_pods_list }}"
   loop_control:
     loop_var: prepare_repos_item

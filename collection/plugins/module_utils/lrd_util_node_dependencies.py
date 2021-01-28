@@ -19,10 +19,10 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
 
 
 def prepare_node_dependencies(node_names, prepared_node_dict):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     for node_name in (node_names or []):
       error_msgs_node = []
 
@@ -228,7 +228,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare the nodes dependencies',
         'error type: ' + str(type(error)),
         'error details: ',

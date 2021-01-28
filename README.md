@@ -2430,7 +2430,8 @@ task_shared_params:
 task_group_params:
   test_run_stage_prop3:
     inner_prop1: "inner3_value1"
-    inner_prop2: "inner3_value2"
+    inner_prop2:
+      inner_prop1: "innermost3_2_value1"
 credentials:
   test_run_stage_prop1_cloud: "value1_credential_cloud"
   test_run_stage_prop2:
@@ -2511,6 +2512,10 @@ The task will run for all the pods (`pod_1`, `pod_2` and `pod_3`) in the single 
 ---
 
 More information about run stages, which properties can be defined for them and what they do can be seen in the [environment schema file](schemas/env.schema.yml), especially in the `run_stage` sub-schema.
+
+## Node Dependencies
+
+Node dependencies can be defined for a node in the same place you can define its name, in the context section, and can point to a url, ip or another node.
 
 ## Encrypt and Decrypt
 

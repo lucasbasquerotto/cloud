@@ -93,6 +93,9 @@ def load_content(content, env, run_info, input_params=None, custom_dir=None):
 
 
 def prepare_content(content, env, run_info, additional_info=None):
+  result = dict()
+  error_msgs = list()
+
   try:
     additional_info = additional_info or dict()
 
@@ -102,17 +105,17 @@ def prepare_content(content, env, run_info, additional_info=None):
     content_names = additional_info.get('content_names')
 
     if env is None:
-      error_msgs = [['msg: environment variable not specified']]
+      error_msgs += [['msg: environment variable not specified']]
       return dict(error_msgs=error_msgs)
     elif not isinstance(env, dict):
-      error_msgs = [[
+      error_msgs += [[
           str('env type: ' + str(type(env))),
           'msg: environment variable is not a dictionary',
       ]]
       return dict(error_msgs=error_msgs)
 
     if content is None:
-      error_msgs = [['msg: content not specified']]
+      error_msgs += [['msg: content not specified']]
       return dict(error_msgs=error_msgs)
 
     if is_str(content):
@@ -122,7 +125,6 @@ def prepare_content(content, env, run_info, additional_info=None):
       )
 
     if isinstance(content, dict):
-      result = dict()
       error_msgs_aux = list()
 
       env_data = run_info.get('env_data')
@@ -474,8 +476,6 @@ def prepare_content(content, env, run_info, additional_info=None):
                     str('msg: schema file not found: ' + schema_file),
                 ]]
 
-      error_msgs = list()
-
       for value in (error_msgs_aux or []):
         new_value = [str('content type: ' + content_type)] + value
         error_msgs += [new_value]
@@ -491,13 +491,13 @@ def prepare_content(content, env, run_info, additional_info=None):
 
       return dict(result=result, error_msgs=error_msgs)
     else:
-      error_msgs = [[
+      error_msgs += [[
           str('type: ' + str(type(content))),
           'msg: invalid content type',
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare the content',
         'error type: ' + str(type(error)),
         'error details: ',

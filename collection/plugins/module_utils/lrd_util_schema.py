@@ -7,11 +7,13 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=import-error
 # pylint: disable=too-many-lines
+# pylint: disable=broad-except
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
 import re
+import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     is_bool, is_int, is_float, is_str, load_cached_file, to_float, to_int
@@ -1058,26 +1060,44 @@ def validate_value(schema, value):
 
 
 def validate_schema(schema, value, full_validation=True):
-  error_msgs = []
+  error_msgs = list()
 
-  if full_validation:
-    schema_base = load_cached_file('schemas/schema.yml')
-    error_msgs_aux = validate_value(schema_base, schema)
+  try:
+    if full_validation:
+      schema_base = load_cached_file('schemas/schema.yml')
+      error_msgs_aux = validate_value(schema_base, schema)
 
-    if error_msgs_aux:
-      for value in (error_msgs_aux or []):
-        new_value = ['schema context: schema'] + value
-        error_msgs += [new_value]
+      if error_msgs_aux:
+        for value in (error_msgs_aux or []):
+          new_value = ['schema context: schema'] + value
+          error_msgs += [new_value]
 
-      return error_msgs
+        return error_msgs
+  except Exception as error:
+    error_msgs += [[
+        'msg: error when trying to validate the schema itself',
+        'error type: ' + str(type(error)),
+        'error details: ',
+        traceback.format_exc(),
+    ]]
+    return dict(error_msgs=error_msgs)
 
   error_msgs_aux = validate_value(schema, value)
 
-  if error_msgs_aux:
-    for value in (error_msgs_aux or []):
-      new_value = ['schema context: value'] + value
-      error_msgs += [new_value]
+  try:
+    if error_msgs_aux:
+      for value in (error_msgs_aux or []):
+        new_value = ['schema context: value'] + value
+        error_msgs += [new_value]
 
-    return error_msgs
+      return error_msgs
+  except Exception as error:
+    error_msgs += [[
+        'msg: error when trying to validate the schema value',
+        'error type: ' + str(type(error)),
+        'error details: ',
+        traceback.format_exc(),
+    ]]
+    return dict(error_msgs=error_msgs)
 
   return []

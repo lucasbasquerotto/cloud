@@ -22,6 +22,9 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import
 
 
 def load_vars(pod_info, run_info, meta_info=None):
+  result = None
+  error_msgs = list()
+
   try:
     pod = pod_info.get('pod')
     dependencies = pod_info.get('dependencies', dict())
@@ -33,9 +36,6 @@ def load_vars(pod_info, run_info, meta_info=None):
 
     meta_info = meta_info or dict()
     no_ctx_msg = meta_info.get('no_ctx_msg')
-
-    result = None
-    error_msgs = []
 
     pod_ctx_file = pod.get('ctx') or ''
 
@@ -105,7 +105,7 @@ def load_vars(pod_info, run_info, meta_info=None):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to load the pod ctx vars',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -115,10 +115,11 @@ def load_vars(pod_info, run_info, meta_info=None):
 
 
 def load_ctx_file(current_file, is_env, data_info):
+  error_msgs = list()
+
   try:
     directories = list()
     files = list()
-    error_msgs = list()
 
     pod = data_info.get('pod')
     env_data = data_info.get('env_data')
@@ -189,7 +190,7 @@ def load_ctx_file(current_file, is_env, data_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to load the pod ctx file',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -199,10 +200,11 @@ def load_ctx_file(current_file, is_env, data_info):
 
 
 def load_ctx_template(current_template, is_env, data_info):
+  error_msgs = list()
+
   try:
     directories = list()
     templates = list()
-    error_msgs = list()
 
     pod = data_info.get('pod')
     env_data = data_info.get('env_data')
@@ -331,7 +333,7 @@ def load_ctx_template(current_template, is_env, data_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to load the pod ctx template',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -341,11 +343,12 @@ def load_ctx_template(current_template, is_env, data_info):
 
 
 def load_next_vars(file_relpath, params, data_info):
+  error_msgs = list()
+
   try:
     directories = list()
     files = list()
     templates = list()
-    error_msgs = list()
 
     plugin = data_info.get('plugin')
     ansible_vars = data_info.get('ansible_vars')
@@ -521,7 +524,7 @@ def load_next_vars(file_relpath, params, data_info):
                   if child_templates:
                     templates += child_templates
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('file: ' + (file_relpath or '')),
           'msg: error when trying to define the pod ctx vars',
           'error type: ' + str(type(error)),
@@ -538,7 +541,7 @@ def load_next_vars(file_relpath, params, data_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         str('file: ' + (file_relpath or '')),
         'msg: unknown error when trying to define the pod ctx vars',
         'error type: ' + str(type(error)),

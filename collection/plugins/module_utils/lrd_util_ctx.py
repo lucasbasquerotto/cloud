@@ -30,10 +30,10 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import v
 
 
 def prepare_service(service_info, run_info, top, service_names=None):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = []
 
+  try:
     service_names = service_names if service_names is not None else set()
 
     env_data = run_info.get('env_data')
@@ -396,7 +396,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('service: ' + service_description),
           'msg: error when trying to prepare service',
           'error type: ' + str(type(error)),
@@ -405,7 +405,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare unknown service',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -415,9 +415,10 @@ def prepare_service(service_info, run_info, top, service_names=None):
 
 
 def prepare_services(services, run_info, top=False, service_names=None):
+  result = list()
+  error_msgs = list()
+
   try:
-    result = []
-    error_msgs = []
     service_names = service_names if service_names is not None else set()
 
     env_data = run_info.get('env_data')
@@ -454,7 +455,7 @@ def prepare_services(services, run_info, top=False, service_names=None):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare services',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -464,8 +465,10 @@ def prepare_services(services, run_info, top=False, service_names=None):
 
 
 def prepare_transfer_content(transfer_contents, context_title, prepare_info, input_params=None):
+  result = list()
+  error_msgs = list()
+
   try:
-    result = list()
     error_msgs_aux = list()
 
     if not transfer_contents:
@@ -552,15 +555,13 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
             traceback.format_exc(),
         ]]
 
-    error_msgs = list()
-
     for value in error_msgs_aux:
       new_value = [str('context: ' + (context_title or ''))] + value
       error_msgs += [new_value]
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         str('context: ' + (context_title or '')),
         'msg: error when trying to prepare to transfer the contents',
         'error type: ' + str(type(error)),
@@ -571,13 +572,13 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
 
 
 def prepare_pod(pod_info, parent_data, run_info):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     pod_ctx_info_dict = parent_data.get('pod_ctx_info_dict')
     local = parent_data.get('local') or False
-    parent_base_dir = parent_data.get('base_dir')
+    parent_base_dir = parent_data.get('base_dir') or ''
     dependencies = parent_data.get('dependencies')
 
     env_data = run_info.get('env_data')
@@ -604,14 +605,14 @@ def prepare_pod(pod_info, parent_data, run_info):
     result['parent_description'] = parent_data.get('parent_description')
 
     try:
-      pods_dict = env.get('pods')
+      pods_dict = env.get('pods') or dict()
 
       if pod_key not in pods_dict:
         error_msgs += [[
             str('pod: ' + pod_description),
             'existing_keys:',
-            sorted(list(pods_dict.keys())),
-            'msg: no pod specified for the environment'
+            sorted(str(k) for k in list(pods_dict.keys())),
+            'msg: pod not specified for the environment'
         ]]
       else:
         pod = pods_dict.get(pod_key)
@@ -663,7 +664,8 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         flat = pod.get('flat')
         base_dir = None if local else (
-            pod.get('base_dir') or (parent_base_dir + '/' + pod_name))
+            pod.get('base_dir') or (parent_base_dir + '/' + pod_name)
+        )
         pod_dir_relpath = pod.get('pod_dir_relpath') or 'main'
         pod_dir = local_dir if local else (
             base_dir if flat else (base_dir + '/' + pod_dir_relpath)
@@ -990,7 +992,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('pod: ' + pod_description),
           'msg: error when trying to prepare pod',
           'error type: ' + str(type(error)),
@@ -999,7 +1001,7 @@ def prepare_pod(pod_info, parent_data, run_info):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare unknown pod',
         'error type: ' + str(type(error)),
         'error details:',
@@ -1009,43 +1011,36 @@ def prepare_pod(pod_info, parent_data, run_info):
 
 
 def prepare_pods(pods, parent_data, run_info):
-  try:
-    result = []
-    error_msgs = []
+  result = list()
+  error_msgs = list()
 
+  try:
     pod_names = set()
-    env_data = run_info.get('env_data')
-    env = env_data.get('env')
 
     if pods:
-      pods_dict = env.get('pods')
+      for pod_info in pods:
+        info = prepare_pod(pod_info, parent_data, run_info)
 
-      if not pods_dict:
-        error_msgs += [['msg: no pod specified for the environment']]
-      else:
-        for pod_info in pods:
-          info = prepare_pod(pod_info, parent_data, run_info)
+        result_aux = info.get('result')
+        error_msgs_aux = info.get('error_msgs') or list()
 
-          result_aux = info.get('result')
-          error_msgs_aux = info.get('error_msgs') or list()
+        if error_msgs_aux:
+          error_msgs += error_msgs_aux
+        else:
+          pod_name = result_aux.get('name')
 
-          if error_msgs_aux:
-            error_msgs += error_msgs_aux
+          if pod_name in pod_names:
+            error_msgs += [[
+                str('pod_name: ' + pod_name),
+                'msg: duplicate pod name',
+            ]]
           else:
-            pod_name = result_aux.get('name')
-
-            if pod_name in pod_names:
-              error_msgs += [[
-                  str('pod_name: ' + pod_name),
-                  'msg: duplicate pod name',
-              ]]
-            else:
-              pod_names.add(pod_name)
-              result += [result_aux]
+            pod_names.add(pod_name)
+            result += [result_aux]
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare pods',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -1055,10 +1050,10 @@ def prepare_pods(pods, parent_data, run_info):
 
 
 def prepare_node(node_info, run_info):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     env_data = run_info.get('env_data')
     validate_ctx = run_info.get('validate')
 
@@ -1091,14 +1086,14 @@ def prepare_node(node_info, run_info):
     result['description'] = node_description
 
     try:
-      nodes_dict = env.get('nodes')
+      nodes_dict = env.get('nodes') or dict()
 
       if node_key not in nodes_dict:
         error_msgs += [[
             str('node: ' + node_description),
             'existing_keys:',
-            sorted(list(nodes_dict.keys())),
-            'msg: no node specified for the environment'
+            sorted(str(k) for k in list(nodes_dict.keys())),
+            'msg: node not specified for the environment'
         ]]
       else:
         node = nodes_dict.get(node_key)
@@ -1161,15 +1156,23 @@ def prepare_node(node_info, run_info):
         result['identifier'] = node_identifier
 
         dev_repos_dir = env_data.get('dev_repos_dir')
-
         base_dir = None if local else node.get('base_dir')
+
+        if (not local) and (not base_dir):
+          error_msgs += [[
+              str('node: ' + node_description),
+              'property: ' + key,
+              'msg: base directory (base_dir) not defined for the (non-local) node'
+          ]]
+
         node_dir = local_dir if local else (
-            node.get('node_dir') or (base_dir + '/.node'))
+            node.get('node_dir') or ((base_dir or '') + '/.node')
+        )
         local_tmp_dir = dev_repos_dir + '/tmp/nodes/' + node_identifier
         tmp_dir = (
             local_tmp_dir
             if local
-            else (node.get('tmp_dir') or (base_dir + '/.tmp'))
+            else (node.get('tmp_dir') or ((base_dir or '') + '/.tmp'))
         )
 
         result['root'] = to_bool(node.get('root'))
@@ -1595,7 +1598,7 @@ def prepare_node(node_info, run_info):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('node: ' + node_description),
           'msg: error when trying to prepare node',
           'error type: ' + str(type(error)),
@@ -1604,7 +1607,7 @@ def prepare_node(node_info, run_info):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare unknown node',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -1614,19 +1617,13 @@ def prepare_node(node_info, run_info):
 
 
 def prepare_nodes(nodes, run_info):
-  result = []
-  error_msgs = []
+  result = list()
+  error_msgs = list()
 
-  node_names = set()
-  env_data = run_info.get('env_data')
-  env = env_data.get('env')
+  try:
+    node_names = set()
 
-  if nodes:
-    nodes_dict = env.get('nodes')
-
-    if not nodes_dict:
-      error_msgs += [['msg: no node specified for the environment']]
-    else:
+    if nodes:
       for node_info in nodes:
         info = prepare_node(node_info, run_info)
 
@@ -1647,14 +1644,22 @@ def prepare_nodes(nodes, run_info):
             node_names.add(node_name)
             result += [result_aux]
 
-  return dict(result=result, error_msgs=error_msgs)
+    return dict(result=result, error_msgs=error_msgs)
+  except Exception as error:
+    error_msgs += [[
+        'msg: error when trying to prepare nodes',
+        'error type: ' + str(type(error)),
+        'error details: ',
+        traceback.format_exc(),
+    ]]
+    return dict(error_msgs=error_msgs)
 
 
 def prepare_task(task_info_dict, run_info):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     env_data = run_info.get('env_data')
     validate_ctx = run_info.get('validate')
 
@@ -1937,7 +1942,7 @@ def prepare_task(task_info_dict, run_info):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('task: ' + task_description),
           'msg: error when trying to prepare task',
           'error type: ' + str(type(error)),
@@ -1946,7 +1951,7 @@ def prepare_task(task_info_dict, run_info):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare unknown task',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -1956,10 +1961,10 @@ def prepare_task(task_info_dict, run_info):
 
 
 def prepare_run_stage_task(run_stage_task_info, run_stage_data):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     default_task_name = run_stage_data.get('default_task_name')
     prepared_nodes = run_stage_data.get('prepared_nodes')
     run_info = run_stage_data.get('run_info')
@@ -2256,7 +2261,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('run stage task: ' + run_stage_task_name),
           'msg: error when trying to prepare run stage task',
           'error type: ' + str(type(error)),
@@ -2265,7 +2270,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare unknown run stage task',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -2275,10 +2280,10 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
 
 def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     env_data = run_info.get('env_data')
     env = env_data.get('env')
 
@@ -2402,7 +2407,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
 
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('run stage: ' + run_stage_name),
           'msg: error when trying to prepare run stage',
           'error type: ' + str(type(error)),
@@ -2411,7 +2416,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare unknown run stage',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -2421,10 +2426,10 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
 
 
 def prepare_run_stages(run_stages, prepared_nodes, run_info):
-  try:
-    result = []
-    error_msgs = []
+  result = list()
+  error_msgs = list()
 
+  try:
     for idx, run_stage_info in enumerate(run_stages or []):
       default_name = str(idx + 1)
       info = prepare_run_stage(
@@ -2444,7 +2449,7 @@ def prepare_run_stages(run_stages, prepared_nodes, run_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'msg: error when trying to prepare run stages',
         'error type: ' + str(type(error)),
         'error details: ',
@@ -2454,10 +2459,10 @@ def prepare_run_stages(run_stages, prepared_nodes, run_info):
 
 
 def prepare_ctx(ctx_name, run_info):
-  try:
-    result = dict()
-    error_msgs = []
+  result = dict()
+  error_msgs = list()
 
+  try:
     env_data = run_info.get('env_data')
 
     if not env_data:
@@ -2682,7 +2687,7 @@ def prepare_ctx(ctx_name, run_info):
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
-    error_msgs = [[
+    error_msgs += [[
         'ctx_name: ' + str(ctx_name),
         'msg: error when trying to prepare the context',
         'error type: ' + str(type(error)),
