@@ -211,11 +211,13 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
               ] + value
               error_msgs_node += [new_value]
 
-        result[node_name] = dict(
+        node_result = dict(
             active_hosts_amount=active_hosts_amount,
             local=local,
             dependencies=node_dependencies,
         )
+
+        result[node_name] = node_result
       except Exception as error:
         error_msgs_node += [[
             'msg: error when trying to prepare the node dependency',
@@ -239,193 +241,34 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, instance_index):
+def prepare_host_dependencies(node_dict_dependencies, hosts_data, instance_type, instance_index):
   result = dict()
   error_msgs = list()
 
   try:
     instance_index = int(instance_index)
 
-    for node_name in sorted(list((node_dependencies or {}).keys())):
+    for node_name in sorted(list((node_dict_dependencies or {}).keys())):
       error_msgs_node = list()
       node_result = dict()
 
       try:
-        node_dependency_info = node_dependencies.get(node_name)
+        node_dependency_info = node_dict_dependencies.get(node_name)
         local = node_dependency_info.get('local')
 
         if (instance_type == node_name) or (local and not instance_type):
-          single_node_dependencies = node_dependency_info.get('dependencies')
+          node_dependencies = node_dependency_info.get('dependencies')
 
           # host (instance_index) - start
-          error_msgs_host = list()
-          dependency_result = dict()
 
-          try:
-            for dependency_name in sorted(list((single_node_dependencies or {}).keys())):
-              error_msgs_dependency = list()
+          info = prepare_node_host_dependencies(
+              node_dependencies,
+              hosts_data=hosts_data,
+              instance_index=instance_index,
+          )
 
-              try:
-                node_dependency = single_node_dependencies.get(
-                    dependency_name
-                )
-                dependency_type = node_dependency.get('type')
-                dependency_hosts = node_dependency.get('hosts')
-                dependency_limit = node_dependency.get('limit')
-                required_amount = int(node_dependency.get('required_amount'))
-                protocol = node_dependency.get('protocol')
-                port = node_dependency.get('port')
-                port = str(port) if (port is not None) else None
-
-                result_host = None
-                result_hosts = list()
-                real_hosts_amount = 0
-
-                if dependency_limit != 0:
-                  if dependency_type == 'node':
-                    node_ip_type = node_dependency.get(
-                        'node_ip_type') or 'private'
-
-                    new_dependency_hosts = []
-
-                    for dependency_host in dependency_hosts:
-                      dependency_host_data = hosts_data.get(dependency_host)
-
-                      if dependency_host_data:
-                        node_ip_type_prop = (
-                            'private_ip'
-                            if (node_ip_type == 'private')
-                            else node_ip_type
-                        )
-                        new_dependency_host = dependency_host_data.get(
-                            node_ip_type_prop
-                        )
-                        local_target = to_bool(
-                            dependency_host_data.get('local')
-                        )
-
-                        if not new_dependency_host:
-                          if local_target:
-                            new_dependency_host = dependency_host
-                          else:
-                            error_msgs_dependency += [[
-                                str('node_ip_type: ' + str(node_ip_type)),
-                                'msg: dependency host has no property for the node ip type',
-                            ]]
-
-                        new_dependency_hosts += [new_dependency_host or '']
-                      elif required_amount == -1:
-                        error_msgs_dependency += [[
-                            str('dependency_host: ' + str(dependency_host)),
-                            'msg: dependency host not defined',
-                        ]]
-
-                    dependency_hosts = new_dependency_hosts
-
-                  hosts_amount = len(dependency_hosts)
-                  result_host_idx = 0
-                  initial_idx = 0
-                  final_idx_next = 0
-                  single_host_included = True
-
-                  if hosts_amount > 0:
-                    result_host_idx = (instance_index - 1) % hosts_amount
-
-                    initial_idx = min(
-                        (result_host_idx * dependency_limit) % hosts_amount,
-                        hosts_amount
-                    )
-                    final_idx_next = min(
-                        initial_idx + dependency_limit,
-                        hosts_amount
-                    )
-                    final_idx_next_round = 0
-
-                    if final_idx_next == hosts_amount:
-                      final_idx_next_round = min(
-                          dependency_limit - (final_idx_next - initial_idx),
-                          initial_idx
-                      )
-
-                    if initial_idx < final_idx_next:
-                      result_hosts = dependency_hosts[initial_idx:final_idx_next]
-
-                    if final_idx_next_round:
-                      result_hosts += dependency_hosts[0:final_idx_next_round]
-
-                    if result_hosts:
-                      single_host_included = (
-                          (initial_idx <= result_host_idx)
-                          and
-                          (result_host_idx < final_idx_next)
-                      ) or (
-                          result_host_idx < final_idx_next_round
-                      )
-
-                  real_hosts_amount = len(result_hosts)
-
-                  if required_amount == -1:
-                    if real_hosts_amount < dependency_limit:
-                      error_msgs_dependency += [[
-                          str('required amount: ' + str(required_amount)),
-                          str('amount found: ' + str(real_hosts_amount)),
-                          str('amount expected: ' + str(dependency_limit)),
-                          'msg: required amount is defined to require all hosts',
-                          str('initial_idx: ' + str(initial_idx)),
-                          str('final_idx_next: ' + str(final_idx_next)),
-                          result_hosts,
-                      ]]
-                  elif required_amount > 0:
-                    if real_hosts_amount < required_amount:
-                      error_msgs_dependency += [[
-                          str('required amount: ' + str(required_amount)),
-                          str('amount found: ' + str(real_hosts_amount)),
-                          'msg: the number of hosts is less than the required amount',
-                      ]]
-
-                  result_hosts_aux = result_hosts
-                  result_hosts = []
-
-                  for host_aux in result_hosts_aux:
-                    host_aux = fill_host(host_aux, protocol, port)
-                    result_hosts += [host_aux]
-
-                  if result_hosts:
-                    result_host = dependency_hosts[result_host_idx]
-                    result_host = fill_host(result_host, protocol, port)
-
-                  if required_amount == -1:
-                    required_amount = real_hosts_amount
-
-                  dependency_result[dependency_name] = dict(
-                      original_type=dependency_type,
-                      host=result_host,
-                      host_list=result_hosts,
-                      single_host_included=single_host_included,
-                      required_amount=required_amount,
-                  )
-              except Exception as error:
-                error_msgs_dependency += [[
-                    'msg: error when trying to prepare the host dependency data',
-                    'error type: ' + str(type(error)),
-                    'error details: ',
-                    traceback.format_exc(),
-                ]]
-
-              for value in error_msgs_dependency:
-                new_value = [
-                    str('dependency name: ' + (dependency_name or ''))
-                ] + value
-                error_msgs_host += [new_value]
-
-            node_result = dependency_result
-          except Exception as error:
-            error_msgs_host += [[
-                'msg: error when trying to prepare the host dependencies data',
-                'error type: ' + str(type(error)),
-                'error details: ',
-                traceback.format_exc(),
-            ]]
+          node_result = info.get('result')
+          error_msgs_host = info.get('error_msgs')
 
           for value in error_msgs_host:
             new_value = [
@@ -459,6 +302,180 @@ def prepare_host_dependencies(node_dependencies, hosts_data, instance_type, inst
         traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
+
+
+def prepare_node_host_dependencies(node_dependencies, hosts_data, instance_index):
+  error_msgs = list()
+  result = dict()
+  dependency_result = dict()
+
+  try:
+    for dependency_name in sorted(list((node_dependencies or {}).keys())):
+      error_msgs_dependency = list()
+
+      try:
+        node_dependency = node_dependencies.get(
+            dependency_name
+        )
+        dependency_type = node_dependency.get('type')
+        dependency_hosts = node_dependency.get('hosts')
+        dependency_limit = node_dependency.get('limit')
+        required_amount = int(node_dependency.get('required_amount'))
+        protocol = node_dependency.get('protocol')
+        port = node_dependency.get('port')
+        port = str(port) if (port is not None) else None
+
+        result_host = None
+        result_hosts = list()
+        real_hosts_amount = 0
+
+        if dependency_limit != 0:
+          if dependency_type == 'node':
+            node_ip_type = node_dependency.get(
+                'node_ip_type') or 'private'
+
+            new_dependency_hosts = []
+
+            for dependency_host in dependency_hosts:
+              dependency_host_data = hosts_data.get(dependency_host)
+
+              if dependency_host_data:
+                node_ip_type_prop = (
+                    'private_ip'
+                    if (node_ip_type == 'private')
+                    else node_ip_type
+                )
+                new_dependency_host = dependency_host_data.get(
+                    node_ip_type_prop
+                )
+                local_target = to_bool(
+                    dependency_host_data.get('local')
+                )
+
+                if not new_dependency_host:
+                  if local_target:
+                    new_dependency_host = dependency_host
+                  else:
+                    error_msgs_dependency += [[
+                        str('node_ip_type: ' + str(node_ip_type)),
+                        'msg: dependency host has no property for the node ip type',
+                    ]]
+
+                new_dependency_hosts += [new_dependency_host or '']
+              elif required_amount == -1:
+                error_msgs_dependency += [[
+                    str('dependency_host: ' + str(dependency_host)),
+                    'msg: dependency host not defined',
+                ]]
+
+            dependency_hosts = new_dependency_hosts
+
+          hosts_amount = len(dependency_hosts)
+          result_host_idx = 0
+          initial_idx = 0
+          final_idx_next = 0
+          single_host_included = True
+
+          if hosts_amount > 0:
+            result_host_idx = (instance_index - 1) % hosts_amount
+
+            initial_idx = min(
+                (result_host_idx * dependency_limit) % hosts_amount,
+                hosts_amount
+            )
+            final_idx_next = min(
+                initial_idx + dependency_limit,
+                hosts_amount
+            )
+            final_idx_next_round = 0
+
+            if final_idx_next == hosts_amount:
+              final_idx_next_round = min(
+                  dependency_limit - (final_idx_next - initial_idx),
+                  initial_idx
+              )
+
+            if initial_idx < final_idx_next:
+              result_hosts = dependency_hosts[initial_idx:final_idx_next]
+
+            if final_idx_next_round:
+              result_hosts += dependency_hosts[0:final_idx_next_round]
+
+            if result_hosts:
+              single_host_included = (
+                  (initial_idx <= result_host_idx)
+                  and
+                  (result_host_idx < final_idx_next)
+              ) or (
+                  result_host_idx < final_idx_next_round
+              )
+
+          real_hosts_amount = len(result_hosts)
+
+          if required_amount == -1:
+            if real_hosts_amount < dependency_limit:
+              error_msgs_dependency += [[
+                  str('required amount: ' + str(required_amount)),
+                  str('amount found: ' + str(real_hosts_amount)),
+                  str('amount expected: ' + str(dependency_limit)),
+                  'msg: required amount is defined to require all hosts',
+                  str('initial_idx: ' + str(initial_idx)),
+                  str('final_idx_next: ' + str(final_idx_next)),
+                  result_hosts,
+              ]]
+          elif required_amount > 0:
+            if real_hosts_amount < required_amount:
+              error_msgs_dependency += [[
+                  str('required amount: ' + str(required_amount)),
+                  str('amount found: ' + str(real_hosts_amount)),
+                  'msg: the number of hosts is less than the required amount',
+              ]]
+
+          result_hosts_aux = result_hosts
+          result_hosts = []
+
+          for host_aux in result_hosts_aux:
+            host_aux = fill_host(host_aux, protocol, port)
+            result_hosts += [host_aux]
+
+          if result_hosts:
+            result_host = dependency_hosts[result_host_idx]
+            result_host = fill_host(result_host, protocol, port)
+
+          if required_amount == -1:
+            required_amount = real_hosts_amount
+
+          dependency_result[dependency_name] = dict(
+              original_type=dependency_type,
+              required_amount=required_amount,
+              single_host_included=single_host_included,
+              host=result_host,
+              host_list=result_hosts,
+          )
+      except Exception as error:
+        error_msgs_dependency += [[
+            'msg: error when trying to prepare the host dependency data',
+            'error type: ' + str(type(error)),
+            'error details: ',
+            traceback.format_exc(),
+        ]]
+
+      for value in error_msgs_dependency:
+        new_value = [
+            str('dependency name: ' + (dependency_name or ''))
+        ] + value
+        error_msgs += [new_value]
+
+    result = dependency_result
+  except Exception as error:
+    error_msgs += [[
+        'msg: error when trying to prepare the host dependencies data',
+        'error type: ' + str(type(error)),
+        'error details: ',
+        traceback.format_exc(),
+    ]]
+
+  return dict(result=result, error_msgs=error_msgs)
 
 
 def fill_host(host, protocol, port):

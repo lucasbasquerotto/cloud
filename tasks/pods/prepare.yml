@@ -81,8 +81,7 @@
     transfer_become: "{{ pod_root | bool }}"
     transfer_prepared: true
     transfer_list: "{{ pod_prepare_transfer_list }}"
-    transfer_input:
-      dependencies: "{{ pod_node_dependencies }}"
+    transfer_input: "{{ pod_input }}"
     transfer_custom_dir: "{{ pod_item.local_dir }}"
   when: (pod_prepare_transfer_list | length) > 0
   tags: ["no_print_skipped"]

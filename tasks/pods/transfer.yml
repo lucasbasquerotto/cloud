@@ -12,7 +12,7 @@
           'lrd.cloud.pod_vars',
           pod_item,
           env_data=env_data,
-          node_dependencies=pod_node_dependencies,
+          input_params=pod_input,
         )
       }}
   tags: ["no_print"]

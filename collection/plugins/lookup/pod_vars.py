@@ -36,8 +36,8 @@ DOCUMENTATION = """
         description: Data about the environment.
         version_added: '2.11'
         type: dict
-      node_dependencies:
-        description: Information about the node (that has the pod) dependencies.
+      input_params:
+        description: Information about the pod input parameters, including the node (that has the pod) dependencies.
         default: {}
         version_added: '2.11'
         type: dict
@@ -59,7 +59,7 @@ class LookupModule(LookupBase):
 
   def run(self, terms, variables, **kwargs):
     env_data = kwargs.get('env_data')
-    node_dependencies = kwargs.get('node_dependencies')
+    input_params = kwargs.get('input_params')
     validate = kwargs.get('validate')
 
     ret = []
@@ -68,7 +68,7 @@ class LookupModule(LookupBase):
     for term in terms:
       pod_info = dict(
           pod=term,
-          dependencies=node_dependencies,
+          input_params=input_params,
       )
 
       run_info = dict(

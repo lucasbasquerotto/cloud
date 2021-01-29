@@ -10,6 +10,9 @@ schemas:
       params:
         schema: "params"
         description: "node params"
+      input:
+        schema: "input"
+        description: "node input params"
   credential:
     type: "dict"
     description: "node credential schema"
@@ -157,3 +160,62 @@ schemas:
       shared_group_params:
         type: "str"
         description: "content shared_group_params (when type is env, str or template)"
+  input:
+    type: "dict"
+    description: "input parameters schema"
+    props:
+      env_name:
+        type: "str"
+        description: "name of the project / environment"
+      ctx_name:
+        type: "str"
+        description: "name of the project context"
+      node_name:
+        type: "str"
+        description: "name of the node"
+      local:
+        type: "bool"
+        description: >-
+          when true, means that the node will run locally (won't create hosts through a service)
+      dev:
+        type: "bool"
+        description: >-
+          when true, means that the project is being deployed in a development environment
+      lax:
+        type: "bool"
+        description: >-
+          when true, means that the files and directories permissions are less restrictive
+      dependencies:
+        type: "map"
+        elem_schema: "dependency"
+        description: "dictionary with the node dependencies"
+  dependency:
+    type: "dict"
+    description: "node prepared dependency parameters schema"
+    props:
+      original_type:
+        type: "str"
+        non_empty: true
+        choices: ["node", "ip", "url"]
+        description: "node dependency type before being prepared (after prepared, it will be a url)"
+      required_amount:
+        type: "int"
+        non_empty: true
+        description: "specifies that at least the specified number of target hosts is defined"
+      single_host_included:
+        type: "bool"
+        non_empty: true
+        description: >-
+          when true, means that the host defined in the 'host' property is included in the 'host_list'
+      host:
+        type: "str"
+        required: true
+        description: "target host url (single host)"
+      host_list:
+        type: "list"
+        elem_type: "str"
+        required: true
+        description: >-
+          target hosts urls (list of hosts, with the minimum amount defined by 'required_amount'), and
+          the maximum amount defined by the 'limit' property defined for the node dependency (in the
+          environment file), but not more than the amount of hosts initially defined

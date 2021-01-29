@@ -38,12 +38,16 @@
 - name: "{{ node_prepare_title }} - transfer (outer)"
   include_tasks: "tasks/util/transfer.yml"
   vars:
+    tmp_dependencies: >-
+      {{ ctx_node_dependencies[node_prepare_node.name] | default({}) }}
     transfer_title: "{{ node_prepare_title }} - transfer"
     transfer_become: "{{ node_prepare_node.root | default(false) }}"
     transfer_list: "{{ node_prepare_transfer_list }}"
     transfer_prepared: true
-    transfer_input:
-      dependencies: >-
-        {{ ctx_node_dependencies[node_prepare_node.name] | default({}) }}
+    transfer_input: >-
+      {{
+        node_prepare_node.initial_input
+        | combine({ 'dependencies': tmp_dependencies })
+      }}
   when: (node_prepare_transfer_list | length) > 0
   tags: ["no_print_skipped"]

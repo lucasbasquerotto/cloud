@@ -577,7 +577,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
   try:
     pod_ctx_info_dict = parent_data.get('pod_ctx_info_dict')
-    local = parent_data.get('local') or False
+    local = to_bool(parent_data.get('local') or False)
     parent_base_dir = parent_data.get('base_dir') or ''
     dependencies = parent_data.get('dependencies')
 
@@ -703,10 +703,24 @@ def prepare_pod(pod_info, parent_data, run_info):
         result['data_dir'] = data_dir
         result['extra_repos_dir_relpath'] = extra_repos_dir_relpath
         result['ctx'] = pod.get('ctx')
-        result['local'] = to_bool(local)
+        result['local'] = local
         result['root'] = to_bool(pod.get('root'))
         result['flat'] = to_bool(pod.get('flat'))
         result['fast_prepare'] = to_bool(pod.get('fast_prepare'))
+
+        initial_input = dict(
+            identifier=pod_identifier,
+            env_name=env_data.get('env').get('name'),
+            ctx_name=env_data.get('ctx_name'),
+            pod_name=pod_name,
+            local=local,
+            dev=to_bool(env_data.get('dev')),
+            lax=to_bool(env_data.get('lax')),
+            data_dir=data_dir,
+            extra_repos_dir_relpath=extra_repos_dir_relpath,
+            dependencies=dependencies,
+        )
+        result['initial_input'] = initial_input
 
         base_dir_prefix = local_dir + '/'
         pod_ctx_info = (pod_ctx_info_dict or dict()).get(pod_name)
@@ -934,7 +948,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             if os.path.exists(schema_file):
               schema = load_cached_file(schema_file)
 
-              schema_data = dict()
+              schema_data = dict(input=initial_input)
 
               for key in ['params', 'credentials', 'contents']:
                 if result.get(key) is not None:
@@ -961,7 +975,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             result_info = load_vars(
                 pod_info=dict(
                     pod=result,
-                    dependencies=dependencies,
+                    input_params=initial_input,
                 ),
                 run_info=run_info,
                 meta_info=dict(no_ctx_msg=True),
@@ -1194,6 +1208,42 @@ def prepare_node(node_info, run_info):
         result['max_amount'] = instance_max_amount
         result['dependencies'] = dependencies
 
+        dependencies_names = sorted(list((dependencies or dict()).keys()))
+        prefilled_dependencies = dict()
+
+        for dependency_name in dependencies_names:
+          dependency = dependencies.get(dependency_name)
+
+          if is_str(dependency):
+            dependency = dict(
+                type='url',
+                host=dependency,
+            )
+
+          required_amount = int(dependency.get('required_amount') or 0)
+          amount = required_amount if (required_amount > 0) else 1
+          host_ip = '127.0.0.1'
+          host_list = [host_ip for v in range(amount)]
+
+          prefilled_dependencies[dependency_name] = dict(
+              original_type=dependency.get('type'),
+              required_amount=required_amount,
+              single_host_included=True,
+              host=host_ip,
+              host_list=host_list,
+          )
+
+        initial_input = dict(
+            env_name=env_data.get('env').get('name'),
+            ctx_name=env_data.get('ctx_name'),
+            node_name=node_name,
+            local=local,
+            dev=to_bool(env_data.get('dev')),
+            lax=to_bool(env_data.get('lax')),
+            dependencies=prefilled_dependencies,
+        )
+        result['initial_input'] = initial_input
+
         credential = node.get('credential')
 
         credential_info = node_info_dict.get('credential')
@@ -1324,7 +1374,7 @@ def prepare_node(node_info, run_info):
             if os.path.exists(schema_file):
               schema = load_cached_file(schema_file)
 
-              schema_data = dict()
+              schema_data = dict(input=initial_input)
 
               for key in ['params', 'credential']:
                 if result.get(key) is not None:
@@ -1517,40 +1567,13 @@ def prepare_node(node_info, run_info):
         pod_ctx_info_dict = node_info_dict.get('pods')
 
         if pods:
-          dependencies_names = sorted(list((dependencies or dict()).keys()))
-          original_dependencies = dependencies
-          dependencies = dict()
-
-          for dependency_name in dependencies_names:
-            dependency = original_dependencies.get(dependency_name)
-
-            if is_str(dependency):
-              dependency = dict(
-                  type='url',
-                  host=dependency,
-              )
-
-            if dependency.get('type') != 'node':
-              dependencies[dependency_name] = dependency
-            else:
-              required_amount = int(dependency.get('required_amount') or 0)
-              amount = required_amount if (required_amount > 0) else 1
-              host_ip = '127.0.0.1'
-              host_list = [host_ip for v in range(amount)]
-              dependencies[dependency_name] = dict(
-                  original_type='ip',
-                  host=host_ip,
-                  host_list=host_list,
-                  required_amount=required_amount,
-              )
-
           node_data = dict(
               pod_ctx_info_dict=pod_ctx_info_dict,
               local=local,
               base_dir=base_dir,
               parent_type='node',
               parent_description=node_description,
-              dependencies=dependencies,
+              dependencies=prefilled_dependencies,
           )
           info = prepare_pods(pods, node_data, run_info)
 
@@ -2592,7 +2615,7 @@ def prepare_ctx(ctx_name, run_info):
                   node_names, prepared_node_dict
               )
 
-              node_dependencies = info.get('result')
+              node_dict_dependencies = info.get('result')
               error_msgs_aux = info.get('error_msgs') or list()
 
               if error_msgs_aux:
@@ -2602,11 +2625,12 @@ def prepare_ctx(ctx_name, run_info):
                   new_value = ['context: prepare node dependencies'] + value
                   error_msgs += [new_value]
               else:
-                result['node_dependencies'] = node_dependencies
+                result['node_dict_dependencies'] = node_dict_dependencies
 
-                for node_name in sorted(list(node_dependencies.keys() or {})):
-                  single_node_dependencies_info = node_dependencies.get(
-                      node_name)
+                for node_name in sorted(list(node_dict_dependencies.keys() or {})):
+                  single_node_dependencies_info = node_dict_dependencies.get(
+                      node_name
+                  )
                   dependencies = single_node_dependencies_info.get(
                       'dependencies'
                   )

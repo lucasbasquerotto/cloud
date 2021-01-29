@@ -27,7 +27,7 @@ def load_vars(pod_info, run_info, meta_info=None):
 
   try:
     pod = pod_info.get('pod')
-    dependencies = pod_info.get('dependencies', dict())
+    input_params = pod_info.get('input_params', dict())
 
     plugin = run_info.get('plugin')
     ansible_vars = run_info.get('ansible_vars')
@@ -38,6 +38,8 @@ def load_vars(pod_info, run_info, meta_info=None):
     no_ctx_msg = meta_info.get('no_ctx_msg')
 
     pod_ctx_file = pod.get('ctx') or ''
+    initial_input = pod.get('initial_input')
+    input_params = input_params or initial_input
 
     if not pod_ctx_file:
       result = dict(
@@ -46,19 +48,6 @@ def load_vars(pod_info, run_info, meta_info=None):
           templates=list(),
       )
       return dict(result=result)
-
-    input_params = dict(
-        identifier=pod.get('identifier'),
-        env_name=env_data.get('env').get('name'),
-        ctx_name=env_data.get('ctx_name'),
-        pod_name=pod.get('name'),
-        local=pod.get('local'),
-        dev=env_data.get('dev'),
-        lax=env_data.get('lax'),
-        data_dir=pod.get('data_dir'),
-        extra_repos_dir_relpath=pod.get('extra_repos_dir_relpath'),
-        dependencies=dependencies,
-    )
 
     ctx_params = dict(
         params=pod.get('params', {}),
