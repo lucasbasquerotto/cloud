@@ -1239,17 +1239,6 @@ def prepare_node(node_info, run_info):
               host_list=host_list,
           )
 
-        initial_input = dict(
-            env_name=env_data.get('env').get('name'),
-            ctx_name=env_data.get('ctx_name'),
-            node_name=node_name,
-            local=local,
-            dev=to_bool(env_data.get('dev')),
-            lax=to_bool(env_data.get('lax')),
-            dependencies=prefilled_dependencies,
-        )
-        result['initial_input'] = initial_input
-
         credential = node.get('credential')
 
         credential_info = node_info_dict.get('credential')
@@ -1279,53 +1268,6 @@ def prepare_node(node_info, run_info):
             result['credential'] = credential
 
         error_msgs_aux_params = []
-
-        all_content_dests = set()
-        prepared_transfer = []
-
-        prepare_transfer_info = dict(
-            env=env,
-            env_data=env_data,
-            run_info=run_info,
-            all_content_dests=all_content_dests,
-        )
-
-        transfer_contents = node_info_dict.get('transfer')
-
-        if transfer_contents:
-          info = prepare_transfer_content(
-              transfer_contents,
-              context_title='prepare node info transfer contents',
-              prepare_info=prepare_transfer_info,
-          )
-
-          prepared_transfer_aux = info.get('result')
-          error_msgs_aux_transfer = info.get('error_msgs')
-
-          if error_msgs_aux_transfer:
-            error_msgs_aux += error_msgs_aux_transfer
-          else:
-            prepared_transfer += prepared_transfer_aux
-
-        transfer_contents = node.get('transfer')
-
-        if transfer_contents:
-          info = prepare_transfer_content(
-              transfer_contents,
-              context_title='prepare node transfer contents',
-              prepare_info=prepare_transfer_info,
-          )
-
-          prepared_transfer_aux = info.get('result')
-          error_msgs_aux_transfer = info.get('error_msgs')
-
-          if error_msgs_aux_transfer:
-            error_msgs_aux += error_msgs_aux_transfer
-          else:
-            prepared_transfer += prepared_transfer_aux
-
-        if prepared_transfer:
-          result['prepared_transfer'] = prepared_transfer
 
         if isinstance(node_info, dict):
           params_args = dict(
@@ -1372,65 +1314,6 @@ def prepare_node(node_info, run_info):
         if not error_msgs_aux_params:
           node_params = merge_dicts(result_aux_node, result_aux_info)
           result['params'] = node_params or None
-
-        if validate_ctx and not error_msgs_aux:
-          schema_file = 'schemas/node.schema.yml'
-
-          if schema_file:
-            if os.path.exists(schema_file):
-              schema = load_cached_file(schema_file)
-
-              schema_data = dict(input=initial_input)
-
-              for key in ['params', 'credential']:
-                if result.get(key) is not None:
-                  schema_data[key] = result.get(key)
-
-              error_msgs_aux_validate = validate_schema(
-                  schema, schema_data
-              )
-
-              for value in (error_msgs_aux_validate or []):
-                new_value = [
-                    'context: validate node schema',
-                    str('schema file: ' + schema_file),
-                ] + value
-                error_msgs_aux += [new_value]
-
-              if (not error_msgs_aux_validate) and (not local):
-                required_props = ['node_setup']
-
-                for key in required_props:
-                  if is_empty(node_params.get(key)):
-                    error_msgs += [[
-                        str('node: ' + node_description),
-                        str('property: ' + key),
-                        'context: validate node params (custom)',
-                        'msg: required property not found in node params or is empty (non-local)'
-                    ]]
-            else:
-              error_msgs_aux += [[
-                  'context: validate node schema',
-                  str('msg: schema file not found: ' + schema_file),
-              ]]
-
-        if node_params:
-          cron = node_params.get('cron')
-
-          if cron:
-            info = prepare_transfer_content(
-                cron,
-                context_title='prepare the node cron transfer contents',
-                prepare_info=prepare_transfer_info,
-            )
-
-            cron_transfer = info.get('result')
-            error_msgs_aux_transfer = info.get('error_msgs')
-
-            if error_msgs_aux_transfer:
-              error_msgs_aux += error_msgs_aux_transfer
-            else:
-              result['cron_transfer'] = cron_transfer
 
         credential = result.get('credential') or dict()
         ssh_file = credential.get('ssh_file')
@@ -1615,6 +1498,125 @@ def prepare_node(node_info, run_info):
 
             result['pods'] = prepared_pods
 
+        info = get_general_node_data(result, prefilled_dependencies)
+
+        general_data = info.get('result')
+        error_msgs_general_data = info.get('error_msgs')
+
+        for value in (error_msgs_general_data or []):
+          new_value = ['context: get general node data'] + value
+          error_msgs_aux += [new_value]
+
+        result['general_data'] = general_data
+
+        all_content_dests = set()
+        prepared_transfer = []
+
+        prepare_transfer_info = dict(
+            env=env,
+            env_data=env_data,
+            run_info=run_info,
+            all_content_dests=all_content_dests,
+        )
+
+        transfer_contents = node_info_dict.get('transfer')
+
+        if transfer_contents:
+          info = prepare_transfer_content(
+              transfer_contents,
+              context_title='prepare node info transfer contents',
+              prepare_info=prepare_transfer_info,
+          )
+
+          prepared_transfer_aux = info.get('result')
+          error_msgs_aux_transfer = info.get('error_msgs')
+
+          if error_msgs_aux_transfer:
+            error_msgs_aux += error_msgs_aux_transfer
+          else:
+            prepared_transfer += prepared_transfer_aux
+
+        transfer_contents = node.get('transfer')
+
+        if transfer_contents:
+          info = prepare_transfer_content(
+              transfer_contents,
+              context_title='prepare node transfer contents',
+              prepare_info=prepare_transfer_info,
+              input_params=dict(node=general_data)
+          )
+
+          prepared_transfer_aux = info.get('result')
+          error_msgs_aux_transfer = info.get('error_msgs')
+
+          if error_msgs_aux_transfer:
+            error_msgs_aux += error_msgs_aux_transfer
+          else:
+            prepared_transfer += prepared_transfer_aux
+
+        if prepared_transfer:
+          result['prepared_transfer'] = prepared_transfer
+
+        if node_params:
+          cron = node_params.get('cron')
+
+          if cron:
+            info = prepare_transfer_content(
+                cron,
+                context_title='prepare the node cron transfer contents',
+                prepare_info=prepare_transfer_info,
+                input_params=dict(general_data)
+            )
+
+            cron_transfer = info.get('result')
+            error_msgs_aux_transfer = info.get('error_msgs')
+
+            if error_msgs_aux_transfer:
+              error_msgs_aux += error_msgs_aux_transfer
+            else:
+              result['cron_transfer'] = cron_transfer
+
+        if validate_ctx and not error_msgs_aux:
+          schema_file = 'schemas/node.schema.yml'
+
+          if schema_file:
+            if os.path.exists(schema_file):
+              schema = load_cached_file(schema_file)
+
+              schema_data = dict(input=general_data)
+
+              for key in ['params', 'credential']:
+                if result.get(key) is not None:
+                  schema_data[key] = result.get(key)
+
+              error_msgs_aux_validate = validate_schema(
+                  schema, schema_data
+              )
+
+              for value in (error_msgs_aux_validate or []):
+                new_value = [
+                    'context: validate node schema',
+                    str('schema file: ' + schema_file),
+                ] + value
+                error_msgs_aux += [new_value]
+
+              if (not error_msgs_aux_validate) and (not local):
+                required_props = ['node_setup']
+
+                for key in required_props:
+                  if is_empty(node_params.get(key)):
+                    error_msgs += [[
+                        str('node: ' + node_description),
+                        str('property: ' + key),
+                        'context: validate node params (custom)',
+                        'msg: required property not found in node params or is empty (non-local)'
+                    ]]
+            else:
+              error_msgs_aux += [[
+                  'context: validate node schema',
+                  str('msg: schema file not found: ' + schema_file),
+              ]]
+
         for value in (error_msgs_aux or []):
           new_value = [str('node: ' + node_description)] + value
           error_msgs += [new_value]
@@ -1638,6 +1640,53 @@ def prepare_node(node_info, run_info):
   except Exception as error:
     error_msgs += [[
         'msg: error when trying to prepare unknown node',
+        'error type: ' + str(type(error)),
+        'error details: ',
+        traceback.format_exc(),
+    ]]
+    return dict(error_msgs=error_msgs)
+
+
+def get_general_node_data(prepared_node, prefilled_dependencies):
+  result = dict()
+  error_msgs = list()
+
+  try:
+    result['name'] = prepared_node.get('name')
+    result['key'] = prepared_node.get('key')
+    result['description'] = prepared_node.get('description')
+    result['base_dir'] = prepared_node.get('base_dir')
+    result['node_dir'] = prepared_node.get('node_dir')
+    result['tmp_dir'] = prepared_node.get('tmp_dir')
+    result['local'] = prepared_node.get('local')
+    result['external'] = prepared_node.get('external')
+    result['dependencies'] = prefilled_dependencies
+
+    pods = list()
+
+    for pod in prepared_node.get('pods') or []:
+      pod_data = dict()
+      pod_data['name'] = pod.get('name')
+      pod_data['key'] = pod.get('key')
+      pod_data['description'] = pod.get('description')
+      pod_data['base_dir'] = pod.get('base_dir')
+      pod_data['pod_dir'] = pod.get('pod_dir')
+      pod_data['tmp_dir'] = pod.get('tmp_dir')
+      pod_data['data_dir'] = pod.get('data_dir')
+      pods += [pod_data]
+
+    result['pods'] = pods
+
+    result_keys = list(result.keys())
+
+    for key in result_keys:
+      if result.get(key) is None:
+        result.pop(key, None)
+
+    return dict(result=result, error_msgs=error_msgs)
+  except Exception as error:
+    error_msgs += [[
+        'msg: error when trying to get the general node information',
         'error type: ' + str(type(error)),
         'error details: ',
         traceback.format_exc(),

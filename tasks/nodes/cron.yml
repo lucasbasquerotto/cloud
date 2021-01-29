@@ -3,6 +3,14 @@
 - name: "{{ cron_title }} - cron_node_params"
   set_fact:
     cron_node_params: "{{ cron_node.params | default({}) }}"
+    cron_node_transfer_input: >-
+      {{
+        cron_node.general_data
+        | combine({ 'dependencies': tmp_dependencies })
+      }}
+  vars:
+    tmp_dependencies: >-
+      {{ ctx_node_dependencies[cron_node.name] | default({}) }}
   tags: ["no_print"]
 
 # Cron Item

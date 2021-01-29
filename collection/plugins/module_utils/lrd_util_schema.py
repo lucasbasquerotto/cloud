@@ -566,7 +566,8 @@ def validate_next_value(schema_data, value):
     if elem_schema_name:
       schema_info_aux = schema_info_dict.get(elem_schema_name)
       schema_info_aux_type = schema_info_aux.get(
-          'type') if schema_info_aux else None
+          'type'
+      ) if schema_info_aux else None
 
       if schema_info_aux_type and (schema_info_aux_type in invalid_elem_types):
         return [[

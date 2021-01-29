@@ -22,8 +22,7 @@
     transfer_become: "{{ cron_transfer_become | default(false) }}"
     transfer_user: "{{ cron_transfer_user | default('') }}"
     transfer_group: "{{ cron_transfer_group | default('') }}"
-    transfer_input:
-      node: "{{ cron_node }}"
+    transfer_input: "{{ cron_node_transfer_input }}"
     transfer_prepared: true
     transfer_list:
       - content: "{{ cron_transfer_src }}"
