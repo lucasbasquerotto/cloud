@@ -452,15 +452,30 @@ my_node_2
 node_3
 
 [node_1]
-node-1-host ansible_host=<ip> ansible_user=my-user1 ansible_become_pass=p4$$w0rd1 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file1 instance_type=node_1 instance_index=1 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+node-1-host ansible_host=<ip> instance_type=node_1 instance_index=1 instance_ipv4=<ipv4> instance_ipv6=<ipv6> instance_private_ip=<private_ip>
+
+[node_1:vars]
+ansible_user=my-user1
+ansible_become_pass=p4$$w0rd1
+ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file1
 
 [my_node_2]
-my-host ansible_host=<ip> ansible_user=my-user2 ansible_become_pass=p4$$w0rd2 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file2 instance_type=my_node_2 instance_index=1 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+my-host ansible_host=<ip>  instance_type=my_node_2 instance_index=1 instance_ipv4=<ipv4> instance_ipv6=<ipv6> instance_private_ip=<private_ip>
+
+[my_node_2:vars]
+ansible_user=my-user2
+ansible_become_pass=p4$$w0rd2
+ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file2
 
 [node_3]
-node-3-host ansible_host=<ip> ansible_user=my-user3 ansible_become_pass=p4$$w0rd3 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3 instance_type=node_3 instance_index=1 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
-node-3-host-2 ansible_host=<ip> ansible_user=my-user3 ansible_become_pass=p4$$w0rd3 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3 instance_type=node_3 instance_index=2 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
-node-3-host-3 ansible_host=<ip> ansible_user=my-user3 ansible_become_pass=p4$$w0rd3 ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3 instance_type=node_3 instance_index=3 instance_public_ipv4=<ipv4> instance_public_ipv6=<ipv6> instance_private_ip=<private_ip>
+node-3-host ansible_host=<ip> instance_type=node_3 instance_index=1 instance_ipv4=<ipv4> instance_ipv6=<ipv6> instance_private_ip=<private_ip>
+node-3-host-2 ansible_host=<ip> instance_type=node_3 instance_index=2 instance_ipv4=<ipv4> instance_ipv6=<ipv6> instance_private_ip=<private_ip>
+node-3-host-3 ansible_host=<ip> instance_type=node_3 instance_index=3 instance_ipv4=<ipv4> instance_ipv6=<ipv6> instance_private_ip=<private_ip>
+
+[node_3:vars]
+ansible_user=my-user3
+ansible_become_pass=p4$$w0rd3
+ansible_ssh_private_key_file=<some_path>/path/to/my-ssh-key-file3
 ```
 
 The nodes accept a [dns_service](schemas/env.schema.yml) property (along with the `service` property) to define dns records for the created host if only one node replica (host) was created, according to the records defined in the property [dns_service_params_list](schemas/node.schema.yml).

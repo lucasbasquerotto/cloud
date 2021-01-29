@@ -19,8 +19,8 @@
     tmp_host_data:
       instance_type: "{{ tmp_host.instance_type | default('') }}"
       instance_index: "{{ tmp_host.instance_index | default('') }}"
-      ipv4: "{{ tmp_host.instance_public_ipv4 | default('') }}"
-      ipv6: "{{ tmp_host.instance_public_ipv6 | default('') }}"
+      ipv4: "{{ tmp_host.instance_ipv4 | default('') }}"
+      ipv6: "{{ tmp_host.instance_ipv6 | default('') }}"
       private_ip: "{{ tmp_host.instance_private_ip | default('') }}"
       local: "{{ (tmp_host.ansible_connection | default('')) == 'local' }}"
   when: tmp_item != 'localhost'

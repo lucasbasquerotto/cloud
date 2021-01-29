@@ -26,7 +26,6 @@ schemas:
       ssh_key_path:
         type: "str"
       credential:
-        required: true
         schema: "node_credential"
   node_credential:
     type: "dict"
