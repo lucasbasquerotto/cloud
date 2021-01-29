@@ -442,39 +442,43 @@ def prepare_content(content, env, run_info, additional_info=None):
               ]]
 
           if validate and not error_msgs_aux:
-            schema_file = content.get('schema')
-
-            if schema_file:
-              schema_file = base_dir_prefix + schema_file
+            schema_files = content.get('schema')
 
             if content_type == 'str':
-              schema_file = 'schemas/content_str.schema.yml'
+              schema_files = ['schemas/content_str.schema.yml']
 
-            if schema_file:
-              if os.path.exists(schema_file):
-                schema = load_cached_file(schema_file)
+            if schema_files:
+              if not isinstance(schema_files, list):
+                schema_files = [schema_files]
 
-                schema_data = dict()
+              for schema_file in schema_files:
+                if content_type != 'str':
+                  schema_file = base_dir_prefix + schema_file
 
-                for key in ['input', 'params', 'credentials', 'contents']:
-                  if result.get(key) is not None:
-                    schema_data[key] = result.get(key)
+                if os.path.exists(schema_file):
+                  schema = load_cached_file(schema_file)
 
-                error_msgs_aux_validate = validate_schema(
-                    schema, schema_data
-                )
+                  schema_data = dict()
 
-                for value in (error_msgs_aux_validate or []):
-                  new_value = [
+                  for key in ['input', 'params', 'credentials', 'contents']:
+                    if result.get(key) is not None:
+                      schema_data[key] = result.get(key)
+
+                  error_msgs_aux_validate = validate_schema(
+                      schema, schema_data
+                  )
+
+                  for value in (error_msgs_aux_validate or []):
+                    new_value = [
+                        'context: validate content schema',
+                        str('schema file: ' + schema_file),
+                    ] + value
+                    error_msgs_aux += [new_value]
+                else:
+                  error_msgs_aux += [[
                       'context: validate content schema',
-                      str('schema file: ' + schema_file),
-                  ] + value
-                  error_msgs_aux += [new_value]
-              else:
-                error_msgs_aux += [[
-                    'context: validate content schema',
-                    str('msg: schema file not found: ' + schema_file),
-                ]]
+                      str('msg: schema file not found: ' + schema_file),
+                  ]]
 
       for value in (error_msgs_aux or []):
         new_value = [str('content type: ' + content_type)] + value

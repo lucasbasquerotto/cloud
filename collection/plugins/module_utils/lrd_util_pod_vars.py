@@ -251,34 +251,37 @@ def load_ctx_template(current_template, is_env, data_info):
       template_params = current_template.get('params') or None
 
       if validate and not error_msgs:
-        schema_file = current_template.get('schema')
+        schema_files = current_template.get('schema')
 
-        if schema_file:
-          schema_file = (env_dir if is_env else pod_local_dir) + \
-              '/' + schema_file
+        if schema_files:
+          if not isinstance(schema_files, list):
+            schema_files = [schema_files]
 
-          if os.path.exists(schema_file):
-            schema = load_cached_file(schema_file)
+          for schema_file in schema_files:
+            schema_file = (env_dir if is_env else pod_local_dir) + \
+                '/' + schema_file
 
-            error_msgs_aux = validate_schema(schema, template_params)
+            if os.path.exists(schema_file):
+              schema = load_cached_file(schema_file)
 
-            for value in (error_msgs_aux or []):
-              new_value = [
-                  str('src: ' + (src_relpath or '')),
+              error_msgs_aux = validate_schema(schema, template_params)
+
+              for value in (error_msgs_aux or []):
+                new_value = [
+                    str('src: ' + (src_relpath or '')),
+                    'context: validate pod ctx vars template schema',
+                    str('schema file: ' + schema_file),
+                ] + value
+                error_msgs += [new_value]
+            else:
+              error_msgs += [[
                   'context: validate pod ctx vars template schema',
                   str('schema file: ' + schema_file),
-              ] + value
-              error_msgs += [new_value]
+                  str('msg: schema file not found: ' + schema_file),
+              ]]
 
-            if error_msgs:
-              return dict(error_msgs=error_msgs)
-          else:
-            error_msgs += [[
-                'context: validate pod ctx vars template schema',
-                str('schema file: ' + schema_file),
-                str('msg: schema file not found: ' + schema_file),
-            ]]
-            return dict(error_msgs=error_msgs)
+      if error_msgs:
+        return dict(error_msgs=error_msgs)
 
       if dest_dir not in dir_names:
         dir_names.add(dest_dir)

@@ -91,8 +91,10 @@ schemas:
         description: >-
           the permissions the resulting template file parent directory should have
       schema:
-        type: "str"
-        description: "schema used to validate the template parameters"
+        type: "simple_list"
+        elem_type: "str"
+        elem_non_empty: true
+        description: "schema (or list of schemas) used to validate the template parameters"
       params:
         type: "unknown"
         description: "parameters that can be accessed in the template file"

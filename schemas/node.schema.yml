@@ -136,8 +136,10 @@ schemas:
         type: "str"
         description: "content file (when type is file or template)"
       schema:
-        type: "str"
-        description: "content schema (when type is template)"
+        type: "simple_list"
+        elem_type: "str"
+        elem_non_empty: true
+        description: "schema (or list of schemas) for the content (when type is template)"
       credentials:
         type: "map"
         elem_type: "str"
