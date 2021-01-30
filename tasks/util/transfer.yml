@@ -119,6 +119,7 @@
 - name: >-
     {{ transfer_title }} - remove the excess of blank lines
     of the files created from the templates
+  become: "{{ transfer_become | default(false) | bool }}"
   replace:
     path: "{{ tmp_item.tmp_dest }}"
     regexp: "^\\s*\\n"
