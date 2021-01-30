@@ -3,6 +3,7 @@
 - name: "{{ cloud_node_item_title }} - cloud_node_credential"
   set_fact:
     cloud_node_credential: "{{ cloud_node_item.credential | default({}) }}"
+    cloud_node_ssh_key_path: ""
   tags: ["no_print"]
 
 - block:
