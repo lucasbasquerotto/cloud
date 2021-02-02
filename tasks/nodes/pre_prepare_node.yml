@@ -1,0 +1,30 @@
+# Vars
+
+- name: "{{ pre_prepare_node_title }} - pre_prepare_node_credential"
+  set_fact:
+    pre_prepare_node_ssh_file: >-
+      {{ env_dir + '/' + (tmp_credential.ssh_file | default('')) }}
+    pre_prepare_node_ssh_key_path: "{{ pre_prepare_node_item.ssh_key_path | default('') }}"
+  vars:
+    tmp_credential: "{{ pre_prepare_node_item.credential | default({}) }}"
+  tags: ["no_print"]
+
+### SSH File ###
+
+- name: >-
+    {{ pre_prepare_node_title }} - create the ssh key file dir -
+    {{ pre_prepare_node_ssh_key_path | dirname }}
+  file:
+    path: "{{ pre_prepare_node_ssh_key_path | dirname }}"
+    state: directory
+    mode: 0755
+  when: pre_prepare_node_ssh_key_path != ''
+  tags: ["no_print_skipped"]
+
+- name: "{{ pre_prepare_node_title }} - generate the ssh key file - {{ pre_prepare_node_ssh_key_path }}"
+  copy:
+    src: "{{ pre_prepare_node_ssh_file }}"
+    dest: "{{ pre_prepare_node_ssh_key_path }}"
+    mode: 0600
+  when: pre_prepare_node_ssh_key_path != ''
+  tags: ["no_print_skipped"]

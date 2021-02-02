@@ -220,3 +220,17 @@
         src: "{{ project_ctx_run_tmp_dest }}"
         dest: "{{ project_ctx_run_dest }}"
         mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
+
+    # pre prepare nodes (ssh)
+
+    - name: "{{ env_title }} - pre prepare nodes (outer)"
+      include_tasks: "tasks/nodes/pre_prepare_node.yml"
+      vars:
+        pre_prepare_node_title: >-
+          {{ env_title }} - pre prepare node [{{ pre_prepare_node_item.description }}]
+      loop: "{{ ctx_data.nodes | default([]) }}"
+      loop_control:
+        loop_var: pre_prepare_node_item
+        label: "{{ pre_prepare_node_item.description }}"
+      when: not (pre_prepare_node_item.local | bool)
+      tags: ["no_print_skipped"]
