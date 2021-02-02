@@ -4,9 +4,10 @@ schemas:
     type: "dict"
     description: "node schema"
     props:
-      credential:
-        schema: "credential"
-        description: "node credential"
+      credentials:
+        type: "map"
+        elem_schema: "credential"
+        description: "node credentials"
       params:
         schema: "params"
         description: "node params"
@@ -39,6 +40,20 @@ schemas:
     type: "dict"
     description: "node params schema"
     props:
+      main_host_user_key:
+        type: "str"
+        description: >-
+          string representing the credential (name) that has the main host user data
+          (like name and ssh file); defaults to 'host'; the main host user is the host
+          user that will generally run the tasks in the host (the other users can run
+          tasks only in the setup step)
+      host_user_keys:
+        type: "list"
+        elem_type: "str"
+        description: >-
+          list of strings representing the credential (names) that have the host users data
+          (like name and ssh file, for each user); defaults to [<main_host_user_key>]; the
+          value of 'main_host_user_key' must be present in the list
       dns_service_params_list:
         type: "list"
         elem_schema: "dns"

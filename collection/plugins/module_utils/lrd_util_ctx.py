@@ -1149,7 +1149,7 @@ def prepare_node(node_info, run_info):
         if (not local) and (not external):
           required_props = [
               'service',
-              'credential',
+              'credentials',
           ]
 
           for key in required_props:
@@ -1239,33 +1239,31 @@ def prepare_node(node_info, run_info):
               host_list=host_list,
           )
 
-        credential = node.get('credential')
-
-        credential_info = node_info_dict.get('credential')
-        credential = node.get('credential')
+        credentials_info_dict = node_info_dict.get('credentials')
+        credentials_dict = node.get('credentials')
         credentials_env_dict = env.get('credentials')
 
-        if credential_info:
-          credential = credential_info
-
-        if credential:
-          params_args = dict(
-              group_params=dict(credential=credential),
-              group_params_dict=credentials_env_dict,
+        if credentials_info_dict:
+          credentials_dict = merge_dicts(
+              credentials_dict, credentials_info_dict
           )
 
-          info = mix(params_args)
+        params_args = dict(
+            group_params=credentials_dict,
+            group_params_dict=credentials_env_dict,
+        )
 
-          result_aux_credential = info.get('result')
-          error_msgs_aux_credential = info.get('error_msgs') or list()
+        info = mix(params_args)
 
-          for value in (error_msgs_aux_credential or []):
-            new_value = ['context: node credential'] + value
-            error_msgs_aux += [new_value]
+        credentials = info.get('result')
+        error_msgs_aux_credentials = info.get('error_msgs') or []
 
-          if not error_msgs_aux_credential:
-            credential = result_aux_credential.get('credential')
-            result['credential'] = credential
+        for value in (error_msgs_aux_credentials or []):
+          new_value = ['context: node credentials'] + value
+          error_msgs_aux += [new_value]
+
+        if not error_msgs_aux_credentials:
+          result['credentials'] = credentials or None
 
         error_msgs_aux_params = []
 
@@ -1315,14 +1313,73 @@ def prepare_node(node_info, run_info):
           node_params = merge_dicts(result_aux_node, result_aux_info)
           result['params'] = node_params or None
 
-        credential = result.get('credential') or dict()
-        ssh_file = credential.get('ssh_file')
-        ssh_key_path = (
-            (local_secrets_dir + '/' + node_name + '.key')
-            if ssh_file
-            else None
-        )
-        result['ssh_key_path'] = ssh_key_path
+        node_params_dict = node_params or dict()
+        credentials_dict = credentials or dict()
+
+        main_host_user_key = node_params_dict.get(
+            'main_host_user_key'
+        ) or 'host'
+
+        if main_host_user_key not in credentials_dict.keys():
+          if not local:
+            error_msgs += [[
+                str('node: ' + node_description),
+                str('main_host_user_key: ' + main_host_user_key),
+                'msg: main host user key is not defined as a credential',
+                'credentials keys:',
+                sorted(list(credentials_dict.keys())),
+            ]]
+        else:
+          result['main_host_user_key'] = main_host_user_key
+
+          main_credential = credentials_dict.get(main_host_user_key)
+
+          main_ssh_file = main_credential.get('ssh_file')
+          main_ssh_key_path = (
+              (local_secrets_dir + '/' + node_name +
+               '.' + main_host_user_key + '.key')
+              if main_ssh_file
+              else None
+          )
+          result['main_ssh_key_path'] = main_ssh_key_path
+
+          host_user_keys = node_params_dict.get(
+              'host_user_keys'
+          ) or [main_host_user_key]
+          result['host_user_keys'] = host_user_keys
+
+          if main_host_user_key not in host_user_keys:
+            error_msgs += [[
+                str('node: ' + node_description),
+                str('main_host_user_key: ' + main_host_user_key),
+                'msg: main host user key is not defined in the list with the host user keys',
+                'host user keys:',
+                host_user_keys,
+            ]]
+
+          ssh_key_path_map = dict()
+
+          for host_user_key in host_user_keys:
+            if host_user_key not in credentials_dict.keys():
+              error_msgs += [[
+                  str('node: ' + node_description),
+                  str('host_user_key: ' + host_user_key),
+                  'msg: host user key is not defined as a credential',
+                  'credentials keys:',
+                  sorted(list(credentials_dict.keys())),
+              ]]
+            else:
+              credential_item = credentials_dict.get(host_user_key)
+              ssh_file_item = credential_item.get('ssh_file')
+              ssh_key_path_item = (
+                  (local_secrets_dir + '/' + node_name + '.' + host_user_key + '.key')
+                  if ssh_file_item
+                  else None
+              )
+              ssh_key_path_map[host_user_key] = ssh_key_path_item
+
+          if ssh_key_path_map:
+            result['ssh_key_path_map'] = ssh_key_path_map
 
         service = node.get('service')
         dns_service = node.get('dns_service')
@@ -1585,7 +1642,7 @@ def prepare_node(node_info, run_info):
 
               schema_data = dict(input=general_data)
 
-              for key in ['params', 'credential']:
+              for key in ['params', 'credentials']:
                 if result.get(key) is not None:
                   schema_data[key] = result.get(key)
 
