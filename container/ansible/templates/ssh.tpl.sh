@@ -32,6 +32,34 @@ while getopts ':c:n:i:-:' OPT; do
 	esac
 done
 shift $((OPTIND-1))
+
+function get_hosts_block {
+    hosts_file="${1:-}"
+    node_name="${2:-}"
+    is_vars="${3:-}"
+    block_name="$node_name"
+
+    if [ "$is_vars" = 'true' ]; then
+        block_name="${node_name}:vars"
+    fi
+
+    result="$(
+        awk '
+            function my_print() {
+                if (SUB) {
+                    if (!match($0, /^[ ]*#/))
+                    print $0
+                }
+            }
+            match($0, /^\[.*$/             ) { if (SUB) { SKIP=1; exit } }
+            match($0, /^\['"$block_name"'\]/) { SUB=1 }
+            !/(^\[)|(^[ ]*$)/ { my_print() }
+        ' "$hosts_file"
+    )"
+
+    echo "$result"
+}
+
 {% if (project_ssh_default_ctx | default('')) != '' %}
     {% if not (project_ssh_default_ctx in (project_ssh_ctxs | default([]))) %}
         {% set error = {} %}
@@ -78,14 +106,14 @@ if [ ! -f "$hosts_file" ]; then
     error "[error] the hosts file $hosts_file doesn't exist ($msg_aux)"
 fi
 
-hosts_file_content="$(cat "$hosts_file" || error "error when accessing the file $hosts_file")"
+hosts="$(get_hosts_block "$hosts_file" "$node_name")"
 
-line="$(echo "$hosts_file_content" \
-    | grep "instance_type=$node_name " \
-    | grep "instance_index=$instance_index " | tail -n 1 || :)"
+vars="$(get_hosts_block "$hosts_file" "$node_name" 'true')"
 
-if [ -z "$line" ]; then
-    msg="No line in the hosts file ($hosts_file) with the node type '$node_name'"
+host="$(echo "$hosts" | grep "instance_index=$instance_index " | tail -n 1 || :)"
+
+if [ -z "$host" ]; then
+    msg="No line (host) in the hosts file ($hosts_file) with the node type '$node_name'"
 
 	if [[ "$instance_index" -gt 1 ]]; then
     	msg="$msg in the index $instance_index (starting in 1)"
@@ -95,14 +123,22 @@ if [ -z "$line" ]; then
     exit 1
 fi
 
-user=$(echo "$line" | sed -n -e 's/^.*ansible_user=//p' | awk '{ print $1 }')
-host=$(echo "$line" | sed -n -e 's/^.*ansible_host=//p' | awk '{ print $1 }')
-key_file=$(echo "$line" | sed -n -e 's/^.*ansible_ssh_private_key_file=//p' | awk '{ print $1 }')
+vars_user="$(echo "$vars" | sed -n -e 's/^ansible_user=//p' | awk '{ print $1 }')"
+vars_host="$(echo "$vars" | sed -n -e 's/^ansible_host=//p' | awk '{ print $1 }')"
+vars_key_file="$(echo "$vars" | sed -n -e 's/^ansible_ssh_private_key_file=//p' | awk '{ print $1 }')"
+
+ansible_user="$(echo "$host" | sed -n -e 's/^.*ansible_user=//p' | awk '{ print $1 }')"
+ansible_host="$(echo "$host" | sed -n -e 's/^.*ansible_host=//p' | awk '{ print $1 }')"
+key_file="$(echo "$host" | sed -n -e 's/^.*ansible_ssh_private_key_file=//p' | awk '{ print $1 }')"
+
+ansible_user="${ansible_user:-$vars_user}"
+ansible_host="${ansible_host:-$vars_host}"
+key_file="${key_file:-$vars_key_file}"
 
 if [ -z "$key_file" ]; then
-    echo "ssh $user@$host"
-    ssh "$user@$host"
+    echo "ssh $ansible_user@$ansible_host"
+    ssh "$ansible_user@$ansible_host"
 else
-    echo "ssh -i $key_file $user@$host"
-    ssh -i "$key_file" "$user@$host"
+    echo "ssh -i $key_file $ansible_user@$ansible_host"
+    ssh -i "$key_file" "$ansible_user@$ansible_host"
 fi
