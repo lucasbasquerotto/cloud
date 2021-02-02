@@ -1194,14 +1194,16 @@ def prepare_node(node_info, run_info):
             if local
             else (node.get('tmp_dir') or ((base_dir or '') + '/.tmp'))
         )
+        local_node_setup = to_bool(
+            node_info_dict.get('local_node_setup')
+        )
 
         result['root'] = to_bool(node.get('root'))
         result['base_dir'] = base_dir
         result['node_dir'] = node_dir
         result['local_tmp_dir'] = local_tmp_dir
         result['tmp_dir'] = tmp_dir
-        result['local_node_setup'] = to_bool(
-            node_info_dict.get('local_node_setup'))
+        result['local_node_setup'] = local_node_setup
         result['local_node_setup_error'] = node_info_dict.get(
             'local_node_setup_error')
 
@@ -1315,16 +1317,17 @@ def prepare_node(node_info, run_info):
 
         node_params_dict = node_params or dict()
         credentials_dict = credentials or dict()
+        prepared_host_users = []
 
         main_host_user_key = node_params_dict.get(
             'main_host_user_key'
         ) or 'host'
 
         if main_host_user_key not in credentials_dict.keys():
-          if not local:
+          if (not local) or local_node_setup:
             error_msgs += [[
                 str('node: ' + node_description),
-                str('main_host_user_key: ' + main_host_user_key),
+                str('main host user key (name): ' + main_host_user_key),
                 'msg: main host user key is not defined as a credential',
                 'credentials keys:',
                 sorted(list(credentials_dict.keys())),
@@ -1332,66 +1335,63 @@ def prepare_node(node_info, run_info):
         else:
           result['main_host_user_key'] = main_host_user_key
 
-          main_credential = credentials_dict.get(main_host_user_key)
-
-          main_ssh_file = main_credential.get('ssh_file')
-          main_ssh_key_path = (
-              (local_secrets_dir + '/' + node_name +
-               '.' + main_host_user_key + '.key')
-              if main_ssh_file
-              else None
-          )
-          result['main_ssh_key_path'] = main_ssh_key_path
-
-          host_user_keys = node_params_dict.get(
-              'host_user_keys'
+          host_users = node_params_dict.get(
+              'host_users'
           ) or [main_host_user_key]
-          result['host_user_keys'] = host_user_keys
 
-          if main_host_user_key not in host_user_keys:
-            error_msgs += [[
-                str('node: ' + node_description),
-                str('main_host_user_key: ' + main_host_user_key),
-                'msg: main host user key is not defined in the list with the host user keys',
-                'host user keys:',
-                host_user_keys,
-            ]]
+          prepared_host_users_dict = dict()
 
-          ssh_key_path_map = dict()
+          for host_user in host_users:
+            if not isinstance(host_user, dict):
+              host_user = dict(name=host_user)
 
-          for host_user_key in host_user_keys:
-            if not local:
-              node_setup_dict = node_params_dict.get('node_setup') or dict()
+            host_user_key = host_user.get('name')
 
-              if host_user_key not in node_setup_dict.keys():
-                error_msgs += [[
-                    str('node: ' + node_description),
-                    str('host_user_key: ' + host_user_key),
-                    'msg: host user key is not defined in the node_setup property',
-                    'node_setup keys:',
-                    sorted(list(node_setup_dict.keys())),
-                ]]
-
-            if host_user_key not in credentials_dict.keys():
+            if host_user_key in prepared_host_users_dict.keys():
               error_msgs += [[
                   str('node: ' + node_description),
-                  str('host_user_key: ' + host_user_key),
-                  'msg: host user key is not defined as a credential',
-                  'credentials keys:',
-                  sorted(list(credentials_dict.keys())),
+                  str('host user key (name): ' + host_user_key),
+                  'msg: duplicate host user key',
               ]]
             else:
-              credential_item = credentials_dict.get(host_user_key)
-              ssh_file_item = credential_item.get('ssh_file')
-              ssh_key_path_item = (
-                  (local_secrets_dir + '/' + node_name + '.' + host_user_key + '.key')
-                  if ssh_file_item
-                  else None
-              )
-              ssh_key_path_map[host_user_key] = ssh_key_path_item
+              if host_user_key not in credentials_dict.keys():
+                error_msgs += [[
+                    str('node: ' + node_description),
+                    str('host user key (name): ' + host_user_key),
+                    'msg: host user key is not defined as a credential',
+                    'credentials keys:',
+                    sorted(list(credentials_dict.keys())),
+                ]]
+              else:
+                credential_item = credentials_dict.get(host_user_key)
+                ssh_file_item = credential_item.get('ssh_file')
+                ssh_key_path_item = (
+                    (local_secrets_dir + '/' + node_name +
+                     '.' + host_user_key + '.key')
+                    if ssh_file_item
+                    else None
+                )
 
-          if ssh_key_path_map:
-            result['ssh_key_path_map'] = ssh_key_path_map
+                prepared_host_user = host_user.copy()
+                prepared_host_user['ssh_key_path'] = ssh_key_path_item
+
+              prepared_host_users += [prepared_host_user]
+              prepared_host_users_dict[host_user_key] = prepared_host_user
+
+          result['host_users'] = prepared_host_users
+
+          main_host_user = prepared_host_users_dict.get(main_host_user_key)
+
+          if not main_host_user:
+            error_msgs += [[
+                str('node: ' + node_description),
+                str('main host user key (name): ' + main_host_user_key),
+                'msg: main host user key is not defined in the list with the host users',
+                'host user names (identifiers) found:',
+                sorted(list(prepared_host_users_dict.keys())),
+            ]]
+          else:
+            result['main_ssh_key_path'] = main_host_user.get('ssh_key_path')
 
         service = node.get('service')
         dns_service = node.get('dns_service')
@@ -1669,16 +1669,16 @@ def prepare_node(node_info, run_info):
                 ] + value
                 error_msgs_aux += [new_value]
 
-              if (not error_msgs_aux_validate) and (not local):
-                required_props = ['node_setup']
+              if not error_msgs_aux_validate:
+                for prepared_host_user in prepared_host_users:
+                  setup_log_file = prepared_host_user.get('setup_log_file')
+                  setup_finished_log_regex = prepared_host_user.get('setup_finished_log_regex')
 
-                for key in required_props:
-                  if is_empty(node_params.get(key)):
-                    error_msgs += [[
-                        str('node: ' + node_description),
-                        str('property: ' + key),
-                        'context: validate node params (custom)',
-                        'msg: required property not found in node params or is empty (non-local)'
+                  if setup_log_file and not setup_finished_log_regex:
+                    error_msgs_aux += [[
+                        str('host user key (name): ' + prepared_host_user.get('name')),
+                        'msg: setup_log_file is defined the host user, but '
+                        + 'setup_finished_log_regex is not defined',
                     ]]
             else:
               error_msgs_aux += [[

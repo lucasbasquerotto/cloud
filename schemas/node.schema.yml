@@ -48,13 +48,16 @@ schemas:
           (like name and ssh file); defaults to 'host'; the main host user is the host
           user that will generally run the tasks in the host (the other users can run
           tasks only in the setup step)
-      host_user_keys:
+      host_users:
         type: "list"
-        elem_type: "str"
+        elem_schema: "node_setup"
         description: >-
-          list of strings representing the credential (names) that have the host users data
-          (like name and ssh file, for each user); defaults to [<main_host_user_key>]; the
-          value of 'main_host_user_key' must be present in the list
+          list of strings or dictionaries representing the credential (names) that have
+          the host users data (like user name and ssh file, for each user) together with
+          specifications for the setup (like timeouts); defaults to [<main_host_user_key>];
+          the value of 'main_host_user_key' must be present (be a name) in the list; when
+          defined as a string, will be equivalent to a dictionary with the name property
+          with the same value (and no other property defined)
       dns_service_params_list:
         type: "list"
         elem_schema: "dns"
@@ -62,13 +65,6 @@ schemas:
           list with dns records to create A and AAAA records
           (when dns_service is specified for the node); will use
           the node ips returned by the service that created the node
-      node_setup:
-        type: "map"
-        elem_key_regex: "^[-\\w]+$"
-        elem_schema: "node_setup"
-        description: >-
-          tests to verify if can connect to the host and
-          if the host was initialized successfully
       cron:
         type: "list"
         elem_schema: "cron"
@@ -77,29 +73,36 @@ schemas:
         type: "bool"
         description: "specify if the cron service must be started (when stopped)"
   node_setup:
-    type: "dict"
+    type: "simple_dict"
+    alternative_type: "str"
     description: >-
-      tests to verify if can connect to the host and
-      if the host was initialized successfully
+      tests to verify if can connect to the host and if the host was initialized successfully
     props:
+      name:
+        type: "str"
+        non_empty: true
+        regex: "^[-\\w]+$"
+        description: "the host user identifier (must be associated with a credential with the same name)"
       initial_connection_timeout:
         type: "int"
         description: "timeout in seconds for the initial connection to the host"
       setup_log_file:
         type: "str"
-        non_empty: true
         description: "log file used to verify if the host setup was completed"
       setup_finished_log_regex:
         type: "str"
-        non_empty: true
         description: "regex applied to the log file used to determine if the setup ended"
       setup_success_log_last_line:
         type: "str"
-        non_empty: true
         description: "last line expected in the log file in the case of a successful setup"
       setup_finished_timeout:
         type: "int"
         description: "timeout in seconds while waiting for the host setup to complete"
+      skip_setup:
+        type: "bool"
+        description: >-
+          when true, skips the setup step (that verifies if the connection is reachable and
+          validates if the setup ended successfully)
   cron:
     type: "dict"
     props:

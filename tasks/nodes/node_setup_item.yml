@@ -1,39 +1,33 @@
-- name: "{{ node_setup_item_title }} - node setup (block)"
-  vars:
-    node_setup_item_vars: "{{ node_setup_node.params.node_setup[node_setup_item_key] | default({}) }}"
-    node_setup_item_credentials: "{{ node_setup_node_credentials[node_setup_item_key] | default({}) }}"
-    ansible_user: "{{ node_setup_item_credentials.host_user | default('') }}"
-    ansible_become_pass: "{{ node_setup_item_credentials.host_pass | default('') }}"
-    ansible_ssh_private_key_file: "{{ node_setup_node.ssh_key_path_map[node_setup_item_key] | default('') }}"
+# Inner Params
+
+- name: "{{ node_setup_item_title }} - node_setup_item_log_file"
+  set_fact:
+    node_setup_item_log_file: "{{ node_setup_item.setup_log_file | default('') }}"
+    node_setup_item_finished_log_regex: "{{ node_setup_item.setup_finished_log_regex | default('') }}"
+    node_setup_item_success_log_last_line: >-
+      {{ node_setup_item.setup_success_log_last_line | default('') }}
+    node_setup_item_initial_connection_timeout: >-
+      {{ node_setup_item.initial_connection_timeout | default(300) }}
+    node_setup_item_finished_timeout: >-
+      {{ node_setup_item.setup_finished_timeout | default(300) }}
+  tags: ["no_print"]
+
+# Wait Host
+
+- name: >
+    {{ node_setup_item_title }} - wait {{ node_setup_item_initial_connection_timeout }}
+    seconds for target connection to become reachable/usable
+  wait_for_connection:
+    delay: 0
+    sleep: 1
+    timeout: "{{ node_setup_item_initial_connection_timeout | int }}"
+  when: ansible_connection != 'local'
+
+- name: "{{ node_setup_item_title }} - Gathering facts"
+  setup:
+
+- name: "{{ node_setup_item_title }} - block - wait and validate setup"
   block:
-    # Inner Params
-
-    - name: "{{ node_setup_item_title }} - node_setup_item_log_file"
-      set_fact:
-        node_setup_item_log_file: "{{ node_setup_item_vars.setup_log_file }}"
-        node_setup_item_finished_log_regex: "{{ node_setup_item_vars.setup_finished_log_regex }}"
-        node_setup_item_success_log_last_line: >-
-          {{ node_setup_item_vars.setup_success_log_last_line }}
-        node_setup_item_initial_connection_timeout: >-
-          {{ node_setup_item_vars.initial_connection_timeout | default(300) }}
-        node_setup_item_finished_timeout: >-
-          {{ node_setup_item_vars.setup_finished_timeout | default(300) }}
-      tags: ["no_print"]
-
-    # Wait Host
-
-    - name: >
-        {{ node_setup_item_title }} - wait {{ node_setup_item_initial_connection_timeout }}
-        seconds for target connection to become reachable/usable
-      wait_for_connection:
-        delay: 0
-        sleep: 1
-        timeout: "{{ node_setup_item_initial_connection_timeout | int }}"
-      when: ansible_connection != 'local'
-
-    - name: "{{ node_setup_item_title }} - Gathering facts"
-      setup:
-
     # Wait Setup
 
     - name: "{{ node_setup_item_title }} - block - local"
@@ -137,10 +131,6 @@
             node_setup_item_full_log: ""
           tags: ["no_print"]
 
-        - name: "{{ node_setup_item_title }} - print the last line of the setup log"
-          debug:
-            msg: "last_line='{{ node_setup_item_last_line }}'"
-
         - name: "{{ node_setup_item_title }} - block - retrieve the full log and fail due to setup error"
           block:
             - name: >-
@@ -159,7 +149,7 @@
               fail:
                 msg: |
                   The last line of the setup log file is not the expected value.
-                  Last line: {{ node_setup_item_last_line }}
+                  Last line (found): {{ node_setup_item_last_line }}
                   Should be: {{ node_setup_item_success_log_last_line }}
                   Full Log:
                   {{ node_setup_item_full_log }}
@@ -168,7 +158,4 @@
 
       when: node_setup_item_success_log_last_line != ''
 
-  when: >-
-    (node_setup_node.params.node_setup[node_setup_item_key] is defined)
-    and
-    (not (node_setup_item_vars.skip | default(false) | bool))
+  when: node_setup_item_log_file != ''

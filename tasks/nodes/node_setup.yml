@@ -9,8 +9,14 @@
 - name: "{{ node_setup_title }} - host users"
   include_tasks: "tasks/nodes/node_setup_item.yml"
   vars:
+    node_setup_item_key: "{{ node_setup_item.name }}"
     node_setup_item_title: "{{ node_setup_title }} - host user [{{ node_setup_item_key }}]"
-  loop: "{{ node_setup_node.host_user_keys | default([]) }}"
+    node_setup_item_credentials: "{{ node_setup_node.credentials[node_setup_item_key] }}"
+    ansible_user: "{{ node_setup_item_credentials.host_user }}"
+    ansible_become_pass: "{{ node_setup_item_credentials.host_pass | default('') }}"
+    ansible_ssh_private_key_file: "{{ node_setup_item.ssh_key_path | default('') }}"
+  when: not (node_setup_item.skip_setup | default(false) | bool)
+  loop: "{{ node_setup_node.host_users | default([]) }}"
   loop_control:
-    loop_var: node_setup_item_key
+    loop_var: node_setup_item
   tags: ["no_print_skipped"]
