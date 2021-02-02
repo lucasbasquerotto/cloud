@@ -40,11 +40,13 @@ schemas:
       main:
         non_empty: true
         type: "map"
+        elem_key_regex: "^[-\\w]+$"
         elem_schema: "main"
         description: "dictionary with the environment contexts (that define the deployment)"
       repos:
         type: "map"
         non_empty: true
+        elem_key_regex: "^[-\\w]+$"
         elem_schema: "repo"
         elem_non_empty: true
         description: "dictionary with definitions of source control repositories"

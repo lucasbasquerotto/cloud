@@ -266,6 +266,7 @@ def validate_next_value(schema_data, value):
 
     return validate_next_value(new_schema_data, value)
 
+  elem_key_regex = schema_info.get('elem_key_regex')
   elem_type = schema_info.get('elem_type')
   elem_alternative_type = schema_info.get('elem_alternative_type')
   elem_alternative_choices = schema_info.get('elem_alternative_choices')
@@ -281,6 +282,16 @@ def validate_next_value(schema_data, value):
   elem_regex = schema_info.get('elem_regex')
   elem_min = schema_info.get('elem_min')
   elem_max = schema_info.get('elem_max')
+
+  if value_type not in ['map', 'simple_map']:
+    if elem_key_regex:
+      return [[
+          str('context: dynamic schema'),
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: a definition should have elem_key_regex only for maps'
+      ]]
 
   if value_type not in ['map', 'simple_map', 'list', 'simple_list']:
     if elem_type:
@@ -960,6 +971,20 @@ def validate_next_value(schema_data, value):
           error_msgs += validate_next_value(new_schema_data, elem_value)
       elif is_dict:
         keys = list(value.keys())
+
+        if elem_key_regex:
+          for key in sorted(keys):
+            pattern = re.compile(elem_key_regex)
+
+            if not pattern.search(key):
+              return [[
+                  str('schema_name: ' + schema_name + schema_suffix),
+                  str('at: ' + (schema_ctx or '<root>')),
+                  str('type: ' + value_type),
+                  str('key: ' + key),
+                  str('elem_key_regex: ' + elem_key_regex),
+                  'msg: dictionary key is invalid (not compatible with the regex specified)',
+              ]]
 
         # required or non-empty properties
         if props and (value_type in ['dict', 'simple_dict']):

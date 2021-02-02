@@ -90,6 +90,9 @@ schemas:
           when the value is not a dictionary, this is the schema that
           will be considered; a simple_dict must have this property
           defined, or alternative_type, but not both
+      elem_key_regex:
+        type: "str"
+        description: "regex to validate element keys, when type is map or simple_map"
       elem_type:
         schema: "type"
         description: "same as type, but for list and map elements"
@@ -202,6 +205,9 @@ schemas:
       alternative_schema:
         type: "str"
         description: "same as schema.alternative_schema, but for properties"
+      elem_key_regex:
+        type: "str"
+        description: "same as schema.elem_key_regex, but for properties"
       elem_type:
         schema: "type"
         description: "same as schema.elem_type, but for properties"

@@ -6,6 +6,7 @@ schemas:
     props:
       credentials:
         type: "map"
+        elem_key_regex: "^[-\\w]+$"
         elem_schema: "credential"
         description: "node credentials"
       params:
@@ -63,6 +64,7 @@ schemas:
           the node ips returned by the service that created the node
       node_setup:
         type: "map"
+        elem_key_regex: "^[-\\w]+$"
         elem_schema: "node_setup"
         description: >-
           tests to verify if can connect to the host and
@@ -159,10 +161,12 @@ schemas:
         description: "schema (or list of schemas) for the content (when type is template)"
       credentials:
         type: "map"
+        elem_key_regex: "^[-\\w]+$"
         elem_type: "str"
         description: "content credentials (when type is template)"
       contents:
         type: "map"
+        elem_key_regex: "^[-\\w]+$"
         elem_schema: "content"
         description: "content inner contents (when type is template)"
       params:
@@ -170,6 +174,7 @@ schemas:
         description: "content params (when type is env, str or template)"
       group_params:
         type: "map"
+        elem_key_regex: "^[-\\w]+$"
         elem_type: "str"
         description: "content group_params (when type is env, str or template)"
       shared_params:
