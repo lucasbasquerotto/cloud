@@ -400,28 +400,34 @@ nodes:
   node_1:
     service: "my_node_service"
     base_dir: "/var/cloud"
-    credential: "host1"
+    credentials:
+      host: "host1"
     root: true
-    shared_params: ["node_setup"]
+    shared_params: ["shared_node_setup"]
   node_2:
     service: "my_node_service"
     base_dir: "/var/cloud"
-    credential: "host2"
+    credentials:
+      host: "host2"
     root: true
-    shared_params: ["node_setup"]
+    shared_params: ["shared_node_setup"]
   node_3:
     service: "my_node_service"
     base_dir: "/var/cloud"
-    credential: "host3"
+    credentials:
+      host: "host3"
     root: true
-    shared_params: ["node_setup"]
+    shared_params: ["shared_node_setup"]
 node_shared_params:
-  node_setup:
-    setup_log_file: "/var/log/setup.log"
-    setup_finished_log_regex: "^Setup Finished.*$"
-    setup_success_log_last_line: "Setup Finished - Success"
-    initial_connection_timeout: 90
-    setup_finished_timeout: 300
+  shared_node_setup:
+    main_host_user_key: "host"
+    node_setup:
+      host:
+        setup_log_file: "/var/log/setup.log"
+        setup_finished_log_regex: "^Setup Finished.*$"
+        setup_success_log_last_line: "Setup Finished - Success"
+        initial_connection_timeout: 90
+        setup_finished_timeout: 300
 services:
   my_node_service:
     #...
@@ -910,30 +916,6 @@ services:
       secret_02:
         credential_02_param_01: "secret_value_02_01"
         credential_02_param_02: "secret_value_02_02"
-```
-
-One exception is the `nodes` section, in which it's not a dictionary `credentials` but a single `credential` string property that is mapped to a credentials in the `credentials` section:
-
-```yaml
-nodes:
-  my_node:
-    #...
-    credential: "my_credential"
-credentials:
-  my_credential:
-    credential_01: "secret_value_01"
-    credential_02: "secret_value_02"
-```
-
-_Will turn into:_
-
-```yaml
-nodes:
-  my_node:
-    #...
-    credential:
-      credential_01: "secret_value_01"
-      credential_02: "secret_value_02"
 ```
 
 ## Contents

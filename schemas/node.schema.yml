@@ -62,7 +62,8 @@ schemas:
           (when dns_service is specified for the node); will use
           the node ips returned by the service that created the node
       node_setup:
-        schema: "node_setup"
+        type: "map"
+        elem_schema: "node_setup"
         description: >-
           tests to verify if can connect to the host and
           if the host was initialized successfully

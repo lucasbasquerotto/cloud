@@ -30,6 +30,3 @@
     loop_var: tmp_item
     label: "{{ tmp_item }} ({{ tmp_path }})"
   tags: ["no_print_skipped"]
-
-- debug:
-    var: pre_prepare_node_item.ssh_key_path_map

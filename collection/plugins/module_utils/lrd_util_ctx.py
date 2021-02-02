@@ -1360,6 +1360,18 @@ def prepare_node(node_info, run_info):
           ssh_key_path_map = dict()
 
           for host_user_key in host_user_keys:
+            if not local:
+              node_setup_dict = node_params_dict.get('node_setup') or dict()
+
+              if host_user_key not in node_setup_dict.keys():
+                error_msgs += [[
+                    str('node: ' + node_description),
+                    str('host_user_key: ' + host_user_key),
+                    'msg: host user key is not defined in the node_setup property',
+                    'node_setup keys:',
+                    sorted(list(node_setup_dict.keys())),
+                ]]
+
             if host_user_key not in credentials_dict.keys():
               error_msgs += [[
                   str('node: ' + node_description),

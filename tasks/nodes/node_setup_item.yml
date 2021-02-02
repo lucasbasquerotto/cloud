@@ -1,0 +1,174 @@
+- name: "{{ node_setup_item_title }} - node setup (block)"
+  vars:
+    node_setup_item_vars: "{{ node_setup_node.params.node_setup[node_setup_item_key] | default({}) }}"
+    node_setup_item_credentials: "{{ node_setup_node_credentials[node_setup_item_key] | default({}) }}"
+    ansible_user: "{{ node_setup_item_credentials.host_user | default('') }}"
+    ansible_become_pass: "{{ node_setup_item_credentials.host_pass | default('') }}"
+    ansible_ssh_private_key_file: "{{ node_setup_node.ssh_key_path_map[node_setup_item_key] | default('') }}"
+  block:
+    # Inner Params
+
+    - name: "{{ node_setup_item_title }} - node_setup_item_log_file"
+      set_fact:
+        node_setup_item_log_file: "{{ node_setup_item_vars.setup_log_file }}"
+        node_setup_item_finished_log_regex: "{{ node_setup_item_vars.setup_finished_log_regex }}"
+        node_setup_item_success_log_last_line: >-
+          {{ node_setup_item_vars.setup_success_log_last_line }}
+        node_setup_item_initial_connection_timeout: >-
+          {{ node_setup_item_vars.initial_connection_timeout | default(300) }}
+        node_setup_item_finished_timeout: >-
+          {{ node_setup_item_vars.setup_finished_timeout | default(300) }}
+      tags: ["no_print"]
+
+    # Wait Host
+
+    - name: >
+        {{ node_setup_item_title }} - wait {{ node_setup_item_initial_connection_timeout }}
+        seconds for target connection to become reachable/usable
+      wait_for_connection:
+        delay: 0
+        sleep: 1
+        timeout: "{{ node_setup_item_initial_connection_timeout | int }}"
+      when: ansible_connection != 'local'
+
+    - name: "{{ node_setup_item_title }} - Gathering facts"
+      setup:
+
+    # Wait Setup
+
+    - name: "{{ node_setup_item_title }} - block - local"
+      block:
+        - name: "{{ node_setup_item_title }} - node_setup_local_msg"
+          set_fact:
+            node_setup_item_local_success_msg: |
+              [info] simulated message - line 01
+              [info] simulated message - line 02
+              [info] simulated message - line 03
+              [success] simulated message - line 04
+              {{ node_setup_item_success_log_last_line }}
+            node_setup_item_local_error_msg: |
+              [info] simulated message - line 01
+              [info] simulated message - line 02
+              [info] simulated message - line 03
+              {{ node_setup_item_success_log_last_line }}
+              [error] simulated error message - last line
+          tags: ["no_print"]
+
+        - name: >
+            {{ node_setup_item_title }} - create the directory "{{ node_setup_item_log_file | dirname }}"
+            to simulate success locally
+          file:
+            path: "{{ node_setup_item_log_file | dirname }}"
+            state: directory
+            mode: "{{ (env_lax | bool) | ternary(0777, 0751) }}"
+          tags: ["no_print_skipped"]
+
+        - name: >
+            {{ node_setup_item_title }} - create the file "{{ node_setup_item_log_file }}"
+            to simulate success locally
+          copy:
+            dest: "{{ node_setup_item_log_file }}"
+            content: >-
+              {{
+                ((node_setup_node.local_node_setup_error | default('')) == 'msg')
+                | ternary(
+                  node_setup_item_local_error_msg,
+                  node_setup_item_local_success_msg
+                )
+              }}
+            mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+          tags: ["no_print_skipped"]
+
+      when: >-
+        (ansible_connection == 'local')
+        and
+        ((node_setup_node.local_node_setup_error | default('')) != 'timeout')
+      tags: ["no_print_skipped"]
+
+    - name: >
+        {{ node_setup_item_title }} - make sure the file "{{ node_setup_item_log_file }}"
+        has "{{ node_setup_item_finished_log_regex }}" in it
+        (wait {{ node_setup_item_finished_timeout }} seconds)
+      wait_for:
+        delay: 0
+        sleep: 1
+        timeout: "{{ node_setup_item_finished_timeout }}"
+        path: "{{ node_setup_item_log_file }}"
+        search_regex: "{{ node_setup_item_finished_log_regex }}"
+      register: node_setup_item_timeout_var
+      ignore_errors: true
+
+    - name: "{{ node_setup_item_title }} - block - retrieve the full log and fail due to setup timeout"
+      block:
+        - name: >-
+            {{ node_setup_item_title }} - setup timeout -
+            retrieve the full log ({{ node_setup_item_log_file }})
+          shell: cat "{{ node_setup_item_log_file }}"
+          register: node_setup_item_full_log_var
+          changed_when: false
+
+        - name: "{{ node_setup_item_title }} - setup timeout - node_setup_item_full_log"
+          set_fact:
+            node_setup_item_full_log: "{{ node_setup_item_full_log_var.stdout }}"
+          tags: ["no_print"]
+
+        - name: "{{ node_setup_item_title }} - fail due to setup timeout"
+          fail:
+            msg: |
+              Timeout to find "{{ node_setup_item_finished_log_regex }}" in file
+              File: {{ node_setup_item_log_file }}
+              Full Log:
+              {{ node_setup_item_full_log }}
+      when: node_setup_item_timeout_var.failed
+      tags: ["no_print_skipped"]
+
+    # Verify Successful Setup
+
+    - name: "{{ node_setup_item_title }} - block - verify last line"
+      block:
+        - name: "{{ node_setup_item_title }} - retrieve last line of {{ node_setup_item_log_file }}"
+          shell: tail -n 1 "{{ node_setup_item_log_file }}"
+          register: node_setup_item_last_line_var
+          changed_when: false
+
+        - name: "{{ node_setup_item_title }} - node_setup_item_last_line"
+          set_fact:
+            node_setup_item_last_line: "{{ node_setup_item_last_line_var.stdout }}"
+            node_setup_item_full_log: ""
+          tags: ["no_print"]
+
+        - name: "{{ node_setup_item_title }} - print the last line of the setup log"
+          debug:
+            msg: "last_line='{{ node_setup_item_last_line }}'"
+
+        - name: "{{ node_setup_item_title }} - block - retrieve the full log and fail due to setup error"
+          block:
+            - name: >-
+                {{ node_setup_item_title }} - setup error -
+                retrieve the full log ({{ node_setup_item_log_file }})
+              shell: cat "{{ node_setup_item_log_file }}"
+              register: node_setup_item_full_log_var
+              changed_when: false
+
+            - name: "{{ node_setup_item_title }} - setup error - node_setup_item_full_log"
+              set_fact:
+                node_setup_item_full_log: "{{ node_setup_item_full_log_var.stdout }}"
+              tags: ["no_print"]
+
+            - name: "{{ node_setup_item_title }} - fail due to setup error"
+              fail:
+                msg: |
+                  The last line of the setup log file is not the expected value.
+                  Last line: {{ node_setup_item_last_line }}
+                  Should be: {{ node_setup_item_success_log_last_line }}
+                  Full Log:
+                  {{ node_setup_item_full_log }}
+          when: node_setup_item_last_line != node_setup_item_success_log_last_line
+          tags: ["no_print_skipped"]
+
+      when: node_setup_item_success_log_last_line != ''
+
+  when: >-
+    (node_setup_node.params.node_setup[node_setup_item_key] is defined)
+    and
+    (not (node_setup_item_vars.skip | default(false) | bool))

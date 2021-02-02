@@ -1,11 +1,3 @@
-# Main Vars
-
-- name: "{{ cloud_node_item_title }} - cloud_node_credential"
-  set_fact:
-    cloud_node_credential: "{{ cloud_node_item.credential | default({}) }}"
-    cloud_node_ssh_key_path: "{{ cloud_node_item.main_ssh_key_path | default('') }}"
-  tags: ["no_print"]
-
 # Main Service
 
 - name: "{{ cloud_node_item_title }} - main service (outer)"
@@ -142,7 +134,7 @@
       }} {{
         (tmp_item.local | default(false) | bool)
         | ternary('', 'ansible_host=' + tmp_host)
-      }} instance_type={{ cloud_node_name }}{{ ''
+      }} {{ ''
       }} instance_index={{ tmp_idx + 1 }}{{ ''
       }} {{
         (tmp_public_ipv4 != '')
@@ -154,17 +146,7 @@
         (tmp_private_ip != '')
         | ternary('instance_private_ip=' + tmp_private_ip, '')
       }}
-      ansible_user={{ cloud_node_credential.host_user }}
-      {{
-        (tmp_host_pass != '')
-        | ternary('ansible_become_pass=' + tmp_host_pass, '')
-      }}
-      {{
-        (cloud_node_ssh_key_path != '')
-        | ternary('ansible_ssh_private_key_file=' + cloud_node_ssh_key_path, '')
-      }}
   vars:
-    tmp_host_pass: "{{ cloud_node_credential.host_pass | default('') }}"
     tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
     tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
     tmp_private_ip: "{{ tmp_item.private_ip | default('') }}"
@@ -182,19 +164,26 @@
       {{ cloud_node_hosts_info }}
 
       [{{ cloud_node_name }}:vars]
-      ansible_user={{ cloud_node_credential.host_user }}
+      instance_type={{ cloud_node_name }}
+      ansible_user={{ tmp_credential.host_user }}
       {{
         (tmp_host_pass != '')
         | ternary('ansible_become_pass=' + tmp_host_pass, '')
       }}
       {{
-        (cloud_node_ssh_key_path != '')
-        | ternary('ansible_ssh_private_key_file=' + cloud_node_ssh_key_path, '')
+        (tmp_ssh_key_path != '')
+        | ternary('ansible_ssh_private_key_file=' + tmp_ssh_key_path, '')
       }}
 
       # [{{ cloud_node_name }}:end]
   vars:
-    tmp_host_pass: "{{ cloud_node_credential.host_pass | default('') }}"
+    tmp_credential: >-
+      {{
+        cloud_node_item.credentials[cloud_node_item.main_host_user_key | default('')]
+        | default({})
+      }}
+    tmp_host_pass: "{{ tmp_credential.host_pass | default('') }}"
+    tmp_ssh_key_path: "{{ cloud_node_item.main_ssh_key_path | default('') }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
