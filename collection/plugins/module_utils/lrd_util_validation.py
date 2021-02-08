@@ -107,28 +107,28 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
         else dev
     )
 
-    if not ignore_validators:
+    dict_to_validate = dict_to_validate or dict()
+
+    if validator_files:
       dict_to_validate = dict_to_validate or dict()
 
-      if validator_files:
-        dict_to_validate = dict_to_validate or dict()
+      if not isinstance(validator_files, list):
+        validator_files = [validator_files]
 
-        if not isinstance(validator_files, list):
-          validator_files = [validator_files]
+      for validator_file in validator_files:
+        validator_file = (
+            (base_dir_prefix + validator_file)
+            if base_dir_prefix
+            else validator_file
+        )
 
-        for validator_file in validator_files:
-          validator_file = (
-              (base_dir_prefix + validator_file)
-              if base_dir_prefix
-              else validator_file
-          )
-
-          if not validator_file:
-            error_msgs_aux += [[
-                str('context: ' + str(ctx_title or '')),
-                str('msg: validator file not defined'),
-            ]]
-          elif os.path.exists(validator_file):
+        if not validator_file:
+          error_msgs += [[
+              str('context: ' + str(ctx_title or '')),
+              str('msg: validator file not defined'),
+          ]]
+        elif os.path.exists(validator_file):
+          if not ignore_validators:
             validator_data = dict()
 
             if all_props:
@@ -144,11 +144,11 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
                 base_dir_prefix=base_dir_prefix,
             )
             result += [result_item]
-          else:
-            error_msgs_aux += [[
-                str('context: ' + str(ctx_title or '')),
-                str('msg: validator file not found: ' + validator_file),
-            ]]
+        else:
+          error_msgs += [[
+              str('context: ' + str(ctx_title or '')),
+              str('msg: validator file not found: ' + validator_file),
+          ]]
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
