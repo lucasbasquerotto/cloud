@@ -934,10 +934,16 @@ def prepare_pod(pod_info, parent_data, run_info):
         result['contents'] = prepared_contents or None
 
         if validate_ctx and not error_msgs_aux:
+          schema_data = dict(input=initial_input)
+
+          for key in ['params', 'credentials', 'contents']:
+            if result.get(key) is not None:
+              schema_data[key] = result.get(key)
+
           task_data = dict(
               base_dir_prefix=base_dir_prefix,
-              dict_to_validate=result,
-              prop_names=['params', 'credentials', 'contents'],
+              dict_to_validate=schema_data,
+              all_props=True,
           )
 
           info = validate_ctx_schema(
@@ -1627,9 +1633,15 @@ def prepare_node(node_info, run_info):
               result['cron_transfer'] = cron_transfer
 
         if validate_ctx and not error_msgs_aux:
+          schema_data = dict(input=general_data)
+
+          for key in ['params', 'credentials']:
+            if result.get(key) is not None:
+              schema_data[key] = result.get(key)
+
           task_data = dict(
-              dict_to_validate=result,
-              prop_names=['params', 'credentials'],
+              dict_to_validate=schema_data,
+              all_props=True,
           )
           schema_files = node.get('schema') or []
           schema_files = ['schemas/node.schema.yml'] + schema_files

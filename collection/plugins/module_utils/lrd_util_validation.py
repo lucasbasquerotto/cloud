@@ -43,7 +43,7 @@ def validate_ctx_schema(ctx_title, schema_files, task_data):
         )
 
         if not schema_file:
-          error_msgs_aux += [[
+          error_msgs += [[
               str('context: ' + str(ctx_title or '')),
               str('msg: schema file not defined'),
           ]]
@@ -59,18 +59,18 @@ def validate_ctx_schema(ctx_title, schema_files, task_data):
               if dict_to_validate.get(key) is not None:
                 schema_data[key] = dict_to_validate.get(key)
 
-          error_msgs_aux_validate = validate_schema(
+          error_msgs_aux = validate_schema(
               schema, schema_data
           )
 
-          for value in (error_msgs_aux_validate or []):
+          for value in (error_msgs_aux or []):
             new_value = [
                 str('context: ' + str(ctx_title or '')),
                 str('schema file: ' + schema_file),
             ] + value
-            error_msgs_aux += [new_value]
+            error_msgs += [new_value]
         else:
-          error_msgs_aux += [[
+          error_msgs += [[
               str('context: ' + str(ctx_title or '')),
               str('msg: schema file not found: ' + schema_file),
           ]]
