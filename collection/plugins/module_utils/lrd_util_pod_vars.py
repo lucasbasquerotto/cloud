@@ -15,10 +15,12 @@ import os
 import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    load_cached_file, load_yaml, to_bool
+    load_yaml, to_bool
 )
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation import (
+    validate_ctx_schema, get_validators
+)
 
 
 def load_vars(pod_info, run_info, meta_info=None):
@@ -249,36 +251,38 @@ def load_ctx_template(current_template, is_env, data_info):
         ]]
 
       template_params = current_template.get('params') or None
+      template_validators = None
 
       if validate and not error_msgs:
-        schema_files = current_template.get('schema')
+        error_msgs_aux = list()
 
-        if schema_files:
-          if not isinstance(schema_files, list):
-            schema_files = [schema_files]
+        base_dir_prefix = (env_dir if is_env else pod_local_dir) + '/'
+        task_data = dict(
+            base_dir_prefix=base_dir_prefix,
+            dict_to_validate=template_params,
+            all_props=True,
+        )
 
-          for schema_file in schema_files:
-            schema_file = (env_dir if is_env else pod_local_dir) + \
-                '/' + schema_file
+        info = validate_ctx_schema(
+            ctx_title='validate pod ctx vars template schema',
+            schema_files=current_template.get('schema'),
+            task_data=task_data,
+        )
+        error_msgs_aux += (info.get('error_msgs') or [])
 
-            if os.path.exists(schema_file):
-              schema = load_cached_file(schema_file)
+        info = get_validators(
+            ctx_title='get pod ctx vars template validators',
+            validator_files=current_template.get('validator'),
+            task_data=task_data,
+            env_data=env_data,
+        )
+        validators = info.get('result')
+        error_msgs_aux += (info.get('error_msgs') or [])
+        template_validators = validators or None
 
-              error_msgs_aux = validate_schema(schema, template_params)
-
-              for value in (error_msgs_aux or []):
-                new_value = [
-                    str('src: ' + (src_relpath or '')),
-                    'context: validate pod ctx vars template schema',
-                    str('schema file: ' + schema_file),
-                ] + value
-                error_msgs += [new_value]
-            else:
-              error_msgs += [[
-                  'context: validate pod ctx vars template schema',
-                  str('schema file: ' + schema_file),
-                  str('msg: schema file not found: ' + schema_file),
-              ]]
+        for value in (error_msgs_aux or []):
+          new_value = [str('src: ' + (src_relpath or ''))] + value
+          error_msgs += [new_value]
 
       if error_msgs:
         return dict(error_msgs=error_msgs)
@@ -316,6 +320,7 @@ def load_ctx_template(current_template, is_env, data_info):
                 )
             ),
             params=template_params,
+            validators=template_validators,
         )
         templates += [template_to_add]
       else:
@@ -395,27 +400,20 @@ def load_next_vars(file_relpath, ctx_params, data_info):
 
       if res:
         if validate:
-          schema_file = 'schemas/pod_ctx.schema.yml'
+          task_data = dict(
+              base_dir_prefix=None,
+              dict_to_validate=res,
+              all_props=True,
+          )
 
-          if os.path.exists(schema_file):
-            schema = load_cached_file(schema_file)
+          info = validate_ctx_schema(
+              ctx_title='validate pod ctx vars schema',
+              schema_files=['schemas/pod_ctx.schema.yml'],
+              task_data=task_data,
+          )
+          error_msgs += (info.get('error_msgs') or [])
 
-            error_msgs_aux = validate_schema(schema, res)
-
-            for value in (error_msgs_aux or []):
-              new_value = [
-                  'context: validate pod ctx vars schema',
-                  str('schema file: ' + schema_file),
-              ] + value
-              error_msgs += [new_value]
-
-            if error_msgs:
-              return dict(error_msgs=error_msgs)
-          else:
-            error_msgs += [[
-                'context: validate pod ctx vars schema',
-                str('msg: schema file not found: ' + schema_file),
-            ]]
+          if error_msgs:
             return dict(error_msgs=error_msgs)
 
         res_files = res.get('files')

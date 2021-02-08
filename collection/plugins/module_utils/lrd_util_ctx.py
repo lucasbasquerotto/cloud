@@ -16,7 +16,7 @@ import os
 import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    default, is_empty, is_str, load_cached_file, merge_dicts, to_bool
+    default, is_empty, is_str, merge_dicts, to_bool
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import (
     load_content, prepare_content
@@ -26,12 +26,14 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_node_dependenci
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import load_vars
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation import (
+    validate_ctx_schema, get_validators
+)
 
 
 def prepare_service(service_info, run_info, top, service_names=None):
   result = dict()
-  error_msgs = []
+  error_msgs = list()
 
   try:
     service_names = service_names if service_names is not None else set()
@@ -159,6 +161,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
               'task',
               'namespace',
               'schema',
+              'validator',
               'credentials',
               'contents',
               'params',
@@ -308,39 +311,28 @@ def prepare_service(service_info, run_info, top, service_names=None):
           result['contents'] = prepared_contents or None
 
           if validate_ctx and not error_msgs_aux:
-            schema_files = service.get('schema')
+            task_data = dict(
+                base_dir_prefix=base_dir_prefix,
+                dict_to_validate=result,
+                prop_names=['params', 'credentials', 'contents'],
+            )
 
-            if schema_files:
-              if not isinstance(schema_files, list):
-                schema_files = [schema_files]
+            info = validate_ctx_schema(
+                ctx_title='validate service schema',
+                schema_files=service.get('schema'),
+                task_data=task_data,
+            )
+            error_msgs_aux += (info.get('error_msgs') or [])
 
-              for schema_file in schema_files:
-                schema_file = base_dir_prefix + schema_file
-
-                if os.path.exists(schema_file):
-                  schema = load_cached_file(schema_file)
-
-                  schema_data = dict()
-
-                  for key in ['params', 'credentials', 'contents']:
-                    if result.get(key) is not None:
-                      schema_data[key] = result.get(key)
-
-                  error_msgs_aux_validate = validate_schema(
-                      schema, schema_data
-                  )
-
-                  for value in (error_msgs_aux_validate or []):
-                    new_value = [
-                        'context: validate service schema',
-                        str('schema file: ' + schema_file),
-                    ] + value
-                    error_msgs_aux += [new_value]
-                else:
-                  error_msgs_aux += [[
-                      'context: validate service schema',
-                      str('msg: schema file not found: ' + schema_file),
-                  ]]
+            info = get_validators(
+                ctx_title='get service validators',
+                validator_files=service.get('validator'),
+                task_data=task_data,
+                env_data=env_data,
+            )
+            validators = info.get('result')
+            error_msgs_aux += (info.get('error_msgs') or [])
+            result['validators'] = validators or None
 
           for value in (error_msgs_aux or []):
             new_value = [str('service: ' + service_description)] + value
@@ -942,39 +934,28 @@ def prepare_pod(pod_info, parent_data, run_info):
         result['contents'] = prepared_contents or None
 
         if validate_ctx and not error_msgs_aux:
-          schema_files = pod.get('schema')
+          task_data = dict(
+              base_dir_prefix=base_dir_prefix,
+              dict_to_validate=result,
+              prop_names=['params', 'credentials', 'contents'],
+          )
 
-          if schema_files:
-            if not isinstance(schema_files, list):
-              schema_files = [schema_files]
+          info = validate_ctx_schema(
+              ctx_title='validate pod schema',
+              schema_files=pod.get('schema'),
+              task_data=task_data,
+          )
+          error_msgs_aux += (info.get('error_msgs') or [])
 
-            for schema_file in schema_files:
-              schema_file = base_dir_prefix + schema_file
-
-              if os.path.exists(schema_file):
-                schema = load_cached_file(schema_file)
-
-                schema_data = dict(input=initial_input)
-
-                for key in ['params', 'credentials', 'contents']:
-                  if result.get(key) is not None:
-                    schema_data[key] = result.get(key)
-
-                error_msgs_aux_validate = validate_schema(
-                    schema, schema_data
-                )
-
-                for value in (error_msgs_aux_validate or []):
-                  new_value = [
-                      'context: validate pod schema',
-                      str('schema file: ' + schema_file),
-                  ] + value
-                  error_msgs_aux += [new_value]
-              else:
-                error_msgs_aux += [[
-                    'context: validate pod schema',
-                    str('msg: schema file not found: ' + schema_file),
-                ]]
+          info = get_validators(
+              ctx_title='get pod validators',
+              validator_files=pod.get('validator'),
+              task_data=task_data,
+              env_data=env_data,
+          )
+          validators = info.get('result')
+          error_msgs_aux += (info.get('error_msgs') or [])
+          result['validators'] = validators or None
 
         if validate_ctx and not error_msgs_aux:
           try:
@@ -1646,45 +1627,46 @@ def prepare_node(node_info, run_info):
               result['cron_transfer'] = cron_transfer
 
         if validate_ctx and not error_msgs_aux:
-          schema_file = 'schemas/node.schema.yml'
+          task_data = dict(
+              dict_to_validate=result,
+              prop_names=['params', 'credentials'],
+          )
+          schema_files = node.get('schema') or []
+          schema_files = ['schemas/node.schema.yml'] + schema_files
 
-          if schema_file:
-            if os.path.exists(schema_file):
-              schema = load_cached_file(schema_file)
+          info = validate_ctx_schema(
+              ctx_title='validate node schema',
+              schema_files=schema_files,
+              task_data=task_data,
+          )
+          error_msgs_aux_validate = info.get('error_msgs') or []
+          error_msgs_aux += error_msgs_aux_validate
 
-              schema_data = dict(input=general_data)
-
-              for key in ['params', 'credentials']:
-                if result.get(key) is not None:
-                  schema_data[key] = result.get(key)
-
-              error_msgs_aux_validate = validate_schema(
-                  schema, schema_data
+          if not error_msgs_aux_validate:
+            for prepared_host_user in prepared_host_users:
+              setup_log_file = prepared_host_user.get('setup_log_file')
+              setup_finished_log_regex = prepared_host_user.get(
+                  'setup_finished_log_regex'
               )
 
-              for value in (error_msgs_aux_validate or []):
-                new_value = [
-                    'context: validate node schema',
-                    str('schema file: ' + schema_file),
-                ] + value
-                error_msgs_aux += [new_value]
+              if setup_log_file and not setup_finished_log_regex:
+                error_msgs_aux += [[
+                    str('host user key (name): ' +
+                        prepared_host_user.get('name')
+                        ),
+                    'msg: setup_log_file is defined the host user, but '
+                    + 'setup_finished_log_regex is not defined',
+                ]]
 
-              if not error_msgs_aux_validate:
-                for prepared_host_user in prepared_host_users:
-                  setup_log_file = prepared_host_user.get('setup_log_file')
-                  setup_finished_log_regex = prepared_host_user.get('setup_finished_log_regex')
-
-                  if setup_log_file and not setup_finished_log_regex:
-                    error_msgs_aux += [[
-                        str('host user key (name): ' + prepared_host_user.get('name')),
-                        'msg: setup_log_file is defined the host user, but '
-                        + 'setup_finished_log_regex is not defined',
-                    ]]
-            else:
-              error_msgs_aux += [[
-                  'context: validate node schema',
-                  str('msg: schema file not found: ' + schema_file),
-              ]]
+          info = get_validators(
+              ctx_title='get node validators',
+              validator_files=node.get('validator'),
+              task_data=task_data,
+              env_data=env_data,
+          )
+          validators = info.get('result')
+          error_msgs_aux += (info.get('error_msgs') or [])
+          result['validators'] = validators or None
 
         for value in (error_msgs_aux or []):
           new_value = [str('node: ' + node_description)] + value
@@ -1879,6 +1861,7 @@ def prepare_task(task_info_dict, run_info):
                 'file',
                 'root',
                 'schema',
+                'validators',
                 'credentials',
                 'contents',
                 'params',
@@ -2044,42 +2027,44 @@ def prepare_task(task_info_dict, run_info):
 
       schema_files = task.get('schema')
       result['schema'] = schema_files
+      task_original_validators = task.get('validator')
+      result['validator'] = task_original_validators
 
-      if validate_ctx and task_target_origin in ['cloud', 'env']:
-        if schema_files:
-          if not isinstance(schema_files, list):
-            schema_files = [schema_files]
+      if task_target_origin in ['cloud', 'env']:
+        if validate_ctx and not error_msgs_aux:
+          error_msgs_validate = list()
 
-          for schema_file in schema_files:
-            schema_file_full = (
-                schema_file
-                if (task_target_origin == 'cloud')
-                else env_data.get('env_dir') + '/' + schema_file
-            ) or ''
+          base_dir_prefix = (
+              None
+              if (task_target_origin == 'cloud')
+              else env_data.get('env_dir') + '/'
+          )
+          task_data = dict(
+              base_dir_prefix=base_dir_prefix,
+              dict_to_validate=result,
+              prop_names=['params', 'credentials', 'contents'],
+          )
 
-            if os.path.exists(schema_file_full):
-              schema = load_cached_file(schema_file_full)
+          info = validate_ctx_schema(
+              ctx_title='validate task schema',
+              schema_files=schema_files,
+              task_data=task_data,
+          )
+          error_msgs_validate += (info.get('error_msgs') or [])
 
-              schema_data = dict()
+          info = get_validators(
+              ctx_title='get task validators',
+              validator_files=task_original_validators,
+              task_data=task_data,
+              env_data=env_data,
+          )
+          validators = info.get('result')
+          error_msgs_validate += (info.get('error_msgs') or [])
+          result['validators'] = validators or None
 
-              for key in ['params', 'credentials', 'contents']:
-                if result.get(key) is not None:
-                  schema_data[key] = result.get(key)
-
-              error_msgs_aux_validate = validate_schema(schema, schema_data)
-
-              for value in (error_msgs_aux_validate or []):
-                new_value = [
-                    'context: validate task schema',
-                    str('schema file: ' + schema_file_full),
-                ] + value
-                error_msgs_aux += [new_value]
-            else:
-              error_msgs_aux += [[
-                  'context: validate task schema',
-                  str('target_origin: ' + task_target_origin),
-                  str('msg: params schema file not found: ' + schema_file),
-              ]]
+          for value in (error_msgs_validate or []):
+            new_value = [str('target origin: ' + task_target_origin)] + value
+            error_msgs_aux += [new_value]
 
       for value in (error_msgs_aux or []):
         new_value = [str('task: ' + task_description)] + value
@@ -2333,8 +2318,13 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
               if not os.path.exists(task_file_full):
                 error_msgs_aux += [[str('msg: task file not found: ' + task_file)]]
+
+              task_validators = task.get('validators')
+              result['validators'] = task_validators or None
             else:
               task_file_paths = set()
+              task_original_validators = task.get('original_validators')
+              task_validators = list()
 
               if task_target == 'node':
                 error_msgs_aux += [
@@ -2346,41 +2336,30 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                   pod_local_dir = pod.get('local_dir')
                   error_msgs_aux_pod = []
 
-                  schema_files = task.get('schema')
+                  base_dir_prefix = pod_local_dir + '/'
+                  task_data = dict(
+                      base_dir_prefix=base_dir_prefix,
+                      dict_to_validate=task,
+                      prop_names=['params', 'credentials', 'contents'],
+                  )
 
-                  if schema_files:
-                    if not isinstance(schema_files, list):
-                      schema_files = [schema_files]
+                  info = validate_ctx_schema(
+                      ctx_title='validate pod task schema',
+                      schema_files=task.get('schema'),
+                      task_data=task_data,
+                  )
+                  error_msgs_aux_pod += (info.get('error_msgs') or [])
 
-                    for schema_file in schema_files:
-                      schema_file_full = pod_local_dir + '/' + schema_file
+                  info = get_validators(
+                      ctx_title='get pod task validators',
+                      validator_files=task_original_validators,
+                      task_data=task_data,
+                      env_data=env_data,
+                  )
+                  task_validators += info.get('result') or []
+                  error_msgs_aux_pod += (info.get('error_msgs') or [])
 
-                      if os.path.exists(schema_file_full):
-                        schema = load_cached_file(schema_file_full)
-
-                        schema_data = dict()
-
-                        for key in ['params', 'credentials', 'contents']:
-                          if task.get(key) is not None:
-                            schema_data[key] = task.get(key)
-
-                        error_msgs_aux_validate = validate_schema(
-                            schema, schema_data
-                        )
-
-                        for value in (error_msgs_aux_validate or []):
-                          new_value = [
-                              'context: validate pod task schema',
-                              str('schema file: ' + schema_file_full),
-                          ] + value
-                          error_msgs_aux_pod += [new_value]
-                      else:
-                        error_msgs_aux_pod += [[
-                            'context: validate pod task schema',
-                            str('msg: schema file not found: ' + schema_file_full),
-                        ]]
-
-                  task_file_path = pod_local_dir + '/' + task_file
+                  task_file_path = base_dir_prefix + task_file
 
                   if task_file_path not in task_file_paths:
                     if not os.path.exists(task_file_path):
@@ -2397,6 +2376,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                     ] + value
                     error_msgs_aux += [new_value]
 
+              result['validators'] = task_validators or None
             for value in error_msgs_aux:
               new_value = [
                   str('run_stage_task: ' + run_stage_task_name),

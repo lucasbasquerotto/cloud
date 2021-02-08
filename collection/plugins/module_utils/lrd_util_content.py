@@ -20,6 +20,9 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation import (
+    validate_ctx_schema, get_validators
+)
 
 
 def load_content(content, env, run_info, input_params=None, custom_dir=None):
@@ -163,6 +166,7 @@ def prepare_content(content, env, run_info, additional_info=None):
             'origin',
             'file',
             'schema',
+            'validator',
             'credentials',
             'contents',
             'params',
@@ -440,6 +444,39 @@ def prepare_content(content, env, run_info, additional_info=None):
                   str('content origin: ' + content_origin),
                   str('msg: content file not found: ' + file_rel),
               ]]
+
+          if validate and not error_msgs_aux:
+            base_dir_prefix_schema = base_dir_prefix
+            schema_files = content.get('schema')
+
+            if content_type == 'str':
+              base_dir_prefix_schema = None
+              schema_files = ['schemas/content_str.schema.yml']
+
+            task_data = dict(
+                base_dir_prefix=base_dir_prefix_schema,
+                dict_to_validate=result,
+                prop_names=['input', 'params', 'credentials', 'contents'],
+            )
+
+            task_data['base_dir_prefix'] = base_dir_prefix_schema
+            info = validate_ctx_schema(
+                ctx_title='validate content schema',
+                schema_files=schema_files,
+                task_data=task_data,
+            )
+            task_data['base_dir_prefix'] = base_dir_prefix
+            error_msgs_aux += (info.get('error_msgs') or [])
+
+            info = get_validators(
+                ctx_title='get content validators',
+                validator_files=content.get('validator'),
+                task_data=task_data,
+                env_data=env_data,
+            )
+            validators = info.get('result')
+            error_msgs_aux += (info.get('error_msgs') or [])
+            result['validators'] = validators or None
 
           if validate and not error_msgs_aux:
             schema_files = content.get('schema')
