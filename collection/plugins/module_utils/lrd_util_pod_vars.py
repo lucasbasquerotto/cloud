@@ -19,7 +19,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_template import lookup
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation import (
-    validate_ctx_schema, get_validators
+    validate_ctx_schema
 )
 
 
@@ -251,7 +251,6 @@ def load_ctx_template(current_template, is_env, data_info):
         ]]
 
       template_params = current_template.get('params') or None
-      template_validators = None
 
       if validate and not error_msgs:
         error_msgs_aux = list()
@@ -269,16 +268,6 @@ def load_ctx_template(current_template, is_env, data_info):
             task_data=task_data,
         )
         error_msgs_aux += (info.get('error_msgs') or [])
-
-        info = get_validators(
-            ctx_title='get pod ctx vars template validators',
-            validator_files=current_template.get('validator'),
-            task_data=task_data,
-            env_data=env_data,
-        )
-        validators = info.get('result')
-        error_msgs_aux += (info.get('error_msgs') or [])
-        template_validators = validators or None
 
         for value in (error_msgs_aux or []):
           new_value = [str('src: ' + (src_relpath or ''))] + value
@@ -320,7 +309,6 @@ def load_ctx_template(current_template, is_env, data_info):
                 )
             ),
             params=template_params,
-            validators=template_validators,
         )
         templates += [template_to_add]
       else:
@@ -487,16 +475,34 @@ def load_next_vars(file_relpath, ctx_params, data_info):
               when = child.get('when')
 
               if to_bool(when if (when is not None) else True):
+                child_error_msgs = list()
+
                 child_name = child.get('name')
                 child_params = child.get('params')
 
-                res_child = load_next_vars(
-                    file_relpath=child_name,
-                    ctx_params=child_params,
-                    data_info=data_info,
+                task_data = dict(
+                    base_dir_prefix=pod_local_dir,
+                    dict_to_validate=child_params,
+                    all_props=True,
                 )
 
-                child_error_msgs = res_child.get('error_msgs') or list()
+                info = validate_ctx_schema(
+                    ctx_title='validate pod ctx child vars schema',
+                    schema_files=child.get('schema'),
+                    task_data=task_data,
+                )
+                child_error_msgs += (info.get('error_msgs') or [])
+
+                res_child = None
+
+                if not child_error_msgs:
+                  res_child = load_next_vars(
+                      file_relpath=child_name,
+                      ctx_params=child_params,
+                      data_info=data_info,
+                  )
+
+                  child_error_msgs += res_child.get('error_msgs') or list()
 
                 if child_error_msgs:
                   for value in child_error_msgs:

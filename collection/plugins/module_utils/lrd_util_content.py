@@ -40,6 +40,7 @@ def load_content(content, env, run_info, input_params=None, custom_dir=None):
     )
 
     prepared_content = info.get('result')
+    validators = info.get('validators')
     error_msgs_aux = info.get('error_msgs') or list()
 
     if not error_msgs_aux:
@@ -84,7 +85,16 @@ def load_content(content, env, run_info, input_params=None, custom_dir=None):
       new_value = ['context: load content'] + value
       error_msgs += [new_value]
 
-    return dict(result=result, error_msgs=error_msgs)
+    validate = run_info.get('validate')
+    final_result = dict(
+        result=result,
+        error_msgs=error_msgs,
+    )
+
+    if validate:
+      final_result['meta'] = dict(validators=validators)
+
+    return final_result
   except Exception as error:
     error_msgs = [[
         'msg: error when trying to load the content',

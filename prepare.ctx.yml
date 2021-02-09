@@ -234,3 +234,17 @@
         label: "{{ pre_prepare_node_item.description }}"
       when: not (pre_prepare_node_item.local | bool)
       tags: ["no_print_skipped"]
+
+    # run the validators
+
+    - name: "{{ env_title }} - run the validators (outer)"
+      include_tasks: "{{ validator_item.task }}"
+      vars:
+        validator_title: >-
+          {{ env_title }} - run the validator - {{ validator_item.description }}
+      loop: "{{ ctx_data.validators | default([]) }}"
+      loop_control:
+        index_var: validator_idx
+        loop_var: validator_item
+        label: "{{ validator_idx }}"
+      tags: ["no_print_skipped"]

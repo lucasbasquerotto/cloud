@@ -107,6 +107,11 @@ schemas:
       name:
         type: "str"
         description: "path to the child pod context file (in the pod repository)"
+      schema:
+        type: "simple_list"
+        elem_type: "str"
+        elem_non_empty: true
+        description: "schema (or list of schemas) used to validate the child parameters"
       params:
         type: "unknown"
         description: >-

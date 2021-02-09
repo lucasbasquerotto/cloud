@@ -27,7 +27,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_node_dependenci
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_params_mixer import mix
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_pod_vars import load_vars
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation import (
-    validate_ctx_schema, get_validators
+    get_validators, update_validators_descriptions, validate_ctx_schema
 )
 
 
@@ -293,12 +293,17 @@ def prepare_service(service_info, run_info, top, service_names=None):
           if contents_info:
             contents = merge_dicts(contents, contents_info)
 
+          service_validators = list()
+
           for content_key in sorted(list((contents or dict()).keys())):
             content = contents.get(content_key)
 
             info = load_content(content, env=env, run_info=run_info)
 
             prepared_content = info.get('result')
+            meta = info.get('meta') or dict()
+            validators = meta.get('validators') or []
+            service_validators += validators
             error_msgs_aux_content = info.get('error_msgs') or list()
 
             for value in (error_msgs_aux_content or []):
@@ -325,14 +330,20 @@ def prepare_service(service_info, run_info, top, service_names=None):
             error_msgs_aux += (info.get('error_msgs') or [])
 
             info = get_validators(
-                ctx_title='get service validators',
+                ctx_title='service validator',
                 validator_files=service.get('validator'),
                 task_data=task_data,
                 env_data=env_data,
             )
-            validators = info.get('result')
+            validators = info.get('result') or []
+            service_validators += validators
             error_msgs_aux += (info.get('error_msgs') or [])
-            result['validators'] = validators or None
+
+            service_validators = update_validators_descriptions(
+                'service [' + str(service_description) + ']',
+                service_validators
+            )
+            result['validators'] = service_validators or None
 
           for value in (error_msgs_aux or []):
             new_value = [str('service: ' + service_description)] + value
@@ -501,6 +512,8 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
             )
 
           prepared_content = info.get('result')
+          meta = info.get('meta') or dict()
+          validators = meta.get('validators')
           error_msgs_aux_content = info.get('error_msgs')
 
           if error_msgs_aux_content:
@@ -514,6 +527,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
                 if to_bool(transfer_content.get('executable'))
                 else default_file_mode
             )
+            validators = update_validators_descriptions('transfer', validators)
 
             result_item = dict(
                 src=prepared_content,
@@ -523,6 +537,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
                     'group') or transfer_content.get('user'),
                 mode=transfer_content.get('mode') or default_file_mode,
                 dir_mode=transfer_content.get('dir_mode') or default_dir_mode,
+                validators=validators,
                 when=to_bool(transfer_content.get('when')),
             )
 
@@ -601,6 +616,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
     try:
       pods_dict = env.get('pods') or dict()
+      pod_validators = list()
 
       if pod_key not in pods_dict:
         error_msgs += [[
@@ -748,7 +764,7 @@ def prepare_pod(pod_info, parent_data, run_info):
           if transfer_contents:
             info = prepare_transfer_content(
                 transfer_contents,
-                context_title='prepare pod ctx info transfer contents',
+                context_title='pod ctx info transfer contents',
                 prepare_info=prepare_transfer_info,
             )
 
@@ -765,7 +781,7 @@ def prepare_pod(pod_info, parent_data, run_info):
         if transfer_contents:
           info = prepare_transfer_content(
               transfer_contents,
-              context_title='prepare pod info transfer contents',
+              context_title='pod info transfer contents',
               prepare_info=prepare_transfer_info,
           )
 
@@ -782,7 +798,7 @@ def prepare_pod(pod_info, parent_data, run_info):
         if transfer_contents:
           info = prepare_transfer_content(
               transfer_contents,
-              context_title='prepare pod transfer contents',
+              context_title='pod transfer contents',
               prepare_info=prepare_transfer_info,
           )
 
@@ -796,6 +812,11 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         if prepared_transfer:
           result['prepared_transfer'] = prepared_transfer
+
+          if validate_ctx:
+            for item in prepared_transfer:
+              validators = item.get('validators') or list()
+              pod_validators += validators
 
         credentials_info_dict = pod_info_dict.get('credentials')
         credentials_dict = pod.get('credentials')
@@ -922,6 +943,9 @@ def prepare_pod(pod_info, parent_data, run_info):
           )
 
           prepared_content = info.get('result')
+          meta = info.get('meta') or dict()
+          validators = meta.get('validators') or []
+          pod_validators += validators
           error_msgs_aux_content = info.get('error_msgs') or list()
 
           for value in (error_msgs_aux_content or []):
@@ -954,14 +978,20 @@ def prepare_pod(pod_info, parent_data, run_info):
           error_msgs_aux += (info.get('error_msgs') or [])
 
           info = get_validators(
-              ctx_title='get pod validators',
+              ctx_title='pod validator',
               validator_files=pod.get('validator'),
               task_data=task_data,
               env_data=env_data,
           )
           validators = info.get('result')
+          pod_validators += validators
           error_msgs_aux += (info.get('error_msgs') or [])
-          result['validators'] = validators or None
+
+          pod_validators = update_validators_descriptions(
+              'pod [' + str(pod_description) + ']',
+              pod_validators
+          )
+          result['validators'] = pod_validators or None
 
         if validate_ctx and not error_msgs_aux:
           try:
@@ -1510,6 +1540,7 @@ def prepare_node(node_info, run_info):
 
         pods = node.get('pods')
         pod_ctx_info_dict = node_info_dict.get('pods')
+        prepared_pods = None
 
         if pods:
           node_data = dict(
@@ -1566,7 +1597,8 @@ def prepare_node(node_info, run_info):
         result['general_data'] = general_data
 
         all_content_dests = set()
-        prepared_transfer = []
+        prepared_transfer = list()
+        node_validators = list()
 
         prepare_transfer_info = dict(
             env=env,
@@ -1580,7 +1612,7 @@ def prepare_node(node_info, run_info):
         if transfer_contents:
           info = prepare_transfer_content(
               transfer_contents,
-              context_title='prepare node info transfer contents',
+              context_title='node info transfer contents',
               prepare_info=prepare_transfer_info,
           )
 
@@ -1597,7 +1629,7 @@ def prepare_node(node_info, run_info):
         if transfer_contents:
           info = prepare_transfer_content(
               transfer_contents,
-              context_title='prepare node transfer contents',
+              context_title='node transfer contents',
               prepare_info=prepare_transfer_info,
               input_params=dict(node=general_data)
           )
@@ -1613,13 +1645,18 @@ def prepare_node(node_info, run_info):
         if prepared_transfer:
           result['prepared_transfer'] = prepared_transfer
 
+          if validate_ctx:
+            for item in prepared_transfer:
+              validators = item.get('validators') or list()
+              node_validators += validators
+
         if node_params:
           cron = node_params.get('cron')
 
           if cron:
             info = prepare_transfer_content(
                 cron,
-                context_title='prepare the node cron transfer contents',
+                context_title='node cron transfer contents',
                 prepare_info=prepare_transfer_info,
                 input_params=dict(general_data)
             )
@@ -1631,6 +1668,11 @@ def prepare_node(node_info, run_info):
               error_msgs_aux += error_msgs_aux_transfer
             else:
               result['cron_transfer'] = cron_transfer
+
+              if validate_ctx and cron_transfer:
+                for item in cron_transfer:
+                  validators = item.get('validators') or list()
+                  node_validators += validators
 
         if validate_ctx and not error_msgs_aux:
           schema_data = dict(input=general_data)
@@ -1671,14 +1713,24 @@ def prepare_node(node_info, run_info):
                 ]]
 
           info = get_validators(
-              ctx_title='get node validators',
+              ctx_title='node validator',
               validator_files=node.get('validator'),
               task_data=task_data,
               env_data=env_data,
           )
-          validators = info.get('result')
+          validators = info.get('result') or list()
+          node_validators += validators
           error_msgs_aux += (info.get('error_msgs') or [])
-          result['validators'] = validators or None
+
+          for item in (prepared_pods or []):
+            validators = item.get('validators') or list()
+            node_validators += validators
+
+          node_validators = update_validators_descriptions(
+              'node [' + str(node_description) + ']',
+              node_validators
+          )
+          result['validators'] = node_validators or None
 
         for value in (error_msgs_aux or []):
           new_value = [str('node: ' + node_description)] + value
@@ -2020,12 +2072,17 @@ def prepare_task(task_info_dict, run_info):
       if contents_info:
         contents = merge_dicts(contents, contents_info)
 
+      task_validators = list()
+
       for content_key in sorted(list((contents or dict()).keys())):
         content = contents.get(content_key)
 
         info = load_content(content, env=env, run_info=run_info)
 
         prepared_content = info.get('result')
+        meta = info.get('meta') or dict()
+        validators = meta.get('validators') or []
+        task_validators += validators
         error_msgs_aux_content = info.get('error_msgs') or list()
 
         for value in (error_msgs_aux_content or []):
@@ -2042,8 +2099,8 @@ def prepare_task(task_info_dict, run_info):
       task_original_validators = task.get('validator')
       result['validator'] = task_original_validators
 
-      if task_target_origin in ['cloud', 'env']:
-        if validate_ctx and not error_msgs_aux:
+      if validate_ctx and not error_msgs_aux:
+        if task_target_origin in ['cloud', 'env']:
           error_msgs_validate = list()
 
           base_dir_prefix = (
@@ -2065,18 +2122,24 @@ def prepare_task(task_info_dict, run_info):
           error_msgs_validate += (info.get('error_msgs') or [])
 
           info = get_validators(
-              ctx_title='get task validators',
+              ctx_title='task validator',
               validator_files=task_original_validators,
               task_data=task_data,
               env_data=env_data,
           )
-          validators = info.get('result')
+          validators = info.get('result') or list()
+          task_validators += validators
           error_msgs_validate += (info.get('error_msgs') or [])
-          result['validators'] = validators or None
 
           for value in (error_msgs_validate or []):
             new_value = [str('target origin: ' + task_target_origin)] + value
             error_msgs_aux += [new_value]
+
+        task_validators = update_validators_descriptions(
+            'task [' + str(task_description) + ']',
+            task_validators
+        )
+        result['validators'] = task_validators or None
 
       for value in (error_msgs_aux or []):
         new_value = [str('task: ' + task_description)] + value
@@ -2320,6 +2383,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
           if validate_ctx and (task_type == 'task'):
             error_msgs_aux = []
+            task_validators = list()
 
             if task_target_origin != 'pod':
               task_file_full = (
@@ -2330,13 +2394,9 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
               if not os.path.exists(task_file_full):
                 error_msgs_aux += [[str('msg: task file not found: ' + task_file)]]
-
-              task_validators = task.get('validators')
-              result['validators'] = task_validators or None
             else:
               task_file_paths = set()
               task_original_validators = task.get('original_validators')
-              task_validators = list()
 
               if task_target == 'node':
                 error_msgs_aux += [
@@ -2363,12 +2423,19 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                   error_msgs_aux_pod += (info.get('error_msgs') or [])
 
                   info = get_validators(
-                      ctx_title='get pod task validators',
+                      ctx_title='pod task validator',
                       validator_files=task_original_validators,
                       task_data=task_data,
                       env_data=env_data,
                   )
-                  task_validators += info.get('result') or []
+                  validators = info.get('result') or []
+                  validators = update_validators_descriptions(
+                      'task [' + str(task_description) + ']'
+                      + ' - node name: [' + str(node_name) + ']'
+                      + ' - pod name: [' + str(pod_name) + ']',
+                      validators
+                  )
+                  task_validators += validators
                   error_msgs_aux_pod += (info.get('error_msgs') or [])
 
                   task_file_path = base_dir_prefix + task_file
@@ -2388,7 +2455,6 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                     ] + value
                     error_msgs_aux += [new_value]
 
-              result['validators'] = task_validators or None
             for value in error_msgs_aux:
               new_value = [
                   str('run_stage_task: ' + run_stage_task_name),
@@ -2397,6 +2463,14 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                   str('task_target_origin: ' + task_target_origin),
               ] + value
               error_msgs += [new_value]
+
+            validators = task.get('validators') or list()
+            task_validators += validators
+            task_validators = update_validators_descriptions(
+                'run stage task: [' + str(run_stage_task_name) + ']',
+                task_validators
+            )
+            result['validators'] = task_validators or None
 
           result['task'] = task
 
@@ -2433,6 +2507,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
   try:
     env_data = run_info.get('env_data')
     env = env_data.get('env')
+    validate_ctx = run_info.get('validate')
 
     run_stage_name = None
     run_stage_tasks_input = None
@@ -2520,7 +2595,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
 
           if run_stage_task_name in run_stage_task_names:
             error_msgs += [[
-                str('run_stage: ' + run_stage_name),
+                str('run_stage: ' + (run_stage_name or '')),
                 str('run_stage_task: ' + run_stage_task_name),
                 'msg: duplicate run stage task name',
             ]]
@@ -2535,7 +2610,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
 
             if task_name and (task_name in task_names):
               error_msgs += [[
-                  str('run_stage: ' + run_stage_name),
+                  str('run_stage: ' + (run_stage_name or '')),
                   str('run_stage_task: ' + run_stage_task_name),
                   str('task_name: ' + task_name),
                   'msg: duplicate task name'
@@ -2546,6 +2621,19 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
       result['hosts'] = sorted(list(hosts))
       result['tasks'] = run_stage_tasks
 
+      if validate_ctx and run_stage_tasks:
+        run_stage_validators = list()
+
+        for item in (run_stage_tasks or []):
+          validators = item.get('validators') or list()
+          run_stage_validators += validators
+
+        run_stage_validators = update_validators_descriptions(
+            'run stage: [' + str(run_stage_name or '') + ']',
+            run_stage_validators
+        )
+        result['validators'] = run_stage_validators
+
       result_keys = list(result.keys())
 
       for key in result_keys:
@@ -2555,7 +2643,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
       return dict(result=result, error_msgs=error_msgs)
     except Exception as error:
       error_msgs += [[
-          str('run stage: ' + run_stage_name),
+          str('run stage: ' + (run_stage_name or '')),
           'msg: error when trying to prepare run stage',
           'error type: ' + str(type(error)),
           'error details: ',
@@ -2611,6 +2699,7 @@ def prepare_ctx(ctx_name, run_info):
 
   try:
     env_data = run_info.get('env_data')
+    validate_ctx = run_info.get('validate')
 
     if not env_data:
       error_msgs += [['msg: env_data property not specified']]
@@ -2637,6 +2726,8 @@ def prepare_ctx(ctx_name, run_info):
         result['env_repos'] = env_repos
         result['cfg'] = ctx.get('cfg')
         result['hosts'] = ctx.get('hosts')
+
+        ctx_validators = list()
 
         repos = env.get('repos')
 
@@ -2688,7 +2779,17 @@ def prepare_ctx(ctx_name, run_info):
             error_msgs += [new_value]
 
           if not error_msgs_aux:
-            result['prepared_initial_services'] = result_aux
+            prepared_initial_services = result_aux
+            result['prepared_initial_services'] = prepared_initial_services
+
+            if validate_ctx and prepared_initial_services:
+              for idx, item in enumerate(prepared_initial_services):
+                validators = item.get('validators') or list()
+                validators = update_validators_descriptions(
+                    'initial service #' + str(idx + 1),
+                    validators
+                )
+                ctx_validators += validators
 
         ctx_nodes = ctx.get('nodes')
         prepared_nodes = []
@@ -2706,6 +2807,12 @@ def prepare_ctx(ctx_name, run_info):
           else:
             prepared_nodes = result_aux
             result['nodes'] = prepared_nodes
+
+            if validate_ctx and prepared_nodes:
+              for idx, item in enumerate(prepared_nodes):
+                validators = item.get('validators') or list()
+                ctx_validators += validators
+
             has_node_dependency = None
 
             if prepared_nodes:
@@ -2801,7 +2908,17 @@ def prepare_ctx(ctx_name, run_info):
             error_msgs += [new_value]
 
           if not error_msgs_aux:
-            result['prepared_final_services'] = result_aux
+            prepared_final_services = result_aux
+            result['prepared_final_services'] = prepared_final_services
+
+            if validate_ctx and prepared_final_services:
+              for idx, item in enumerate(prepared_final_services):
+                validators = item.get('validators') or list()
+                validators = update_validators_descriptions(
+                    'final service #' + str(idx + 1),
+                    validators
+                )
+                ctx_validators += validators
 
         run_stages = ctx.get('run_stages')
 
@@ -2825,7 +2942,16 @@ def prepare_ctx(ctx_name, run_info):
             if error_msgs_aux:
               error_msgs += error_msgs_aux
             else:
-              result['run_stages'] = result_aux
+              prepared_run_stages = result_aux
+              result['run_stages'] = prepared_run_stages
+
+              if validate_ctx and prepared_run_stages:
+                for idx, item in enumerate(prepared_run_stages):
+                  validators = item.get('validators') or list()
+                  ctx_validators += validators
+
+        if validate_ctx and ctx_validators:
+          result['validators'] = ctx_validators
 
     result_keys = list(result.keys())
 

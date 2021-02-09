@@ -15,7 +15,7 @@ __metaclass__ = type  # pylint: disable=invalid-name
 import os
 import traceback
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import load_cached_file
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import load_cached_file, to_bool
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 
 
@@ -100,7 +100,7 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
     env = env_data.get('env') or dict()
     meta = env.get('meta') or dict()
     dev = env_data.get('dev')
-    ignore_validators = meta.get('ignore_validators')
+    ignore_validators = to_bool(meta.get('ignore_validators'))
     ignore_validators = (
         ignore_validators
         if (ignore_validators is not None)
@@ -139,10 +139,10 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
                   validator_data[key] = dict_to_validate.get(key)
 
             result_item = dict(
-                label=ctx_title,
+                description=ctx_title,
                 task=validator_file,
                 data=validator_data,
-                base_dir_prefix=base_dir_prefix,
+                base_dir_prefix=base_dir_prefix or '',
             )
             result += [result_item]
         else:
@@ -161,3 +161,19 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
         traceback.format_exc(),
     ]]
     return dict(error_msgs=error_msgs)
+
+
+def update_validators_descriptions(info, validators):
+  result = validators
+
+  if info and validators:
+    result = list()
+
+    for validator in validators:
+      result_item = validator.copy()
+      result_item['description'] = (
+          info + ' - ' + (validator.get('description') or '')
+      )
+      result += [result_item]
+
+  return result
