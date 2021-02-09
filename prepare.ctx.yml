@@ -235,6 +235,24 @@
       when: not (pre_prepare_node_item.local | bool)
       tags: ["no_print_skipped"]
 
+    # prepare pods (local)
+
+    - name: "{{ env_title }} - prepare pods (local) (outer)"
+      include_tasks: "tasks/pods/main.yml"
+      vars:
+        pod_node: "{{ main_item }}"
+        pod_title: "{{ env_title }} - prepare pod (local) - node [{{ pod_node.description }}]"
+        pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
+      loop: "{{ ctx_data.local_nodes | default([]) }}"
+      loop_control:
+        loop_var: main_item
+        label: "{{ pod_node.description }}"
+      when: >-
+        (not (env_fast_prepare | default(false) | bool))
+        and
+        (not (env.meta.skip_local_pod_preparation | default(env_dev) | bool))
+      tags: ["no_print_skipped"]
+
     # run the validators
 
     - name: "{{ env_title }} - run the validators (outer)"

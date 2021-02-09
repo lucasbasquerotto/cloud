@@ -1092,7 +1092,7 @@ def prepare_pods(pods, parent_data, run_info):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_node(node_info, run_info):
+def prepare_node(node_info, run_info, local=None):
   result = dict()
   error_msgs = list()
 
@@ -1147,7 +1147,7 @@ def prepare_node(node_info, run_info):
         node_info_dict.pop('can_destroy', None)
 
         result['absent'] = to_bool(node_info_dict.get('absent'))
-        local = to_bool(node_info_dict.get('local') or False)
+        local = local or to_bool(node_info_dict.get('local') or False)
         result['local'] = local
         external = to_bool(node_info_dict.get('external'))
         result['external'] = external
@@ -1815,7 +1815,7 @@ def get_general_node_data(prepared_node, prefilled_dependencies):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_nodes(nodes, run_info):
+def prepare_nodes(nodes, run_info, local=None):
   result = list()
   error_msgs = list()
 
@@ -1824,7 +1824,7 @@ def prepare_nodes(nodes, run_info):
 
     if nodes:
       for node_info in nodes:
-        info = prepare_node(node_info, run_info)
+        info = prepare_node(node_info, run_info, local)
 
         result_aux = info.get('result')
         error_msgs_aux = info.get('error_msgs') or list()
@@ -2821,6 +2821,18 @@ def prepare_ctx(ctx_name, run_info):
               for idx, item in enumerate(prepared_nodes):
                 validators = item.get('validators') or list()
                 ctx_validators += validators
+
+            info = prepare_nodes(ctx_nodes, run_info, local=True)
+
+            result_aux = info.get('result')
+            error_msgs_aux = info.get('error_msgs') or list()
+
+            if error_msgs_aux:
+              nodes_errors = error_msgs_aux
+              error_msgs += error_msgs_aux
+            else:
+              local_nodes = result_aux
+              result['local_nodes'] = local_nodes
 
             has_node_dependency = None
 
