@@ -139,6 +139,7 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
                   validator_data[key] = dict_to_validate.get(key)
 
             result_item = dict(
+                label=ctx_title,
                 task=validator_file,
                 data=validator_data,
                 base_dir_prefix=base_dir_prefix,
