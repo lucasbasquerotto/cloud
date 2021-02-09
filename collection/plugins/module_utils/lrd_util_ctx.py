@@ -512,8 +512,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
             )
 
           prepared_content = info.get('result')
-          meta = info.get('meta') or dict()
-          validators = meta.get('validators')
+          validators = prepared_content.get('validators')
           error_msgs_aux_content = info.get('error_msgs')
 
           if error_msgs_aux_content:
@@ -527,7 +526,10 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
                 if to_bool(transfer_content.get('executable'))
                 else default_file_mode
             )
-            validators = update_validators_descriptions('transfer', validators)
+            validators = update_validators_descriptions(
+                'transfer #' + str(idx + 1) + ' (' + dest + ')',
+                validators
+            )
 
             result_item = dict(
                 src=prepared_content,

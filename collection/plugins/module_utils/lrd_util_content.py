@@ -479,7 +479,7 @@ def prepare_content(content, env, run_info, additional_info=None):
             error_msgs_aux += (info.get('error_msgs') or [])
 
             info = get_validators(
-                ctx_title='get content validators',
+                ctx_title='content validators',
                 validator_files=content.get('validator'),
                 task_data=task_data,
                 env_data=env_data,
