@@ -2,16 +2,20 @@
 
 - name: "{{ pre_prepare_node_title }} - create the ssh key file dir(s)"
   file:
-    path: "{{ tmp_path | dirname }}"
+    path: "{{ tmp_item }}"
     state: directory
     mode: 0755
-  vars:
-    tmp_path: "{{ pre_prepare_node_item.ssh_key_path_map[tmp_item] | default('') }}"
-  when: tmp_path != ''
-  loop: "{{ pre_prepare_node_item.host_user_keys | default([]) }}"
+  when: tmp_item != ''
+  loop: >-
+    {{
+      pre_prepare_node_item.host_users | default([])
+      | selectattr('ssh_key_dir', 'defined')
+      | map(attribute='ssh_key_dir')
+      | list
+      | unique
+    }}
   loop_control:
     loop_var: tmp_item
-    label: "{{ tmp_item }} ({{ tmp_path }})"
   tags: ["no_print_skipped"]
 
 - name: "{{ pre_prepare_node_title }} - generate the ssh key file(s)"
@@ -20,13 +24,11 @@
     dest: "{{ tmp_path }}"
     mode: 0600
   vars:
-    tmp_credential: "{{ pre_prepare_node_item.credentials[tmp_item] }}"
-    tmp_src: >-
-      {{ env_dir + '/' + (tmp_credential.ssh_file | default('')) }}
-    tmp_path: "{{ pre_prepare_node_item.ssh_key_path_map[tmp_item] | default('') }}"
+    tmp_src: "{{ tmp_item.ssh_key_src | default('') }}"
+    tmp_path: "{{ tmp_item.ssh_key_path | default('') }}"
   when: tmp_path != ''
-  loop: "{{ pre_prepare_node_item.host_user_keys | default([]) }}"
+  loop: "{{ pre_prepare_node_item.host_users | default([]) }}"
   loop_control:
     loop_var: tmp_item
-    label: "{{ tmp_item }} ({{ tmp_path }})"
+    label: "{{ tmp_path }}"
   tags: ["no_print_skipped"]

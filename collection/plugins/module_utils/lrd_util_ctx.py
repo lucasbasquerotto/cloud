@@ -1388,15 +1388,21 @@ def prepare_node(node_info, run_info, local=None):
               else:
                 credential_item = credentials_dict.get(host_user_key)
                 ssh_file_item = credential_item.get('ssh_file')
-                ssh_key_path_item = (
-                    (local_secrets_dir + '/' + node_name +
-                     '.' + host_user_key + '.key')
-                    if ssh_file_item
-                    else None
-                )
+                env_dir = env_data.get('env_dir')
 
                 prepared_host_user = host_user.copy()
-                prepared_host_user['ssh_key_path'] = ssh_key_path_item
+
+                if ssh_file_item:
+                  ssh_key_path_item = (
+                      local_secrets_dir + '/' + node_name +
+                      '.' + host_user_key + '.key'
+                  )
+                  prepared_host_user['ssh_key_src'] = env_dir + \
+                      '/' + ssh_file_item
+                  prepared_host_user['ssh_key_path'] = ssh_key_path_item
+                  prepared_host_user['ssh_key_dir'] = os.path.dirname(
+                      ssh_key_path_item
+                  )
 
               prepared_host_users += [prepared_host_user]
               prepared_host_users_dict[host_user_key] = prepared_host_user
