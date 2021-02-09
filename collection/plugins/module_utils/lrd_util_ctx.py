@@ -1925,7 +1925,7 @@ def prepare_task(task_info_dict, run_info):
                 'file',
                 'root',
                 'schema',
-                'validators',
+                'validator',
                 'credentials',
                 'contents',
                 'params',
@@ -2097,7 +2097,7 @@ def prepare_task(task_info_dict, run_info):
       schema_files = task.get('schema')
       result['schema'] = schema_files
       task_original_validators = task.get('validator')
-      result['validator'] = task_original_validators
+      result['original_validators'] = task_original_validators
 
       if validate_ctx and not error_msgs_aux:
         if task_target_origin in ['cloud', 'env']:
@@ -2404,7 +2404,10 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                 ]
 
               for node in nodes_to_run:
+                node_description = node.get('description')
+
                 for pod in node.get('pods'):
+                  pod_description = pod.get('description')
                   pod_local_dir = pod.get('local_dir')
                   error_msgs_aux_pod = []
 
@@ -2431,8 +2434,8 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
                   validators = info.get('result') or []
                   validators = update_validators_descriptions(
                       'task [' + str(task_description) + ']'
-                      + ' - node name: [' + str(node_name) + ']'
-                      + ' - pod name: [' + str(pod_name) + ']',
+                      + ' - node [' + str(node_description) + ']'
+                      + ' - pod [' + str(pod_description) + ']',
                       validators
                   )
                   task_validators += validators
@@ -2450,8 +2453,8 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
 
                   for value in error_msgs_aux_pod:
                     new_value = [
-                        str('node_name: ' + node_name),
-                        str('pod_name: ' + pod_name),
+                        str('node: ' + node_description),
+                        str('pod: ' + pod_description),
                     ] + value
                     error_msgs_aux += [new_value]
 
@@ -2467,7 +2470,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
             validators = task.get('validators') or list()
             task_validators += validators
             task_validators = update_validators_descriptions(
-                'run stage task: [' + str(run_stage_task_name) + ']',
+                'run stage task [' + str(run_stage_task_name) + ']',
                 task_validators
             )
             result['validators'] = task_validators or None
@@ -2629,7 +2632,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
           run_stage_validators += validators
 
         run_stage_validators = update_validators_descriptions(
-            'run stage: [' + str(run_stage_name or '') + ']',
+            'run stage [' + str(run_stage_name or '') + ']',
             run_stage_validators
         )
         result['validators'] = run_stage_validators
