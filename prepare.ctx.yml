@@ -241,7 +241,7 @@
       include_tasks: "{{ validator_item.task }}"
       vars:
         validator_title: >-
-          {{ env_title }} - run the validator - {{ validator_item.description }}
+          {{ env_title }} - run validator - {{ validator_item.description }}
       loop: "{{ ctx_data.validators | default([]) }}"
       loop_control:
         index_var: validator_idx

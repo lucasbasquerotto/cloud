@@ -100,6 +100,7 @@
           shell: cat "{{ node_setup_item_log_file }}"
           register: node_setup_item_full_log_var
           changed_when: false
+          tags: ["no_print_skipped"]
 
         - name: "{{ node_setup_item_title }} - setup timeout - node_setup_item_full_log"
           set_fact:
@@ -113,6 +114,7 @@
               File: {{ node_setup_item_log_file }}
               Full Log:
               {{ node_setup_item_full_log }}
+          tags: ["no_print_skipped"]
       when: node_setup_item_timeout_var.failed
       tags: ["no_print_skipped"]
 
@@ -124,6 +126,7 @@
           shell: tail -n 1 "{{ node_setup_item_log_file }}"
           register: node_setup_item_last_line_var
           changed_when: false
+          tags: ["no_print_skipped"]
 
         - name: "{{ node_setup_item_title }} - node_setup_item_last_line"
           set_fact:
@@ -139,6 +142,7 @@
               shell: cat "{{ node_setup_item_log_file }}"
               register: node_setup_item_full_log_var
               changed_when: false
+              tags: ["no_print_skipped"]
 
             - name: "{{ node_setup_item_title }} - setup error - node_setup_item_full_log"
               set_fact:
@@ -153,6 +157,7 @@
                   Should be: {{ node_setup_item_success_log_last_line }}
                   Full Log:
                   {{ node_setup_item_full_log }}
+              tags: ["no_print_skipped"]
           when: node_setup_item_last_line != node_setup_item_success_log_last_line
           tags: ["no_print_skipped"]
 

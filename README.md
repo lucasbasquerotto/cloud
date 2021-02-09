@@ -110,6 +110,8 @@ The demos are great for what they are meant to be: demos, prototypes. **They sho
 
   - [Schemas](#schemas)
 
+  - [Validators](#validators)
+
   - [Extra Repositories](#extra-repositories)
 
   - [Pod Context](#pod-context)
@@ -1322,6 +1324,16 @@ Will have the following validation result:
 **Important:** Only sections used by the context are validated, so if `initial_services` was `["my_service_01", "my_service_06"]`, and the other services weren't used anywhere else in the context, there would be no errors.
 
 Before validating the value, the schema itself is validated (because the schema may be wrong, for example, due to a typo). To validate the schemas, the schema at [schemas/schema.yml](schemas/schema.yml) is used. **You can take a look at it to familiarize yourself with schemas, as well as know what can be defined in a schema and their meanings.**
+
+## Validators
+
+Validators run in the [Cloud Context Preparation Step](#cloud-context-preparation-step) and have the main purpose of validating the structure of data that will be used in a given context, and may also be used to verify if some library dependency is present, before running the main step.
+
+They are similar to [schemas](#schemas) in this aspect. The main difference between them is that validators run as a task and allows a more complex and dynamic validation, while schemas only do a static validation. Validators are supposed to not cause side effects and just do what it's supposed to do: validate. Validation that requires network connections may be used as long they don't cause side effects, although they should be avoided.
+
+Validators may not be required in situations in which schemas may be used, considering that the definition of a schema is, in most cases, simpler to do and to understand and more straightforward than a validator that does the same thing.
+
+The boolean flag `meta.ignore_validators` has by default the value of `env_dev` (`true` when the project is deployed with the `-d`/`--dev` option) and may be used to ignore validators so that they don't run at all. It may be used in an environment in which you want to be sure that the [Cloud Context Preparation Step](#cloud-context-preparation-step) cause no side effects (for example, because the preparation step runs in a CI environment to do the (other) validations and you aren't certain that the validators cause no side effects). It also may be used in a development environment to skip the validation and deploy faster (it's ignored by default in this case, when `--dev` is used when launching, unless `meta.ignore_validators` is explicitly `false`).
 
 ## Extra Repositories
 
