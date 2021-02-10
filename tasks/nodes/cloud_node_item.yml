@@ -118,6 +118,23 @@
 
 ### Hosts File (Inventory) ###
 
+- name: "{{ cloud_node_item_title }} - verify active hosts ips"
+  fail:
+    msg: |-
+      Public Host Ip not found (node={{ tmp_item.name }}).
+      Host Data:
+      {{ tmp_item | to_nice_yaml }}
+  vars:
+    tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
+    tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
+    tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6, true) }}"
+  when: tmp_host == ''
+  loop: "{{ cloud_node_active_hosts | list }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_item.name }}"
+  tags: ["no_print"]
+
 - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - init"
   set_fact:
     cloud_node_hosts_info: ""
