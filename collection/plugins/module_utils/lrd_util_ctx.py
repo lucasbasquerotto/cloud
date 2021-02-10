@@ -1097,6 +1097,7 @@ def prepare_node(node_info, run_info, local=None):
   error_msgs = list()
 
   try:
+    local_original = local
     env_data = run_info.get('env_data')
     validate_ctx = run_info.get('validate')
 
@@ -1147,7 +1148,7 @@ def prepare_node(node_info, run_info, local=None):
         node_info_dict.pop('can_destroy', None)
 
         result['absent'] = to_bool(node_info_dict.get('absent'))
-        local = local or to_bool(node_info_dict.get('local') or False)
+        local = local_original or to_bool(node_info_dict.get('local') or False)
         result['local'] = local
         external = to_bool(node_info_dict.get('external'))
         result['external'] = external
@@ -1184,7 +1185,7 @@ def prepare_node(node_info, run_info, local=None):
                   + 'or is empty (non-local and non-external)'
               ]]
 
-        if local and not env_data.get('dev'):
+        if local and (not local_original) and (not env_data.get('dev')):
           error_msgs += [[
               str('node: ' + node_description),
               'msg: local node should be defined only in development environments'
