@@ -17,6 +17,9 @@
 
 - name: "{{ env_title }} - ctx (outer)"
   include_tasks: "tasks/util/ctx.yml"
+  vars:
+    ctx_load_hosts_data: "{{ init_load_node_dependencies | default(false) }}"
+    ctx_load_node_dependencies: "{{ init_load_node_dependencies | default(false) }}"
   when: ctx_data is not defined
   tags: ["no_print"]
 
@@ -25,30 +28,3 @@
     msg: "localhost (in ansible group 'main') failed"
   when: "'localhost' in init_failed_hosts"
   tags: ["no_print_skipped"]
-
-- name: "{{ env_title }} - hosts data (outer)"
-  include_tasks: "tasks/util/hosts_data.yml"
-  when: >-
-    (init_load_node_dependencies | default(false) | bool)
-    and
-    (ctx_node_dependencies is not defined)
-    and
-    (ctx_data.has_node_dependency | default(false) | bool)
-  tags: ["no_print"]
-
-- name: "{{ env_title }} - generate the node dependencies"
-  set_fact:
-    ctx_node_dependencies: >-
-      {{
-        ctx_data.node_dict_dependencies | default({})
-        | lrd.cloud.node_dict_dependencies(
-          ctx_hosts_data | default({}),
-          instance_type=instance_type,
-          instance_index=instance_index
-        )
-      }}
-  when: >-
-    (init_load_node_dependencies | default(false) | bool)
-    and
-    (ctx_node_dependencies is not defined)
-  tags: ["no_print"]

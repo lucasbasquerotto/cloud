@@ -11,3 +11,56 @@
       }}
   when: ctx_data is not defined
   tags: ["no_print_skipped"]
+
+
+- name: "{{ env_title }} - hosts data (outer)"
+  include_tasks: "tasks/util/hosts_data.yml"
+  when: >-
+    (ctx_load_hosts_data | default(false) | bool)
+    and
+    (ctx_node_dependencies is not defined)
+    and
+    (ctx_data.has_node_dependency | default(false) | bool)
+  tags: ["no_print"]
+
+- name: "{{ env_title }} - generate the node dependencies"
+  set_fact:
+    ctx_node_dependencies: >-
+      {{
+        ctx_data.node_dict_dependencies | default({})
+        | lrd.cloud.node_dict_dependencies(
+          ctx_hosts_data | default({}),
+          instance_type=instance_type,
+          instance_index=instance_index
+        )
+      }}
+  when: >-
+    (ctx_load_node_dependencies | default(false) | bool)
+    and
+    (ctx_node_dependencies is not defined)
+  tags: ["no_print"]
+
+- name: "{{ env_title }} - generate the local node dependencies"
+  set_fact:
+    ctx_node_dependencies: >-
+      {{ ctx_node_dependencies | combine(ctx_result_item) }}
+  vars:
+    ctx_result_item: >-
+      {{
+        ctx_data.node_dict_dependencies | default({})
+        | lrd.cloud.node_dict_dependencies(
+          ctx_hosts_data | default({}),
+          instance_type=ctx_item.name,
+          instance_index=1,
+          ignore_unknown_nodes=ctx_ignore_unknown_nodes | default(false) | bool
+        )
+      }}
+  when: >-
+    (ctx_load_node_dependencies | default(false) | bool)
+    and
+    (inventory_hostname == 'localhost')
+  loop: "{{ ctx_data.local_nodes | default([]) }}"
+  loop_control:
+    loop_var: ctx_item
+    label: "{{ ctx_item.description }}"
+  tags: ["no_print"]

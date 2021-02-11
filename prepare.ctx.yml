@@ -33,6 +33,8 @@
       include_tasks: "tasks/util/ctx.yml"
       vars:
         ctx_validate: true
+        ctx_load_node_dependencies: true
+        ctx_ignore_unknown_nodes: true
       when: ctx is not defined
       tags: ["no_print"]
 

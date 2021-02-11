@@ -29,13 +29,19 @@ class FilterModule(object):
     }
 
   def node_dict_dependencies(
-      self, node_dict_dependencies, hosts_data, instance_type, instance_index
+      self,
+      node_dict_dependencies,
+      hosts_data,
+      instance_type,
+      instance_index,
+      ignore_unknown_nodes=None,
   ):
     info = prepare_host_dependencies(
         node_dict_dependencies=node_dict_dependencies,
         hosts_data=hosts_data,
         instance_type=instance_type,
         instance_index=instance_index,
+        ignore_unknown_nodes=ignore_unknown_nodes,
     )
 
     result = info.get('result')

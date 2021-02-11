@@ -241,7 +241,13 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_host_dependencies(node_dict_dependencies, hosts_data, instance_type, instance_index):
+def prepare_host_dependencies(
+    node_dict_dependencies,
+    hosts_data,
+    instance_type,
+    instance_index,
+    ignore_unknown_nodes=None,
+):
   result = dict()
   error_msgs = list()
 
@@ -265,6 +271,7 @@ def prepare_host_dependencies(node_dict_dependencies, hosts_data, instance_type,
               node_dependencies,
               hosts_data=hosts_data,
               instance_index=instance_index,
+              ignore_unknown_nodes=ignore_unknown_nodes,
           )
 
           node_result = info.get('result')
@@ -304,7 +311,12 @@ def prepare_host_dependencies(node_dict_dependencies, hosts_data, instance_type,
     return dict(error_msgs=error_msgs)
 
 
-def prepare_node_host_dependencies(node_dependencies, hosts_data, instance_index):
+def prepare_node_host_dependencies(
+    node_dependencies,
+    hosts_data,
+    instance_index,
+    ignore_unknown_nodes=None,
+):
   error_msgs = list()
   result = dict()
   dependency_result = dict()
@@ -362,11 +374,22 @@ def prepare_node_host_dependencies(node_dependencies, hosts_data, instance_index
                     ]]
 
                 new_dependency_hosts += [new_dependency_host or '']
+              elif ignore_unknown_nodes:
+                new_dependency_host = dependency_host
+                new_dependency_hosts += [new_dependency_host]
               elif required_amount == -1:
-                error_msgs_dependency += [[
-                    str('dependency_host: ' + str(dependency_host)),
-                    'msg: dependency host not defined',
-                ]]
+                if ignore_unknown_nodes:
+                  new_dependency_host = dependency_host
+                  new_dependency_hosts += [new_dependency_host]
+                  error_msgs_dependency += [[
+                      str('dependency_host: ' + str(dependency_host)),
+                      'msg: dependency host not defined',
+                  ]]
+                else:
+                  error_msgs_dependency += [[
+                      str('dependency_host: ' + str(dependency_host)),
+                      'msg: dependency host not defined',
+                  ]]
 
             dependency_hosts = new_dependency_hosts
 
