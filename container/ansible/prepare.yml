@@ -28,10 +28,11 @@
       fail:
         msg: "project key not specified at {{ project_keys_file_rel }}"
       when: (project_env_init.key | default('')) == ''
+      tags: ["no_print"]
 
     - name: "{{ project_base_title }} - project_title"
       set_fact:
-        project_title: "{{ project_base_title }} [{{ project_env_init.key }}]"
+        project_title: "[{{ project_env_init.key }}] {{ project_base_title }}"
         env_dev: "{{ tmp_dev }}"
         env_lax: "{{ project_env_init.lax | default(tmp_dev, true) }}"
       vars:
