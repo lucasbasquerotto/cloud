@@ -595,7 +595,7 @@ def validate_next_value(schema_data, value):
   props = schema_info.get('props')
 
   if (
-      (not props)
+      (props is None)
       and
       (not is_prop)
       and

@@ -270,7 +270,10 @@ def load_ctx_template(current_template, is_env, data_info):
         error_msgs_aux += (info.get('error_msgs') or [])
 
         for value in (error_msgs_aux or []):
-          new_value = [str('src: ' + (src_relpath or ''))] + value
+          new_value = [
+              str('src: ' + (src_relpath or '')),
+              str('dest: ' + (dest_relpath or '')),
+          ] + value
           error_msgs += [new_value]
 
       if error_msgs:
