@@ -598,6 +598,7 @@ def prepare_pod(pod_info, parent_data, run_info):
 
     env = env_data.get('env')
     ctx_dir = env_data.get('ctx_dir')
+    dev = to_bool(env_data.get('dev'))
 
     pod_info_dict = pod_info if isinstance(pod_info, dict) else dict()
 
@@ -659,7 +660,6 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         local_dir = ctx_dir + '/pods/' + pod_name
 
-        dev = env_data.get('dev')
         path_maps = env_data.get('path_map') or dict()
         dev_repo_path = path_maps.get(repo)
 
@@ -683,8 +683,10 @@ def prepare_pod(pod_info, parent_data, run_info):
         pod_dir = local_dir if local else (
             base_dir if flat else (base_dir + '/' + pod_dir_relpath)
         )
+
+        env_dirname = 'dev' if dev else 'main'
         tmp_dir = (
-            (dev_repos_dir + '/tmp/pods/' + pod_identifier)
+            (dev_repos_dir + '/tmp/' + env_dirname + '/pods/' + pod_identifier)
             if local
             else (
                 pod.get('tmp_dir')
@@ -696,7 +698,10 @@ def prepare_pod(pod_info, parent_data, run_info):
             )
         )
         data_dir = (
-            (local_base_dir_relpath + '/data/' + pod_identifier)
+            (
+                local_base_dir_relpath + '/data/'
+                + env_dirname + '/' + pod_identifier
+            )
             if local
             else (
                 pod.get('data_dir')
@@ -1102,6 +1107,7 @@ def prepare_node(node_info, run_info, local=None):
     validate_ctx = run_info.get('validate')
 
     env = env_data.get('env')
+    dev = to_bool(env_data.get('dev'))
 
     node_info_dict = node_info if isinstance(node_info, dict) else dict()
 
@@ -1212,7 +1218,11 @@ def prepare_node(node_info, run_info, local=None):
         node_dir = local_dir if local else (
             node.get('node_dir') or ((base_dir or '') + '/.node')
         )
-        local_tmp_dir = dev_repos_dir + '/tmp/nodes/' + node_identifier
+        env_dirname = 'dev' if dev else 'main'
+        local_tmp_dir = (
+            dev_repos_dir + '/tmp/'
+            + env_dirname + '/nodes/' + node_identifier
+        )
         tmp_dir = (
             local_tmp_dir
             if local
