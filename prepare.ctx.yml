@@ -237,17 +237,34 @@
       when: not (pre_prepare_node_item.local | bool)
       tags: ["no_print_skipped"]
 
+    # prepare nodes (local)
+
+    - name: "{{ env_title }} - prepare nodes (local) (outer)"
+      include_tasks: "tasks/nodes/prepare.yml"
+      vars:
+        node_prepare_node: "{{ prepare_item }}"
+        node_prepare_title: >-
+          {{ env_title }} - prepare node [{{ node_prepare_node.description }}]
+      loop: "{{ ctx_data.local_nodes | default([]) }}"
+      loop_control:
+        loop_var: prepare_item
+        label: "{{ node_prepare_node.description }}"
+      when: >-
+        (not (env_fast_prepare | default(false) | bool))
+        and
+        (not (env.meta.skip_local_node_preparation | default(env_dev) | bool))
+      tags: ["no_print_skipped"]
+
     # prepare pods (local)
 
     - name: "{{ env_title }} - prepare pods (local) (outer)"
       include_tasks: "tasks/pods/main.yml"
       vars:
-        pod_node: "{{ main_item }}"
+        pod_node: "{{ prepare_item }}"
         pod_title: "{{ env_title }} - prepare pod (local) - node [{{ pod_node.description }}]"
-        pod_nodes_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
       loop: "{{ ctx_data.local_nodes | default([]) }}"
       loop_control:
-        loop_var: main_item
+        loop_var: prepare_item
         label: "{{ pod_node.description }}"
       when: >-
         (not (env_fast_prepare | default(false) | bool))
