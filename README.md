@@ -2756,3 +2756,7 @@ The task will validate the hosts defined in the `host_list` property (the list o
 ## Encrypt and Decrypt
 
 To encrypt and decrypt values and files, use `ansible-vault` as defined at http://github.com/lucasbasquerotto/ctl#encrypt-and-decrypt.
+
+---
+
+TODO py-yaml: unique keys

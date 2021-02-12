@@ -58,6 +58,11 @@ schemas:
           the value of 'main_host_user_key' must be present (be a name) in the list; when
           defined as a string, will be equivalent to a dictionary with the name property
           with the same value (and no other property defined)
+      service_params:
+        type: "dict"
+        description: >-
+          parameters to be defined for the service that will create/destroy the node;
+          the parameters defined here will override the parameters defined for the service
       dns_service_params_list:
         type: "list"
         elem_schema: "dns"

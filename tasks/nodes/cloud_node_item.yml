@@ -128,7 +128,7 @@
     tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
     tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
     tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6, true) }}"
-  when: tmp_host == ''
+  when: (tmp_host == '') and not (tmp_item.local | default(false) | bool)
   loop: "{{ cloud_node_active_hosts | list }}"
   loop_control:
     loop_var: tmp_item

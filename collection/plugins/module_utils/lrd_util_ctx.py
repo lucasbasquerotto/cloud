@@ -1424,6 +1424,7 @@ def prepare_node(node_info, run_info, local=None):
             result['main_ssh_key_path'] = main_host_user.get('ssh_key_path')
 
         service = node.get('service')
+        service_params = node_params.get('service_params')
         dns_service = node.get('dns_service')
         dns_service_params_list = node_params.get('dns_service_params_list')
 
@@ -1487,11 +1488,19 @@ def prepare_node(node_info, run_info, local=None):
             result['active_hosts'] = active_hosts
             result['all_hosts'] = all_hosts
 
-            service_info = dict(
-                name=service,
-                single=True,
-                params=dict(replicas=replicas)
+            service_info = service
+
+            if not isinstance(service, dict):
+              service_info = dict(name=service)
+
+            service_params = merge_dicts(
+                service_info.get('params'),
+                service_params,
+                dict(replicas=replicas),
             )
+
+            service_info['single'] = True
+            service_info['params'] = service_params
 
             info = prepare_service(service_info, run_info=run_info, top=True)
 
