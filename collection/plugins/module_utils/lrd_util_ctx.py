@@ -387,8 +387,8 @@ def prepare_service(service_info, run_info, top, service_names=None):
               error_msgs += [new_value]
 
             if not error_msgs_children:
-              if result_children:
-                for result_child in result_children:
+              if services_list:
+                for result_child in services_list:
                   result_child['tmp'] = tmp
                   result_child['can_destroy'] = can_destroy
 
