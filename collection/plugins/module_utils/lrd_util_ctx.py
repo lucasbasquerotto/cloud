@@ -361,6 +361,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
             error_msgs += [new_value]
 
           services = service.get('services')
+          services_list = list()
 
           if services:
             if absent:
@@ -377,7 +378,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
                 service_names=service_names
             )
 
-            result_children = info.get('result')
+            services_list = info.get('result')
             error_msgs_children = info.get('error_msgs') or list()
 
             for value in (error_msgs_children or []):
@@ -391,8 +392,8 @@ def prepare_service(service_info, run_info, top, service_names=None):
                   result_child['tmp'] = tmp
                   result_child['can_destroy'] = can_destroy
 
-              result['is_list'] = True
-              result['services'] = result_children
+          result['is_list'] = True
+          result['services'] = services_list
 
       result_keys = list(result.keys())
 
