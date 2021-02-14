@@ -143,7 +143,7 @@ if [ -n "$key_file" ]; then
 fi
 
 if [ "${skip_host_check:-}" = 'true' ]; then
-    args+=( -o UserKnownHostsFile=/dev/null )
+    args+=( -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null )
 fi
 
 echo "ssh ${args[@]+"${args[*]}"} $ansible_user@$ansible_host"
