@@ -17,7 +17,7 @@ function error {
 	exit 2
 }
 
-while getopts ':c:n:i:-:' OPT; do
+while getopts ':c:n:i:h-:' OPT; do
 	if [ "$OPT" = "-" ]; then    # long option: reformulate OPT and OPTARG
 		OPT="${OPTARG%%=*}"      # extract long option name
 		OPTARG="${OPTARG#$OPT}"  # extract long option argument (may be empty)
@@ -27,6 +27,7 @@ while getopts ':c:n:i:-:' OPT; do
 		c|ctx ) arg_ctx="${OPTARG:-}";;
 		n|node ) arg_node="${OPTARG:-}";;
 		i|idx ) arg_idx="${OPTARG:-}";;
+        h|skip-host-check ) skip_host_check='true';;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;
 		?* ) error "[error] unknown long option: --${OPT:-}";;
 	esac
@@ -135,10 +136,15 @@ ansible_user="${ansible_user:-$vars_user}"
 ansible_host="${ansible_host:-$vars_host}"
 key_file="${key_file:-$vars_key_file}"
 
-if [ -z "$key_file" ]; then
-    echo "ssh $ansible_user@$ansible_host"
-    ssh "$ansible_user@$ansible_host"
-else
-    echo "ssh -i $key_file $ansible_user@$ansible_host"
-    ssh -i "$key_file" "$ansible_user@$ansible_host"
+args=()
+
+if [ -n "$key_file" ]; then
+    args+=( -i "$key_file" )
 fi
+
+if [ "${skip_host_check:-}" = 'true' ]; then
+    args+=( -o UserKnownHostsFile=/dev/null )
+fi
+
+echo "ssh ${args[@]+"${args[*]}"} $ansible_user@$ansible_host"
+ssh ${args[@]+"${args[@]}"} "$ansible_user@$ansible_host"
