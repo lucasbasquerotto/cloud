@@ -574,10 +574,9 @@
     - name: "{{ env_title }} - fail execution if there are postponed errors"
       fail:
         msg: |
-          There were delayed (postponed) errors during the execution:
+          There were {{ instance_errors | length }} delayed error(s) during the execution:
 
           {{ instance_errors | to_nice_yaml }}
-
           (see above logs for more details)
       when: (instance_errors | length) > 0
       tags: ["no_print"]

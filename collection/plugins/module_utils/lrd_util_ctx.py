@@ -31,7 +31,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation impo
 )
 
 
-def prepare_service(service_info, run_info, top, service_names=None):
+def prepare_service(service_info, run_info, top, parent_description=None, service_names=None):
   result = dict()
   error_msgs = list()
 
@@ -53,6 +53,9 @@ def prepare_service(service_info, run_info, top, service_names=None):
         if service_name != service_key
         else service_name
     )
+
+    if parent_description:
+      service_description = parent_description + ' - ' + service_description
 
     if not service_name:
       error_msgs += [['msg: service name not specified']]
@@ -391,7 +394,8 @@ def prepare_service(service_info, run_info, top, service_names=None):
                 services,
                 run_info=run_info,
                 top=False,
-                service_names=service_names
+                parent_description=service_description,
+                service_names=service_names,
             )
 
             services_list = info.get('result')
@@ -437,7 +441,7 @@ def prepare_service(service_info, run_info, top, service_names=None):
     return dict(error_msgs=error_msgs)
 
 
-def prepare_services(services, run_info, top=False, service_names=None):
+def prepare_services(services, run_info, top=False, parent_description=None, service_names=None):
   result = list()
   error_msgs = list()
 
@@ -458,7 +462,8 @@ def prepare_services(services, run_info, top=False, service_names=None):
               service_info,
               run_info=run_info,
               top=top,
-              service_names=service_names
+              parent_description=parent_description,
+              service_names=service_names,
           )
 
           result_aux = info.get('result')
@@ -1188,6 +1193,9 @@ def prepare_node(node_info, run_info, local=None):
         node_info_dict.pop('tmp', None)
         result['can_destroy'] = to_bool(node_info_dict.get('can_destroy'))
         node_info_dict.pop('can_destroy', None)
+
+        result['delay_errors'] = node_info_dict.get('delay_errors')
+        result['ignore_errors'] = node_info_dict.get('ignore_errors')
 
         result['absent'] = to_bool(node_info_dict.get('absent'))
         local = local_original or to_bool(node_info_dict.get('local') or False)

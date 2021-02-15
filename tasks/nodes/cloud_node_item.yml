@@ -1,216 +1,234 @@
-# Main Service
+- block:
+    # Main Service
 
-- name: "{{ cloud_node_item_title }} - main service (outer)"
-  include_tasks: "tasks/services/cloud_service.yml"
-  vars:
-    tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
-    cloud_service_title: "{{ cloud_node_item_title }} - main service"
-    cloud_service_prepared_list: "{{ [tmp_service] }}"
-    cloud_service_top: true
-    cloud_service_tmp_dir: "{{ cloud_node_item.tmp_dir }}/services"
-    cloud_service_state: "{{ cloud_node_item_state }}"
-  tags: ["no_print_skipped"]
+    - name: "{{ cloud_node_item_title }} - main service (outer)"
+      include_tasks: "tasks/services/cloud_service.yml"
+      vars:
+        tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
+        cloud_service_title: "{{ cloud_node_item_title }} - main service"
+        cloud_service_prepared_list: "{{ [tmp_service] }}"
+        cloud_service_top: true
+        cloud_service_tmp_dir: "{{ cloud_node_item.tmp_dir }}/services"
+        cloud_service_state: "{{ cloud_node_item_state }}"
+      tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - verify if there is a node result"
-  fail:
-    msg: >-
-      the result after calling the node service ({{ tmp_service_name }})
-      was not found or doesn't have a "hosts" property
-  vars:
-    tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
-    tmp_service_name: "{{ tmp_service.name | default('') }}"
-    tmp_result_item: >-
-      {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
-  when: tmp_result_item.hosts is not defined
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - verify if there is a node result"
+      fail:
+        msg: >-
+          the result after calling the node service ({{ tmp_service_name }})
+          was not found or doesn't have a "hosts" property
+      vars:
+        tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
+        tmp_service_name: "{{ tmp_service.name | default('') }}"
+        tmp_result_item: >-
+          {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
+      when: tmp_result_item.hosts is not defined
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_hosts"
-  set_fact:
-    cloud_node_hosts: "{{ tmp_result_item.hosts }}"
-  vars:
-    tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
-    tmp_service_name: "{{ tmp_service.name | default('') }}"
-    tmp_result_item: >-
-      {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - cloud_node_hosts"
+      set_fact:
+        cloud_node_hosts: "{{ tmp_result_item.hosts }}"
+      vars:
+        tmp_service: "{{ cloud_node_item.prepared_service | default({}) }}"
+        tmp_service_name: "{{ tmp_service.name | default('') }}"
+        tmp_result_item: >-
+          {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - validate the node service result schema"
-  lrd.cloud.schema:
-    schema_file: "schemas/node_services_result.schema.yml"
-    value: "{{ cloud_node_hosts }}"
+    - name: "{{ cloud_node_item_title }} - validate the node service result schema"
+      lrd.cloud.schema:
+        schema_file: "schemas/node_services_result.schema.yml"
+        value: "{{ cloud_node_hosts }}"
 
-- name: "{{ cloud_node_item_title }} - cloud_node_active_hosts"
-  set_fact:
-    cloud_node_active_hosts: >-
-      {{
-        cloud_node_hosts
-        | selectattr('state', 'equalto', 'present')
-        | list
-      }}
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - cloud_node_active_hosts"
+      set_fact:
+        cloud_node_active_hosts: >-
+          {{
+            cloud_node_hosts
+            | selectattr('state', 'equalto', 'present')
+            | list
+          }}
+      tags: ["no_print"]
 
-# DNS Services
+    ### Hosts File (Inventory) ###
 
-- name: "{{ cloud_node_item_title }} - node dns list (init)"
-  set_fact:
-    cloud_node_dns_list: []
-    cloud_node_dns_list_aux: []
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - verify active hosts ips"
+      fail:
+        msg: |-
+          Public Host Ip not found (node={{ tmp_item.name }}).
+          Host Data:
+          {{ tmp_item | to_nice_yaml }}
+      vars:
+        tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
+        tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
+        tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6, true) }}"
+      when: (tmp_host == '') and not (tmp_item.local | default(false) | bool)
+      loop: "{{ cloud_node_active_hosts | list }}"
+      loop_control:
+        loop_var: tmp_item
+        label: "{{ tmp_item.name }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - node dns list (fill)"
-  set_fact:
-    cloud_node_dns_list_aux: "{{ tmp_dns_list_aux }}"
-  vars:
-    tmp_dns_absent: >-
-      {{
-        cloud_node_item.prepared_dns_services | default([])
-        | selectattr('can_destroy', 'defined')
-        | selectattr('can_destroy', 'equalto', True)
-        | list
-      }}
-    tmp_dns_state: "{{ cloud_node_state | default('present', true) }}"
-    tmp_dns_list_aux: >-
-      {{
-        (tmp_dns_state == 'present') | ternary(
-          cloud_node_item.prepared_dns_services | default([]),
-          tmp_dns_absent
-        )
-      }}
-  when: (cloud_node_item.prepared_dns_services | default([]) | length) > 0
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - init"
+      set_fact:
+        cloud_node_hosts_info: ""
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - node dns list (params - ips)"
-  set_fact:
-    cloud_node_dns_list: "{{ cloud_node_dns_list + [tmp_dns_item_to_add] }}"
-  vars:
-    tmp_dns_host: "{{ cloud_node_active_hosts[0] | default({}) }}"
-    tmp_dns_ini_params: "{{ cloud_node_dns_item.params | default({}) }}"
-    tmp_dns_type: "{{ tmp_dns_ini_params.dns_type | default('') }}"
-    tmp_dns_ipv4: "{{ tmp_dns_host.public_ipv4 | default('') }}"
-    tmp_dns_ipv6: "{{ tmp_dns_host.public_ipv6 | default('') }}"
-    tmp_dns_value: >-
-      {{
-        (tmp_dns_type == 'A') | ternary(
-          tmp_dns_ipv4,
-          (tmp_dns_type == 'AAAA') | ternary(tmp_dns_ipv6, '')
-        )
-      }}
-    tmp_dns_params: >-
-      {{ tmp_dns_ini_params | combine({ 'value': tmp_dns_value }) }}
-    tmp_dns_item_to_add: >-
-      {{ cloud_node_dns_item | combine({ 'params': tmp_dns_params }) }}
-  loop: "{{ cloud_node_dns_list_aux }}"
-  loop_control:
-    loop_var: cloud_node_dns_item
-    label: "{{ cloud_node_dns_item.name | default('') }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill hosts"
+      set_fact:
+        cloud_node_hosts_info: >-
+          {{ cloud_node_hosts_info }}
 
-- name: "{{ cloud_node_item_title }} - node dns service (outer)"
-  include_tasks: "tasks/services/cloud_service.yml"
-  vars:
-    cloud_service_title: "{{ cloud_node_item_title }} - node dns service"
-    cloud_service_list: "{{ cloud_node_dns_list }}"
-    cloud_service_top: true
-    cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
-    cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
-  when: (cloud_node_dns_list | length) > 0
-  tags: ["no_print_skipped"]
+          {{ tmp_item.name }} {{
+            (tmp_item.local | default(false) | bool)
+            | ternary('ansible_connection=local', '')
+          }} {{
+            (tmp_item.local | default(false) | bool)
+            | ternary('', 'ansible_host=' + tmp_host)
+          }} {{ ''
+          }} instance_index={{ tmp_idx + 1 }}{{ ''
+          }} {{
+            (tmp_public_ipv4 != '')
+            | ternary('instance_ipv4=' + tmp_public_ipv4, '')
+          }} {{
+            (tmp_public_ipv6 != '')
+            | ternary('instance_ipv6=' + tmp_public_ipv6, '')
+          }} {{
+            (tmp_private_ip != '')
+            | ternary('instance_private_ip=' + tmp_private_ip, '')
+          }}
+      vars:
+        tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
+        tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
+        tmp_private_ip: "{{ tmp_item.private_ip | default('') }}"
+        tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6, true) }}"
+      loop: "{{ cloud_node_active_hosts | list }}"
+      loop_control:
+        index_var: tmp_idx
+        loop_var: tmp_item
+        label: "{{ tmp_item.name }}"
+      tags: ["no_print"]
 
-### Hosts File (Inventory) ###
+    - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill vars"
+      set_fact:
+        cloud_node_hosts_info: |-
+          {{ cloud_node_hosts_info }}
 
-- name: "{{ cloud_node_item_title }} - verify active hosts ips"
-  fail:
-    msg: |-
-      Public Host Ip not found (node={{ tmp_item.name }}).
-      Host Data:
-      {{ tmp_item | to_nice_yaml }}
-  vars:
-    tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
-    tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
-    tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6, true) }}"
-  when: (tmp_host == '') and not (tmp_item.local | default(false) | bool)
-  loop: "{{ cloud_node_active_hosts | list }}"
-  loop_control:
-    loop_var: tmp_item
-    label: "{{ tmp_item.name }}"
-  tags: ["no_print"]
+          [{{ cloud_node_name }}:vars]
+          instance_type={{ cloud_node_name }}
+          ansible_user={{ tmp_credential.host_user }}
+          {{
+            (tmp_host_pass != '')
+            | ternary('ansible_become_pass=' + tmp_host_pass, '')
+          }}
+          {{
+            (tmp_ssh_key_path != '')
+            | ternary('ansible_ssh_private_key_file=' + tmp_ssh_key_path, '')
+          }}
 
-- name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - init"
-  set_fact:
-    cloud_node_hosts_info: ""
-  tags: ["no_print"]
+          # [{{ cloud_node_name }}:end]
+      vars:
+        tmp_credential: >-
+          {{
+            cloud_node_item.credentials[cloud_node_item.main_host_user_key | default('')]
+            | default({})
+          }}
+        tmp_host_pass: "{{ tmp_credential.host_pass | default('') }}"
+        tmp_ssh_key_path: "{{ cloud_node_item.main_ssh_key_path | default('') }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill hosts"
-  set_fact:
-    cloud_node_hosts_info: >-
-      {{ cloud_node_hosts_info }}
+    - name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
+      blockinfile:
+        path: "{{ inventory_file }}"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
+        insertafter: "^\\[{{ cloud_node_name }}\\]$"
+        block: "{{ cloud_node_hosts_info }}"
+      tags: ["no_print_skipped"]
 
-      {{ tmp_item.name }} {{
-        (tmp_item.local | default(false) | bool)
-        | ternary('ansible_connection=local', '')
-      }} {{
-        (tmp_item.local | default(false) | bool)
-        | ternary('', 'ansible_host=' + tmp_host)
-      }} {{ ''
-      }} instance_index={{ tmp_idx + 1 }}{{ ''
-      }} {{
-        (tmp_public_ipv4 != '')
-        | ternary('instance_ipv4=' + tmp_public_ipv4, '')
-      }} {{
-        (tmp_public_ipv6 != '')
-        | ternary('instance_ipv6=' + tmp_public_ipv6, '')
-      }} {{
-        (tmp_private_ip != '')
-        | ternary('instance_private_ip=' + tmp_private_ip, '')
-      }}
-  vars:
-    tmp_public_ipv4: "{{ tmp_item.public_ipv4 | default('') }}"
-    tmp_public_ipv6: "{{ tmp_item.public_ipv6 | default('') }}"
-    tmp_private_ip: "{{ tmp_item.private_ip | default('') }}"
-    tmp_host: "{{ tmp_public_ipv4 | default(tmp_public_ipv6, true) }}"
-  loop: "{{ cloud_node_active_hosts | list }}"
-  loop_control:
-    index_var: tmp_idx
-    loop_var: tmp_item
-    label: "{{ tmp_item.name }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - refresh inventory"
+      meta: refresh_inventory
+      tags: ["no_print_skipped"]
 
-- name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill vars"
-  set_fact:
-    cloud_node_hosts_info: |-
-      {{ cloud_node_hosts_info }}
+    # DNS Services
 
-      [{{ cloud_node_name }}:vars]
-      instance_type={{ cloud_node_name }}
-      ansible_user={{ tmp_credential.host_user }}
-      {{
-        (tmp_host_pass != '')
-        | ternary('ansible_become_pass=' + tmp_host_pass, '')
-      }}
-      {{
-        (tmp_ssh_key_path != '')
-        | ternary('ansible_ssh_private_key_file=' + tmp_ssh_key_path, '')
-      }}
+    - name: "{{ cloud_node_item_title }} - node dns list (init)"
+      set_fact:
+        cloud_node_dns_list: []
+        cloud_node_dns_list_aux: []
+      tags: ["no_print"]
 
-      # [{{ cloud_node_name }}:end]
-  vars:
-    tmp_credential: >-
-      {{
-        cloud_node_item.credentials[cloud_node_item.main_host_user_key | default('')]
-        | default({})
-      }}
-    tmp_host_pass: "{{ tmp_credential.host_pass | default('') }}"
-    tmp_ssh_key_path: "{{ cloud_node_item.main_ssh_key_path | default('') }}"
-  tags: ["no_print"]
+    - name: "{{ cloud_node_item_title }} - node dns list (fill)"
+      set_fact:
+        cloud_node_dns_list_aux: "{{ tmp_dns_list_aux }}"
+      vars:
+        tmp_dns_absent: >-
+          {{
+            cloud_node_item.prepared_dns_services | default([])
+            | selectattr('can_destroy', 'defined')
+            | selectattr('can_destroy', 'equalto', True)
+            | list
+          }}
+        tmp_dns_state: "{{ cloud_node_state | default('present', true) }}"
+        tmp_dns_list_aux: >-
+          {{
+            (tmp_dns_state == 'present') | ternary(
+              cloud_node_item.prepared_dns_services | default([]),
+              tmp_dns_absent
+            )
+          }}
+      when: (cloud_node_item.prepared_dns_services | default([]) | length) > 0
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
-  blockinfile:
-    path: "{{ inventory_file }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
-    insertafter: "^\\[{{ cloud_node_name }}\\]$"
-    block: "{{ cloud_node_hosts_info }}"
-  tags: ["no_print_skipped"]
+    - name: "{{ cloud_node_item_title }} - node dns list (params - ips)"
+      set_fact:
+        cloud_node_dns_list: "{{ cloud_node_dns_list + [tmp_dns_item_to_add] }}"
+      vars:
+        tmp_dns_host: "{{ cloud_node_active_hosts[0] | default({}) }}"
+        tmp_dns_ini_params: "{{ cloud_node_dns_item.params | default({}) }}"
+        tmp_dns_type: "{{ tmp_dns_ini_params.dns_type | default('') }}"
+        tmp_dns_ipv4: "{{ tmp_dns_host.public_ipv4 | default('') }}"
+        tmp_dns_ipv6: "{{ tmp_dns_host.public_ipv6 | default('') }}"
+        tmp_dns_value: >-
+          {{
+            (tmp_dns_type == 'A') | ternary(
+              tmp_dns_ipv4,
+              (tmp_dns_type == 'AAAA') | ternary(tmp_dns_ipv6, '')
+            )
+          }}
+        tmp_dns_params: >-
+          {{ tmp_dns_ini_params | combine({ 'value': tmp_dns_value }) }}
+        tmp_dns_item_to_add: >-
+          {{ cloud_node_dns_item | combine({ 'params': tmp_dns_params }) }}
+      loop: "{{ cloud_node_dns_list_aux }}"
+      loop_control:
+        loop_var: cloud_node_dns_item
+        label: "{{ cloud_node_dns_item.name | default('') }}"
+      tags: ["no_print"]
 
-- name: "{{ cloud_node_item_title }} - refresh inventory"
-  meta: refresh_inventory
-  tags: ["no_print_skipped"]
+    - name: "{{ cloud_node_item_title }} - node dns service (outer)"
+      include_tasks: "tasks/services/cloud_service.yml"
+      vars:
+        cloud_service_title: "{{ cloud_node_item_title }} - node dns service"
+        cloud_service_list: "{{ cloud_node_dns_list }}"
+        cloud_service_top: true
+        cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
+        cloud_service_state: "{{ cloud_node_state | default('present', true) }}"
+      when: (cloud_node_dns_list | length) > 0
+      tags: ["no_print_skipped"]
+
+  rescue:
+    - name: "{{ cloud_node_item_title }} - handle error (fail)"
+      fail:
+        msg: "error in node execution (see above logs for more details)"
+      ignore_errors: "{{ cloud_node_item.ignore_errors | default(false) | bool }}"
+      when: not (cloud_node_item.delay_errors | default(false) | bool)
+      tags: ["no_print"]
+
+    - name: "{{ cloud_node_item_title }} - handle error (postpone)"
+      set_fact:
+        instance_errors: "{{ instance_errors + ['[error] ' + cloud_node_item_title] }}"
+      when: >-
+        (cloud_node_item.delay_errors | default(false) | bool)
+        and
+        (not (cloud_node_item.ignore_errors | default(false) | bool))
+      tags: ["no_print"]
