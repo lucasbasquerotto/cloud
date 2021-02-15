@@ -1600,6 +1600,7 @@ def prepare_node(node_info, run_info, local=None):
               local=local,
               base_dir=base_dir,
               parent_type='node',
+              parent_name=node_name,
               parent_description=node_description,
               dependencies=prefilled_dependencies,
           )
