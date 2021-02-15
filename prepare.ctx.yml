@@ -239,12 +239,12 @@
 
     # prepare nodes (local)
 
-    - name: "{{ env_title }} - prepare nodes (local) (outer)"
+    - name: "{{ env_title }} - prepare local nodes (outer)"
       include_tasks: "tasks/nodes/prepare.yml"
       vars:
         node_prepare_node: "{{ prepare_item }}"
         node_prepare_title: >-
-          {{ env_title }} - prepare node [{{ node_prepare_node.description }}]
+          {{ env_title }} - prepare local node [{{ node_prepare_node.description }}]
       loop: "{{ ctx_data.local_nodes | default([]) }}"
       loop_control:
         loop_var: prepare_item
@@ -257,11 +257,11 @@
 
     # prepare pods (local)
 
-    - name: "{{ env_title }} - prepare pods (local) (outer)"
+    - name: "{{ env_title }} - prepare local pods (outer)"
       include_tasks: "tasks/pods/main.yml"
       vars:
         pod_node: "{{ prepare_item }}"
-        pod_title: "{{ env_title }} - prepare pod (local) - node [{{ pod_node.description }}]"
+        pod_title: "{{ env_title }} - prepare local pod - node [{{ pod_node.description }}]"
       loop: "{{ ctx_data.local_nodes | default([]) }}"
       loop_control:
         loop_var: prepare_item

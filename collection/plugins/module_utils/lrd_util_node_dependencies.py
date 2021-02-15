@@ -503,8 +503,11 @@ def prepare_node_host_dependencies(
 
 def fill_host(host, protocol, port):
   if host:
+    if (not protocol) and ('://' not in host):
+      protocol = 'void'
+
     if protocol:
-      host = protocol + "://" + host
+      host = protocol + '://' + host
 
     if port:
       host += ":" + port
