@@ -612,13 +612,29 @@ def prepare_pod(pod_info, parent_data, run_info):
       error_msgs += [['msg: pod name not specified']]
       return dict(result=result, error_msgs=error_msgs)
 
+    parent_name = parent_data.get('parent_name') or ''
+    parent_type = parent_data.get('parent_type') or ''
+
     result['name'] = pod_name
     result['key'] = pod_key
     result['description'] = pod_description
-    result['parent_type'] = parent_data.get('parent_type')
+    result['parent_name'] = parent_name
+    result['parent_type'] = parent_type
     result['parent_description'] = parent_data.get('parent_description')
 
     try:
+      if not parent_name:
+        error_msgs += [[
+            str('pod: ' + (pod_description or '')),
+            'msg: pod parent name not specified'
+        ]]
+
+      if not parent_type:
+        error_msgs += [[
+            str('pod: ' + (pod_description or '')),
+            'msg: pod parent type not specified'
+        ]]
+
       pods_dict = env.get('pods') or dict()
       pod_validators = list()
 
@@ -659,7 +675,10 @@ def prepare_pod(pod_info, parent_data, run_info):
             env_data.get('ctx_name') + '-' + pod_name
         result['identifier'] = pod_identifier
 
-        local_dir = ctx_dir + '/pods/' + pod_name
+        local_dir = (
+            ctx_dir + '/' + parent_type + '-pods/' + parent_name
+            + '/pods/' + pod_name
+        )
 
         path_maps = env_data.get('path_map') or dict()
         dev_repo_path = path_maps.get(repo)
