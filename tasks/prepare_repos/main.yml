@@ -73,7 +73,11 @@
     prepare_repos_layer: "{{ prepare_repos_pods_dict[prepare_repos_layer_key] | default({}) }}"
     prepare_repos_layer_title: "{{ prepare_repos_title }} - local pod repo - {{ prepare_repos_layer_label }}"
     prepare_repos_layer_dest: >-
-      {{ env_ctx_dir + '/' + prepare_repos_item.0.type + '-pods/' + prepare_repos_layer_name }}
+      {{
+        env_ctx_dir
+        + '/' + prepare_repos_item.0.type + '-pods/' + prepare_repos_item.0.name
+        + '/pods/' + prepare_repos_layer_name
+      }}
   when: prepare_repos_pods_dict[prepare_repos_layer_key] is defined
   loop: "{{ prepare_repos_parent_pods_list | subelements('pods') }}"
   loop_control:
