@@ -138,6 +138,8 @@ def prepare_service(service_info, run_info, top, service_names=None):
               'key',
               'single',
               'absent',
+              'delay_errors',
+              'ignore_errors',
               'credentials',
               'contents',
               'params',
@@ -157,6 +159,8 @@ def prepare_service(service_info, run_info, top, service_names=None):
 
           allowed_keys = [
               'list',
+              'delay_errors',
+              'ignore_errors',
               'base_dir',
               'task',
               'namespace',
@@ -188,6 +192,9 @@ def prepare_service(service_info, run_info, top, service_names=None):
         if not is_list:
           result['tmp'] = tmp
           result['can_destroy'] = can_destroy
+
+          result['delay_errors'] = service_info_dict.get('delay_errors')
+          result['ignore_errors'] = service_info_dict.get('ignore_errors')
 
           task = service.get('task')
           result['task'] = task
@@ -350,6 +357,8 @@ def prepare_service(service_info, run_info, top, service_names=None):
             error_msgs += [new_value]
         else:
           single = service_info_dict.get('single')
+          delay_errors = service_info_dict.get('delay_errors')
+          ignore_errors = service_info_dict.get('ignore_errors')
 
           if single:
             error_msgs_aux += [[
@@ -367,7 +376,14 @@ def prepare_service(service_info, run_info, top, service_names=None):
             if absent:
               for idx, service_info_aux in enumerate(services):
                 if isinstance(service_info_aux, dict):
-                  service_info_aux['absent'] = True
+                  if absent:
+                    service_info_aux['absent'] = True
+
+                  if delay_errors:
+                    service_info_aux['delay_errors'] = True
+
+                  if ignore_errors:
+                    service_info_aux['ignore_errors'] = True
                 else:
                   services[idx] = dict(name=service_info_aux, absent=True)
 

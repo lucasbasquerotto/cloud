@@ -560,4 +560,26 @@
       include_tasks: "{{ ctx_data.hooks.after_delete_main }}"
       when: (ctx_data.hooks.after_delete_main | default('')) != ''
       tags: ["no_print"]
+
+###############################################################################
+##################            PREPARE THE CLOUD            ####################
+###############################################################################
+
+- name: Play 0 - Main - Handle Postponed Errors
+  hosts: main
+  tags:
+    - always
+  gather_facts: no
+  tasks:
+    - name: "{{ env_title }} - fail execution if there are postponed errors"
+      fail:
+        msg: |
+          There were delayed (postponed) errors during the execution:
+
+          {{ instance_errors | to_nice_yaml }}
+
+          (see above logs for more details)
+      when: (instance_errors | length) > 0
+      tags: ["no_print"]
+
 ###############################################################################

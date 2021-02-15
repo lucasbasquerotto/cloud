@@ -33,28 +33,48 @@
     cloud_service_result: {}
   tags: ["no_print"]
 
-- name: "{{ cloud_service_run_inner_title }} - execute the service"
-  include_tasks: "{{ inner_service_base_dir_prefix }}{{ inner_service_task }}"
-  vars:
-    cloud_service_top: false
-    inner_service_state: >-
-      {{
-        cloud_service_run.absent | default(false) | bool
-        | ternary('absent', cloud_service_state)
-      }}
-    inner_service_title: "{{ cloud_service_run_inner_title }} - inside"
-    inner_service_name: "{{ cloud_service_run.name }}"
-    inner_service_task: "{{ cloud_service_run.task }}"
-    inner_service_namespace: "{{ cloud_service_run.namespace | default('') }}"
-    inner_service_params: "{{ cloud_service_run.params | default({}) }}"
-    inner_service_credentials: "{{ cloud_service_run.credentials | default({}) }}"
-    inner_service_contents: "{{ cloud_service_run.contents | default({}) }}"
-    inner_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
-    inner_service_tmp_dir: "{{ cloud_service_tmp_dir }}/{{ cloud_service_run.name }}"
-    # Define an empty list for the case in which a service call another
-    cloud_service_prepared_list: []
-  when: cloud_service_continue | bool
-  tags: ["no_print_skipped"]
+- block:
+    - name: "{{ cloud_service_run_inner_title }} - execute the service"
+      include_tasks: "{{ inner_service_base_dir_prefix }}{{ inner_service_task }}"
+      vars:
+        cloud_service_top: false
+        inner_service_state: >-
+          {{
+            cloud_service_run.absent | default(false) | bool
+            | ternary('absent', cloud_service_state)
+          }}
+        inner_service_title: "{{ cloud_service_run_inner_title }} - inside"
+        inner_service_name: "{{ cloud_service_run.name }}"
+        inner_service_task: "{{ cloud_service_run.task }}"
+        inner_service_namespace: "{{ cloud_service_run.namespace | default('') }}"
+        inner_service_params: "{{ cloud_service_run.params | default({}) }}"
+        inner_service_credentials: "{{ cloud_service_run.credentials | default({}) }}"
+        inner_service_contents: "{{ cloud_service_run.contents | default({}) }}"
+        inner_service_base_dir_prefix: "{{ cloud_service_run.base_dir_prefix }}"
+        inner_service_tmp_dir: "{{ cloud_service_tmp_dir }}/{{ cloud_service_run.name }}"
+        # Define an empty list for the case in which a service call another
+        cloud_service_prepared_list: []
+      when: cloud_service_continue | bool
+      tags: ["no_print_skipped"]
+  rescue:
+    - name: "{{ cloud_service_run_inner_title }} - result - initial"
+      fail:
+        msg: "error in service execution (see above logs for more details)"
+      when: >-
+        (not (cloud_service_run.delay_errors | default(false) | bool))
+        and
+        (not (cloud_service_run.ignore_errors | default(false) | bool))
+      tags: ["no_print"]
+
+    - name: "{{ cloud_service_run_inner_title }} - result - initial"
+      set_fact:
+        instance_errors: "{{ instance_errors + ['[error] ' + cloud_service_run_inner_title] }}"
+      when: >-
+        (cloud_service_run.delay_errors | default(false) | bool)
+        and
+        (not (cloud_service_run.ignore_errors | default(false) | bool))
+      tags: ["no_print"]
+
 
 - name: "{{ cloud_service_run_title }} - cloud_service_run - after"
   set_fact:
@@ -71,7 +91,7 @@
     cloud_service_result_map: >-
       {{
         cloud_service_result_map
-        | combine({ cloud_service_run.name: cloud_service_result | default({}) })
+        | combine({ cloud_service_run.name: cloud_service_result })
       }}
   tags: ["no_print"]
 
