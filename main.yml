@@ -90,6 +90,7 @@
   tags:
     - init
     - nodes
+    - setup
     - nodes_setup
     - prepare_nodes
     - prepare_pods
