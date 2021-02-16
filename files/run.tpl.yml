@@ -43,7 +43,7 @@
     <<% if var_run_stage.gather_facts | default(false) | bool %>>
 
     - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
+      when: inventory_hostname != 'localhost'
       tags: ["no_print"]
 
     <<% endif %>>

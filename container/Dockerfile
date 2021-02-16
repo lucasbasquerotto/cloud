@@ -1,6 +1,8 @@
-FROM lucasbasquerotto/ansible:0.0.2
+FROM lucasbasquerotto/ansible:1.0.0
 
-RUN pip3 install pyyaml
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY container/run.sh /usr/local/bin/run
 COPY container/ansible /usr/main/ansible
@@ -15,5 +17,8 @@ COPY tasks/util /usr/main/ansible/tasks/util
 
 RUN echo 'exec "${@}"' > /usr/local/bin/sudo \
  && chmod +x /usr/local/bin/sudo
+
+# RUN yes | pip install docker-py 'dopy>=0.3.5,<=0.3.5' \
+#  && yes | pip3 install boto boto3 botocore
 
 CMD /usr/local/bin/run

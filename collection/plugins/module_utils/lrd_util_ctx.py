@@ -2957,10 +2957,9 @@ def prepare_ctx(ctx_name, run_info):
                   dependencies = single_node_dependencies_info.get(
                       'dependencies'
                   )
-                  dependencies_type_node_amount = len(filter(
-                      lambda d: d.get('type') == 'node',
-                      dependencies.values()
-                  ))
+                  dependencies_type_node_amount = len(
+                      [d for d in dependencies.values() if d.get('type') == 'node']
+                  )
                   has_node_dependency_aux = dependencies_type_node_amount > 0
                   has_node_dependency = has_node_dependency or has_node_dependency_aux
 

@@ -7,18 +7,16 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=import-error
 # pylint: disable=protected-access
-
 import os
 from copy import deepcopy
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
-from ansible.template import generate_ansible_template_vars, USE_JINJA2_NATIVE
+from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
 from ansible.utils.display import Display
 
 display = Display()
 
-# from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
 
 if USE_JINJA2_NATIVE:
   from ansible.utils.native_jinja import NativeJinjaText
@@ -60,35 +58,24 @@ def lookup(plugin, ansible_vars, file, params):
     new_vars.update(params)
     display.vv("params keys: %s" % params.keys())
 
-    # TODO: Remove in newer ansible versions
-    old_vars = plugin._templar._available_variables
-    plugin._templar.set_available_variables(new_vars)
-    res = plugin._templar.template(
-        template_data,
-        preserve_trailing_newlines=True,
-        convert_data=False,
-        escape_backslashes=False
-    )
-    plugin._templar.set_available_variables(old_vars)
-    ###
+    if USE_JINJA2_NATIVE:
+      templar = plugin._templar.copy_with_new_env(
+          environment_class=AnsibleEnvironment
+      )
+    else:
+      templar = plugin._templar
 
-    # TODO: Include in newer ansible versions
-    # if USE_JINJA2_NATIVE:
-    #   templar = plugin._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
-    # else:
-    #   templar = plugin._templar
-
-    # with templar.set_temporary_context(
-    #     variable_start_string=None,
-    #     variable_end_string=None,
-    #     available_ansible_vars=new_vars,
-    #     searchpath=searchpath
-    # ):
-    #   res = templar.template(
-    #       template_data,
-    #       preserve_trailing_newlines=True,
-    #       escape_backslashes=False
-    #   )
+    with templar.set_temporary_context(
+        variable_start_string=None,
+        variable_end_string=None,
+        available_variables=new_vars,
+        searchpath=searchpath
+    ):
+      res = templar.template(
+          template_data,
+          preserve_trailing_newlines=True,
+          escape_backslashes=False
+      )
 
     if USE_JINJA2_NATIVE:
       # jinja2_native is true globally, we need this text

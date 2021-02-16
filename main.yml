@@ -85,7 +85,24 @@
 
 ###############################################################################
 
-- name: Play 02.02 - Nodes - Setup
+- name: Play 02.02 - Nodes - Facts
+  hosts: main,host
+  tags:
+    - init
+    - nodes
+    - hosts
+    - facts
+    - nodes_facts
+  gather_facts: no
+  tasks:
+    - include_tasks: "tasks/util/init.yml"
+      vars:
+        init_load_node_dependencies: true
+      tags: ["no_print"]
+
+###############################################################################
+
+- name: Play 02.03 - Nodes - Setup
   hosts: main,host
   tags:
     - init
@@ -99,8 +116,7 @@
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
-      vars:
-        init_load_node_dependencies: true
+      when: inventory_hostname != 'localhost'
       tags: ["no_print"]
 
     - name: "{{ env_title }} - validate instance type (required)"
@@ -174,7 +190,7 @@
 
 ###############################################################################
 
-- name: Play 02.03 - Nodes - Prepare
+- name: Play 02.04 - Nodes - Prepare
   hosts: main,host
   tags:
     - init
@@ -183,7 +199,7 @@
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
+      when: inventory_hostname != 'localhost'
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
@@ -235,7 +251,7 @@
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
+      when: inventory_hostname != 'localhost'
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
@@ -295,7 +311,7 @@
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
+      when: inventory_hostname != 'localhost'
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
@@ -348,7 +364,7 @@
   gather_facts: no
   tasks:
     - include_tasks: "tasks/util/init.yml"
-      when: ansible_connection != 'local'
+      when: inventory_hostname != 'localhost'
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
