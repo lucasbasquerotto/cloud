@@ -150,7 +150,7 @@
         instance_info_node: "{{ main_item }}"
         instance_info_title: >-
           {{ env_title }} - instance info - before -
-          instance [{{ instance_info_node.description }}
+          instance [{{ instance_info_node.description }}]
         instance_info_type: "before"
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:
@@ -367,7 +367,7 @@
         instance_info_node: "{{ main_item }}"
         instance_info_title: >-
           {{ env_title }} - instance info - after -
-          instance [{{ instance_info_node.description }}
+          instance [{{ instance_info_node.description }}]
         instance_info_type: "after"
       loop: "{{ ctx_data.nodes | default([]) }}"
       loop_control:
@@ -581,5 +581,4 @@
           (see above logs for more details)
       when: (instance_errors | length) > 0
       tags: ["no_print"]
-
 ###############################################################################
