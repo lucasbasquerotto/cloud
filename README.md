@@ -1361,8 +1361,8 @@ main:
         dir: "ext-cloud"
       - repo: "pod"
         dir: "pod"
-      - repo: "custom_pod"
-        dir: "custom-pod"
+      - repo: "ext_pod"
+        dir: "ext-pod"
       - repo: "app"
         dir: "app"
       - repo: "container_images"
@@ -1382,8 +1382,8 @@ repos:
   pod:
     src: "https://github.com/lucasbasquerotto/pod.git"
     version: "master"
-  custom_pod:
-    src: "https://github.com/lucasbasquerotto/custom-pod.git"
+  ext_pod:
+    src: "https://github.com/lucasbasquerotto/ext-pod.git"
     version: "master"
   app:
     src: "https://github.com/lucasbasquerotto/wordpress-docker.git"
@@ -1524,7 +1524,7 @@ nodes:
     pods: ["simple"]
 pods:
   simple:
-    repo: "custom_pod"
+    repo: "ext_pod"
     ctx: "test/ctx-simple.yml"
     schema: "test/simple.schema.yml"
     root: true
@@ -1546,8 +1546,8 @@ repos:
   ext_cloud:
     src: "https://github.com/lucasbasquerotto/ext-cloud.git"
     version: "master"
-  custom_pod:
-    src: "https://github.com/lucasbasquerotto/custom-pod.git"
+  ext_pod:
+    src: "https://github.com/lucasbasquerotto/ext-pod.git"
     version: "master"
 ```
 
@@ -1555,7 +1555,7 @@ _(In a **project environment base file**, you can reference the project environm
 
 And the following files:
 
-_test/ctx-simple.yml (in the `custom_pod` repository):_
+_test/ctx-simple.yml (in the `ext_pod` repository):_
 
 ```yaml
 {% set var_pod_kind = 'test' %}
@@ -1605,7 +1605,7 @@ children:
       value: "{{ params.pod_param_3 }}"
 ```
 
-_test/ctx-child.yml (in the `custom_pod` repository):_
+_test/ctx-child.yml (in the `ext_pod` repository):_
 
 ```yaml
 {% set var_pod_kind = 'test' %}
@@ -1639,7 +1639,7 @@ templates:
     value: "{{ custom.value }}"
 ```
 
-_test/simple.schema.yml (in the `custom_pod` repository):_
+_test/simple.schema.yml (in the `ext_pod` repository):_
 
 ```yaml
 root: "pod_schema"
@@ -1703,7 +1703,7 @@ schemas:
         type: "dict"
 ```
 
-_test/template.schema.yml (in the `custom_pod` repository)_
+_test/template.schema.yml (in the `ext_pod` repository)_
 
 ```yaml
 root: "pod_template_params"
@@ -1716,7 +1716,7 @@ schemas:
         non_empty: true
 ```
 
-Then the deployment will create the following files (the destination is always is the `custom_pod` repository directory):
+Then the deployment will create the following files (the destination is always is the `ext_pod` repository directory):
 
 ---
 
@@ -1744,7 +1744,7 @@ params:
 
 ---
 
-_`[src]` test/pod-file.txt (in the `custom_pod` repository)_
+_`[src]` test/pod-file.txt (in the `ext_pod` repository)_
 
 _`[dest]` env/file.main.txt_
 
@@ -1758,7 +1758,7 @@ Last line
 
 ---
 
-_`[src]` test/dynamic.tpl.yml (in the `custom_pod` repository)_
+_`[src]` test/dynamic.tpl.yml (in the `ext_pod` repository)_
 
 ```yaml
 {{ params | to_nice_yaml }}
@@ -1813,7 +1813,7 @@ line 03
 
 ---
 
-_`[src]` test/pod-file.txt (in the `custom_pod` repository)_
+_`[src]` test/pod-file.txt (in the `ext_pod` repository)_
 
 _`[dest]` env/file.child.txt_
 
@@ -1829,7 +1829,7 @@ Last line
 
 ---
 
-_`[src]` test/template.sh (in the `custom_pod` repository)_
+_`[src]` test/template.sh (in the `ext_pod` repository)_
 
 ```bash
 #!/bin/bash
@@ -1957,7 +1957,7 @@ params:
 
 And the following schema file:
 
-_test/simple.schema.yml (in the `custom_pod` repository):_
+_test/simple.schema.yml (in the `ext_pod` repository):_
 
 ```yaml
 root: "pod_schema"
