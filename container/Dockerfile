@@ -18,7 +18,4 @@ COPY tasks/util /usr/main/ansible/tasks/util
 RUN echo 'exec "${@}"' > /usr/local/bin/sudo \
  && chmod +x /usr/local/bin/sudo
 
-# RUN yes | pip install docker-py 'dopy>=0.3.5,<=0.3.5' \
-#  && yes | pip3 install boto boto3 botocore
-
 CMD /usr/local/bin/run

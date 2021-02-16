@@ -385,8 +385,8 @@ main:
   my_context:
     repo: "cloud"
     env_repos:
-      - repo: "custom_cloud"
-        dir: "custom-cloud"
+      - repo: "ext_cloud"
+        dir: "ext-cloud"
     hosts:
       type: "template"
       file: "files/hosts.tpl.ini"
@@ -1357,8 +1357,8 @@ main:
     extra_repos:
       - repo: "env_base"
         dir: "env-base"
-      - repo: "custom_cloud"
-        dir: "custom-cloud"
+      - repo: "ext_cloud"
+        dir: "ext-cloud"
       - repo: "pod"
         dir: "pod"
       - repo: "custom_pod"
@@ -1376,8 +1376,8 @@ repos:
   cloud:
     src: "https://github.com/lucasbasquerotto/cloud.git"
     version: "master"
-  custom_cloud:
-    src: "https://github.com/lucasbasquerotto/custom-cloud.git"
+  ext_cloud:
+    src: "https://github.com/lucasbasquerotto/ext-cloud.git"
     version: "master"
   pod:
     src: "https://github.com/lucasbasquerotto/pod.git"
@@ -1509,8 +1509,8 @@ main:
   pod_local:
     repo: "cloud"
     env_repos:
-      - repo: "custom_cloud"
-        dir: "custom-cloud"
+      - repo: "ext_cloud"
+        dir: "ext-cloud"
     hosts: |
       [main]
       localhost ansible_connection=local
@@ -1543,8 +1543,8 @@ repos:
   cloud:
     src: "https://github.com/lucasbasquerotto/cloud.git"
     version: "master"
-  custom_cloud:
-    src: "https://github.com/lucasbasquerotto/custom-cloud.git"
+  ext_cloud:
+    src: "https://github.com/lucasbasquerotto/ext-cloud.git"
     version: "master"
   custom_pod:
     src: "https://github.com/lucasbasquerotto/custom-pod.git"
@@ -2052,8 +2052,8 @@ main:
   my_ctx:
     repo: "cloud"
     env_repos:
-      - repo: "custom_cloud"
-        dir: "custom-cloud"
+      - repo: "ext_cloud"
+        dir: "ext-cloud"
     hosts: |
       [main]
       localhost ansible_connection=local
@@ -2061,7 +2061,7 @@ main:
     initial_services: ["service_1"]
 services:
   service_1:
-    base_dir: "custom-cloud"
+    base_dir: "ext-cloud"
     namespace: "ext_demo"
     task: "test/services/general/01.yml"
     schema: "test/services/general/01.schema.yml"
@@ -2320,7 +2320,7 @@ repos:
 
 As you can see in the example above, there might be more than 1 cloud repository extension, and each one can be used by a different service, making the creation and use of new services very easy.
 
-**The official cloud repository extension** is https://github.com/lucasbasquerotto/custom-cloud, and can be used in the same way as the above example. **This repository has several services that can manage the creation of VPNs, DNS Records, Cloud Instances (Nodes), Buckets (S3) and more.**
+**The official cloud repository extension** is https://github.com/lucasbasquerotto/ext-cloud, and can be used in the same way as the above example. **This repository has several services that can manage the creation of VPNs, DNS Records, Cloud Instances (Nodes), Buckets (S3) and more.**
 
 ## Run Stages
 
@@ -2351,8 +2351,8 @@ main:
   my_context:
     repo: "cloud"
     env_repos:
-      - repo: "custom_cloud"
-        dir: "custom-cloud"
+      - repo: "ext_cloud"
+        dir: "ext-cloud"
     nodes:
       - "node_1"
       - name: "node_2"
@@ -2410,8 +2410,8 @@ tasks:
   test_params:
     type: "task"
     root: true
-    file: "custom-cloud/test/run-tasks/task.yml"
-    schema: "custom-cloud/test/run-tasks/task.schema.yml"
+    file: "ext-cloud/test/run-tasks/task.yml"
+    schema: "ext-cloud/test/run-tasks/task.schema.yml"
     credentials:
       prop1: "test_run_stage_prop1_cloud"
       prop2: "test_run_stage_prop2"
