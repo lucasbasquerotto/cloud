@@ -1,2 +1,0 @@
-cron_dest_dir: "/var/spool/cron/crontabs"
-cron_dest_file: "root"

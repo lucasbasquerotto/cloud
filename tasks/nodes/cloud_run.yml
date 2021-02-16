@@ -56,7 +56,7 @@
 
 - name: "{{ cloud_run_title }} - run node shell command (outer)"
   include_role:
-    name: "long_run"
+    name: "lrd.cloud.long_run"
   vars:
     long_run_title: "{{ cloud_run_title }} - run node shell command"
     long_run_become: "{{ cloud_run_task.root | default(false) }}"
@@ -73,7 +73,7 @@
 
 - name: "{{ cloud_run_title }} - run pod shell command (outer)"
   include_role:
-    name: "long_run"
+    name: "lrd.cloud.long_run"
   vars:
     long_run_title: >-
       {{ cloud_run_title }} -
