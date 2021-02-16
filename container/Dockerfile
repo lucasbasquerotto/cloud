@@ -1,7 +1,7 @@
 FROM lucasbasquerotto/ansible:1.0.0
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends git \
+ && apt-get install -y --no-install-recommends git openssh-client \
  && rm -rf /var/lib/apt/lists/*
 
 COPY container/run.sh /usr/local/bin/run
