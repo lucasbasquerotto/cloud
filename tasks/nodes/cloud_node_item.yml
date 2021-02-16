@@ -221,14 +221,14 @@
       fail:
         msg: "error in node execution (see above logs for more details)"
       ignore_errors: "{{ cloud_node_item.ignore_errors | default(false) | bool }}"
-      when: not (cloud_node_item.delay_errors | default(false) | bool)
+      when: not (cloud_node_item_delay_errors | bool)
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - handle error (postpone)"
       set_fact:
         instance_errors: "{{ instance_errors + ['[error] ' + cloud_node_item_title] }}"
       when: >-
-        (cloud_node_item.delay_errors | default(false) | bool)
+        (cloud_node_item_delay_errors | bool)
         and
         (not (cloud_node_item.ignore_errors | default(false) | bool))
       tags: ["no_print"]

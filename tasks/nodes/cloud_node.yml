@@ -9,6 +9,11 @@
         cloud_node_item.absent | default(false) |
         ternary('absent', cloud_node_state)
       }}
+    cloud_node_item_delay_errors: >-
+      {{
+        cloud_node_delay_errors
+        | default(cloud_node_item.delay_errors | default(false))
+      }}
   loop: "{{ cloud_node_list }}"
   loop_control:
     loop_var: cloud_node_item

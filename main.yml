@@ -465,6 +465,7 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
+        cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
 
     - name: "{{ env_title }} - [destroy (tmp)] nodes (outer)"
@@ -482,6 +483,7 @@
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_node_state: "absent"
+        cloud_node_delay_errors: true
       when: (main_tmp_nodes | length) > 0
 
     - name: "{{ env_title }} - [destroy (tmp)] initial services (outer)"
@@ -499,6 +501,7 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
+        cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
 
     - name: "{{ env_title }}"
@@ -537,6 +540,7 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
+        cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
 
     - name: "{{ env_title }} - [destroy] nodes (outer)"
@@ -554,6 +558,7 @@
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_node_state: "absent"
+        cloud_node_delay_errors: true
       when: (main_tmp_nodes | length) > 0
 
     - name: "{{ env_title }} - [destroy] initial services (outer)"
@@ -571,6 +576,7 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "absent"
+        cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
 
     - name: "{{ env_title }}"
@@ -579,7 +585,7 @@
       tags: ["no_print"]
 
 ###############################################################################
-##################            PREPARE THE CLOUD            ####################
+################            SHOW POSTPONED ERRORS            ##################
 ###############################################################################
 
 - name: Play 09 - Main - Handle Postponed Errors
