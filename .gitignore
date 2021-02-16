@@ -6,9 +6,11 @@
 
 /env/
 /env-*/
+/env-*
 
 /ext/
 /ext-*/
+/ext-*
 
 /ansible/ansible.generated.cfg
 /run.yml
