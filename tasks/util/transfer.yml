@@ -39,7 +39,7 @@
   loop: "{{ transfer_prepared_list }}"
   loop_control:
     loop_var: tmp_item
-    label: "{{ tmp_item.dest }}"
+    label: "[file] {{ tmp_item.dest }}"
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - create the tmp directories"
@@ -49,7 +49,7 @@
     state: directory
     mode: "{{ tmp_item.dir_mode | default(omit, true) }}"
   when: tmp_item.content.type == 'template'
-  loop: "{{ transfer_prepared_list }}"
+  loop: "[file] {{ transfer_prepared_list }}"
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
