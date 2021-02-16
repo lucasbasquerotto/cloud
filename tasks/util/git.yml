@@ -82,7 +82,7 @@
   when: git_ssh_file != ''
   tags: ["no_print_skipped"]
 
-- name: "{{ git_title }} - git"
+- name: "{{ git_title }} - git checkout"
   become: "{{ git_root | default(false) | bool }}"
   git:
     repo: "{{ git_repo.src }}"
