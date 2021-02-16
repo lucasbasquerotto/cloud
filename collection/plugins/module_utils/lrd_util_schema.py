@@ -1104,7 +1104,7 @@ def validate_schema(schema, value, full_validation=True):
         'msg: error when trying to validate the schema itself',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -1122,7 +1122,7 @@ def validate_schema(schema, value, full_validation=True):
         'msg: error when trying to validate the schema value',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 

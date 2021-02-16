@@ -428,7 +428,7 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
           'msg: error when trying to prepare service',
           'error type: ' + str(type(error)),
           'error details: ',
-          traceback.format_exc(),
+          traceback.format_exc().split('\n'),
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
@@ -436,7 +436,7 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
         'msg: error when trying to prepare unknown service',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -487,7 +487,7 @@ def prepare_services(services, run_info, top=False, parent_description=None, ser
         'msg: error when trying to prepare services',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -586,7 +586,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
             'msg: error when trying to prepare to transfer the content item',
             'error type: ' + str(type(error)),
             'error details: ',
-            traceback.format_exc(),
+            traceback.format_exc().split('\n'),
         ]]
 
     for value in error_msgs_aux:
@@ -600,7 +600,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
         'msg: error when trying to prepare to transfer the contents',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -1065,7 +1065,7 @@ def prepare_pod(pod_info, parent_data, run_info):
                 'msg: error when trying to load pod vars',
                 'error type: ' + str(type(error)),
                 'error details: ',
-                traceback.format_exc(),
+                traceback.format_exc().split('\n'),
             ]]
             error_msgs_aux += error_msgs_validate
 
@@ -1086,7 +1086,7 @@ def prepare_pod(pod_info, parent_data, run_info):
           'msg: error when trying to prepare pod',
           'error type: ' + str(type(error)),
           'error details:',
-          traceback.format_exc(),
+          traceback.format_exc().split('\n'),
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
@@ -1094,7 +1094,7 @@ def prepare_pod(pod_info, parent_data, run_info):
         'msg: error when trying to prepare unknown pod',
         'error type: ' + str(type(error)),
         'error details:',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -1133,7 +1133,7 @@ def prepare_pods(pods, parent_data, run_info):
         'msg: error when trying to prepare pods',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -1826,7 +1826,7 @@ def prepare_node(node_info, run_info, local=None):
           'msg: error when trying to prepare node',
           'error type: ' + str(type(error)),
           'error details: ',
-          traceback.format_exc(),
+          traceback.format_exc().split('\n'),
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
@@ -1834,7 +1834,7 @@ def prepare_node(node_info, run_info, local=None):
         'msg: error when trying to prepare unknown node',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -1881,7 +1881,7 @@ def get_general_node_data(prepared_node, prefilled_dependencies):
         'msg: error when trying to get the general node information',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -1920,7 +1920,7 @@ def prepare_nodes(nodes, run_info, local=None):
         'msg: error when trying to prepare nodes',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -2235,7 +2235,7 @@ def prepare_task(task_info_dict, run_info):
           'msg: error when trying to prepare task',
           'error type: ' + str(type(error)),
           'error details: ',
-          traceback.format_exc(),
+          traceback.format_exc().split('\n'),
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
@@ -2243,7 +2243,7 @@ def prepare_task(task_info_dict, run_info):
         'msg: error when trying to prepare unknown task',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -2567,7 +2567,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
           'msg: error when trying to prepare run stage task',
           'error type: ' + str(type(error)),
           'error details: ',
-          traceback.format_exc(),
+          traceback.format_exc().split('\n'),
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
@@ -2575,7 +2575,7 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
         'msg: error when trying to prepare unknown run stage task',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -2727,7 +2727,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
           'msg: error when trying to prepare run stage',
           'error type: ' + str(type(error)),
           'error details: ',
-          traceback.format_exc(),
+          traceback.format_exc().split('\n'),
       ]]
       return dict(error_msgs=error_msgs)
   except Exception as error:
@@ -2735,7 +2735,7 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
         'msg: error when trying to prepare unknown run stage',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -2768,7 +2768,7 @@ def prepare_run_stages(run_stages, prepared_nodes, run_info):
         'msg: error when trying to prepare run stages',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -3057,6 +3057,6 @@ def prepare_ctx(ctx_name, run_info):
         'msg: error when trying to prepare the context',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)

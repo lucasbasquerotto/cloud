@@ -100,7 +100,7 @@ def load_content(content, env, run_info, input_params=None, custom_dir=None):
         'msg: error when trying to load the content',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -379,7 +379,7 @@ def prepare_content(content, env, run_info, additional_info=None):
                     'msg: error when trying to prepare the content child (env type)',
                     'error type: ' + str(type(error)),
                     'error details: ',
-                    traceback.format_exc(),
+                    traceback.format_exc().split('\n'),
                 ]]
 
           for value in (error_msgs_env or []):
@@ -552,6 +552,6 @@ def prepare_content(content, env, run_info, additional_info=None):
         'msg: error when trying to prepare the content',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)

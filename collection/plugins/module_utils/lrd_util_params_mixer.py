@@ -52,7 +52,7 @@ def expand_group_params(group_params, group_params_dict, ctx_name=None):
         'msg: error when trying to expand group params',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -150,7 +150,7 @@ def mix_inner(args):
         'msg: error when trying to mix parameters (inner)',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 

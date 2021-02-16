@@ -5,16 +5,91 @@
 
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-function-docstring
+# pylint: disable=missing-class-docstring
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
+import collections
+import sys
 import yaml
 
+from yaml.reader import Reader
+from yaml.scanner import Scanner
+from yaml.parser import Parser
+from yaml.composer import Composer
+from yaml.constructor import Constructor, ConstructorError
+from yaml.resolver import Resolver
+from yaml.nodes import MappingNode
+
 try:
-  from yaml import CLoader as Loader, CDumper as Dumper
+  from yaml import CDumper as Dumper
 except ImportError:
-  from yaml import Loader, Dumper
+  from yaml import Dumper
+
+
+class NoDuplicateConstructor(Constructor):
+  def construct_mapping(self, node, deep=False):
+    if not isinstance(node, MappingNode):
+      raise ConstructorError(
+          None, None,
+          'expected a mapping node, but found %s' % node.id,
+          node.start_mark
+      )
+
+    mapping = dict()
+
+    for key_node, value_node in node.value:
+      # keys can be list -> deep
+      key = self.construct_object(key_node, deep=True)
+
+      # lists are not hashable, but tuples are
+      if not isinstance(key, collections.Hashable):
+        if isinstance(key, list):
+          key = tuple(key)
+
+      if sys.version_info.major == 2:
+        try:
+          hash(key)
+        except TypeError as exc:
+          raise ConstructorError(
+              'while constructing a mapping',
+              node.start_mark,
+              'found unacceptable key (%s)' % exc,
+              key_node.start_mark
+          ) from exc
+      else:
+        if not isinstance(key, collections.Hashable):
+          raise ConstructorError(
+              'while constructing a mapping',
+              node.start_mark,
+              'found unhashable key',
+              key_node.start_mark
+          )
+
+      value = self.construct_object(value_node, deep=deep)
+
+      # Actually do the check.
+      if key in mapping:
+        raise ConstructorError(
+            None, None,
+            'duplicate key found: %s' % key,
+            key_node.start_mark
+        )
+
+      mapping[key] = value
+    return mapping
+
+
+class NoDuplicateLoader(Reader, Scanner, Parser, Composer, NoDuplicateConstructor, Resolver):
+  def __init__(self, stream):
+    Reader.__init__(self, stream)
+    Scanner.__init__(self)
+    Parser.__init__(self)
+    Composer.__init__(self)
+    NoDuplicateConstructor.__init__(self)
+    Resolver.__init__(self)
+
 
 cached_files_dict = dict()
 
@@ -39,7 +114,7 @@ def load_file(file_path):
 
 
 def load_yaml(text):
-  return yaml.load(text, Loader=Loader)
+  return yaml.load(text, Loader=NoDuplicateLoader)
 
 
 def load_yaml_file(file_path):

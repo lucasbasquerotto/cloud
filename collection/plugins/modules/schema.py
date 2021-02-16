@@ -12,6 +12,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_schema import validate_schema
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, load_yaml_file
@@ -151,9 +152,10 @@ def main():
     except Exception as error:
       error_msgs = [[
           str('file: ' + schema_file),
-          'msg: error when trying to the load schema file',
+          'msg: error when trying to load the schema file',
           'error type: ' + str(type(error)),
-          'error details: ' + str(error),
+          'error details: ',
+          traceback.format_exc().split('\n'),
       ]]
 
     if schema:

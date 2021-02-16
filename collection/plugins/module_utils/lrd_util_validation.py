@@ -36,52 +36,63 @@ def validate_ctx_schema(ctx_title, schema_files, task_data):
         schema_files = [schema_files]
 
       for schema_file in schema_files:
-        schema_file = (
-            (base_dir_prefix + schema_file)
-            if base_dir_prefix
-            else schema_file
-        )
-
-        if not schema_file:
-          error_msgs += [[
-              str('context: ' + str(ctx_title or '')),
-              str('msg: schema file not defined'),
-          ]]
-        elif os.path.exists(schema_file):
-          schema = load_cached_file(schema_file)
-
-          schema_data = dict()
-
-          if all_props:
-            schema_data = dict_to_validate
-          else:
-            for key in (prop_names or []):
-              if dict_to_validate.get(key) is not None:
-                schema_data[key] = dict_to_validate.get(key)
-
-          error_msgs_aux = validate_schema(
-              schema, schema_data
+        try:
+          schema_file = (
+              (base_dir_prefix + schema_file)
+              if base_dir_prefix
+              else schema_file
           )
 
-          for value in (error_msgs_aux or []):
-            new_value = [
+          if not schema_file:
+            error_msgs += [[
                 str('context: ' + str(ctx_title or '')),
-                str('schema file: ' + schema_file),
-            ] + value
-            error_msgs += [new_value]
-        else:
+                str('msg: schema file not defined'),
+            ]]
+          elif os.path.exists(schema_file):
+            schema = load_cached_file(schema_file)
+
+            schema_data = dict()
+
+            if all_props:
+              schema_data = dict_to_validate
+            else:
+              for key in (prop_names or []):
+                if dict_to_validate.get(key) is not None:
+                  schema_data[key] = dict_to_validate.get(key)
+
+            error_msgs_aux = validate_schema(
+                schema, schema_data
+            )
+
+            for value in (error_msgs_aux or []):
+              new_value = [
+                  str('context: ' + str(ctx_title or '')),
+                  str('schema file: ' + schema_file),
+              ] + value
+              error_msgs += [new_value]
+          else:
+            error_msgs += [[
+                str('context: ' + str(ctx_title or '')),
+                str('msg: schema file not found: ' + schema_file),
+            ]]
+        except Exception as error:
           error_msgs += [[
               str('context: ' + str(ctx_title or '')),
-              str('msg: schema file not found: ' + schema_file),
+              str('schema file: ' + (schema_file or '')),
+              'msg: error when trying to validate the context schema',
+              'error type: ' + str(type(error)),
+              'error details: ',
+              traceback.format_exc().split('\n'),
           ]]
+          return dict(error_msgs=error_msgs)
     return dict(result=None, error_msgs=error_msgs)
   except Exception as error:
     error_msgs += [[
         str('context: ' + str(ctx_title or '')),
-        'msg: error when trying to validate the context schema',
+        'msg: error when trying to validate the context schemas',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -158,7 +169,7 @@ def get_validators(ctx_title, validator_files, task_data, env_data):
         'msg: error when trying to get the context validators',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 

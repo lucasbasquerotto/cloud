@@ -223,7 +223,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
             'msg: error when trying to prepare the node dependency',
             'error type: ' + str(type(error)),
             'error details: ',
-            traceback.format_exc(),
+            traceback.format_exc().split('\n'),
         ]]
 
       for value in error_msgs_node:
@@ -236,7 +236,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
         'msg: error when trying to prepare the nodes dependencies',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -291,7 +291,7 @@ def prepare_host_dependencies(
             'msg: error when trying to prepare the node dependency data',
             'error type: ' + str(type(error)),
             'error details: ',
-            traceback.format_exc(),
+            traceback.format_exc().split('\n'),
         ]]
 
       for value in error_msgs_node:
@@ -306,7 +306,7 @@ def prepare_host_dependencies(
         'msg: error when trying to prepare the nodes dependencies data',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
     return dict(error_msgs=error_msgs)
 
@@ -480,7 +480,7 @@ def prepare_node_host_dependencies(
             'msg: error when trying to prepare the host dependency data',
             'error type: ' + str(type(error)),
             'error details: ',
-            traceback.format_exc(),
+            traceback.format_exc().split('\n'),
         ]]
 
       for value in error_msgs_dependency:
@@ -495,7 +495,7 @@ def prepare_node_host_dependencies(
         'msg: error when trying to prepare the host dependencies data',
         'error type: ' + str(type(error)),
         'error details: ',
-        traceback.format_exc(),
+        traceback.format_exc().split('\n'),
     ]]
 
   return dict(result=result, error_msgs=error_msgs)
