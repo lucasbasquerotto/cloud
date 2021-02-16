@@ -89,8 +89,10 @@ class FilterModule(object):
       return None
 
     if not isinstance(input_list, list):
-      raise AnsibleError('[simple_dict_prop_list] value should be a list, ' +
-                         'found: ' + str(type(input_list)))
+      raise AnsibleError(
+          '[simple_dict_prop_list] value should be a list, '
+          + 'found: ' + str(type(input_list))
+      )
 
     result_list = map(
         lambda item: self.simple_dict_prop(item, prop),
