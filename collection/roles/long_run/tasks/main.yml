@@ -8,7 +8,7 @@
   file:
     path: "{{ long_run_item }}"
     state: directory
-    mode: 0751
+    mode: 0755
   loop:
     - "{{ long_run_output_path }}"
     - "{{ long_run_tmp_path }}"

@@ -541,10 +541,11 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
             error_msgs_aux_item += error_msgs_aux_content
           else:
             env_lax = env_data.get('lax')
-            default_dir_mode = 777 if env_lax else 751
+            default_dir_mode = 777 if env_lax else 755
             default_file_mode = 666 if env_lax else 640
+            default_file_executable_mode = 777 if env_lax else 751
             default_file_mode = (
-                default_dir_mode
+                default_file_executable_mode
                 if to_bool(transfer_content.get('executable'))
                 else default_file_mode
             )

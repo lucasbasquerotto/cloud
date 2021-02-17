@@ -129,9 +129,9 @@ def load_ctx_file(current_file, is_env, data_info):
 
     env_dir = env_data.get('env_dir')
     env_lax = env_data.get('lax')
-    default_dir_mode = 777 if env_lax else 751
+    default_dir_mode = 777 if env_lax else 755
     default_file_mode = 666 if env_lax else 640
-    default_file_executable_mode = default_dir_mode
+    default_file_executable_mode = 777 if env_lax else 751
 
     when = current_file.get('when')
 
@@ -221,9 +221,9 @@ def load_ctx_template(current_template, is_env, data_info):
         'template_no_empty_lines'
     )
 
-    default_dir_mode = 777 if env_lax else 751
+    default_dir_mode = 777 if env_lax else 755
     default_file_mode = 666 if env_lax else 640
-    default_file_executable_mode = default_dir_mode
+    default_file_executable_mode = 777 if env_lax else 751
 
     when = current_template.get('when')
 

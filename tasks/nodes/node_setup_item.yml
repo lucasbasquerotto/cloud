@@ -54,7 +54,7 @@
           file:
             path: "{{ node_setup_item_log_file | dirname }}"
             state: directory
-            mode: "{{ (env_lax | bool) | ternary(0777, 0751) }}"
+            mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
           tags: ["no_print_skipped"]
 
         - name: >

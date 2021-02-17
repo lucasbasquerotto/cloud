@@ -1044,7 +1044,7 @@ When the `lax` property is defined in the [Cloud Input Vars](#cloud-input-vars) 
 
 Otherwise, when `lax` is `false` (default):
 
-- Directories will have the permission `751`.
+- Directories will have the permission `755`.
 - If the `executable` property is defined as `true`, files will have the permission `751`.
 - If the `executable` property is defined as `false` (default), files will have the permission `640`.
 

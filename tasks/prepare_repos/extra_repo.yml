@@ -27,7 +27,7 @@
           )
         }}
       dir_mode: >-
-        {{ tmp_item.mode | default(env_lax | bool | ternary(0777, 0751)) }}
+        {{ tmp_item.mode | default(env_lax | bool | ternary(0777, 0755)) }}
       no_empty_lines: "{{ tmp_item.no_empty_lines | default(tmp_no_empty_lines) }}"
   when: tmp_item.when | default(true, true) | bool
   loop: "{{ prepare_repos_item.transfer | default([]) }}"
