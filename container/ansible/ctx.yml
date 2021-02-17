@@ -70,11 +70,49 @@
     label: "{{ project_ctx_item_label }}"
   tags: ["no_print"]
 
+- name: "{{ project_ctx_title }} - collections (parent directories)"
+  file:
+    path: "{{ (project_ctx_cloud_repo_dir + '/' +  tmp_dest) | dirname }}"
+    state: directory
+    mode: "{{ tmp_item.dir_mode }}"
+  vars:
+    tmp_dest: "{{ tmp_item.dest | default('') }}"
+  loop: "{{ project_ctx.prepared_collections | default([], true) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "(parent of) {{ tmp_dest }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ project_ctx_title }} - collections (symlinks)"
+  file:
+    src: "{{ tmp_real_src | default(omit, true) }}"
+    dest: "{{ tmp_full_dest }}"
+    state: "{{ tmp_item.absent | ternary('absent', 'link') }}"
+    mode: "{{ tmp_real_mode | default(omit, true) }}"
+  vars:
+    tmp_src: "{{ tmp_item.src | default('') }}"
+    tmp_dest: "{{ tmp_item.dest | default('') }}"
+    tmp_full_src: "{{ project_ctx_cloud_repo_dir }}/{{ tmp_src }}"
+    tmp_full_dest: "{{ project_ctx_cloud_repo_dir }}/{{ tmp_dest }}"
+    tmp_src_relpath: "{{ tmp_full_src | relpath(tmp_full_dest | dirname) }}"
+    tmp_real_src: "{{ tmp_item.absent | ternary('', tmp_src_relpath) }}"
+    tmp_real_mode: "{{ tmp_item.absent | ternary('', tmp_item.mode) }}"
+    tmp_label: "[src] {{ tmp_src }} - [dest] {{ tmp_dest }}"
+    tmp_absent_label: "[absent] {{ tmp_dest }}"
+    tmp_real_label: "{{ tmp_item.absent | ternary(tmp_absent_label, tmp_label) }}"
+  loop: "{{ project_ctx.prepared_collections | default([], true) }}"
+  loop_control:
+    loop_var: tmp_item
+    label: "{{ tmp_real_label }}"
+  tags: ["no_print_skipped"]
+
 - name: "{{ project_ctx_title }} - create the ctx directory"
   file:
     path: "{{ project_ctx_base_dir }}"
     state: directory
     mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+
+# output vars
 
 - name: "{{ project_ctx_title }} - project_ctx_params (define)"
   set_fact:

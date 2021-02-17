@@ -16,17 +16,21 @@ __metaclass__ = type  # pylint: disable=invalid-name
 
 import traceback
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import is_str
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import is_str, to_bool
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation import (
     validate_ctx_schema
 )
 
 
-def prepare_ctx(ctx_name, env, env_init, has_original_env, env_original, env_dir):
+def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
   error_msgs_ctx = list()
   result = dict()
 
   try:
+    has_original_env = env_info.get('has_original_env')
+    env_dir = env_info.get('env_dir')
+    env_lax = env_info.get('env_lax')
+
     if not ctx_name:
       error_msgs_ctx += [['msg: context name not specified']]
     else:
@@ -89,7 +93,7 @@ def prepare_ctx(ctx_name, env, env_init, has_original_env, env_original, env_dir
             collection_dest = collection_namespace
 
             if collection_name:
-              collection_dest += collection_namespace + '/' + collection_name
+              collection_dest = collection_namespace + '/' + collection_name
 
             if collection_namespace == 'lrd':
               error_msgs_collection += [[
@@ -126,10 +130,15 @@ def prepare_ctx(ctx_name, env, env_init, has_original_env, env_original, env_dir
               collection_namespaces.add(collection_namespace)
               collection_dests.add(collection_dest)
 
-              prepared_collections += dict(
+              default_mode = 777 if env_lax else 755
+              prepared_collection = dict(
                   src=collection_path,
-                  dest=collection_dest,
+                  dest='ansible/collections/ansible_collections/' + collection_dest,
+                  mode=collection.get('mode') or default_mode,
+                  dir_mode=collection.get('dir_mode') or default_mode,
+                  absent=to_bool(collection.get('absent')) or False,
               )
+              prepared_collections += [prepared_collection]
 
           result['prepared_collections'] = prepared_collections
 
@@ -182,7 +191,7 @@ def prepare_ctx(ctx_name, env, env_init, has_original_env, env_original, env_dir
 
       if (not has_original_env) and ctl_env_schema:
         task_data = dict(
-            base_dir_prefix=env_dir,
+            base_dir_prefix=env_dir + '/',
             dict_to_validate=env_init.get('env_params'),
             all_props=True,
         )
@@ -196,7 +205,7 @@ def prepare_ctx(ctx_name, env, env_init, has_original_env, env_original, env_dir
 
       if has_original_env and original_env_schema:
         task_data = dict(
-            base_dir_prefix=env_dir,
+            base_dir_prefix=env_dir + '/',
             dict_to_validate=env_original,
             all_props=True,
         )
@@ -225,11 +234,15 @@ def prepare_ctx(ctx_name, env, env_init, has_original_env, env_original, env_dir
   return dict(result=result, error_msgs=error_msgs)
 
 
-def prepare_project(env, env_init, has_original_env, env_original, env_dir):
+def prepare_project(env, env_init, env_original, env_info):
   result = dict()
   error_msgs = list()
 
   try:
+    env_info = env_info or dict()
+    has_original_env = env_info.get('has_original_env')
+    env_dir = env_info.get('env_dir')
+
     if not env_init:
       error_msgs += [['msg: initial environment dictionary not specified']]
 
@@ -306,7 +319,7 @@ def prepare_project(env, env_init, has_original_env, env_original, env_dir):
 
       if has_original_env and original_env_schema:
         task_data = dict(
-            base_dir_prefix=env_dir,
+            base_dir_prefix=env_dir + '/',
             dict_to_validate=env_original,
             all_props=True,
         )
@@ -351,9 +364,8 @@ def prepare_project(env, env_init, has_original_env, env_original, env_dir):
               ctx_name,
               env=env,
               env_init=env_init,
-              has_original_env=has_original_env,
               env_original=env_original,
-              env_dir=env_dir,
+              env_info=env_info,
           )
           ctx_data = info.get('result')
           error_msgs_ctx += (info.get('error_msgs') or [])

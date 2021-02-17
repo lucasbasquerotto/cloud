@@ -55,6 +55,11 @@ schemas:
     lax: true
     description: "context minimal schema"
     props:
+      run_file:
+        type: "str"
+        description: >-
+          path, relative to the cloud repository, in which the file to run the
+          cloud context steps is located
       repo:
         non_empty: true
         type: "str"
@@ -66,6 +71,15 @@ schemas:
           list with repository names that extends the main repository of the cloud
           layer and the directories in which the repositories will be cloned
           (relative to the cloud repository)
+      collections:
+        type: "list"
+        elem_schema: "collection"
+        description: >-
+          list of collections that specifies paths to collections, relative to the
+          cloud repository directory, the namespace and, optionally, the collection
+          name, so that a symlink pointing to the actual collection (or namespace)
+          directory is created, making possible the use of the collection in the
+          cloud context steps
       ctl_env_schema:
         type: "str"
         description: >-
@@ -90,6 +104,34 @@ schemas:
         non_empty: true
         type: "str"
         description: "path to directory in which the repository will be cloned"
+  collection:
+    type: "dict"
+    description: "hooks schema"
+    props:
+      namespace:
+        type: "str"
+        non_empty: true
+        regex: "^[-\\w]+$"
+        description: "the collection namespace"
+      collection:
+        type: "str"
+        regex: "^[-\\w]+$"
+        description: "the collection name"
+      path:
+        type: "str"
+        non_empty: true
+        description: "path to the collection, relative to the cloud repository directory"
+      mode:
+        type: "str"
+        regex: "^([0-7]{3})?$"
+        description: "the permissions the resulting symlink should have"
+      dir_mode:
+        type: "str"
+        regex: "^([0-7]{3})?$"
+        description: "the permissions the resulting symlink parent directory should have"
+      absent:
+        type: "bool"
+        description: "when true, the symlink will be removed, if present"
   repo:
     type: "dict"
     description: "repository schema"

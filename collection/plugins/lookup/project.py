@@ -35,16 +35,12 @@ DOCUMENTATION = """
         description: The controller environment dictionary (output of the Controller Preparation Step)
         type: dict
         required: true
-      has_original_env:
-        description: Specifies if environment has an original and a base environment files
-        type: bool
-        default: true
       env_original:
         description: The original environment dictionary (loaded from the Project Environemnt Repository File)
         type: dict
         required: true
-      env_dir:
-        description: Environment repository directory
+      env_info:
+        description: General information about the environment, like the directory, lax permissions and so on
         type: str
         default: true
 """
@@ -61,9 +57,8 @@ class LookupModule(LookupBase):
 
   def run(self, terms, **kwargs):
     env_init = kwargs.get('env_init')
-    has_original_env = kwargs.get('has_original_env')
     env_original = kwargs.get('env_original')
-    env_dir = kwargs.get('env_dir')
+    env_info = kwargs.get('env_info')
 
     ret = []
     error_msgs = []
@@ -74,9 +69,8 @@ class LookupModule(LookupBase):
       result_info = prepare_project(
           env=env,
           env_init=env_init,
-          has_original_env=has_original_env,
           env_original=env_original,
-          env_dir=env_dir,
+          env_info=env_info,
       )
 
       result_aux = result_info.get('result')
@@ -88,6 +82,8 @@ class LookupModule(LookupBase):
         ret.append(result_aux)
 
     if error_msgs:
-      raise AnsibleError(to_text(error_text(error_msgs, 'project generation')))
+      raise AnsibleError(
+          to_text(error_text(error_msgs, 'project data generation'))
+      )
 
     return ret

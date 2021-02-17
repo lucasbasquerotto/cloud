@@ -169,13 +169,18 @@
               'lrd.cloud.project',
               project_env,
               env_init=project_env_init,
-              has_original_env=project_env_has_original | bool,
               env_original=project_env_original,
-              env_dir=project_env_dir
+              env_info=tmp_info
             )
           }}
         project_ssh_title: "{{ project_title }} - ssh"
         project_ctxs_title: "{{ project_title }} - ctxs"
+      vars:
+        tmp_info:
+          env_lax: "{{ env_lax | bool }}"
+          env_dev: "{{ env_dev | bool }}"
+          env_dir: "{{ project_env_dir }}"
+          has_original_env: "{{ project_env_has_original | bool }}"
       tags: ["no_print"]
 
     - name: "{{ project_ssh_title }} - create the cloud dir"
