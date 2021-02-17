@@ -95,10 +95,16 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
             if collection_name:
               collection_dest = collection_namespace + '/' + collection_name
 
-            if collection_namespace == 'lrd':
+            if ((collection_namespace == 'lrd') and (not collection_name)):
               error_msgs_collection += [[
                   'collection namespace: ' + str(collection_namespace),
-                  'msg: invalid collection namespace',
+                  'msg: reserved collection namespace (namespace only)',
+              ]]
+            elif ((collection_namespace == 'lrd') and (collection_name == 'cloud')):
+              error_msgs_collection += [[
+                  'collection namespace: ' + str(collection_namespace),
+                  'collection name: ' + str(collection_name),
+                  'msg: reserved collection',
               ]]
             elif collection_namespace in collection_only_namespaces:
               error_msgs_collection += [[

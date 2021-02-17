@@ -15,7 +15,7 @@
 /ansible/ansible.generated.cfg
 
 /ansible/collections/ansible_collections/*
-!/ansible/collections/ansible_collections/lrd
+!/ansible/collections/ansible_collections/lrd/cloud
 
 /run.yml
 /tmp/
