@@ -59,7 +59,7 @@ schemas:
         non_empty: true
         type: "str"
         description: "repository name of the cloud layer"
-      env_repos:
+      ext_repos:
         type: "list"
         elem_schema: "repo_info"
         description: >-

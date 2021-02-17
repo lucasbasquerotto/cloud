@@ -206,7 +206,7 @@ _(The values above are the output after running `./run launch --dev demo` with t
 
 ## Cloud Preparation Step
 
-This step receives a `project-dir` parameter with the [project base directory](#project-base-directory), then use the [Cloud Input Vars](#cloud-input-vars) at `<project_base_dir>/files/ctl/vars.yml` to load the [Project Environment](#project-environment), and, finally, for each context defined in the input vars (`ctxs`), clone the cloud repository for that context, as well as the repositories that will act as extensions (`env_repos`) for the cloud repository for the given context.
+This step receives a `project-dir` parameter with the [project base directory](#project-base-directory), then use the [Cloud Input Vars](#cloud-input-vars) at `<project_base_dir>/files/ctl/vars.yml` to load the [Project Environment](#project-environment), and, finally, for each context defined in the input vars (`ctxs`), clone the cloud repository for that context, as well as the repositories that will act as extensions (`ext_repos`) for the cloud repository for the given context.
 
 This preparation step is commonly executted inside a container, runs only once for the project and is the same even if the cloud repositories for the contexts are different, so it's expected that all the contexts in a project are compatible with this preparation step, and any specific stuff related to the context is run in the [Cloud Context Preparation Step](#cloud-context-preparation-step).
 
@@ -384,7 +384,7 @@ This step create the nodes declared for the context in the environment file. For
 main:
   my_context:
     repo: "cloud"
-    env_repos:
+    ext_repos:
       - repo: "ext_cloud"
         dir: "ext-cloud"
     hosts:
@@ -1508,7 +1508,7 @@ meta:
 main:
   pod_local:
     repo: "cloud"
-    env_repos:
+    ext_repos:
       - repo: "ext_cloud"
         dir: "ext-cloud"
     hosts: |
@@ -2051,7 +2051,7 @@ ctxs: "{{ params.ctxs | default([]) }}"
 main:
   my_ctx:
     repo: "cloud"
-    env_repos:
+    ext_repos:
       - repo: "ext_cloud"
         dir: "ext-cloud"
     hosts: |
@@ -2287,7 +2287,7 @@ ctxs: ["my_ctx"]
 main:
   my_ctx:
     repo: "cloud"
-    env_repos:
+    ext_repos:
       - repo: "ext_cloud_1"
         dir: "ext-cloud-1"
       - repo: "ext_cloud_2"
@@ -2350,7 +2350,7 @@ _Example:_
 main:
   my_context:
     repo: "cloud"
-    env_repos:
+    ext_repos:
       - repo: "ext_cloud"
         dir: "ext-cloud"
     nodes:

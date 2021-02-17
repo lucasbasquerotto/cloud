@@ -673,8 +673,8 @@ def prepare_pod(pod_info, parent_data, run_info):
 
         repo = pod.get('repo')
         result['repo'] = repo
-        env_repos = pod.get('env_repos')
-        result['env_repos'] = env_repos
+        ext_repos = pod.get('ext_repos')
+        result['ext_repos'] = ext_repos
 
         repos = env.get('repos')
 
@@ -686,11 +686,11 @@ def prepare_pod(pod_info, parent_data, run_info):
               str('msg: repository not found: ' + repo),
           ]]
 
-        for env_repo in (env_repos or []):
-          if not repos.get(env_repo.get('repo')):
+        for ext_repo in (ext_repos or []):
+          if not repos.get(ext_repo.get('repo')):
             error_msgs_aux += [[
                 'context: validate pod env repo',
-                str('msg: repository not found: ' + env_repo.get('repo')),
+                str('msg: repository not found: ' + ext_repo.get('repo')),
             ]]
 
         pod_identifier = env.get('name') + '-' + \
@@ -2803,8 +2803,8 @@ def prepare_ctx(ctx_name, run_info):
         ctx = main_dict.get(ctx_name)
         repo = ctx.get('repo')
         result['repo'] = repo
-        env_repos = ctx.get('env_repos')
-        result['env_repos'] = env_repos
+        ext_repos = ctx.get('ext_repos')
+        result['ext_repos'] = ext_repos
         result['cfg'] = ctx.get('cfg')
         result['hosts'] = ctx.get('hosts')
 
@@ -2820,11 +2820,11 @@ def prepare_ctx(ctx_name, run_info):
               'msg: repository not found: ' + repo,
           ]]
 
-        for env_repo in (env_repos or []):
-          if not repos.get(env_repo.get('repo')):
+        for ext_repo in (ext_repos or []):
+          if not repos.get(ext_repo.get('repo')):
             error_msgs += [[
                 'context: validate ctx env repo',
-                str('msg: repository not found: ' + env_repo.get('repo')),
+                str('msg: repository not found: ' + ext_repo.get('repo')),
             ]]
 
         hooks = ctx.get('hooks')

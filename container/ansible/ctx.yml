@@ -6,93 +6,22 @@
       {{ project_files_cloud_dir }}/ctxs/{{ project_ctx_key }}
     project_ctx_secrets_dir: >-
       {{ project_secrets_cloud_dir }}/ctxs/{{ project_ctx_key }}
-  tags: ["no_print"]
-
-- name: "{{ project_ctx_title }} - project_ctx_path_map_repos"
-  set_fact:
-    project_ctx_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
+    project_ctx_path_map_repos: >-
+      {{ project_env_init.path_params.path_map_repos | default({}) }}
   tags: ["no_print"]
 
 # ctx - cloud repository
 
-- name: "{{ project_ctx_title }} - validate - ctx - required"
-  fail:
-    msg: "ctx [{{ project_ctx_key }}] not specified for under 'main' in the environment file"
-  when: project_env.main[project_ctx_key] is not defined
-  tags: ["no_print"]
-
-- name: "{{ project_ctx_title }} - validate - cloud repo - required"
-  fail:
-    msg: >-
-      cloud repository (under 'main' in the environment file)
-      not specified for ctx [{{ project_ctx_key }}]
-  when: (project_env.main[project_ctx_key].repo | default('')) == ''
-  tags: ["no_print"]
-
-- name: "{{ project_ctx_title }} - project_ctx_main"
-  set_fact:
-    project_ctx_main: "{{ project_env.main[project_ctx_key] }}"
-  tags: ["no_print"]
-
-- name: "{{ project_env_title }} - validate if ctl_env_schema is defined for the context"
-  fail:
-    msg: |
-      ctl_env_schema is defined for the context in the project base environment repository file
-      (should be in the original environment repository)
-      ctl_env_schema: {{ project_ctx_main.ctl_env_schema | default('') }}
-  when: >-
-    (project_env_has_original | bool)
-    and
-    ((project_ctx_main.ctl_env_schema | default('')) != '')
-
-- name: "{{ project_ctx_title }} - validate ctl env (env vars) for the context"
-  lrd.cloud.schema:
-    schema_file: "{{ project_env_dir }}/{{ project_ctx_main.ctl_env_schema | default('') }}"
-    value: "{{ project_env_init.env_params | default({}) }}"
-  when: >-
-    (not (project_env_has_original | bool))
-    and
-    ((project_ctx_main.ctl_env_schema | default('')) != '')
-
-- name: "{{ project_env_title }} - validate if original_env_schema is defined for the context"
-  fail:
-    msg: |
-      original_env_schema is defined for the context in the project environment repository file
-      (should be in an environment base repository)
-      original_env_schema: {{ project_ctx_main.original_env_schema | default('') }}
-  when: >-
-    (not (project_env_has_original | bool))
-    and
-    ((project_ctx_main.original_env_schema | default('')) != '')
-
-- name: "{{ project_ctx_title }} - validate original env for the context"
-  lrd.cloud.schema:
-    schema_file: "{{ project_env_dir }}/{{ project_ctx_main.original_env_schema | default('') }}"
-    value: "{{ project_env_original }}"
-  when: >-
-    (project_env_has_original | bool)
-    and
-    ((project_ctx_main.original_env_schema | default('')) != '')
-
-- name: "{{ project_ctx_title }} - project_ctx_cloud_repo_key"
-  set_fact:
-    project_ctx_cloud_repo_key: "{{ project_ctx_main.repo }}"
-    project_ctx_cloud_env_repos: "{{ project_ctx_main.env_repos | default([]) }}"
-  tags: ["no_print"]
-
-- name: "{{ project_env_title }} - set_fact - project_ctx_cloud_repo_dir"
-  set_fact:
+- name: "{{ project_ctx_title }} - cloud - repo (outer)"
+  include_tasks: "tasks/util/repo.yml"
+  vars:
+    project_ctx_cloud_repo_key: "{{ project_ctx.repo }}"
     project_ctx_cloud_repo_dir: "{{ project_ctx_base_dir + '/repo' }}"
     project_ctx_path_cloud: >-
       {{
         project_ctx_path_map_repos[project_ctx_cloud_repo_key]
         | default('')
       }}
-  tags: ["no_print"]
-
-- name: "{{ project_ctx_title }} - cloud - repo (outer)"
-  include_tasks: "tasks/util/repo.yml"
-  vars:
     repo_title: "{{ project_ctx_title }} - cloud - repo"
     repo_main: "{{ project_env.repos[project_ctx_cloud_repo_key] | default({}) }}"
     repo_ssh_src_dir: "{{ project_env_dir }}"
@@ -115,7 +44,7 @@
     project_ctx_item_label: >-
       {{ project_ctx_item.dir | default('') }}
       ({{ project_ctx_item.repo | default('') }})
-    project_ctx_path_cloud_env_repo: >-
+    project_ctx_path_cloud_ext_repo: >-
       {{
         project_ctx_path_map_repos[project_ctx_item.repo | default('')]
         | default('')
@@ -132,10 +61,10 @@
     repo_secrets_dir: "{{ project_ctx_secrets_dir + '/' + project_ctx_item.dir }}"
     repo_default_dir: "{{ project_ctx_cloud_repo_dir + '/' + project_ctx_item.dir }}"
     repo_dev_base_dir: "{{ project_dev_repos_dir }}"
-    repo_dev_path: "{{ project_ctx_path_cloud_env_repo }}"
+    repo_dev_path: "{{ project_ctx_path_cloud_ext_repo }}"
     repo_dev: "{{ env_dev }}"
     repo_lax: "{{ env_lax }}"
-  loop: "{{ project_ctx_cloud_env_repos }}"
+  loop: "{{ project_ctx.ext_repos | default([], true) }}"
   loop_control:
     loop_var: project_ctx_item
     label: "{{ project_ctx_item_label }}"
@@ -163,8 +92,7 @@
       env_dir: "{{ project_env_dir }}"
       env_file: "{{ project_env_file }}"
       repo_dir: "{{ project_ctx_cloud_repo_dir }}"
-      repo_run_file: >-
-        {{ project_ctx_cloud_repo_dir }}/{{ project_ctx_main.run_file | default('run') }}
+      repo_run_file: "{{ project_ctx_cloud_repo_dir }}/{{ project_ctx.run_file }}"
       vault_file: "{{ project_secrets_ctl_dir }}/vault"
       env_params_file: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
       path_map_file: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"

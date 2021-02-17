@@ -26,12 +26,12 @@
 ### Create the environment pod repositories in the env folders (when defined) ###
 
 - name: "{{ pod_prepare_title }}"
-  include_tasks: "tasks/pods/env_repos.yml"
+  include_tasks: "tasks/pods/ext_repos.yml"
   vars:
-    pod_prepare_env_repo_name: "{{ pod_prepare_item.repo }}"
-    pod_prepare_env_repo: >-
+    pod_prepare_ext_repo_name: "{{ pod_prepare_item.repo }}"
+    pod_prepare_ext_repo: >-
       {{ env.repos[pod_prepare_item.repo] }}
-  loop: "{{ pod_item.env_repos | default([], true) }}"
+  loop: "{{ pod_item.ext_repos | default([], true) }}"
   loop_control:
     loop_var: pod_prepare_item
     label: "{{ pod_prepare_item.repo }}"

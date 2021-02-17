@@ -41,7 +41,7 @@
     repo_dev_path: "{{ prepare_repos_env_path_map[prepare_repos_layer_item.repo] | default('') }}"
     repo_dev: "{{ env_dev }}"
     repo_lax: "{{ env_lax }}"
-  loop: "{{ prepare_repos_layer.env_repos | default([]) }}"
+  loop: "{{ prepare_repos_layer.ext_repos | default([]) }}"
   loop_control:
     loop_var: prepare_repos_layer_item
     label: "{{ prepare_repos_layer_item.repo }}"

@@ -5,18 +5,16 @@
     - name: "[cloud - init] - project_base_title"
       set_fact:
         project_base_title: "[cloud - init]"
-        project_base_dir: "{{ env_project_dir }}"
+        project_base_dir: "{{ tmp_base_dir }}"
         project_keys_file_rel: "files/ctl/vars.yml"
-      tags: ["no_print"]
-
-    - name: "{{ project_base_title }} - project directories"
-      set_fact:
         project_files_cloud_dir_rel: "files/cloud"
-        project_files_cloud_dir: "{{ project_base_dir }}/files/cloud"
-        project_secrets_ctl_dir: "{{ project_base_dir }}/secrets/ctl"
-        project_secrets_cloud_dir: "{{ project_base_dir }}/secrets/cloud"
-        project_dev_repos_dir: "{{ project_base_dir }}/dev/link"
-        project_commit_dir: "{{ project_base_dir }}/files/cloud/commit"
+        project_files_cloud_dir: "{{ tmp_base_dir }}/files/cloud"
+        project_secrets_ctl_dir: "{{ tmp_base_dir }}/secrets/ctl"
+        project_secrets_cloud_dir: "{{ tmp_base_dir }}/secrets/cloud"
+        project_dev_repos_dir: "{{ tmp_base_dir }}/dev/link"
+        project_commit_dir: "{{ tmp_base_dir }}/files/cloud/commit"
+      vars:
+        tmp_base_dir: "{{ env_project_dir }}"
       tags: ["no_print"]
 
     - name: "{{ project_base_title }} - load the init environment vars"
@@ -161,124 +159,23 @@
       when: project_env.env is defined
       tags: ["no_print"]
 
-    # validate environment
+    # project data (from env)
 
-    - name: "{{ project_env_title }} - validate if ctl_env_schema is defined"
-      fail:
-        msg: |
-          ctl_env_schema is defined in the project base environment repository file
-          (should be in the original environment repository)
-          ctl_env_schema: {{ project_env.ctl_env_schema | default('') }}
-      when: >-
-        (project_env_has_original | bool)
-        and
-        ((project_env.ctl_env_schema | default('')) != '')
-
-    - name: "{{ project_env_title }} - validate if original_env_schema is defined"
-      fail:
-        msg: |
-          original_env_schema is defined in the project environment repository file
-          (should be in the environment base repository)
-          original_env_schema: {{ project_env_original.original_env_schema | default('') }}
-      when: >-
-        (not (project_env_has_original | bool))
-        and
-        (project_env_original.original_env_schema | default('')) != ''
-
-    - name: "{{ project_env_title }} - validate original env"
-      lrd.cloud.schema:
-        schema_file: "{{ project_env_dir }}/{{ project_env.original_env_schema | default('') }}"
-        value: "{{ project_env_original }}"
-      when: >-
-        (project_env_has_original | bool)
-        and
-        ((project_env.original_env_schema | default('')) != '')
-
-    - name: "{{ project_env_title }} - validate env (minimum)"
-      lrd.cloud.schema:
-        schema_file: "schemas/env_minimum.schema.yml"
-        value: "{{ project_env }}"
-
-    - name: "{{ project_env_title }} - validate the container"
-      fail:
-        msg: >-
-          {{ project_env_title }} - the container specified in the project environment
-          ({{ project_env.container }}) is not the container in which the project is being run
-          ({{ project_env_init.init.container }})
-      when: >-
-        ((project_env.container | default('')) != '')
-        and
-        ((project_env.container | default('')) != project_env_init.init.container)
-      tags: ["no_print"]
-
-    - name: "{{ project_env_title }} - validate the migration version"
-      fail:
-        msg: >-
-          {{ project_env_title }} - the migration version specified in the project environment
-          ({{ project_env.migration }}) is not the migration version specified for the project
-          in the root environment ({{ project_env_init.migration }})
-      when: >-
-        ((project_env.migration | default('')) != '')
-        and
-        ((project_env.migration | default('')) != project_env_init.migration)
-      tags: ["no_print"]
-
-    - name: "{{ project_env_title }} - validate ctx(s) - required"
-      fail:
-        msg: >-
-          {{ project_env_title }} -
-          ctxs is not defined anywhere (neither in the main env file,
-          nor in the project env file (or base env file))
-      when: (project_env.ctxs | default([]) | length) == 0
-      tags: ["no_print"]
-
-    # ssh (to access the nodes)
-
-    - name: "{{ project_title }} - project_ssh_title"
+    - name: "{{ project_title }} - generate the project data"
       set_fact:
+        project_data: >-
+          {{
+            lookup(
+              'lrd.cloud.project',
+              project_env,
+              env_init=project_env_init,
+              has_original_env=project_env_has_original | bool,
+              env_original=project_env_original,
+              env_dir=project_env_dir
+            )
+          }}
         project_ssh_title: "{{ project_title }} - ssh"
-      tags: ["no_print"]
-
-    - name: "{{ project_ssh_title }} - define node names"
-      set_fact:
-        project_ssh_nodes_list: []
-      tags: ["no_print"]
-
-    - name: "{{ project_ssh_title }} - define nodes"
-      set_fact:
-        project_ssh_nodes_list: "{{ project_ssh_nodes_list + tmp_nodes }}"
-      vars:
-        tmp_nodes: "{{ project_env.main[project_item].nodes | default([]) }}"
-      loop: "{{ project_env.ctxs | default([]) }}"
-      loop_control:
-        loop_var: project_item
-      tags: ["no_print"]
-
-    - name: "{{ project_ssh_title }} - define node names (create)"
-      set_fact:
-        project_ssh_nodes_all: []
-      tags: ["no_print"]
-
-    - name: "{{ project_ssh_title }} - define node names"
-      set_fact:
-        project_ssh_nodes_all: "{{ project_ssh_nodes_all + [tmp_node] }}"
-      vars:
-        tmp_node: "{{ project_item.name | default(project_item) }}"
-      loop: "{{ project_ssh_nodes_list | default([]) }}"
-      loop_control:
-        loop_var: project_item
-        label: "{{ tmp_node }}"
-      tags: ["no_print"]
-
-    - name: "{{ project_ssh_title }} - define unique node names"
-      set_fact:
-        project_ssh_nodes: "{{ project_ssh_nodes_all | unique }}"
-      tags: ["no_print"]
-
-    - name: "{{ project_ssh_title }} - verify unique node names"
-      fail:
-        project_ssh_nodes: "There are duplicated node names in your settings"
-      when: (project_ssh_nodes | length) != (project_ssh_nodes_all | length)
+        project_ctxs_title: "{{ project_title }} - ctxs"
       tags: ["no_print"]
 
     - name: "{{ project_ssh_title }} - create the cloud dir"
@@ -287,6 +184,8 @@
         state: directory
         mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
 
+    # ssh (to access the nodes)
+
     - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_files_cloud_dir }}/"
       template:
         src: "templates/ssh.tpl.sh"
@@ -294,14 +193,15 @@
         mode: "{{ env_lax | bool | ternary(0777, 0711) }}"
       vars:
         project_ssh_ctxs: "{{ project_env.ctxs }}"
+        project_ssh_nodes: "{{ project_data.node_names | default([]) }}"
         project_ssh_default_ctx: "{{ project_env_init.env_params.default_ctx | default('') }}"
         project_ssh_default_node: "{{ project_env_init.env_params.default_node | default('') }}"
+      when: (project_ssh_nodes | length) > 0
 
     # ctxs
 
-    - name: "{{ project_title }} - project_ctxs_title"
+    - name: "{{ project_ctxs_title }} - project_env_params and project_path_map_repos"
       set_fact:
-        project_ctxs_title: "{{ project_title }} - ctxs"
         project_env_params: "{{ project_env_init.env_params | default({}) }}"
         project_env_params_file_rel: "env-params.yml"
         project_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
@@ -323,10 +223,12 @@
     - name: "{{ project_ctxs_title }} (main)"
       include_tasks: "ctx.yml"
       vars:
+        project_ctx_key: "{{ project_ctx.name }}"
         project_ctx_title: "{{ project_ctxs_title }} [{{ project_ctx_key }}]"
-      loop: "{{ project_env.ctxs }}"
+      loop: "{{ project_data.prepared_ctxs }}"
       loop_control:
-        loop_var: project_ctx_key
+        loop_var: project_ctx
+        label: "{{ project_ctx_key }}"
       tags: ["no_print"]
 
     - name: "{{ project_ctxs_title }} - copy the ctxs executable file to {{ project_files_cloud_dir }}/"
