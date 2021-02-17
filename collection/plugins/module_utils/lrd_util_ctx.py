@@ -2794,6 +2794,7 @@ def prepare_ctx(ctx_name, run_info):
       error_msgs += [['msg: context name not specified']]
     else:
       main_dict = env.get('main')
+      cloud_dict = env.get('cloud') or dict()
 
       if not main_dict:
         error_msgs += [['msg: main environment dictionary not specified']]
@@ -2801,12 +2802,28 @@ def prepare_ctx(ctx_name, run_info):
         error_msgs += [['msg: context not in the main environment dictionary']]
       else:
         ctx = main_dict.get(ctx_name)
+
+        extend_cloud = to_bool(ctx.get('extend_cloud'))
         repo = ctx.get('repo')
+        repo = repo if (repo is not None) else (
+            cloud_dict.get('repo') if extend_cloud else None
+        )
         result['repo'] = repo
         ext_repos = ctx.get('ext_repos')
         result['ext_repos'] = ext_repos
-        result['cfg'] = ctx.get('cfg')
-        result['hosts'] = ctx.get('hosts')
+        ext_repos = ext_repos if (ext_repos is not None) else (
+            cloud_dict.get('ext_repos') if extend_cloud else None
+        )
+        cfg = ctx.get('cfg')
+        cfg = cfg if (cfg is not None) else (
+            cloud_dict.get('cfg') if extend_cloud else None
+        )
+        result['cfg'] = cfg
+        hosts = ctx.get('hosts')
+        hosts = hosts if (hosts is not None) else (
+            cloud_dict.get('hosts') if extend_cloud else None
+        )
+        result['hosts'] = hosts
 
         ctx_validators = list()
 
@@ -2823,11 +2840,21 @@ def prepare_ctx(ctx_name, run_info):
         for ext_repo in (ext_repos or []):
           if not repos.get(ext_repo.get('repo')):
             error_msgs += [[
-                'context: validate ctx env repo',
+                'context: validate ctx ext repo',
                 str('msg: repository not found: ' + ext_repo.get('repo')),
             ]]
 
+        if not hosts:
+          error_msgs += [[
+              'msg: hosts property not specified for the context '
+              + '(under the ' + ('main or cloud' if extend_cloud else 'main')
+              + ' section) in the environment dictionary'
+          ]]
+
         hooks = ctx.get('hooks')
+        hooks = hooks if (hooks is not None) else (
+            cloud_dict.get('hooks') if extend_cloud else None
+        )
 
         if hooks:
           for key in sorted(list(hooks.keys())):

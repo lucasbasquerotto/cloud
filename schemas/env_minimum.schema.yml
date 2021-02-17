@@ -37,6 +37,11 @@ schemas:
           schema to validate the environment parameters defined for the project
           in the project environment repository file when defined in the base
           environment repository file; will be applied for all contexts
+      cloud:
+        schema: "cloud"
+        description: >-
+          cloud section; used to extend the contexts in the main section,
+          when extend_cloud is true
       main:
         non_empty: true
         type: "map"
@@ -50,18 +55,14 @@ schemas:
         elem_schema: "repo"
         elem_non_empty: true
         description: "dictionary with definitions of source control repositories"
-  main:
+  cloud:
     type: "dict"
     lax: true
-    description: "context minimal schema"
+    description: >-
+      cloud section schema; used to extend the contexts in the main section,
+      when extend_cloud is true
     props:
-      run_file:
-        type: "str"
-        description: >-
-          path, relative to the cloud repository, in which the file to run the
-          cloud context steps is located
       repo:
-        non_empty: true
         type: "str"
         description: "repository name of the cloud layer"
       ext_repos:
@@ -80,6 +81,45 @@ schemas:
           name, so that a symlink pointing to the actual collection (or namespace)
           directory is created, making possible the use of the collection in the
           cloud context steps
+      run_file:
+        type: "str"
+        description: >-
+          path, relative to the cloud repository, in which the file to run the
+          cloud context steps is located
+  main:
+    type: "dict"
+    lax: true
+    description: "context minimal schema"
+    props:
+      extend_cloud:
+        type: "bool"
+        description: >-
+          when true, the properties defined in the cloud section are used
+          when the corresponding property is not present in this section
+      repo:
+        type: "str"
+        description: "repository name of the cloud layer"
+      ext_repos:
+        type: "list"
+        elem_schema: "repo_info"
+        description: >-
+          list with repository names that extends the main repository of the cloud
+          layer and the directories in which the repositories will be cloned
+          (relative to the cloud repository)
+      collections:
+        type: "list"
+        elem_schema: "collection"
+        description: >-
+          list of collections that specifies paths to collections, relative to the
+          cloud repository directory, the namespace and, optionally, the collection
+          name, so that a symlink pointing to the actual collection (or namespace)
+          directory is created, making possible the use of the collection in the
+          cloud context steps
+      run_file:
+        type: "str"
+        description: >-
+          path, relative to the cloud repository, in which the file to run the
+          cloud context steps is located
       ctl_env_schema:
         type: "str"
         description: >-

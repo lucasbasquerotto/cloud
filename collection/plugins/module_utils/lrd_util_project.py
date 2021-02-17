@@ -37,6 +37,7 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
       result['name'] = ctx_name
 
       main_dict = env.get('main')
+      cloud_dict = env.get('cloud') or dict()
 
       if not main_dict:
         error_msgs_ctx += [['msg: main environment dictionary not specified']]
@@ -44,21 +45,34 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
         error_msgs_ctx += [['msg: context not in the main environment dictionary']]
       else:
         ctx = main_dict.get(ctx_name)
-        result['run_file'] = ctx.get('run_file') or 'run'
+
+        extend_cloud = to_bool(ctx.get('extend_cloud'))
         repo = ctx.get('repo')
+        repo = repo if (repo is not None) else (
+            cloud_dict.get('repo') if extend_cloud else None
+        )
         result['repo'] = repo
         ext_repos = ctx.get('ext_repos')
+        ext_repos = ext_repos if (ext_repos is not None) else (
+            cloud_dict.get('ext_repos') if extend_cloud else None
+        )
         result['ext_repos'] = ext_repos
+        run_file = ctx.get('run_file')
+        run_file = run_file if (run_file is not None) else (
+            cloud_dict.get('run_file') if extend_cloud else None
+        )
+        run_file = run_file or 'run'
+        result['run_file'] = run_file
+
+        repos = env.get('repos')
 
         if not repo:
           error_msgs_ctx += [[
               'msg: cloud repository not defined for the context '
-              + '(under the main section) in the environment dictionary'
+              + '(under the ' + ('main or cloud' if extend_cloud else 'main')
+              + ' section) in the environment dictionary'
           ]]
-
-        repos = env.get('repos')
-
-        if not repos:
+        elif not repos:
           error_msgs_ctx += [['msg: no repositories in the environment dictionary']]
         elif not repos.get(repo):
           error_msgs_ctx += [[
@@ -76,6 +90,9 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
             ]]
 
         collections = ctx.get('collections')
+        collections = collections if (collections is not None) else (
+            cloud_dict.get('collections') if extend_cloud else None
+        )
 
         if collections:
           prepared_collections = list()
