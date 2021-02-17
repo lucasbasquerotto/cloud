@@ -8,7 +8,6 @@ COPY container/run.sh /usr/local/bin/run
 COPY container/ansible /usr/main/ansible
 
 COPY collection /usr/main/ansible/collections/ansible_collections/lrd/cloud
-COPY ansible/callback_plugins /usr/main/ansible/callback_plugins
 COPY ansible/ansible.cfg /usr/main/ansible/ansible.cfg
 COPY ansible/prepare.hosts /usr/main/ansible/hosts
 
