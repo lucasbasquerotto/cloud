@@ -1,6 +1,8 @@
 #!/bin/bash
-#shellcheck disable=SC2214
+#shellcheck disable=SC2029,SC2214
 set -euo pipefail
+
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 GRAY='\033[0;90m'
 RED='\033[0;31m'
@@ -61,35 +63,15 @@ function get_hosts_block {
     echo "$result"
 }
 
-{% if (project_ssh_default_ctx | default('')) != '' %}
-    {% if not (project_ssh_default_ctx in (project_ssh_ctxs | default([]))) %}
-        {% set error = {} %}
-        {{ error['error.invalid_ctx.' + project_ssh_default_ctx] }}
-    {% endif %}
-    {% set ssh_default_ctx = project_ssh_default_ctx %}
-{% else %}
-    {% if (project_ssh_ctxs | default([]) | length) == 1 %}
-        {% set ssh_default_ctx = project_ssh_ctxs[0] %}
-    {% endif %}
-{% endif %}
-{% if (project_ssh_default_node | default('')) != '' %}
-    {% if not (project_ssh_default_node in (project_ssh_nodes | default([]))) %}
-        {% set error = {} %}
-        {{ error['error.invalid_node.' + project_ssh_default_node] }}
-    {% endif %}
-    {% set ssh_default_node = project_ssh_default_node %}
-{% else %}
-    {% if (project_ssh_nodes | default([]) | length) == 1 %}
-        {% set ssh_default_node = project_ssh_nodes[0] %}
-    {% endif %}
-{% endif %}
+# shellcheck source=./vars.sample.sh
+. "$dir/vars.sh"
 
-project_secrets_cloud_dir={{ project_secrets_cloud_dir | quote }}
-ssh_default_ctx={{ ssh_default_ctx | default('') | quote }}
-ssh_default_node={{ ssh_default_node | default('') | quote }}
+var_project_secrets_cloud_dir="$project_secrets_cloud_dir"
+var_project_ssh_default_ctx="$project_ssh_default_ctx"
+var_project_ssh_default_node="$project_ssh_default_node"
 
-ctx_name="${arg_ctx:-$ssh_default_ctx}"
-node_name="${arg_node:-$ssh_default_node}"
+ctx_name="${arg_ctx:-$var_project_ssh_default_ctx}"
+node_name="${arg_node:-$var_project_ssh_default_node}"
 instance_index="${arg_idx:-1}"
 
 if [ -z "$ctx_name" ]; then
@@ -100,7 +82,7 @@ if [ -z "$node_name" ]; then
     error "node not defined for ssh (use parameter --node or define a default node)"
 fi
 
-hosts_file="$project_secrets_cloud_dir/ctxs/$ctx_name/hosts"
+hosts_file="$var_project_secrets_cloud_dir/ctxs/$ctx_name/hosts"
 
 if [ ! -f "$hosts_file" ]; then
     msg_aux="maybe the context (ctx) is wrong, or the preparation step was not done"
