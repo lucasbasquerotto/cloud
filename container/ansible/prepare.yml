@@ -197,16 +197,12 @@
         dest: "{{ project_files_cloud_dir }}/vars.sh"
         mode: "{{ env_lax | bool | ternary(0666, 0640) }}"
       vars:
-        project_run_ctxs_title: "{{ project_ctxs_title }}"
-        project_run_ctxs_list: "{{ project_env.ctxs }}"
-        project_run_ctx_cloud_dir: "{{ project_files_cloud_dir }}"
-        project_ssh_ctxs: "{{ project_env.ctxs }}"
-        project_ssh_nodes: "{{ project_data.node_names | default([]) }}"
-        project_ssh_default_ctx: "{{ project_env_init.env_params.default_ctx | default('') }}"
-        project_ssh_default_node: "{{ project_env_init.env_params.default_node | default('') }}"
-
-    - debug:
-        var: project_data.node_names
+        project_vars_title: "{{ project_ctxs_title }}"
+        project_vars_ctxs: "{{ project_env.ctxs }}"
+        project_vars_files_cloud_dir: "{{ project_files_cloud_dir }}"
+        project_vars_secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
+        project_vars_default_ctx: "{{ project_data.default_ctx | default('') }}"
+        project_vars_default_node: "{{ project_data.default_node | default('') }}"
 
     # ssh (to access the nodes)
 

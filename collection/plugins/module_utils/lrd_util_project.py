@@ -371,7 +371,7 @@ def prepare_project(env, env_init, env_original, env_info):
 
     if not error_msgs:
       prepared_ctxs = list()
-      ctx_names = set()
+      ctx_names = list()
 
       for ctx_idx, ctx_name in enumerate(env.get('ctxs')):
         error_msgs_ctx = list()
@@ -398,10 +398,60 @@ def prepare_project(env, env_init, env_original, env_info):
           error_msgs += [new_value]
 
         if not error_msgs_ctx:
-          ctx_names.add(ctx_name)
+          ctx_names += [ctx_name]
           prepared_ctxs += [ctx_data]
 
       result['prepared_ctxs'] = prepared_ctxs
+
+      env_params = env_init.get('env_params') or dict()
+      default_ctx = env_params.get('default_ctx')
+      default_node = env_params.get('default_node')
+
+      if default_node and not default_ctx:
+        error_msgs_ctx += [[
+            'default node: ' + str(default_node or ''),
+            'msg: the default node is defined, but not the default context',
+        ]]
+
+      if default_ctx and (default_ctx not in ctx_names):
+        error_msgs_ctx += [[
+            'default ctx: ' + str(default_ctx or ''),
+            'msg: the default context is not present in the project contexts',
+            'project contexts: ',
+            ctx_names,
+        ]]
+      else:
+        if default_ctx:
+          default_ctx = [
+              ctx
+              for ctx in prepared_ctxs
+              if (ctx.get('name') == default_ctx)
+          ][0]
+        elif (not default_ctx) and (len(prepared_ctxs) == 1):
+          ctx = prepared_ctxs[0]
+          default_ctx = ctx.get('name')
+          node_names = ctx.get('node_names') or list()
+
+        if default_ctx:
+          if default_node and not node_names:
+            error_msgs_ctx += [[
+                'default ctx: ' + str(default_ctx or ''),
+                'default node: ' + str(default_node or ''),
+                'msg: the default context has no nodes',
+            ]]
+          elif default_node and (default_node not in node_names):
+            error_msgs_ctx += [[
+                'default ctx: ' + str(default_ctx or ''),
+                'default node: ' + str(default_node or ''),
+                'msg: the default node is not present in the context',
+                'allowed nodes: ',
+                node_names,
+            ]]
+          elif (not default_node) and (len(node_names) == 1):
+            default_node = node_names[0]
+
+      result['default_ctx'] = default_ctx
+      result['default_node'] = default_node
 
     result_keys = list(result.keys())
 

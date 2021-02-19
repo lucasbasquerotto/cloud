@@ -17,7 +17,7 @@ function error {
 
 var_project_title="$project_title"
 var_project_ctxs="$project_ctxs"
-var_project_ctx_cloud_dir="$project_ctx_cloud_dir"
+var_project_files_cloud_dir="$project_files_cloud_dir"
 
 if [ -n "$var_project_ctxs" ]; then
 	IFS=',' read -r -a tmp <<< "$var_project_ctxs"
@@ -25,7 +25,7 @@ if [ -n "$var_project_ctxs" ]; then
 
 	for ctx in "${arr[@]}"; do
 		# shellcheck source=./vars.ctx.sample.sh
-		. "${var_project_ctx_cloud_dir}/ctxs/${ctx}/vars.sh"
+		. "${var_project_files_cloud_dir}/ctxs/${ctx}/vars.sh"
 
 		bash "$repo_run_file" "$ctx_dir" "${@}" \
 			|| error "[error] $var_project_title ($ctx)"

@@ -67,8 +67,8 @@ function get_hosts_block {
 . "$dir/vars.sh"
 
 var_project_secrets_cloud_dir="$project_secrets_cloud_dir"
-var_project_ssh_default_ctx="$project_ssh_default_ctx"
-var_project_ssh_default_node="$project_ssh_default_node"
+var_project_ssh_default_ctx="$project_default_ctx"
+var_project_ssh_default_node="$project_default_node"
 
 ctx_name="${arg_ctx:-$var_project_ssh_default_ctx}"
 node_name="${arg_node:-$var_project_ssh_default_node}"
