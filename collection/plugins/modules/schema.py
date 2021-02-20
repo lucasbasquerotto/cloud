@@ -150,7 +150,7 @@ def main():
     try:
       schema = load_yaml_file(schema_file)
     except Exception as error:
-      error_msgs = [[
+      error_msgs += [[
           str('file: ' + schema_file),
           'msg: error when trying to load the schema file',
           'error type: ' + str(type(error)),
