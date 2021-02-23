@@ -1482,6 +1482,7 @@ def prepare_node(node_info, run_info, local=None):
         service_params = node_params.get('service_params')
         dns_service = node.get('dns_service')
         dns_service_params_list = node_params.get('dns_service_params_list')
+        node_validators = list()
 
         if not service:
           if dns_service:
@@ -1568,6 +1569,12 @@ def prepare_node(node_info, run_info, local=None):
                 error_msgs_aux += [new_value]
             else:
               result['prepared_service'] = prepared_service
+              validators = prepared_service.get('validators')
+              validators = update_validators_descriptions(
+                  'node main service',
+                  validators
+              )
+              node_validators += validators or []
 
           if not dns_service:
             if dns_service_params_list:
@@ -1582,38 +1589,51 @@ def prepare_node(node_info, run_info, local=None):
                 + 'for node with more than 1 replica'
             ]]
           elif dns_service_params_list:
-            services_info = []
+            dns_prepared_params_list = []
 
-            for idx, dns_service_params in enumerate(dns_service_params_list, start=1):
+            for dns_service_params in dns_service_params_list:
               for dns_type_name in ['ipv4', 'ipv6']:
                 name_suffix = (
                     '-' + dns_type_name
                     + (('-' + str(idx)) if idx > 1 else '')
                 )
-                service_info = dict(
-                    name=dns_service + name_suffix,
-                    key=dns_service,
-                    can_destroy=to_bool(dns_service_params.get('can_destroy')),
-                    params=dict(
-                        record=dns_service_params.get('record'),
-                        ttl=dns_service_params.get('ttl'),
-                        dns_type='A' if dns_type_name == 'ipv4' else 'AAAA',
-                    )
+                prepared_param = dict(
+                    record=dns_service_params.get('record'),
+                    ttl=dns_service_params.get('ttl'),
+                    dns_type='A' if dns_type_name == 'ipv4' else 'AAAA',
                 )
-                services_info += [service_info]
+                dns_prepared_params_list += [prepared_param]
 
-            if services_info:
-              result['prepared_dns_services'] = list(services_info)
+            service_info = (
+                dns_service
+                if isinstance(dns_service, dict)
+                else dict(name=dns_service)
+            )
+            service_info['params'] = merge_dicts(
+                service_info.get('params'),
+                dict(list=dns_prepared_params_list)
+            )
 
-              if validate_ctx:
-                info = prepare_services(
-                    services_info, run_info=run_info, top=True
+            result['prepared_dns_services'] = [service_info]
+
+            if validate_ctx:
+              info = prepare_service(
+                  service_info, run_info=run_info, top=True
+              )
+              prepared_node_dns_service = info.get('result')
+              error_msgs_aux_service = info.get('error_msgs')
+
+              for value in (error_msgs_aux_service or []):
+                new_value = ['context: node dns service'] + value
+                error_msgs_aux += [new_value]
+
+              if not error_msgs_aux_service:
+                validators = prepared_node_dns_service.get('validators') or []
+                validators = update_validators_descriptions(
+                    'node dns service',
+                    validators
                 )
-                error_msgs_aux_service = info.get('error_msgs') or list()
-
-                for value in (error_msgs_aux_service or []):
-                  new_value = ['context: node dns service'] + value
-                  error_msgs_aux += [new_value]
+                node_validators += validators
 
         pods = node.get('pods')
         pod_ctx_info_dict = node_info_dict.get('pods')
@@ -1676,7 +1696,6 @@ def prepare_node(node_info, run_info, local=None):
 
         all_content_dests = set()
         prepared_transfer = list()
-        node_validators = list()
 
         prepare_transfer_info = dict(
             env=env,
@@ -1726,6 +1745,10 @@ def prepare_node(node_info, run_info, local=None):
           if validate_ctx:
             for item in prepared_transfer:
               validators = item.get('validators') or list()
+              validators = update_validators_descriptions(
+                  'node transfer',
+                  validators
+              )
               node_validators += validators
 
         if node_params:
@@ -1750,6 +1773,10 @@ def prepare_node(node_info, run_info, local=None):
               if validate_ctx and cron_transfer:
                 for item in cron_transfer:
                   validators = item.get('validators') or list()
+                  validators = update_validators_descriptions(
+                      'node cron',
+                      validators
+                  )
                   node_validators += validators
 
         if validate_ctx and not error_msgs_aux:

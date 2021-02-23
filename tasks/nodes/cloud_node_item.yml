@@ -161,7 +161,7 @@
       set_fact:
         cloud_node_dns_list_aux: "{{ tmp_dns_list_aux }}"
       vars:
-        tmp_dns_absent: >-
+        tmp_dns_absent_list: >-
           {{
             cloud_node_item.prepared_dns_services | default([])
             | selectattr('can_destroy', 'defined')
@@ -173,7 +173,7 @@
           {{
             (tmp_dns_state == 'present') | ternary(
               cloud_node_item.prepared_dns_services | default([]),
-              tmp_dns_absent
+              tmp_dns_absent_list
             )
           }}
       when: (cloud_node_item.prepared_dns_services | default([]) | length) > 0
