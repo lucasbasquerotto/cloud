@@ -329,7 +329,7 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
             task_data = dict(
                 base_dir_prefix=base_dir_prefix,
                 dict_to_validate=result,
-                prop_names=['params', 'credentials', 'contents'],
+                prop_names=['namespace', 'params', 'credentials', 'contents'],
             )
 
             info = validate_ctx_schema(
