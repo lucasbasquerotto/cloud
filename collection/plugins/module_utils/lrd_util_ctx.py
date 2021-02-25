@@ -782,6 +782,8 @@ def prepare_pod(pod_info, parent_data, run_info):
             tmp_dir=tmp_dir,
             data_dir=data_dir,
             extra_repos_dir_relpath=extra_repos_dir_relpath,
+            # will be changed later
+            instance_index=1,
             dependencies=dependencies,
         )
         result['initial_input'] = initial_input

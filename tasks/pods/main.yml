@@ -24,7 +24,13 @@
     pod_fast: "{{ pod_item.fast_prepare | default(false) }}"
     pod_secrets_repos_dir: "{{ pod_item.tmp_dir }}/secrets/repos"
     pod_node_dependencies: "{{ ctx_node_dependencies[pod_node_name] | default({}) }}"
-    pod_input: "{{ pod_item.initial_input | combine({ 'dependencies': pod_node_dependencies }) }}"
+    pod_input: >-
+      {{
+        pod_item.initial_input | combine({
+          'instance_index': instance_index,
+          'dependencies': pod_node_dependencies
+        })
+      }}
   loop: "{{ pod_node.pods | default([], true) }}"
   loop_control:
     loop_var: pod_item
