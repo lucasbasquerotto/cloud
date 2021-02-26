@@ -165,6 +165,8 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
 
           result['prepared_collections'] = prepared_collections
 
+        ctl_env_schema = ctx.get('ctl_env_schema')
+        original_env_schema = ctx.get('original_env_schema')
         nodes = ctx.get('nodes')
 
         if nodes:
@@ -195,9 +197,6 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
               node_names += [node_name]
 
           result['node_names'] = node_names
-
-        ctl_env_schema = ctx.get('ctl_env_schema')
-        original_env_schema = ctx.get('original_env_schema')
 
         if has_original_env and ctl_env_schema:
           error_msgs_ctx += [[
