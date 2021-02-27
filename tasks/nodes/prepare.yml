@@ -20,7 +20,10 @@
       }}
   vars:
     tmp_dependencies: >-
-      {{ ctx_node_dependencies[node_prepare_node.name] | default({}) }}
+      {{
+        ctx_node_dependencies[node_prepare_node.name]
+        | default(node_prepare_node.general_data.dependencies | default({}))
+      }}
   tags: ["no_print"]
 
 - name: "{{ node_prepare_title }} - node_prepare_transfer_list (fill)"
