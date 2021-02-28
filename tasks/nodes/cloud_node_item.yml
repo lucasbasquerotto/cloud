@@ -161,7 +161,7 @@
           {{
             lrd.cloud.node_dns_service_info(
               dns_service_params_list=,
-              active_host=,
+              active_host=cloud_node_active_hosts[0] | default({}),
               state=cloud_service_tmp_state
             )
           }}
