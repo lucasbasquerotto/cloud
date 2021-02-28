@@ -162,7 +162,7 @@
           {{
             cloud_node_item.prepared_dns_service | lrd.cloud.node_dns_service_info(
               active_host=cloud_node_active_hosts[0] | default({}),
-              state=cloud_service_tmp_state
+              state=cloud_service_state
             )
           }}
 
@@ -174,7 +174,7 @@
           {{
             cloud_node_item.prepared_dns_service | lrd.cloud.node_dns_service_info(
               active_host=cloud_node_active_hosts[0] | default({}),
-              state=cloud_service_tmp_state
+              state=cloud_service_state
             )
           }}
         cloud_service_title: "{{ cloud_node_item_title }} - node dns service"
