@@ -157,10 +157,10 @@
     - debug:
         var: cloud_service_tmp_info
       vars:
+        cloud_service_state: "{{ cloud_node_item_state | default('present', true) }}"
         cloud_service_tmp_info: >-
           {{
-            lrd.cloud.node_dns_service_info(
-              dns_service_params_list=,
+            cloud_node_item.prepared_dns_service | lrd.cloud.node_dns_service_info(
               active_host=cloud_node_active_hosts[0] | default({}),
               state=cloud_service_tmp_state
             )
@@ -172,9 +172,8 @@
         cloud_service_state: "{{ cloud_node_item_state | default('present', true) }}"
         cloud_service_tmp_info: >-
           {{
-            lrd.cloud.node_dns_service_info(
-              dns_service_params_list=,
-              active_host=,
+            cloud_node_item.prepared_dns_service | lrd.cloud.node_dns_service_info(
+              active_host=cloud_node_active_hosts[0] | default({}),
               state=cloud_service_tmp_state
             )
           }}
