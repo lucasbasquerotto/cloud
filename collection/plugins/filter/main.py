@@ -64,7 +64,7 @@ class FilterModule(object):
       if (state != 'absent') and not value:
         return None
 
-      if item['value']:
+      if item.get('value'):
         raise AnsibleError(
             'the dns record value is defined explicitly for the '
             + 'node dns service record in the parameters list (should empty '
@@ -73,6 +73,11 @@ class FilterModule(object):
 
       item['value'] = value
       return item
+
+    skip_info = dict(skip=True, service=dict())
+
+    if not dns_service:
+      return skip_info
 
     if not state:
       raise AnsibleError(
@@ -86,20 +91,18 @@ class FilterModule(object):
     if not isinstance(dns_service, dict):
       dns_service = dict(name=dns_service)
 
-    skip_info = dict(skip=True, service=dict())
-
     if (state == 'absent') and (not dns_service.get('can_destroy')):
       return skip_info
 
     params = dns_service.get('params') or dict()
 
-    if params['dns_type']:
+    if params.get('dns_type'):
       raise AnsibleError(
           'the dns type is defined explicitly for the node dns service '
           + 'record (should be let empty to be defined later)'
       )
 
-    if params['value']:
+    if params.get('value'):
       raise AnsibleError(
           'the dns record value is defined explicitly for the '
           + 'node dns service record (should empty to be be defined later '
@@ -108,7 +111,7 @@ class FilterModule(object):
 
     params_list_aux = [
         prepare_item(item)
-        for item in (dns_service_params_list or [])
+        for item in (params.get('list') or [])
     ]
     params_list = [i for i in params_list_aux if i is not None]
 
