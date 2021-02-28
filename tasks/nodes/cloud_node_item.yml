@@ -151,28 +151,14 @@
 
     # DNS Services
 
-    - debug:
-        var: cloud_node_active_hosts
-
-    - debug:
-        var: cloud_service_tmp_info
-      vars:
-        cloud_service_state: "{{ cloud_node_item_state | default('present', true) }}"
-        cloud_service_tmp_info: >-
-          {{
-            cloud_node_item.prepared_dns_service | lrd.cloud.node_dns_service_info(
-              active_host=cloud_node_active_hosts[0] | default({}),
-              state=cloud_service_state
-            )
-          }}
-
     - name: "{{ cloud_node_item_title }} - node dns service (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
         cloud_service_state: "{{ cloud_node_item_state | default('present', true) }}"
         cloud_service_tmp_info: >-
           {{
-            cloud_node_item.prepared_dns_service | lrd.cloud.node_dns_service_info(
+            cloud_node_item.prepared_dns_service | default('')
+            | lrd.cloud.node_dns_service_info(
               active_host=cloud_node_active_hosts[0] | default({}),
               state=cloud_service_state
             )
