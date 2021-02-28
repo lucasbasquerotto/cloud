@@ -151,65 +151,20 @@
 
     # DNS Services
 
-    - name: "{{ cloud_node_item_title }} - node dns list (init)"
-      set_fact:
-        cloud_node_dns_list: []
-        cloud_node_dns_list_aux: []
-      tags: ["no_print"]
-
-    - name: "{{ cloud_node_item_title }} - node dns list (fill)"
-      set_fact:
-        cloud_node_dns_list_aux: "{{ tmp_dns_list_aux }}"
-      vars:
-        tmp_dns_absent_list: >-
-          {{
-            cloud_node_item.prepared_dns_services | default([])
-            | selectattr('can_destroy', 'defined')
-            | selectattr('can_destroy', 'equalto', True)
-            | list
-          }}
-        tmp_dns_state: "{{ cloud_node_item_state | default('present', true) }}"
-        tmp_dns_list_aux: >-
-          {{
-            (tmp_dns_state == 'present') | ternary(
-              cloud_node_item.prepared_dns_services | default([]),
-              tmp_dns_absent_list
-            )
-          }}
-      when: (cloud_node_item.prepared_dns_services | default([]) | length) > 0
-      tags: ["no_print"]
-
-    - name: "{{ cloud_node_item_title }} - node dns list (params - ips)"
-      set_fact:
-        cloud_node_dns_list: "{{ cloud_node_dns_list + [tmp_dns_item_to_add] }}"
-      vars:
-        tmp_dns_host: "{{ cloud_node_active_hosts[0] | default({}) }}"
-        tmp_dns_ini_params: "{{ cloud_node_dns_item.params | default({}) }}"
-        tmp_dns_type: "{{ tmp_dns_ini_params.dns_type | default('') }}"
-        tmp_dns_ipv4: "{{ tmp_dns_host.public_ipv4 | default('') }}"
-        tmp_dns_ipv6: "{{ tmp_dns_host.public_ipv6 | default('') }}"
-        tmp_dns_value: >-
-          {{
-            (tmp_dns_type == 'A') | ternary(
-              tmp_dns_ipv4,
-              (tmp_dns_type == 'AAAA') | ternary(tmp_dns_ipv6, '')
-            )
-          }}
-        tmp_dns_params: >-
-          {{ tmp_dns_ini_params | combine({ 'value': tmp_dns_value }) }}
-        tmp_dns_item_to_add: >-
-          {{ cloud_node_dns_item | combine({ 'params': tmp_dns_params }) }}
-      loop: "{{ cloud_node_dns_list_aux }}"
-      loop_control:
-        loop_var: cloud_node_dns_item
-        label: "{{ cloud_node_dns_item.name | default('') }}"
-      tags: ["no_print"]
-
     - debug:
         var: cloud_node_active_hosts
 
     - debug:
-        var: cloud_node_dns_list
+        var: cloud_service_tmp_info
+      vars:
+        cloud_service_tmp_info: >-
+          {{
+            lrd.cloud.node_dns_service_info(
+              dns_service_params_list=,
+              active_host=,
+              state=cloud_service_tmp_state
+            )
+          }}
 
     - name: "{{ cloud_node_item_title }} - node dns service (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
