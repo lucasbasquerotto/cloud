@@ -1617,7 +1617,7 @@ def prepare_node(node_info, run_info, local=None):
                 dict(list=dns_prepared_params_list)
             )
 
-            result['prepared_dns_services'] = [service_info]
+            result['prepared_dns_service'] = service_info
 
             if validate_ctx:
               info = prepare_service(

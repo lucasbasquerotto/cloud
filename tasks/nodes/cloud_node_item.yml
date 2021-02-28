@@ -214,12 +214,20 @@
     - name: "{{ cloud_node_item_title }} - node dns service (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
+        cloud_service_state: "{{ cloud_node_item_state | default('present', true) }}"
+        cloud_service_tmp_info: >-
+          {{
+            lrd.cloud.node_dns_service_info(
+              dns_service_params_list=,
+              active_host=,
+              state=cloud_service_tmp_state
+            )
+          }}
         cloud_service_title: "{{ cloud_node_item_title }} - node dns service"
-        cloud_service_list: "{{ cloud_node_dns_list }}"
+        cloud_service_list: "{{ [cloud_service_tmp_info.service] }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
-        cloud_service_state: "{{ cloud_node_item_state | default('present', true) }}"
-      when: (cloud_node_dns_list | length) > 0
+      when: not cloud_service_tmp_info.skip
       tags: ["no_print_skipped"]
 
   rescue:

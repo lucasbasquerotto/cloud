@@ -21,6 +21,7 @@ class FilterModule(object):
   def filters(self):
     return {
         'node_dict_dependencies': self.node_dict_dependencies,
+        'node_dns_service_info': self.node_dns_service_info,
         'params_mixer': self.params_mixer,
         'simple_to_list': self.simple_to_list,
         'simple_dict_prop': self.simple_dict_prop,
@@ -51,6 +52,82 @@ class FilterModule(object):
       raise AnsibleError(to_text(error_text(error_msgs, 'params_mixer')))
 
     return result
+
+  def node_dns_service_info(self, dns_service, dns_service_params_list, active_host, state):
+    def prepare_item(item, dns_type, value):
+      if (state != 'absent') and not value:
+        return None
+
+      if item['dns_type']:
+        raise AnsibleError(
+            'the dns type is defined explicitly for the node dns service '
+            + 'record in the parameters list (should be let empty to be '
+            + 'defined later)'
+        )
+
+      if item['value']:
+        raise AnsibleError(
+            'the dns record value is defined explicitly for the '
+            + 'node dns service record in the parameters list (should empty '
+            + 'to be be defined later based on the node ip)'
+        )
+
+      item['dns_type'] = dns_type
+      item['value'] = value
+      return item
+
+    if not state:
+      raise AnsibleError(
+          'the state is not defined for the node dns service'
+      )
+    elif state not in ['present', 'absent']:
+      raise AnsibleError(
+          'the state defined for the node dns service is invalid'
+      )
+
+    if not isinstance(dns_service, dict):
+      dns_service = dict(name=dns_service)
+
+    skip_info = dict(skip=True, service=dict())
+
+    if (state == 'absent') and (not dns_service.get('can_destroy')):
+      return skip_info
+
+    if not dns_service_params_list:
+      return skip_info
+
+    params = dns_service.get('params') or dict()
+
+    if params['dns_type']:
+      raise AnsibleError(
+          'the dns type is defined explicitly for the node dns service '
+          + 'record (should be let empty to be defined later)'
+      )
+
+    if params['value']:
+      raise AnsibleError(
+          'the dns record value is defined explicitly for the '
+          + 'node dns service record (should empty to be be defined later '
+          + 'based on the node ip)'
+      )
+
+    ipv4 = active_host.get('public_ipv4') or ''
+    ipv6 = active_host.get('public_ipv6') or ''
+    ip_map = dict(A=ipv4, AAAA=ipv6)
+
+    params_list_aux = [
+        prepare_item(item, dns_type=t, value=ip_map.get(t))
+        for item in (dns_service_params_list or [])
+        for t in ['A', 'AAAA']
+    ]
+    params_list = [i for i in params_list_aux if i is not None]
+
+    params['list'] = params_list
+
+    result_service = dns_service.copy()
+    result_service['params'] = params
+
+    return dict(skip=False, service=result_service)
 
   def params_mixer(self, params_args):
     info = mix(params_args)
