@@ -1,0 +1,9 @@
+root: "node_schema"
+schemas:
+  node_schema:
+    type: "dict"
+    props:
+      namespace:
+        type: "str"
+        non_empty: true
+        choices: ["ext_node"]

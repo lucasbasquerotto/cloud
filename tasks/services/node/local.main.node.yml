@@ -1,0 +1,32 @@
+# Prepare
+
+- name: "{{ inner_service_title }} - node - test - vars"
+  set_fact:
+    ext_node_title: "{{ inner_service_title }} - node - test"
+    ext_node_params: "{{ inner_service_params }}"
+    ext_node_credentials: "{{ inner_service_credentials }}"
+    ext_node_contents: "{{ inner_service_contents }}"
+    ext_node_state: "{{ inner_service_state }}"
+    ext_node_base_dir_prefix: "{{ inner_service_base_dir_prefix }}"
+    ext_node_tmp_dir: "{{ inner_service_tmp_dir }}"
+    ext_node_result: {}
+  tags: ["no_print"]
+
+# Main
+
+- name: "{{ ext_node_title }} - local node service"
+  debug:
+    msg: "local node service - skipping..."
+
+- name: "{{ ext_node_title }} - set result (tmp)"
+  set_fact:
+    ext_node_result:
+      hosts: []
+  tags: ["no_print"]
+
+# Set Result
+
+- name: "{{ ext_node_title }} - set result"
+  set_fact:
+    cloud_service_result: "{{ ext_node_result }}"
+  tags: ["no_print"]
