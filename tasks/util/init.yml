@@ -20,7 +20,6 @@
   vars:
     ctx_load_hosts_data: "{{ init_load_node_dependencies | default(false) }}"
     ctx_load_node_dependencies: "{{ init_load_node_dependencies | default(false) }}"
-  when: ctx_data is not defined
   tags: ["no_print"]
 
 - name: "{{ env_title }} - fail when localhost failed"

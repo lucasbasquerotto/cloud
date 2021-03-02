@@ -1312,15 +1312,32 @@ def prepare_node(node_info, run_info, local=None):
 
           required_amount = int(dependency.get('required_amount') or 0)
           amount = required_amount if (required_amount > 0) else 1
-          host_ip = '127.0.0.1'
-          host_list = [host_ip for v in range(amount)]
+
+          dependency_type = dependency.get('type')
+          dependency_host = dependency.get('host')
+
+          dependency_final_host = None
+          dependency_final_host_list = []
+
+          if dependency_type == 'node':
+            dependency_final_host = 'http://127.0.0.1'
+            dependency_final_host_list = [dependency_final_host for v in range(amount)]
+          else:
+            if isinstance(dependency_host, list):
+              dependency_final_host_list = dependency_host
+
+              if len(dependency_final_host_list) > 0:
+                dependency_final_host = dependency_final_host_list[0]
+            else:
+              dependency_final_host = dependency_host
+              dependency_final_host_list = [dependency_final_host]
 
           prefilled_dependencies[dependency_name] = dict(
-              original_type=dependency.get('type'),
+              original_type=dependency_type,
               required_amount=required_amount,
               single_host_included=True,
-              host=host_ip,
-              host_list=host_list,
+              host=dependency_final_host,
+              host_list=dependency_final_host_list,
           )
 
         credentials_info_dict = node_info_dict.get('credentials')

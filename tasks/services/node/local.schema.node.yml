@@ -7,3 +7,12 @@ schemas:
         type: "str"
         non_empty: true
         choices: ["ext_node"]
+      params:
+        schema: "empty_dict"
+      credentials:
+        schema: "empty_dict"
+      contents:
+        schema: "empty_dict"
+  empty_dict:
+    type: "dict"
+    props: {}

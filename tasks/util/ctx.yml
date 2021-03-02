@@ -12,7 +12,6 @@
   when: ctx_data is not defined
   tags: ["no_print_skipped"]
 
-
 - name: "{{ env_title }} - hosts data (outer)"
   include_tasks: "tasks/util/hosts_data.yml"
   when: >-
@@ -22,6 +21,9 @@
     and
     (ctx_data.has_node_dependency | default(false) | bool)
   tags: ["no_print"]
+
+- debug:
+    msg: "before"
 
 - name: "{{ env_title }} - generate the node dependencies"
   set_fact:
@@ -39,6 +41,12 @@
     and
     (ctx_node_dependencies is not defined)
   tags: ["no_print"]
+
+- debug:
+    var: ctx_load_node_dependencies
+
+- debug:
+    msg: "after"
 
 - name: "{{ env_title }} - generate the local node dependencies"
   set_fact:
