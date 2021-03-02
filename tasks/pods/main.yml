@@ -10,9 +10,6 @@
 
 # Pods
 
-- debug:
-    var: ctx_node_dependencies
-
 - name: "{{ pod_title }} - pods (outer)"
   include_tasks: "tasks/pods/pod.yml"
   vars:

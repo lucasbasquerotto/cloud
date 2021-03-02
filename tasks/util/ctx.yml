@@ -22,9 +22,6 @@
     (ctx_data.has_node_dependency | default(false) | bool)
   tags: ["no_print"]
 
-- debug:
-    msg: "before"
-
 - name: "{{ env_title }} - generate the node dependencies"
   set_fact:
     ctx_node_dependencies: >-
@@ -41,12 +38,6 @@
     and
     (ctx_node_dependencies is not defined)
   tags: ["no_print"]
-
-- debug:
-    var: ctx_load_node_dependencies
-
-- debug:
-    msg: "after"
 
 - name: "{{ env_title }} - generate the local node dependencies"
   set_fact:
