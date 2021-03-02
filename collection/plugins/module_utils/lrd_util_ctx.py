@@ -1321,7 +1321,8 @@ def prepare_node(node_info, run_info, local=None):
 
           if dependency_type == 'node':
             dependency_final_host = 'http://127.0.0.1'
-            dependency_final_host_list = [dependency_final_host for v in range(amount)]
+            dependency_final_host_list = [
+                dependency_final_host for v in range(amount)]
           else:
             if isinstance(dependency_host, list):
               dependency_final_host_list = dependency_host
@@ -1497,6 +1498,8 @@ def prepare_node(node_info, run_info, local=None):
             ]]
           else:
             result['main_ssh_key_path'] = main_host_user.get('ssh_key_path')
+
+        node_params = node_params or dict()
 
         service = node.get('service')
         service_params = node_params.get('service_params')
