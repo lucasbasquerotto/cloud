@@ -1548,11 +1548,13 @@ def prepare_node(node_info, run_info, local=None):
           all_hosts = []
 
           if instance_max_amount > 0:
+            node_base_name = hostname or (node_name + '-host')
+            node_base_name = node_base_name.replace('_', '-')
+
             for idx in range(1, instance_max_amount + 1):
               name_suffix = ('-' + str(idx)) if idx > 1 else ''
               absent = None if (idx <= instance_amount) else True
-              real_hostname = (hostname or (node_name + '-host')) + name_suffix
-              real_hostname = real_hostname.replace('_', '-')
+              real_hostname = node_base_name + name_suffix
               replica = dict(
                   name=real_hostname,
                   absent=absent,
@@ -1575,7 +1577,7 @@ def prepare_node(node_info, run_info, local=None):
             service_params = merge_dicts(
                 service_info.get('params'),
                 service_params,
-                dict(replicas=replicas),
+                dict(name=node_base_name, replicas=replicas),
             )
 
             service_info['single'] = True
