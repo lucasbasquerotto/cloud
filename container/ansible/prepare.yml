@@ -68,29 +68,11 @@
         repo_lax: "{{ env_lax }}"
       tags: ["no_print"]
 
-    - name: "{{ project_base_title }} - project_env_dir"
+    - name: "{{ project_env_title }} - project_env_dir"
       set_fact:
         project_env_dir: "{{ repo_dir }}"
+        project_env_file: "{{ repo_dir }}/{{ project_env_init.repo.env_file }}"
         project_env_commit: "{{ repo_git_result.after }}"
-      tags: ["no_print"]
-
-    - name: "{{ project_base_title }} - create the cloud commit dir"
-      file:
-        path: "{{ project_commit_dir }}"
-        state: directory
-        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-
-    - name: "{{ project_base_title }} - create the cloud commit file"
-      copy:
-        content: |
-          #!/bin/bash
-          export commit={{ project_env_commit | quote }}
-        dest: "{{ project_commit_dir }}/current"
-        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-
-    - name: "{{ project_env_title }} - set_fact - project_env_file"
-      set_fact:
-        project_env_file: "{{ project_env_dir }}/{{ project_env_init.repo.env_file }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - load the environment vars"
@@ -173,7 +155,6 @@
               env_info=tmp_info
             )
           }}
-        project_ssh_title: "{{ project_title }} - ssh"
         project_ctxs_title: "{{ project_title }} - ctxs"
       vars:
         tmp_info:
@@ -183,11 +164,55 @@
           has_original_env: "{{ project_env_has_original | bool }}"
       tags: ["no_print"]
 
-    - name: "{{ project_ssh_title }} - create the cloud dir"
+    - name: "{{ project_title }} - project_env_params and project_path_map_repos"
+      set_fact:
+        project_env_params: "{{ project_env_init.env_params | default({}) }}"
+        project_env_params_file_rel: "env-params.yml"
+        project_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
+        project_path_map_file_rel: "path-map.yml"
+      tags: ["no_print"]
+
+    # project files and directories
+
+    - name: "{{ project_title }} - create the project directories"
       file:
-        path: "{{ project_files_cloud_dir }}"
+        path: "{{ project_item }}"
         state: directory
         mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+      loop:
+        - "{{ project_commit_dir }}"
+        - "{{ project_files_cloud_dir }}"
+      loop_control:
+        loop_var: project_item
+
+    - name: "{{ project_title }} - create the project files"
+      copy:
+        content: "{{ project_item.content | default(omit, true) }}"
+        src: "{{ project_item.src | default(omit, true) }}"
+        dest: "{{ project_item.dest }}"
+        mode: "{{ project_item.mode }}"
+      loop:
+        - content: |
+            #!/bin/bash
+            export commit={{ project_env_commit | quote }}
+          dest: "{{ project_commit_dir }}/current"
+          mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+        - src: "files/ssh.sh"
+          dest: "{{ project_files_cloud_dir }}/ssh"
+          mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+        - src: "files/run-ctxs.sh"
+          dest: "{{ project_files_cloud_dir }}/run-ctxs"
+          mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+        - content: "{{ project_env_params | to_nice_yaml }}"
+          dest: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
+          mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
+        - content: "{{ project_path_map_repos | to_nice_yaml }}"
+          dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
+          mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
+      when: project_item.when | default(true) | bool
+      loop_control:
+        loop_var: project_item
+        label: "{{ project_item.dest }}"
 
     # vars file (used to run the contexts and ssh file)
 
@@ -204,43 +229,7 @@
         project_vars_default_ctx: "{{ project_data.default_ctx | default('') }}"
         project_vars_default_node: "{{ project_data.default_node | default('') }}"
 
-    # ssh (to access the nodes)
-
-    - name: "{{ project_ssh_title }} - copy the ssh executable file to {{ project_files_cloud_dir }}/"
-      copy:
-        src: "files/ssh.sh"
-        dest: "{{ project_files_cloud_dir }}/ssh"
-        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-
     # ctxs
-
-    - name: "{{ project_ctxs_title }} - project_env_params and project_path_map_repos"
-      set_fact:
-        project_env_params: "{{ project_env_init.env_params | default({}) }}"
-        project_env_params_file_rel: "env-params.yml"
-        project_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
-        project_path_map_file_rel: "path-map.yml"
-      tags: ["no_print"]
-
-    - name: >-
-        {{ project_ctxs_title }} - copy the ctxs executable file to
-        {{ project_files_cloud_dir }}/
-      copy:
-        src: "files/run-ctxs.sh"
-        dest: "{{ project_files_cloud_dir }}/run-ctxs"
-        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
-
-    - name: "{{ project_ctxs_title }} - create the config file with the ctl env params"
-      copy:
-        content: "{{ project_env_params | to_nice_yaml }}"
-        dest: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
-        mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
-
-    - name: "{{ project_ctxs_title }} - create the config file with the repo path maps"
-      copy:
-        content: "{{ project_path_map_repos | to_nice_yaml }}"
-        dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
-        mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
 
     - name: "{{ project_ctxs_title }} (main)"
       include_tasks: "ctx.yml"
