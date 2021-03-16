@@ -533,7 +533,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
                 ),
             )
 
-          prepared_content = info.get('result')
+          prepared_content = info.get('result') or dict()
           validators = prepared_content.get('validators')
           error_msgs_aux_content = info.get('error_msgs')
 
