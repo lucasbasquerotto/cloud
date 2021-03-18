@@ -773,6 +773,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             env_name=env_data.get('env').get('name'),
             ctx_name=env_data.get('ctx_name'),
             pod_name=pod_name,
+            pod_description=pod_description,
             local=local,
             dev=to_bool(env_data.get('dev')),
             lax=to_bool(env_data.get('lax')),
@@ -822,6 +823,7 @@ def prepare_pod(pod_info, parent_data, run_info):
                 transfer_contents,
                 context_title='pod ctx info transfer contents',
                 prepare_info=prepare_transfer_info,
+                input_params=dict(initial_input),
             )
 
             prepared_transfer_aux = info.get('result')
@@ -839,6 +841,7 @@ def prepare_pod(pod_info, parent_data, run_info):
               transfer_contents,
               context_title='pod info transfer contents',
               prepare_info=prepare_transfer_info,
+              input_params=dict(initial_input),
           )
 
           prepared_transfer_aux = info.get('result')
@@ -856,6 +859,7 @@ def prepare_pod(pod_info, parent_data, run_info):
               transfer_contents,
               context_title='pod transfer contents',
               prepare_info=prepare_transfer_info,
+              input_params=dict(initial_input),
           )
 
           prepared_transfer_aux = info.get('result')
@@ -1736,6 +1740,7 @@ def prepare_node(node_info, run_info, local=None):
               transfer_contents,
               context_title='node info transfer contents',
               prepare_info=prepare_transfer_info,
+              input_params=dict(general_data),
           )
 
           prepared_transfer_aux = info.get('result')
@@ -1753,7 +1758,7 @@ def prepare_node(node_info, run_info, local=None):
               transfer_contents,
               context_title='node transfer contents',
               prepare_info=prepare_transfer_info,
-              input_params=dict(node=general_data)
+              input_params=dict(node=general_data),
           )
 
           prepared_transfer_aux = info.get('result')
@@ -1784,7 +1789,7 @@ def prepare_node(node_info, run_info, local=None):
                 cron,
                 context_title='node cron transfer contents',
                 prepare_info=prepare_transfer_info,
-                input_params=dict(general_data)
+                input_params=dict(general_data),
             )
 
             cron_transfer = info.get('result')
