@@ -111,6 +111,9 @@ schemas:
   cron:
     type: "dict"
     props:
+      when:
+        type: "bool"
+        description: "when false, the cron job is ignored; defaults to true"
       user:
         type: "str"
         non_empty: true
