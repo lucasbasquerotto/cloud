@@ -136,7 +136,10 @@
           set_fact:
             project_env: "{{ project_env_base }}"
           vars:
-            params: "{{ project_env }}"
+            project_name: "{{ project_env.name | default('') }}"
+            project_ctxs: "{{ project_env.ctxs | default([]) }}"
+            params: "{{ project_env.params | default({}) }}"
+            credentials: "{{ project_env.credentials | default({}) }}"
 
       when: project_env.env is defined
       tags: ["no_print"]
