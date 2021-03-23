@@ -676,12 +676,15 @@ _The above remains unchanged when the parameters are processed._
 
 The values specified in `group_params` must be a dictionary in which the value of each property is a string that references a property in a group params dictionary that contains the values that will be mapped to the initial dictionary properties. The group params dictionary depends on the context that the `group_params` is specified (for example, if defined in a service, the group params dictionary is `service_group_params` defined at the topmost layer of the project environment variable; if defined in a node, will be `node_group_params`; and so on).
 
+The `group_params` properties whose values are not defined or are an empty string will be ignored (it will be considered as if the property is not there, and it won't be mapped to any property in the group params dictionary).
+
 ```yaml
 services:
   my_service:
     group_params:
       param1: "group_1"
       param2: "group_2"
+      param3: ""
 service_group_params:
   group_1: 3
   group_2: 4

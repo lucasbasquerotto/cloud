@@ -27,24 +27,20 @@ def expand_group_params(group_params, group_params_dict, ctx_name=None):
       for key in sorted(list(group_params.keys())):
         mapped_key = group_params.get(key)
 
-        if not mapped_key:
-          error_msgs += [[
-              str('group_params key: ' + key + ctx_info),
-              'msg: group_params mapped key not defined',
-          ]]
-        if (not group_params_dict) or (mapped_key not in group_params_dict):
-          error_msgs += [[
-              str('group_params key: ' + key + ctx_info),
-              str('group_params mapped_key: ' + mapped_key),
-              'group_params_dict keys:',
-              sorted(
-                  str(dict_key)
-                  for dict_key in list(group_params_dict.keys())
-              ) if group_params_dict else '',
-              'msg: group_params mapped key not present in dict',
-          ]]
-        else:
-          result[key] = group_params_dict.get(mapped_key)
+        if mapped_key:
+          if (not group_params_dict) or (mapped_key not in group_params_dict):
+            error_msgs += [[
+                str('group_params key: ' + key + ctx_info),
+                str('group_params mapped_key: ' + mapped_key),
+                'group_params_dict keys:',
+                sorted(
+                    str(dict_key)
+                    for dict_key in list(group_params_dict.keys())
+                ) if group_params_dict else '',
+                'msg: group_params mapped key not present in dict',
+            ]]
+          else:
+            result[key] = group_params_dict.get(mapped_key)
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
