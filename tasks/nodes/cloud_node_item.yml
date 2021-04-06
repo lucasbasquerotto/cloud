@@ -10,6 +10,7 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ cloud_node_item.tmp_dir }}/services"
         cloud_service_state: "{{ cloud_node_item_state }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ cloud_node_item_title }} - verify if there is a node result"
@@ -23,6 +24,7 @@
         tmp_result_item: >-
           {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
       when: tmp_result_item.hosts is not defined
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - cloud_node_hosts"
@@ -33,12 +35,14 @@
         tmp_service_name: "{{ tmp_service.name | default('') }}"
         tmp_result_item: >-
           {{ cloud_service_result_inner_map[tmp_service_name] | default({}) }}
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - validate the node service result schema"
       lrd.cloud.schema:
         schema_file: "schemas/node_services_result.schema.yml"
         value: "{{ cloud_node_hosts }}"
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ cloud_node_item_title }} - cloud_node_active_hosts"
       set_fact:
@@ -48,6 +52,7 @@
             | selectattr('state', 'equalto', 'present')
             | list
           }}
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     ### Hosts File (Inventory) ###
@@ -67,11 +72,13 @@
       loop_control:
         loop_var: tmp_item
         label: "{{ tmp_item.name }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - init"
       set_fact:
         cloud_node_hosts_info: ""
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill hosts"
@@ -107,6 +114,7 @@
         index_var: tmp_idx
         loop_var: tmp_item
         label: "{{ tmp_item.name }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - cloud_node_hosts_info - fill vars"
@@ -135,6 +143,7 @@
           }}
         tmp_host_pass: "{{ tmp_credential.host_pass | default('') }}"
         tmp_ssh_key_path: "{{ cloud_node_item.main_ssh_key_path | default('') }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
@@ -143,10 +152,12 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
         insertafter: "^\\[{{ cloud_node_name }}\\]$"
         block: "{{ cloud_node_hosts_info }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ cloud_node_item_title }} - refresh inventory"
       meta: refresh_inventory
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     # DNS Services
@@ -168,6 +179,7 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/node/{{ cloud_node_name }}/dns/services"
       when: not cloud_service_tmp_info.skip
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
   rescue:
@@ -176,6 +188,7 @@
         msg: "error in node execution (see above logs for more details)"
       ignore_errors: "{{ cloud_node_item.ignore_errors | default(false) | bool }}"
       when: not (cloud_node_item_delay_errors | bool)
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ cloud_node_item_title }} - handle error (postpone)"
@@ -185,4 +198,5 @@
         (cloud_node_item_delay_errors | bool)
         and
         (not (cloud_node_item.ignore_errors | default(false) | bool))
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]

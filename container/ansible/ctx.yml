@@ -8,6 +8,7 @@
       {{ project_secrets_cloud_dir }}/ctxs/{{ project_ctx_key }}
     project_ctx_path_map_repos: >-
       {{ project_env_init.path_params.path_map_repos | default({}) }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # ctx - cloud repository
@@ -31,11 +32,13 @@
     repo_dev_path: "{{ project_ctx_path_cloud }}"
     repo_dev: "{{ env_dev }}"
     repo_lax: "{{ env_lax }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ project_env_title }} - set_fact - project_ctx_cloud_repo_dir"
   set_fact:
     project_ctx_cloud_repo_dir: "{{ repo_dir }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - env repos (outer)"
@@ -68,6 +71,7 @@
   loop_control:
     loop_var: project_ctx_item
     label: "{{ project_ctx_item_label }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - collections (parent directories)"
@@ -81,6 +85,7 @@
   loop_control:
     loop_var: tmp_item
     label: "(parent of) {{ tmp_dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ project_ctx_title }} - collections (symlinks)"
@@ -104,6 +109,7 @@
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_real_label }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ project_ctx_title }} - create the ctx directory"
@@ -111,6 +117,7 @@
     path: "{{ project_ctx_base_dir }}"
     state: directory
     mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+  no_log: "{{ env_no_log }}"
 
 # output vars
 
@@ -122,6 +129,7 @@
       ctx: "{{ project_ctx_key }}"
       env_dev: "{{ env_dev | bool | ternary('true', 'false') }}"
       env_lax: "{{ env_lax | bool | ternary('true', 'false') }}"
+      env_no_log: "{{ env_no_log | bool | ternary('true', 'false') }}"
       ctx_dir: "{{ project_ctx_base_dir }}"
       ctx_dev_dir: >-
         {{ project_dev_repos_dir }}/{{
@@ -137,6 +145,7 @@
       dev_repos_dir: "{{ project_dev_repos_dir }}"
       secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
       secrets_ctx_dir: "{{ project_secrets_cloud_dir }}/ctxs/{{ project_ctx_key }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.yml)"
@@ -144,10 +153,12 @@
     content: "{{ project_ctx_params | to_nice_yaml }}"
     dest: "{{ project_ctx_base_dir }}/vars.yml"
     mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
+  no_log: "{{ env_no_log }}"
 
 - name: "{{ project_ctx_title }} - project_ctx_params_list - init"
   set_fact:
     project_ctx_params_list: ["#!/bin/bash"]
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - project_ctx_params - fill"
@@ -165,6 +176,7 @@
   loop_control:
     loop_var: project_ctx_item
     label: "{{ project_ctx_item }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ project_ctx_title }} - create the project cloud ctx config file (vars.sh)"
@@ -172,3 +184,4 @@
     content: "{{ project_ctx_params_list | join('\n') }}"
     dest: "{{ project_ctx_base_dir }}/vars.sh"
     mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
+  no_log: "{{ env_no_log }}"

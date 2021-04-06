@@ -15,6 +15,7 @@
           input_params=pod_input,
         )
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # create the directories
@@ -31,6 +32,7 @@
   loop_control:
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.path }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 # transfer the templates
@@ -52,6 +54,7 @@
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.dest_tmp }}"
   changed_when: false
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -70,6 +73,7 @@
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.dest_tmp }}"
   changed_when: false
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -87,6 +91,7 @@
   loop_control:
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 # transfer the files
@@ -104,4 +109,5 @@
   loop_control:
     loop_var: pod_transfer_item
     label: "{{ pod_transfer_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

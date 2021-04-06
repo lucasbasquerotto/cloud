@@ -4,6 +4,7 @@
   vars:
     tmp_name: "{{ node_setup_node.name }}"
   when: (tmp_name != instance_type) and (ansible_connection != 'local')
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ node_setup_title }} - host users"
@@ -19,4 +20,5 @@
   loop: "{{ node_setup_node.host_users | default([]) }}"
   loop_control:
     loop_var: node_setup_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

@@ -76,6 +76,7 @@
         (main_tmp_node | lrd.cloud.validate_connection(env_info))
         and
         ((main_tmp_task.type | default('')) != 'skip')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
 <<% set ns_outer_run.first = false %>>

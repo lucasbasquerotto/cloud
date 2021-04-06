@@ -10,6 +10,7 @@
       {{ node_setup_item.initial_connection_timeout | default(300) }}
     node_setup_item_finished_timeout: >-
       {{ node_setup_item.setup_finished_timeout | default(300) }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Wait Host
@@ -22,9 +23,11 @@
     sleep: 1
     timeout: "{{ node_setup_item_initial_connection_timeout | int }}"
   when: ansible_connection != 'local'
+  no_log: "{{ env_no_log }}"
 
 - name: "{{ node_setup_item_title }} - Gathering facts"
   setup:
+  no_log: "{{ env_no_log }}"
 
 - name: "{{ node_setup_item_title }} - block - wait and validate setup"
   block:
@@ -46,6 +49,7 @@
               [info] simulated message - line 03
               {{ node_setup_item_success_log_last_line }}
               [error] simulated error message - last line
+          no_log: "{{ env_no_log }}"
           tags: ["no_print"]
 
         - name: >
@@ -55,6 +59,7 @@
             path: "{{ node_setup_item_log_file | dirname }}"
             state: directory
             mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
+          no_log: "{{ env_no_log }}"
           tags: ["no_print_skipped"]
 
         - name: >
@@ -71,12 +76,14 @@
                 )
               }}
             mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+          no_log: "{{ env_no_log }}"
           tags: ["no_print_skipped"]
 
       when: >-
         (ansible_connection == 'local')
         and
         ((node_setup_node.local_node_setup_error | default('')) != 'timeout')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: >
@@ -91,6 +98,7 @@
         search_regex: "{{ node_setup_item_finished_log_regex }}"
       register: node_setup_item_timeout_var
       ignore_errors: true
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ node_setup_item_title }} - block - retrieve the full log and fail due to setup timeout"
       block:
@@ -100,11 +108,13 @@
           shell: cat "{{ node_setup_item_log_file }}"
           register: node_setup_item_full_log_var
           changed_when: false
+          no_log: "{{ env_no_log }}"
           tags: ["no_print_skipped"]
 
         - name: "{{ node_setup_item_title }} - setup timeout - node_setup_item_full_log"
           set_fact:
             node_setup_item_full_log: "{{ node_setup_item_full_log_var.stdout }}"
+          no_log: "{{ env_no_log }}"
           tags: ["no_print"]
 
         - name: "{{ node_setup_item_title }} - fail due to setup timeout"
@@ -114,8 +124,10 @@
               File: {{ node_setup_item_log_file }}
               Full Log:
               {{ node_setup_item_full_log }}
+          no_log: "{{ env_no_log }}"
           tags: ["no_print_skipped"]
       when: node_setup_item_timeout_var.failed
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     # Verify Successful Setup
@@ -126,12 +138,14 @@
           shell: tail -n 1 "{{ node_setup_item_log_file }}"
           register: node_setup_item_last_line_var
           changed_when: false
+          no_log: "{{ env_no_log }}"
           tags: ["no_print_skipped"]
 
         - name: "{{ node_setup_item_title }} - node_setup_item_last_line"
           set_fact:
             node_setup_item_last_line: "{{ node_setup_item_last_line_var.stdout }}"
             node_setup_item_full_log: ""
+          no_log: "{{ env_no_log }}"
           tags: ["no_print"]
 
         - name: "{{ node_setup_item_title }} - block - retrieve the full log and fail due to setup error"
@@ -142,11 +156,13 @@
               shell: cat "{{ node_setup_item_log_file }}"
               register: node_setup_item_full_log_var
               changed_when: false
+              no_log: "{{ env_no_log }}"
               tags: ["no_print_skipped"]
 
             - name: "{{ node_setup_item_title }} - setup error - node_setup_item_full_log"
               set_fact:
                 node_setup_item_full_log: "{{ node_setup_item_full_log_var.stdout }}"
+              no_log: "{{ env_no_log }}"
               tags: ["no_print"]
 
             - name: "{{ node_setup_item_title }} - fail due to setup error"
@@ -157,10 +173,14 @@
                   Should be: {{ node_setup_item_success_log_last_line }}
                   Full Log:
                   {{ node_setup_item_full_log }}
+              no_log: "{{ env_no_log }}"
               tags: ["no_print_skipped"]
           when: node_setup_item_last_line != node_setup_item_success_log_last_line
+          no_log: "{{ env_no_log }}"
           tags: ["no_print_skipped"]
 
       when: node_setup_item_success_log_last_line != ''
+      no_log: "{{ env_no_log }}"
 
   when: node_setup_item_log_file != ''
+  no_log: "{{ env_no_log }}"

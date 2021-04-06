@@ -12,6 +12,7 @@
   loop: "{{ prepare_repos_ctx_extra_repos }}"
   loop_control:
     loop_var: prepare_repos_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ prepare_repos_title }} - extra repos (local) - options"
@@ -29,6 +30,7 @@
   loop: "{{ prepare_repos_ctx_extra_repos }}"
   loop_control:
     loop_var: prepare_repos_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Pods Repos (Local)
@@ -36,6 +38,7 @@
 - name: "{{ prepare_repos_title }} - prepare_repos_parent_pods_list - init"
   set_fact:
     prepare_repos_parent_pods_list: []
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ prepare_repos_title }} - prepare_repos_parent_pods_list - fill"
@@ -57,6 +60,7 @@
   loop: "{{ prepare_repos_nodes }}"
   loop_control:
     loop_var: tmp_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ prepare_repos_title }} - local pod repos"
@@ -83,4 +87,5 @@
   loop_control:
     loop_var: prepare_repos_item
     label: "{{ prepare_repos_layer_label }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

@@ -1,6 +1,7 @@
 - name: "{{ transfer_title }} - transfer_prepared_list (prepare)"
   set_fact:
     transfer_prepared_list: []
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - transfer_prepared_list (fill)"
@@ -35,4 +36,5 @@
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

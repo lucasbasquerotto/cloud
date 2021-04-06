@@ -10,6 +10,7 @@
     ext_node_base_dir_prefix: "{{ inner_service_base_dir_prefix }}"
     ext_node_tmp_dir: "{{ inner_service_tmp_dir }}"
     ext_node_result: {}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Main
@@ -22,6 +23,7 @@
   set_fact:
     ext_node_result:
       hosts: []
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Set Result
@@ -29,4 +31,5 @@
 - name: "{{ ext_node_title }} - set result"
   set_fact:
     cloud_service_result: "{{ ext_node_result }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

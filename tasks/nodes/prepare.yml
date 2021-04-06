@@ -9,6 +9,7 @@
     - "{{ node_prepare_node.tmp_dir }}"
   loop_control:
     loop_var: node_prepare_item
+  no_log: "{{ env_no_log }}"
 
 - name: "{{ node_prepare_title }} - node_prepare_transfer_list (init)"
   set_fact:
@@ -24,6 +25,7 @@
         ctx_node_dependencies[node_prepare_node.name]
         | default(node_prepare_node.general_data.dependencies | default({}))
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ node_prepare_title }} - node_prepare_transfer_list (fill)"
@@ -44,6 +46,7 @@
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ node_prepare_title }} - transfer (outer)"
@@ -55,4 +58,5 @@
     transfer_prepared: true
     transfer_input: "{{ node_prepare_transfer_input }}"
   when: (node_prepare_transfer_list | length) > 0
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

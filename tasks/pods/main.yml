@@ -6,6 +6,7 @@
     pod_node_local: "{{ pod_node.local | default(false) | bool }}"
     pod_node_credential: "{{ pod_node.credential | default({}) }}"
     pod_node_base_dir: "{{ pod_node.base_dir | default('') }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Pods
@@ -40,4 +41,5 @@
     loop_var: pod_item
     label: "{{ pod_item.description }}"
   when: env_pod in ['', pod_name]
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

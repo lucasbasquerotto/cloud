@@ -16,6 +16,7 @@
     }}
   loop_control:
     loop_var: tmp_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ pre_prepare_node_title }} - generate the ssh key file(s)"
@@ -31,4 +32,5 @@
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_path }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

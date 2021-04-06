@@ -1,6 +1,7 @@
 - name: "{{ env_title }} - generate the hosts data - init"
   set_fact:
     ctx_hosts_data: {}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ env_title }} - generate the hosts data - fill"
@@ -27,4 +28,5 @@
   loop: "{{ ansible_play_hosts_all }}"
   loop_control:
     loop_var: tmp_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

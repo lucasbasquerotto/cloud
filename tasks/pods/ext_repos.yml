@@ -15,4 +15,5 @@
     repo_root: "{{ pod_root | bool }}"
     repo_dev: "{{ env_dev and (pod_node_local | bool) }}"
     repo_lax: "{{ env_lax }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

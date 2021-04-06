@@ -16,3 +16,4 @@
   loop_control:
     loop_var: ext_run_dependencies_item
     label: "{{ ext_run_dependencies_item.key }}"
+  no_log: "{{ env_no_log }}"

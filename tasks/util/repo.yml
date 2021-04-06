@@ -2,12 +2,14 @@
   set_fact:
     repo_dir_dev: "{{ (repo_dev | bool) and ((repo_dev_path | default('')) != '') }}"
     repo_dev_base_dir: "{{ repo_dev_base_dir | default('') }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - validate the git repo development base dir"
   fail:
     msg: "repo_dev_base_dir is not specified for dev repository"
   when: (repo_dev_base_dir == '') and (repo_dir_dev | bool)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - repo_dir"
@@ -20,6 +22,7 @@
           repo_default_dir
         )
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: >-
@@ -31,6 +34,7 @@
     state: directory
     mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
   when: repo_dir != repo_default_dir
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ repo_title }} - git (outer)"
@@ -45,11 +49,13 @@
     git_root: "{{ repo_root | default(false) }}"
     git_dev: "{{ repo_dev }}"
     git_lax: "{{ repo_lax }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - git_result"
   set_fact:
     repo_git_result: "{{ git_result }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ repo_title }} - create symbolic link"
@@ -59,4 +65,5 @@
     dest: "{{ repo_default_dir }}"
     state: link
   when: repo_dir != repo_default_dir
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

@@ -10,6 +10,7 @@
         )
       }}
   when: ctx_data is not defined
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ env_title }} - hosts data (outer)"
@@ -20,6 +21,7 @@
     (ctx_node_dependencies is not defined)
     and
     (ctx_data.has_node_dependency | default(false) | bool)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ env_title }} - generate the node dependencies"
@@ -37,6 +39,7 @@
     (ctx_load_node_dependencies | default(false) | bool)
     and
     (ctx_node_dependencies is not defined)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ env_title }} - generate the local node dependencies"
@@ -62,4 +65,5 @@
   loop_control:
     loop_var: ctx_item
     label: "{{ ctx_item.description }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

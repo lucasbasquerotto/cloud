@@ -2,6 +2,7 @@
   fail:
     msg: "neither the cloud service list nor the prepared list are defined"
   when: (cloud_service_prepared_list is not defined) and (cloud_service_list is not defined)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - validate entrypoint service (must be a list)"
@@ -11,18 +12,21 @@
     ((cloud_service_prepared_list | default([]) | length) > 0)
     and
     ((cloud_service_list | default([]) | length) > 0)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - validate the cloud service state (required)"
   fail:
     msg: "the cloud service state is not defined"
   when: (cloud_service_state | default('')) == ''
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - validate the cloud service state (value)"
   fail:
     msg: "the cloud service state ({{ cloud_service_state }}) should be either 'present' or 'absent'"
   when: not (cloud_service_state in ['present', 'absent'])
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - cloud_service_next - handle previous cases"
@@ -46,12 +50,14 @@
       result_map: "{{ cloud_service_result_map | default({}) }}"
       next_list: "{{ [tmp_next_service_item] + tmp_next_prev.next_list }}"
   when: not (cloud_service_top | bool)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - cloud_service_next - initialize"
   set_fact:
     cloud_service_next: { next_list: [] }
   when: cloud_service_top | bool
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - cloud_service_run_list - initial"
@@ -60,12 +66,14 @@
     cloud_service_run_idx: 0
     cloud_service_result_map: {}
     cloud_service_result_inner_map: {}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - cloud_service_run_list (prepared)"
   set_fact:
     cloud_service_run_list: "{{ cloud_service_prepared_list | default([]) }}"
   when: (cloud_service_prepared_list | default([]) | length) > 0
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_title }} - generate the service list"
@@ -81,28 +89,33 @@
         )
       }}
   when: (cloud_service_list | default([]) | length) > 0
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_service_title }} - cloud_service_run_title"
   set_fact:
     cloud_service_run_title: "{{ cloud_service_title }} - run"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_run_title }} - cloud_service_continue - before"
   set_fact:
     cloud_service_continue: >-
       {{ (cloud_service_run_idx | int) < (cloud_service_run_list | length) }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_service_run_title }} - execute the service(s)"
   include_tasks: "tasks/services/cloud_service_run.yml"
   when: cloud_service_continue | bool
+  no_log: "{{ env_no_log }}"
 
 # set continue as true because it may be called inside a another service
 # (to continue running the parent service, if there is one)
 - name: "{{ cloud_service_run_title }} - cloud_service_continue - after"
   set_fact:
     cloud_service_continue: true
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # set previous values for the parent service (if there is one)
@@ -116,4 +129,5 @@
     cloud_service_result_map: "{{ tmp_next.result_map | default({}) }}"
   vars:
     tmp_next: "{{ cloud_service_next | default({}) }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

@@ -4,6 +4,7 @@
     transfer_diff_str: {}
     transfer_diff_file: {}
     transfer_diff_template: {}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Prepare (if needed)
@@ -11,6 +12,7 @@
 - name: "{{ transfer_title }} - prepare the list with the input"
   include_tasks: "tasks/util/transfer_prepare.yml"
   when: not (transfer_prepared | default(false) | bool)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - prepare the content - verify type"
@@ -26,6 +28,7 @@
   loop_control:
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # Create the destination directory
@@ -40,6 +43,7 @@
   loop_control:
     loop_var: tmp_item
     label: "[file] {{ tmp_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ transfer_title }} - create the tmp directories"
@@ -53,6 +57,7 @@
   loop_control:
     loop_var: tmp_item
     label: "[file] {{ tmp_item.dest }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 # String
@@ -71,6 +76,7 @@
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
   register: transfer_diff_str
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 # File
@@ -89,6 +95,7 @@
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
   register: transfer_diff_file
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 # Template
@@ -114,6 +121,7 @@
     loop_var: tmp_item
     label: "{{ tmp_item.tmp_dest }}"
   changed_when: false
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -133,6 +141,7 @@
     loop_var: tmp_item
     label: "{{ tmp_item.tmp_dest }}"
   changed_when: false
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -152,6 +161,7 @@
     loop_var: tmp_item
     label: "{{ tmp_item.dest }}"
   register: transfer_diff_template
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ transfer_title }} - transfer_diff"
@@ -164,4 +174,5 @@
         +
         (transfer_diff_template.results | default([]) )
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

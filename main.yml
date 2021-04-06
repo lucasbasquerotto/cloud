@@ -28,6 +28,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.before_initial_services }}"
       when: (ctx_data.hooks.before_initial_services | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - initial services (outer)"
@@ -39,11 +40,13 @@
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
+      no_log: "{{ env_no_log }}"
       when: (main_tmp_services | length) > 0
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_initial_services }}"
       when: (ctx_data.hooks.after_initial_services | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -61,6 +64,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.before_nodes }}"
       when: (ctx_data.hooks.before_nodes | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - nodes (outer)"
@@ -76,11 +80,13 @@
         cloud_node_list: "{{ main_tmp_nodes }}"
         cloud_node_tmp_dir: "{{ env_ctx_dir }}/cloud/nodes"
         cloud_node_state: "present"
+      no_log: "{{ env_no_log }}"
       when: (main_tmp_nodes | length) > 0
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_nodes }}"
       when: (ctx_data.hooks.after_nodes | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -123,6 +129,7 @@
       fail:
         msg: "instance_type is not defined in the host"
       when: (instance_type == '') and (ansible_connection != 'local')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }}"
@@ -131,6 +138,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.before_nodes_setup | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - nodes setup (outer)"
@@ -153,11 +161,13 @@
           or
           (node_setup_node.local_node_setup | default(false, true) | bool)
         )
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }} - instance_info_skip (initial)"
       set_fact:
         instance_info_skip: false
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - instance info - before (outer)"
@@ -176,6 +186,7 @@
         (not (instance_info_skip | bool))
         and
         (instance_info_node | lrd.cloud.validate_connection(env_info))
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -186,6 +197,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.after_nodes_setup | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -210,6 +222,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.before_prepare_nodes | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - prepare nodes (outer)"
@@ -226,6 +239,7 @@
         (not (instance_info_skip | bool))
         and
         (node_prepare_node | lrd.cloud.validate_connection(env_info))
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -236,6 +250,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.after_prepare_nodes | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -262,6 +277,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.before_prepare_pods | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - prepare pods (outer)"
@@ -279,6 +295,7 @@
         (pod_node | lrd.cloud.validate_connection(env_info))
         and
         ((pod_node.pods | default([]) | length) > 0)
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -289,6 +306,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.after_prepare_pods | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -322,6 +340,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.before_cron | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - cron (outer)"
@@ -341,6 +360,7 @@
         (cron_node | lrd.cloud.validate_connection(env_info))
         and
         ((cron_node.params.cron | default([]) | length) > 0)
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -351,6 +371,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.after_cron | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -375,6 +396,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.before_nodes_finished | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - instance info - after (outer)"
@@ -390,6 +412,7 @@
         loop_var: main_item
         label: "{{ instance_info_node.description }}"
       when: instance_info_node | lrd.cloud.validate_connection(env_info)
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
@@ -398,6 +421,7 @@
         (env_can_run_node | bool)
         and
         ((ctx_data.hooks.after_nodes_finished | default('')) != '')
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -415,6 +439,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.before_final_services }}"
       when: (ctx_data.hooks.before_final_services | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - final services (outer)"
@@ -427,10 +452,12 @@
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
       when: (main_tmp_services | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_final_services }}"
       when: (ctx_data.hooks.after_final_services | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -448,6 +475,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.before_delete_tmp }}"
       when: (ctx_data.hooks.before_delete_tmp | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - [destroy (tmp)] final services (outer)"
@@ -467,6 +495,7 @@
         cloud_service_state: "absent"
         cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }} - [destroy (tmp)] nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
@@ -485,6 +514,7 @@
         cloud_node_state: "absent"
         cloud_node_delay_errors: true
       when: (main_tmp_nodes | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }} - [destroy (tmp)] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
@@ -503,10 +533,12 @@
         cloud_service_state: "absent"
         cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_delete_tmp }}"
       when: (ctx_data.hooks.after_delete_tmp | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -523,6 +555,7 @@
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.before_delete_main }}"
       when: (ctx_data.hooks.before_delete_main | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ env_title }} - [destroy] final services (outer)"
@@ -542,6 +575,7 @@
         cloud_service_state: "absent"
         cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }} - [destroy] nodes (outer)"
       include_tasks: "tasks/nodes/cloud_node.yml"
@@ -560,6 +594,7 @@
         cloud_node_state: "absent"
         cloud_node_delay_errors: true
       when: (main_tmp_nodes | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }} - [destroy] initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
@@ -578,10 +613,12 @@
         cloud_service_state: "absent"
         cloud_service_delay_errors: true
       when: (main_tmp_services | length) > 0
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_delete_main }}"
       when: (ctx_data.hooks.after_delete_main | default('')) != ''
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
 ###############################################################################
@@ -602,5 +639,6 @@
           {{ instance_errors | to_nice_yaml }}
           (see above logs for more details)
       when: (instance_errors | length) > 0
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 ###############################################################################

@@ -19,4 +19,5 @@
     loop_var: cloud_node_item
     label: "{{ cloud_node_name }}"
   when: env_node in ['', cloud_node_name]
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

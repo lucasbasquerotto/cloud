@@ -6,6 +6,7 @@
   vars:
     tmp_backup_dir: "{{ instance_info_node.tmp_dir }}/backup"
     tmp_backup_file: "commit"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ instance_info_title }} - create the backup directory"
@@ -15,6 +16,7 @@
     state: directory
     mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
   when: instance_info_type == 'before'
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -26,6 +28,7 @@
     dest: "{{ instance_info_backup_file_tmp }}"
     mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
   when: instance_info_type == 'before'
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - block:
@@ -38,6 +41,7 @@
         content: ""
         dest: "{{ instance_info_backup_file }}"
         mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ instance_info_title }} - get the difference of the 2 commit files (old and current)"
@@ -46,14 +50,17 @@
       register: instance_info_diff
       failed_when: instance_info_diff.rc > 1
       changed_when: instance_info_diff.rc == 1
+      no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
     - name: "{{ instance_info_title }} - instance_info_skip (define)"
       set_fact:
         instance_info_skip: "{{ not instance_info_diff.changed }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
   when: (instance_info_type == 'before') and (not (env_force | bool))
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: >-
@@ -67,4 +74,5 @@
     dest: "{{ instance_info_backup_file }}"
     mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
   when: instance_info_type == 'after'
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

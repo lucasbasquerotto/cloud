@@ -6,6 +6,7 @@
         + main_tmp_stage_task.name + '.' + cloud_run_task.name + '.'
         + ('%Y-%m-%d_%H-%M-%S' | strftime())
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ cloud_run_title }} - run node task file (outer)"
@@ -21,6 +22,7 @@
       tmp_dir: "{{ cloud_run_node.tmp_dir }}"
       dependencies: "{{ ctx_node_dependencies[cloud_run_node.name] | default({}) }}"
   when: (cloud_run_task.type == 'task') and (cloud_run_task_target == 'node')
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_title }} - run pod task file (outer)"
@@ -52,6 +54,7 @@
     loop_var: cloud_run_pod
     label: "{{ cloud_run_pod.description }}"
   when: (cloud_run_task.type == 'task') and (cloud_run_task_target == 'pod')
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_title }} - run node shell command (outer)"
@@ -69,6 +72,7 @@
     long_run_cmd: "{{ cloud_run_task.cmd }}"
     long_run_sync: "{{ cloud_run_task.sync | default(false) }}"
   when: (cloud_run_task.type == 'shell') and (cloud_run_task_target == 'node')
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ cloud_run_title }} - run pod shell command (outer)"
@@ -93,4 +97,5 @@
     loop_var: cloud_run_pod
     label: "{{ cloud_run_pod.description }}"
   when: (cloud_run_task.type == 'shell') and (cloud_run_task_target == 'pod')
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

@@ -7,6 +7,7 @@
     pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/tmp"
     pod_prepare_tmp: true
   when: not (pod_fast | bool)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 ### Prepare the real directory ###
@@ -16,4 +17,5 @@
     pod_prepare_title: "{{ pod_inner_title }} - main"
     pod_repo_dir: "{{ pod_item.pod_dir }}"
     pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/main"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

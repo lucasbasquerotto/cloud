@@ -1,6 +1,6 @@
 #################################################################################
 ### Fails if there is a node dependency in which the required amount of hosts ###
-### is higher than the actual amount of reacheble hosts                       ###
+### is higher than the actual amount of reachable hosts                       ###
 #################################################################################
 
 - name: >
@@ -36,11 +36,13 @@
     loop_var: ext_run_dependencies_host
   register: ext_run_dependencies_var
   ignore_errors: true
+  no_log: "{{ env_no_log }}"
 
 - name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_errors (init)"
   set_fact:
     ext_run_dependencies_inner_errors: 0
     ext_run_dependencies_inner_msgs: "Unreachable hosts:"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_errors (fill)"
@@ -56,6 +58,7 @@
   loop_control:
     loop_var: ext_run_dependencies_inner_item
     label: "dependency [{{ ext_run_dependencies_inner_item.ext_run_dependencies_host }}]"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_successful"
@@ -66,6 +69,7 @@
         -
         (ext_run_dependencies_inner_errors | int)
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ ext_run_dependencies_title }} - ext_run_dependencies_inner_msgs (end)"
@@ -82,6 +86,7 @@
     (ext_run_dependencies_inner_successful | int)
     <
     (ext_run_dependencies_item_value.required_amount | int)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ ext_run_dependencies_title }} - fail due to unreachable hosts"
@@ -91,4 +96,5 @@
     (ext_run_dependencies_inner_successful | int)
     <
     (ext_run_dependencies_item_value.required_amount | int)
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]

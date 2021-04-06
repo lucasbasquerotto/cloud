@@ -9,6 +9,7 @@
     - "git_update"
   loop_control:
     loop_var: git_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ git_title }} - validate the git task ssh parameters"
@@ -23,6 +24,7 @@
     - "git_secrets_dir"
   loop_control:
     loop_var: git_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ git_title }} - validate the git repo properties"
@@ -34,6 +36,7 @@
     - "version"
   loop_control:
     loop_var: git_item
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ git_title }} - git_ssh_file"
@@ -43,6 +46,7 @@
         ((git_repo.ssh_file | default('')) != '')
         | ternary(git_secrets_dir + '/ssh.key', '')
       }}
+  no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
 - name: "{{ git_title }} - create the local directories"
@@ -57,6 +61,7 @@
   loop_control:
     loop_var: git_item
     label: "{{ git_item.dir }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - create the directories"
@@ -72,6 +77,7 @@
   loop_control:
     loop_var: git_item
     label: "{{ git_item.dir }}"
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - copy the repo ssh file"
@@ -80,6 +86,7 @@
     dest: "{{ git_ssh_file }}"
     mode: 0600
   when: git_ssh_file != ''
+  no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
 - name: "{{ git_title }} - git checkout"
@@ -92,4 +99,5 @@
     dest: "{{ git_repo_dir }}"
     update: "{{ git_update | bool | ternary('yes', 'no') }}"
     force: "{{ git_update | bool | ternary('yes', 'no') }}"
+  no_log: "{{ env_no_log }}"
   register: git_result

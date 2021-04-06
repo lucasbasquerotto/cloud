@@ -33,6 +33,7 @@
         project_title: "[{{ project_env_init.key }}] {{ project_base_title }}"
         env_dev: "{{ tmp_dev }}"
         env_lax: "{{ project_env_init.lax | default(tmp_dev, true) }}"
+        env_no_log: "{{ project_env_init.no_log | default(false, true) }}"
       vars:
         tmp_dev: "{{ project_env_init.dev | default(false, true) }}"
       tags: ["no_print"]
@@ -46,6 +47,7 @@
         - "version"
       loop_control:
         loop_var: project_item
+      no_log: "{{ env_no_log }}"
 
     # env repository
 
@@ -66,6 +68,7 @@
         repo_dev_path: "{{ project_env_init.path_params.path_env | default('') }}"
         repo_dev: "{{ env_dev }}"
         repo_lax: "{{ env_lax }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - project_env_dir"
@@ -73,12 +76,14 @@
         project_env_dir: "{{ repo_dir }}"
         project_env_file: "{{ repo_dir }}/{{ project_env_init.repo.env_file }}"
         project_env_commit: "{{ repo_git_result.after }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - load the environment vars"
       include_vars:
         file: "{{ project_env_file }}"
         name: project_env_aux
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - project_env"
@@ -90,6 +95,7 @@
         project_name: "{{ project_env_init.key }}"
         project_ctxs: "{{ project_env_init.ctxs | default([]) }}"
         params: "{{ project_env_init.env_params | default({}) }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ project_env_title }} - validate ctl env (env vars)"
@@ -97,6 +103,7 @@
         schema_file: "{{ project_env_dir }}/{{ project_env.ctl_env_schema | default('') }}"
         value: "{{ project_env_init.env_params | default({}) }}"
       when: (project_env.ctl_env_schema | default('')) != ''
+      no_log: "{{ env_no_log }}"
 
     # env base repository
 
@@ -105,12 +112,14 @@
           fail:
             msg: "{{ project_env_title }} - git env base destination not defined"
           when: (project_env.env.repo_dir | default('')) == ''
+          no_log: "{{ env_no_log }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - set_fact - project_env_base_dir"
           set_fact:
             project_env_base_dir: "{{ project_env_dir + '/' + project_env.env.repo_dir }}"
             project_env_has_original: true
+          no_log: "{{ env_no_log }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - env base - repo (outer)"
@@ -125,12 +134,14 @@
             repo_dev_path: "{{ project_env_init.path_params.path_env_base | default('') }}"
             repo_dev: "{{ env_dev }}"
             repo_lax: "{{ env_lax }}"
+          no_log: "{{ env_no_log }}"
           tags: ["no_print"]
 
         - name: "{{ project_env_title }} - load the base environment vars"
           include_vars:
             file: "{{ project_env_base_dir }}/{{ project_env.env.file }}"
             name: project_env_base
+          no_log: "{{ env_no_log }}"
 
         - name: "{{ project_env_title }} - project_env (from base)"
           set_fact:
@@ -140,8 +151,10 @@
             project_ctxs: "{{ project_env.ctxs | default([]) }}"
             params: "{{ project_env.params | default({}) }}"
             credentials: "{{ project_env.credentials | default({}) }}"
+          no_log: "{{ env_no_log }}"
 
       when: project_env.env is defined
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     # project data (from env)
@@ -165,6 +178,7 @@
           env_dev: "{{ env_dev | bool }}"
           env_dir: "{{ project_env_dir }}"
           has_original_env: "{{ project_env_has_original | bool }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     - name: "{{ project_title }} - project_env_params and project_path_map_repos"
@@ -173,6 +187,7 @@
         project_env_params_file_rel: "env-params.yml"
         project_path_map_repos: "{{ project_env_init.path_params.path_map_repos | default({}) }}"
         project_path_map_file_rel: "path-map.yml"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
 
     # project files and directories
@@ -187,6 +202,7 @@
         - "{{ project_files_cloud_dir }}"
       loop_control:
         loop_var: project_item
+      no_log: "{{ env_no_log }}"
 
     - name: "{{ project_title }} - create the project files"
       copy:
@@ -216,6 +232,7 @@
       loop_control:
         loop_var: project_item
         label: "{{ project_item.dest }}"
+      no_log: "{{ env_no_log }}"
 
     # vars file (used to run the contexts and ssh file)
 
@@ -231,6 +248,7 @@
         project_vars_secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
         project_vars_default_ctx: "{{ project_data.default_ctx | default('') }}"
         project_vars_default_node: "{{ project_data.default_node | default('') }}"
+      no_log: "{{ env_no_log }}"
 
     # ctxs
 
@@ -243,4 +261,5 @@
       loop_control:
         loop_var: project_ctx
         label: "{{ project_ctx_key }}"
+      no_log: "{{ env_no_log }}"
       tags: ["no_print"]
