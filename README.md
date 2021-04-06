@@ -164,6 +164,7 @@ init:
   run_file: /usr/local/bin/run
 key: demo
 lax: true
+no_log: false
 migration: ''
 path_params:
   path_env: repos/env
@@ -193,6 +194,7 @@ _(The values above are the output after running `./run launch --dev demo` with t
 | <nobr>`key`</nobr> | Unique identifier of the project. |
 | <nobr>`lax`</nobr> | Indicates if files and directories created and copied during the deployment will have less strict permissions (when `true`, recommended when in development). |
 | <nobr>`migration`</nobr> | This will set the `migration` variable to be used to compare with the `migration` variable defined in the [project environment file](#project-environment-file), throwing an error in the preparation step, when the later value is defined and is different than the first `migration` variable. |
+| <nobr>`no_log`</nobr> | When `true`, won't print the ansible plays, tasks and module arguments, as well as outputs. Use only if absolutely necessary. |
 | <nobr>`path_params.path_env`</nobr> | When specified, is the directory, relative to the project root directory, in which the [project environment repository](#project-environment-repository) will cloned when in development mode. |
 | <nobr>`path_params.path_env_base`</nobr> | When specified, is the directory, relative to the project root directory, in which the [project environment base repository](#project-environment-base-file) will cloned when in development mode. |
 | <nobr>`path_params.path_map_repos`</nobr> | Dictionary of directories in which each key represents a repository as defined in the `repos` section in the [project environment file](#project-environment-file), and the value is the directory, relative to the project root directory, in which the repository will cloned when in development mode. |
@@ -250,6 +252,7 @@ export env_dev=true
 export env_dir=/main/dev/link/repos/env
 export env_file=/main/dev/link/repos/env/common/demo.yml
 export env_lax=true
+export env_no_log=false
 export env_params_file=/main/files/cloud/env-params.yml
 export path_map_file=/main/files/cloud/path-map.yml
 export project=demo
@@ -272,6 +275,7 @@ env_dev: 'true'
 env_dir: /main/dev/link/repos/env
 env_file: /main/dev/link/repos/env/common/demo.yml
 env_lax: 'true'
+env_no_log: 'true'
 env_params_file: /main/files/cloud/env-params.yml
 path_map_file: /main/files/cloud/path-map.yml
 project: demo
@@ -293,6 +297,7 @@ vault_file: /main/secrets/ctl/vault
 | <nobr>`env_dir`</nobr> | The environment repository directory path inside the container. |
 | <nobr>`env_file`</nobr> | The full path of the [project environment file](#project-environment-file), inside the container. |
 | <nobr>`env_lax`</nobr> | Indicates if files and directories created and copied during the deployment will have less strict permissions (when `true`; recommended when in development). |
+| <nobr>`env_no_log`</nobr> | When `true`, won't print the ansible plays, tasks and module arguments, as well as outputs. Use only if absolutely necessary. |
 | <nobr>`env_params_file`</nobr> | Path, inside the container, of the `yaml` file that will have the value of `env_params` defined in the [Cloud Input Vars](#cloud-input-vars). |
 | <nobr>`path_map_file`</nobr> | Path, inside the container, of the `yaml` file that will have the value of `path_params.path_map_repos` defined in the [Cloud Input Vars](#cloud-input-vars). |
 | <nobr>`project`</nobr> | The project identifier, that has the value of `key` defined in the [Cloud Input Vars](#cloud-input-vars). |
