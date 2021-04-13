@@ -65,6 +65,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                       'host',
                       'protocol',
                       'port',
+                      'when',
                   ],
                   ip=[
                       'type',
@@ -73,6 +74,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                       'host',
                       'protocol',
                       'port',
+                      'when',
                   ],
                   url=[
                       'type',
@@ -81,6 +83,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                       'host',
                       'protocol',
                       'port',
+                      'when',
                   ],
               )
 

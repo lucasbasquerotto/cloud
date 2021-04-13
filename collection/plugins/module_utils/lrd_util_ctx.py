@@ -116,6 +116,7 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
           allowed_keys = [
               'name',
               'key',
+              'when',
               'single',
               'absent',
           ]
@@ -146,6 +147,7 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
           allowed_keys = [
               'name',
               'key',
+              'when',
               'single',
               'absent',
               'delay_errors',
