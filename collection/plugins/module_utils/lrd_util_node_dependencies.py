@@ -51,165 +51,169 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                   host=dependency,
               )
 
-            dependency_type = dependency.get('type')
+            when = to_bool(dependency.get('when'), True)
 
-            allowed_props_map = dict(
-                node=[
-                    'type',
-                    'required_amount',
-                    'node_ip_type',
-                    'limit',
-                    'host',
-                    'protocol',
-                    'port',
-                ],
-                ip=[
-                    'type',
-                    'required_amount',
-                    'limit',
-                    'host',
-                    'protocol',
-                    'port',
-                ],
-                url=[
-                    'type',
-                    'required_amount',
-                    'limit',
-                    'host',
-                    'protocol',
-                    'port',
-                ],
-            )
+            if when:
+              dependency_type = dependency.get('type')
 
-            allowed_props = allowed_props_map.get(dependency_type)
+              allowed_props_map = dict(
+                  node=[
+                      'type',
+                      'required_amount',
+                      'node_ip_type',
+                      'limit',
+                      'host',
+                      'protocol',
+                      'port',
+                  ],
+                  ip=[
+                      'type',
+                      'required_amount',
+                      'limit',
+                      'host',
+                      'protocol',
+                      'port',
+                  ],
+                  url=[
+                      'type',
+                      'required_amount',
+                      'limit',
+                      'host',
+                      'protocol',
+                      'port',
+                  ],
+              )
 
-            for key in sorted(list(dependency.keys())):
-              if key not in allowed_props:
-                error_msgs_dependency += [[
-                    str('property: ' + key),
-                    'msg: invalid property for this node dependency type',
-                    'allowed properties: ',
-                    allowed_props,
-                ]]
+              allowed_props = allowed_props_map.get(dependency_type)
 
-            required_props = ['type', 'host']
-
-            for key in sorted(required_props):
-              if dependency.get(key) is None:
-                error_msgs_dependency += [[
-                    str('property: ' + key),
-                    'msg: required property not specified for this node dependency',
-                ]]
-
-            dependency_hosts = dependency.get('host')
-
-            if is_str(dependency_hosts):
-              dependency_hosts = [dependency_hosts]
-
-            if dependency_hosts and (dependency_type == 'node'):
-              target_node_names = dependency_hosts
-              dependency_hosts = []
-
-              for target_node_name in (target_node_names or []):
-                target_prepared_node = prepared_node_dict.get(target_node_name)
-
-                if not target_prepared_node:
+              for key in sorted(list(dependency.keys())):
+                if key not in allowed_props:
                   error_msgs_dependency += [[
-                      str('target node: ' + str(target_node_name or '')),
-                      'msg: invalid target node',
+                      str('property: ' + key),
+                      'msg: invalid property for this node dependency type',
+                      'allowed properties: ',
+                      allowed_props,
                   ]]
-                else:
-                  dependency_hosts += target_prepared_node.get(
-                      'active_hosts'
-                  ) or []
-                  target_local = target_prepared_node.get('local')
 
-            if not error_msgs_dependency:
-              dependency_limit = dependency.get('limit')
-              dependency_limit = int(
-                  dependency_limit
-                  if (dependency_limit is not None)
-                  else 1
-              )
-              dependency_required_amount = to_default_int(
-                  dependency.get('required_amount'), 0
-              )
-              dependency_real_limit = (
-                  len(dependency_hosts)
-                  if (dependency_limit == -1)
-                  else min(dependency_limit, len(dependency_hosts))
-              )
+              required_props = ['type', 'host']
 
-              if dependency_limit < -1:
-                error_msgs_dependency += [[
-                    str('dependency limit: ' + str(dependency_limit)),
-                    'msg: dependency limit should be -1, 0, or a positive integer',
-                ]]
-              elif (dependency_required_amount != 0) and dependency_limit == 0:
-                error_msgs_dependency += [[
-                    str(
-                        'dependency required amount: '
-                        + str(dependency_required_amount)
-                    ),
-                    'msg: dependency limit is defined as 0, but is required',
-                ]]
-              elif (dependency_required_amount != 0) and dependency_real_limit == 0:
-                error_msgs_dependency += [[
-                    str(
-                        'dependency required amount: '
-                        + str(dependency_required_amount)
-                    ),
-                    'msg: dependency is required, but number of hosts defined is 0',
-                ]]
-
-                if dependency_type == 'node':
+              for key in sorted(required_props):
+                if dependency.get(key) is None:
                   error_msgs_dependency += [[
-                      'tip: take a look at the "amount" property of the target node(s)',
-                      'target node(s): ' + str(dependency.get('host') or ''),
+                      str('property: ' + key),
+                      'msg: required property not specified for this node dependency',
                   ]]
-              elif (
-                  (dependency_required_amount != -1)
-                  and
-                  (dependency_real_limit < dependency_required_amount)
-              ):
-                error_msgs_dependency += [[
-                    str(
-                        'dependency required amount: '
-                        + str(dependency_required_amount)
-                    ),
-                    str(
-                        'target host amount: '
-                        + str(dependency_real_limit)
-                    ),
-                    'msg: dependency real limit is less than the required amount',
-                ]]
 
-              result_item = dict(
-                  type=dependency_type,
-                  origin_amount=origin_hosts_amount,
-                  required_amount=dependency_required_amount,
-                  limit=dependency_real_limit,
-                  node_ip_type=dependency.get('node_ip_type'),
-                  hosts=dependency_hosts,
-                  protocol=dependency.get('protocol'),
-                  port=dependency.get('port'),
-                  local=target_local,
-              )
+              dependency_hosts = dependency.get('host')
 
-              result_item_keys = list(result_item.keys())
+              if is_str(dependency_hosts):
+                dependency_hosts = [dependency_hosts]
 
-              for key in result_item_keys:
-                if result_item.get(key) is None:
-                  result_item.pop(key, None)
+              if dependency_hosts and (dependency_type == 'node'):
+                target_node_names = dependency_hosts
+                dependency_hosts = []
 
-              node_dependencies[dependency_name] = result_item
+                for target_node_name in (target_node_names or []):
+                  target_prepared_node = prepared_node_dict.get(
+                      target_node_name)
 
-            for value in error_msgs_dependency:
-              new_value = [
-                  str('dependency name: ' + dependency_name),
-                  str('dependency type: ' + dependency_type),
-              ] + value
-              error_msgs_node += [new_value]
+                  if not target_prepared_node:
+                    error_msgs_dependency += [[
+                        str('target node: ' + str(target_node_name or '')),
+                        'msg: invalid target node',
+                    ]]
+                  else:
+                    dependency_hosts += target_prepared_node.get(
+                        'active_hosts'
+                    ) or []
+                    target_local = target_prepared_node.get('local')
+
+              if not error_msgs_dependency:
+                dependency_limit = dependency.get('limit')
+                dependency_limit = int(
+                    dependency_limit
+                    if (dependency_limit is not None)
+                    else 1
+                )
+                dependency_required_amount = to_default_int(
+                    dependency.get('required_amount'), 0
+                )
+                dependency_real_limit = (
+                    len(dependency_hosts)
+                    if (dependency_limit == -1)
+                    else min(dependency_limit, len(dependency_hosts))
+                )
+
+                if dependency_limit < -1:
+                  error_msgs_dependency += [[
+                      str('dependency limit: ' + str(dependency_limit)),
+                      'msg: dependency limit should be -1, 0, or a positive integer',
+                  ]]
+                elif (dependency_required_amount != 0) and dependency_limit == 0:
+                  error_msgs_dependency += [[
+                      str(
+                          'dependency required amount: '
+                          + str(dependency_required_amount)
+                      ),
+                      'msg: dependency limit is defined as 0, but is required',
+                  ]]
+                elif (dependency_required_amount != 0) and dependency_real_limit == 0:
+                  error_msgs_dependency += [[
+                      str(
+                          'dependency required amount: '
+                          + str(dependency_required_amount)
+                      ),
+                      'msg: dependency is required, but number of hosts defined is 0',
+                  ]]
+
+                  if dependency_type == 'node':
+                    error_msgs_dependency += [[
+                        'tip: take a look at the "amount" property of the target node(s)',
+                        'target node(s): ' + str(dependency.get('host') or ''),
+                    ]]
+                elif (
+                    (dependency_required_amount != -1)
+                    and
+                    (dependency_real_limit < dependency_required_amount)
+                ):
+                  error_msgs_dependency += [[
+                      str(
+                          'dependency required amount: '
+                          + str(dependency_required_amount)
+                      ),
+                      str(
+                          'target host amount: '
+                          + str(dependency_real_limit)
+                      ),
+                      'msg: dependency real limit is less than the required amount',
+                  ]]
+
+                result_item = dict(
+                    type=dependency_type,
+                    origin_amount=origin_hosts_amount,
+                    required_amount=dependency_required_amount,
+                    limit=dependency_real_limit,
+                    node_ip_type=dependency.get('node_ip_type'),
+                    hosts=dependency_hosts,
+                    protocol=dependency.get('protocol'),
+                    port=dependency.get('port'),
+                    local=target_local,
+                )
+
+                result_item_keys = list(result_item.keys())
+
+                for key in result_item_keys:
+                  if result_item.get(key) is None:
+                    result_item.pop(key, None)
+
+                node_dependencies[dependency_name] = result_item
+
+              for value in error_msgs_dependency:
+                new_value = [
+                    str('dependency name: ' + dependency_name),
+                    str('dependency type: ' + dependency_type),
+                ] + value
+                error_msgs_node += [new_value]
 
         node_result = dict(
             active_hosts_amount=active_hosts_amount,
