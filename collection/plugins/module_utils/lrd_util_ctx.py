@@ -44,7 +44,14 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
     env = env_data.get('env')
 
     service_info_dict = service_info if isinstance(
-        service_info, dict) else dict()
+        service_info, dict
+    ) else dict()
+
+    when = to_bool(service_info_dict.get('when'), True)
+    result['when'] = when
+
+    if not when:
+      return dict(result=result, error_msgs=error_msgs)
 
     service_name = default(service_info_dict.get('name'), service_info)
     service_key = default(service_info_dict.get('key'), service_name)
@@ -275,7 +282,8 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
               group_params=service.get('group_params'),
               shared_params=service.get('shared_params'),
               shared_group_params=service.get('shared_group_params'),
-              shared_group_params_dict=env.get('service_shared_group_params'),
+              shared_group_params_dict=env.get(
+                  'service_shared_group_params'),
               shared_params_dict=env.get('service_shared_params'),
               group_params_dict=env.get('service_group_params'),
           )
@@ -329,7 +337,8 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
             task_data = dict(
                 base_dir_prefix=base_dir_prefix,
                 dict_to_validate=result,
-                prop_names=['namespace', 'params', 'credentials', 'contents'],
+                prop_names=['namespace', 'params',
+                            'credentials', 'contents'],
             )
 
             info = validate_ctx_schema(
@@ -473,13 +482,16 @@ def prepare_services(services, run_info, top=False, parent_description=None, ser
             error_msgs += error_msgs_aux
           else:
             service = result_aux
-            is_list = service.get('is_list')
+            when = service.get('when')
 
-            if is_list:
-              services_children = service.get('services')
-              result += (services_children or [])
-            else:
-              result += [service]
+            if when:
+              is_list = service.get('is_list')
+
+              if is_list:
+                services_children = service.get('services')
+                result += (services_children or [])
+              else:
+                result += [service]
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
@@ -624,6 +636,12 @@ def prepare_pod(pod_info, parent_data, run_info):
     dev = to_bool(env_data.get('dev'))
 
     pod_info_dict = pod_info if isinstance(pod_info, dict) else dict()
+
+    when = to_bool(pod_info_dict.get('when'), True)
+    result['when'] = when
+
+    if not when:
+      return dict(result=result, error_msgs=error_msgs)
 
     pod_name = default(pod_info_dict.get('name'), pod_info)
     pod_key = default(pod_info_dict.get('key'), pod_name)
@@ -1124,16 +1142,20 @@ def prepare_pods(pods, parent_data, run_info):
         if error_msgs_aux:
           error_msgs += error_msgs_aux
         else:
-          pod_name = result_aux.get('name')
+          pod = result_aux
+          when = pod.get('when')
 
-          if pod_name in pod_names:
-            error_msgs += [[
-                str('pod_name: ' + pod_name),
-                'msg: duplicate pod name',
-            ]]
-          else:
-            pod_names.add(pod_name)
-            result += [result_aux]
+          if when:
+            pod_name = pod.get('name')
+
+            if pod_name in pod_names:
+              error_msgs += [[
+                  str('pod_name: ' + pod_name),
+                  'msg: duplicate pod name',
+              ]]
+            else:
+              pod_names.add(pod_name)
+              result += [result_aux]
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
@@ -1159,6 +1181,12 @@ def prepare_node(node_info, run_info, local=None):
     dev = to_bool(env_data.get('dev'))
 
     node_info_dict = node_info if isinstance(node_info, dict) else dict()
+
+    when = to_bool(node_info_dict.get('when'), True)
+    result['when'] = when
+
+    if not when:
+      return dict(result=result, error_msgs=error_msgs)
 
     node_name = default(node_info_dict.get('name'), node_info)
     node_key = default(node_info_dict.get('key'), node_name)
@@ -1961,16 +1989,21 @@ def prepare_nodes(nodes, run_info, local=None):
         if error_msgs_aux:
           error_msgs += error_msgs_aux
         else:
-          node_name = result_aux.get('name')
+          node = result_aux
+          when = node.get('when')
+          when = when if (when is not None) else True
 
-          if node_name in node_names:
-            error_msgs += [[
-                str('node_name: ' + node_name),
-                'msg: duplicate node name',
-            ]]
-          else:
-            node_names.add(node_name)
-            result += [result_aux]
+          if when:
+            node_name = node.get('name')
+
+            if node_name in node_names:
+              error_msgs += [[
+                  str('node_name: ' + node_name),
+                  'msg: duplicate node name',
+              ]]
+            else:
+              node_names.add(node_name)
+              result += [result_aux]
 
     return dict(result=result, error_msgs=error_msgs)
   except Exception as error:
@@ -1997,6 +2030,12 @@ def prepare_task(task_info_dict, run_info):
       error_msgs += [[
           'msg: task name not specified'
       ]]
+      return dict(result=result, error_msgs=error_msgs)
+
+    when = to_bool(task_info_dict.get('when'), True)
+    result['when'] = when
+
+    if not when:
       return dict(result=result, error_msgs=error_msgs)
 
     task_key = task_info_dict.get('key') or task_name
@@ -2510,107 +2549,110 @@ def prepare_run_stage_task(run_stage_task_info, run_stage_data):
             error_msgs += [new_value]
         else:
           task = result_aux
+          when = task.get('when')
+          result['when'] = when
 
-          task_description = task.get('description')
-          task_type = task.get('type')
-          task_target_origin = task.get('target_origin')
-          task_file = task.get('file')
+          if when:
+            task_description = task.get('description')
+            task_type = task.get('type')
+            task_target_origin = task.get('target_origin')
+            task_file = task.get('file')
 
-          if validate_ctx and (task_type == 'task'):
-            error_msgs_aux = []
-            task_validators = list()
+            if validate_ctx and (task_type == 'task'):
+              error_msgs_aux = []
+              task_validators = list()
 
-            if task_target_origin != 'pod':
-              task_file_full = (
-                  task_file
-                  if (task_target_origin == 'cloud')
-                  else env_data.get('env_dir') + '/' + task_file
-              ) or ''
+              if task_target_origin != 'pod':
+                task_file_full = (
+                    task_file
+                    if (task_target_origin == 'cloud')
+                    else env_data.get('env_dir') + '/' + task_file
+                ) or ''
 
-              if not os.path.exists(task_file_full):
-                error_msgs_aux += [[str('msg: task file not found: ' + task_file)]]
-            else:
-              task_file_paths = set()
-              task_original_validators = task.get('original_validators')
+                if not os.path.exists(task_file_full):
+                  error_msgs_aux += [[str('msg: task file not found: ' + task_file)]]
+              else:
+                task_file_paths = set()
+                task_original_validators = task.get('original_validators')
 
-              if task_target == 'node':
-                error_msgs_aux += [
-                    [str('msg: node task with pod target_origin: ' + task_file)]
-                ]
+                if task_target == 'node':
+                  error_msgs_aux += [
+                      [str('msg: node task with pod target_origin: ' + task_file)]
+                  ]
 
-              for node in nodes_to_run:
-                node_description = node.get('description')
+                for node in nodes_to_run:
+                  node_description = node.get('description')
 
-                for pod in node.get('pods'):
-                  pod_description = pod.get('description')
-                  pod_local_dir = pod.get('local_dir')
-                  error_msgs_aux_pod = []
+                  for pod in node.get('pods'):
+                    pod_description = pod.get('description')
+                    pod_local_dir = pod.get('local_dir')
+                    error_msgs_aux_pod = []
 
-                  base_dir_prefix = pod_local_dir + '/'
-                  task_data = dict(
-                      base_dir_prefix=base_dir_prefix,
-                      dict_to_validate=task,
-                      prop_names=['params', 'credentials', 'contents'],
-                  )
+                    base_dir_prefix = pod_local_dir + '/'
+                    task_data = dict(
+                        base_dir_prefix=base_dir_prefix,
+                        dict_to_validate=task,
+                        prop_names=['params', 'credentials', 'contents'],
+                    )
 
-                  info = validate_ctx_schema(
-                      ctx_title='validate pod task schema',
-                      schema_files=task.get('schema'),
-                      task_data=task_data,
-                  )
-                  error_msgs_aux_pod += (info.get('error_msgs') or [])
+                    info = validate_ctx_schema(
+                        ctx_title='validate pod task schema',
+                        schema_files=task.get('schema'),
+                        task_data=task_data,
+                    )
+                    error_msgs_aux_pod += (info.get('error_msgs') or [])
 
-                  info = get_validators(
-                      ctx_title='pod task validator',
-                      validator_files=task_original_validators,
-                      task_data=task_data,
-                      env_data=env_data,
-                  )
-                  validators = info.get('result') or []
-                  validators = update_validators_descriptions(
-                      'task [' + str(task_description) + ']'
-                      + ' - node [' + str(node_description) + ']'
-                      + ' - pod [' + str(pod_description) + ']',
-                      validators
-                  )
-                  task_validators += validators
-                  error_msgs_aux_pod += (info.get('error_msgs') or [])
+                    info = get_validators(
+                        ctx_title='pod task validator',
+                        validator_files=task_original_validators,
+                        task_data=task_data,
+                        env_data=env_data,
+                    )
+                    validators = info.get('result') or []
+                    validators = update_validators_descriptions(
+                        'task [' + str(task_description) + ']'
+                        + ' - node [' + str(node_description) + ']'
+                        + ' - pod [' + str(pod_description) + ']',
+                        validators
+                    )
+                    task_validators += validators
+                    error_msgs_aux_pod += (info.get('error_msgs') or [])
 
-                  task_file_path = base_dir_prefix + task_file
+                    task_file_path = base_dir_prefix + task_file
 
-                  if task_file_path not in task_file_paths:
-                    if not os.path.exists(task_file_path):
-                      error_msgs_aux_pod += [[
-                          str('msg: pod task file not found: ' + task_file),
-                      ]]
+                    if task_file_path not in task_file_paths:
+                      if not os.path.exists(task_file_path):
+                        error_msgs_aux_pod += [[
+                            str('msg: pod task file not found: ' + task_file),
+                        ]]
 
-                    task_file_paths.add(task_file_path)
+                      task_file_paths.add(task_file_path)
 
-                  for value in error_msgs_aux_pod:
-                    new_value = [
-                        str('node: ' + node_description),
-                        str('pod: ' + pod_description),
-                    ] + value
-                    error_msgs_aux += [new_value]
+                    for value in error_msgs_aux_pod:
+                      new_value = [
+                          str('node: ' + node_description),
+                          str('pod: ' + pod_description),
+                      ] + value
+                      error_msgs_aux += [new_value]
 
-            for value in error_msgs_aux:
-              new_value = [
-                  str('run_stage_task: ' + run_stage_task_name),
-                  str('task: ' + task_description),
-                  str('task_type: ' + task_type),
-                  str('task_target_origin: ' + task_target_origin),
-              ] + value
-              error_msgs += [new_value]
+              for value in error_msgs_aux:
+                new_value = [
+                    str('run_stage_task: ' + run_stage_task_name),
+                    str('task: ' + task_description),
+                    str('task_type: ' + task_type),
+                    str('task_target_origin: ' + task_target_origin),
+                ] + value
+                error_msgs += [new_value]
 
-            validators = task.get('validators') or list()
-            task_validators += validators
-            task_validators = update_validators_descriptions(
-                'run stage task [' + str(run_stage_task_name) + ']',
-                task_validators
-            )
-            result['validators'] = task_validators or None
+              validators = task.get('validators') or list()
+              task_validators += validators
+              task_validators = update_validators_descriptions(
+                  'run stage task [' + str(run_stage_task_name) + ']',
+                  task_validators
+              )
+              result['validators'] = task_validators or None
 
-          result['task'] = task
+            result['task'] = task
 
       result_keys = list(result.keys())
 
@@ -2729,32 +2771,36 @@ def prepare_run_stage(run_stage_info, default_name, prepared_nodes, run_info):
             error_msgs += [new_value]
         else:
           run_stage_task = result_aux
-          run_stage_task_name = run_stage_task.get('name')
 
-          if run_stage_task_name in run_stage_task_names:
-            error_msgs += [[
-                str('run_stage: ' + (run_stage_name or '')),
-                str('run_stage_task: ' + run_stage_task_name),
-                'msg: duplicate run stage task name',
-            ]]
-          else:
-            nodes = run_stage_task.get('nodes')
-            hosts.update(map(lambda n: 'main' if n.get(
-                'local') else n.get('name'), nodes or []))
-            run_stage_task_names.add(run_stage_task_name)
-            run_stage_tasks += [run_stage_task]
+          when = run_stage_task.get('when')
 
-            task_name = run_stage_task.get('task_name')
+          if when:
+            run_stage_task_name = run_stage_task.get('name')
 
-            if task_name and (task_name in task_names):
+            if run_stage_task_name in run_stage_task_names:
               error_msgs += [[
                   str('run_stage: ' + (run_stage_name or '')),
                   str('run_stage_task: ' + run_stage_task_name),
-                  str('task_name: ' + task_name),
-                  'msg: duplicate task name'
+                  'msg: duplicate run stage task name',
               ]]
-            elif task_name:
-              task_names.add(task_name)
+            else:
+              nodes = run_stage_task.get('nodes')
+              hosts.update(map(lambda n: 'main' if n.get(
+                  'local') else n.get('name'), nodes or []))
+              run_stage_task_names.add(run_stage_task_name)
+              run_stage_tasks += [run_stage_task]
+
+              task_name = run_stage_task.get('task_name')
+
+              if task_name and (task_name in task_names):
+                error_msgs += [[
+                    str('run_stage: ' + (run_stage_name or '')),
+                    str('run_stage_task: ' + run_stage_task_name),
+                    str('task_name: ' + task_name),
+                    'msg: duplicate task name'
+                ]]
+              elif task_name:
+                task_names.add(task_name)
 
       result['hosts'] = sorted(list(hosts))
       result['tasks'] = run_stage_tasks
