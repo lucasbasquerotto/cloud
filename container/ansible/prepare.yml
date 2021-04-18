@@ -236,13 +236,13 @@
 
     # vars file (used to run the contexts and ssh file)
 
-    - name: "{{ project_ssh_title }} - create the vars file at {{ project_files_cloud_dir }}/"
+    - name: "{{ project_title }} - create the vars file at {{ project_files_cloud_dir }}/"
       template:
         src: "files/vars.tpl.sh"
         dest: "{{ project_files_cloud_dir }}/vars.sh"
         mode: "{{ env_lax | bool | ternary(0666, 0640) }}"
       vars:
-        project_vars_title: "{{ project_ctxs_title }}"
+        project_vars_title: "{{ project_title }}"
         project_vars_ctxs: "{{ project_env.ctxs }}"
         project_vars_files_cloud_dir: "{{ project_files_cloud_dir }}"
         project_vars_secrets_cloud_dir: "{{ project_secrets_cloud_dir }}"
