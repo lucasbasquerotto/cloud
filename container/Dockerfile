@@ -1,4 +1,4 @@
-FROM lucasbasquerotto/ansible:1.0.1
+FROM lucasbasquerotto/ctl:1.0.0
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git openssh-client \
