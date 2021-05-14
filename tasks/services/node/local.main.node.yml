@@ -21,8 +21,36 @@
 
 - name: "{{ ext_node_title }} - set result (tmp)"
   set_fact:
+    ext_node_hosts: []
+  no_log: "{{ env_no_log }}"
+  tags: ["no_print"]
+
+- name: "{{ ext_node_title }} - hosts"
+  set_fact:
+    ext_node_hosts: "{{ ext_node_hosts + [ext_node_item_result] }}"
+  vars:
+    ext_node_item_name: "{{ ext_node_item.name | default('') }}"
+    ext_node_item_state: >-
+      {{
+        ext_node_item.absent
+        | default(false)
+        | ternary('absent', ext_node_state)
+      }}
+    ext_node_item_result:
+      name: "{{ ext_node_item_name }}"
+      state: "{{ ext_node_item_state }}"
+      local: true
+  loop: "{{ ext_node_params.replicas }}"
+  loop_control:
+    loop_var: ext_node_item
+    label: "{{ ext_node_item_name }} ({{ ext_node_item_state }})"
+  no_log: "{{ env_no_log }}"
+  tags: ["no_print"]
+
+- name: "{{ ext_node_title }} - set result (tmp)"
+  set_fact:
     ext_node_result:
-      hosts: []
+      hosts: "{{ ext_node_hosts }}"
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
