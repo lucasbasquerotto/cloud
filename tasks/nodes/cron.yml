@@ -34,6 +34,9 @@
 
 # Cron - Start
 
+- debug:
+    var: cron_node.local
+
 - name: "{{ cron_title }} - ensure cron is running"
   become: true
   service:
@@ -43,4 +46,6 @@
     (cron_node_params.cron_start | default(true) | bool)
     and
     ((cron_node_params.cron | default([]) | list | length) > 0)
+    and
+    (not (cron_node.local | default(false) | bool))
   no_log: "{{ env_no_log }}"
