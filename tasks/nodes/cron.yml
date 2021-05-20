@@ -34,9 +34,6 @@
 
 # Cron - Start
 
-- debug:
-    var: cron_node.local
-
 - name: "{{ cron_title }} - ensure cron is running"
   become: true
   service:
