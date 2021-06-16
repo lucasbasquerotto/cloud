@@ -134,6 +134,11 @@ schemas:
         type: "str"
         non_empty: true
         description: "dns record (like a subdomain, for example)"
+      proxied:
+        type: "bool"
+        description: >-
+          proxy through the dns service network or just use dns
+          (only applied for dns services that can act as proxies)
       ttl:
         type: "int"
         description: "dns record ttl"

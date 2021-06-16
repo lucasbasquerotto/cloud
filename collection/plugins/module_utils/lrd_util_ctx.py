@@ -1656,11 +1656,8 @@ def prepare_node(node_info, run_info, local=None):
                     '-' + dns_type_name
                     + (('-' + str(idx)) if idx > 1 else '')
                 )
-                prepared_param = dict(
-                    record=dns_service_params.get('record'),
-                    ttl=dns_service_params.get('ttl'),
-                    dns_type='A' if dns_type_name == 'ipv4' else 'AAAA',
-                )
+                prepared_param = dns_service_params.copy()
+                prepared_param['dns_type'] = 'A' if dns_type_name == 'ipv4' else 'AAAA'
                 dns_prepared_params_list += [prepared_param]
 
             service_info = (
