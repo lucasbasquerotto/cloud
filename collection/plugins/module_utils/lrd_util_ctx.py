@@ -9,6 +9,10 @@
 # pylint: disable=too-many-lines
 # pylint: disable=broad-except
 
+# pyright: reportUnusedImport=true
+# pyright: reportUnusedVariable=true
+# pyright: reportMissingImports=false
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
@@ -1355,8 +1359,7 @@ def prepare_node(node_info, run_info, local=None):
 
           if dependency_type == 'node':
             dependency_final_host = 'http://127.0.0.1'
-            dependency_final_host_list = [
-                dependency_final_host for v in range(amount)]
+            dependency_final_host_list = [dependency_final_host] * amount
           else:
             if isinstance(dependency_host, list):
               dependency_final_host_list = dependency_host

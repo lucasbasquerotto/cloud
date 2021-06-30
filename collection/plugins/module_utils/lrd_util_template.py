@@ -7,6 +7,11 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=import-error
 # pylint: disable=protected-access
+
+# pyright: reportUnusedImport=true
+# pyright: reportUnusedVariable=true
+# pyright: reportMissingImports=false
+
 import os
 from copy import deepcopy
 

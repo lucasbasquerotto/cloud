@@ -9,6 +9,10 @@
 # pylint: disable=invalid-name
 # pylint: disable=unused-argument
 
+# pyright: reportUnusedImport=true
+# pyright: reportUnusedVariable=true
+# pyright: reportMissingImports=false
+
 from __future__ import (absolute_import, division, print_function)
 
 import datetime

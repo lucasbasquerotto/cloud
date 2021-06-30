@@ -9,6 +9,10 @@
 # pylint: disable=too-many-lines
 # pylint: disable=broad-except
 
+# pyright: reportUnusedImport=true
+# pyright: reportUnusedVariable=true
+# pyright: reportMissingImports=false
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
@@ -16,7 +20,7 @@ import re
 import traceback
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
-    is_bool, is_int, is_float, is_str, load_cached_file, to_float, to_int
+    is_bool, is_int, is_float, is_str, load_cached_file, to_bool, to_float, to_int
 )
 
 
@@ -820,16 +824,19 @@ def validate_next_value(schema_data, value):
               'msg: value should be a float',
           ]]
 
-    if choices and (value not in choices):
-      return [[
-          str('schema_name: ' + schema_name + schema_suffix),
-          str('at: ' + (schema_ctx or '<root>')),
-          str('type: ' + value_type),
-          str('value: ' + str(value)),
-          'msg: value is invalid',
-          'valid choices:',
-          choices
-      ]]
+    if choices:
+      value_to_compare = value if (value_type != 'bool') else to_bool(value)
+
+      if(value_to_compare not in choices):
+        return [[
+            str('schema_name: ' + schema_name + schema_suffix),
+            str('at: ' + (schema_ctx or '<root>')),
+            str('type: ' + value_type),
+            str('value: ' + str(value)),
+            'msg: value is invalid',
+            'valid choices:',
+            choices
+        ]]
 
     if regex:
       pattern = re.compile(regex)

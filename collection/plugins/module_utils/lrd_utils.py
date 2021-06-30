@@ -7,6 +7,10 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=missing-class-docstring
 
+# pyright: reportUnusedImport=true
+# pyright: reportUnusedVariable=true
+# pyright: reportMissingImports=false
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type  # pylint: disable=invalid-name
 
@@ -171,7 +175,7 @@ def is_int(str_val):
 
 def is_str(value):
   try:
-    return isinstance(value, basestring)
+    return isinstance(value, basestring)  # type: ignore
   except NameError:
     return isinstance(value, str)
 

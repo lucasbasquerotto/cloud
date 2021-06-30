@@ -9,6 +9,10 @@
 # pylint: disable=import-error
 # pylint: disable=protected-access
 
+# pyright: reportUnusedImport=true
+# pyright: reportUnusedVariable=true
+# pyright: reportMissingImports=false
+
 from __future__ import (absolute_import, division, print_function)
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, to_bool
