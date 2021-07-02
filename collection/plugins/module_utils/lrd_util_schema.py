@@ -828,15 +828,21 @@ def validate_next_value(schema_data, value):
       value_to_compare = value if (value_type != 'bool') else to_bool(value)
 
       if(value_to_compare not in choices):
-        return [[
-            str('schema_name: ' + schema_name + schema_suffix),
-            str('at: ' + (schema_ctx or '<root>')),
-            str('type: ' + value_type),
-            str('value: ' + str(value)),
-            'msg: value is invalid',
-            'valid choices:',
-            choices
-        ]]
+        non_empty = (value_to_compare is not None)
+        non_empty = non_empty and (
+            (value_type not in primitive_types) or (str(value_to_compare) != '')
+        )
+
+        if non_empty:
+          return [[
+              str('schema_name: ' + schema_name + schema_suffix),
+              str('at: ' + (schema_ctx or '<root>')),
+              str('type: ' + value_type),
+              str('value: ' + str(value)),
+              'msg: value is invalid',
+              'valid choices:',
+              choices
+          ]]
 
     if regex:
       pattern = re.compile(regex)
