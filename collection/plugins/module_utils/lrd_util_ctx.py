@@ -575,6 +575,7 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
             result_item = dict(
                 src=prepared_content,
                 dest=dest,
+                is_base_dir=transfer_content.get('is_base_dir'),
                 user=transfer_content.get('user'),
                 group=transfer_content.get(
                     'group') or transfer_content.get('user'),

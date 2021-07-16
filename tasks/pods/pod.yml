@@ -3,7 +3,8 @@
   include_tasks: "tasks/pods/prepare.yml"
   vars:
     pod_prepare_title: "{{ pod_inner_title }} - tmp"
-    pod_repo_dir: "{{ pod_tmp_dir }}/prepare-tmp"
+    pod_base_dir: "{{ pod_tmp_dir }}/prepare-tmp"
+    pod_repo_dir: "{{ pod_base_dir }}/repo"
     pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/tmp"
     pod_prepare_tmp: true
   when: not (pod_fast | bool)
@@ -15,6 +16,7 @@
   include_tasks: "tasks/pods/prepare.yml"
   vars:
     pod_prepare_title: "{{ pod_inner_title }} - main"
+    pod_base_dir: "{{ pod_item.base_dir }}"
     pod_repo_dir: "{{ pod_item.pod_dir }}"
     pod_tmp_dir: "{{ pod_item.tmp_dir }}/prepare/main"
   no_log: "{{ env_no_log }}"
