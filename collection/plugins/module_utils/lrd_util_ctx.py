@@ -743,7 +743,7 @@ def prepare_pod(pod_info, parent_data, run_info):
             dev_extra_repos_dir, local_dir)
 
         flat = pod.get('flat')
-        base_dir = None if local else (
+        base_dir = local_dir if local else (
             pod.get('base_dir') or (parent_base_dir + '/' + pod_name)
         )
         pod_dir_relpath = pod.get('pod_dir_relpath') or 'main'
