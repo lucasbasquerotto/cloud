@@ -1,4 +1,4 @@
-FROM lucasbasquerotto/ctl:20210429
+FROM lucasbasquerotto/ctl:20210810
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git cron openssh-client \
