@@ -1,4 +1,6 @@
-FROM lucasbasquerotto/ctl:20210810
+ARG VERSION=20210810
+
+FROM lucasbasquerotto/ctl:$VERSION
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git cron openssh-client \
