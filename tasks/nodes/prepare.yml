@@ -3,7 +3,7 @@
   file:
     path: "{{ node_prepare_item }}"
     state: directory
-    mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+    mode: "{{ env_lax | bool | ternary('777', '755') }}"
   loop:
     - "{{ node_prepare_node.node_dir }}"
     - "{{ node_prepare_node.tmp_dir }}"

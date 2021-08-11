@@ -2,7 +2,7 @@
   file:
     path: "{{ prepare_repos_extra_repo_link_dest | dirname }}"
     state: directory
-    mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+    mode: "{{ env_lax | bool | ternary('777', '755') }}"
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 

@@ -14,7 +14,7 @@
   file:
     path: "{{ instance_info_backup_dir }}"
     state: directory
-    mode: "{{ (env_lax | bool) | ternary(0777, 0755) }}"
+    mode: "{{ (env_lax | bool) | ternary('777', '755') }}"
   when: instance_info_type == 'before'
   no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
@@ -26,7 +26,7 @@
   copy:
     content: "{{ env_commit }}"
     dest: "{{ instance_info_backup_file_tmp }}"
-    mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+    mode: "{{ (env_lax | bool) | ternary('666', '640') }}"
   when: instance_info_type == 'before'
   no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
@@ -40,7 +40,7 @@
         force: no
         content: ""
         dest: "{{ instance_info_backup_file }}"
-        mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+        mode: "{{ (env_lax | bool) | ternary('666', '640') }}"
       no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
@@ -72,7 +72,7 @@
     remote_src: yes
     src: "{{ instance_info_backup_file_tmp }}"
     dest: "{{ instance_info_backup_file }}"
-    mode: "{{ (env_lax | bool) | ternary(0666, 0640) }}"
+    mode: "{{ (env_lax | bool) | ternary('666', '640') }}"
   when: instance_info_type == 'after'
   no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]

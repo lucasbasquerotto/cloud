@@ -22,13 +22,13 @@
         {{
           tmp_item.mode | default(
             tmp_item.executable | default(false) | bool | ternary(
-              env_lax | bool | ternary(0777, 0751),
-              env_lax | bool | ternary(0666, 0600)
+              env_lax | bool | ternary('777', '751'),
+              env_lax | bool | ternary('666', '600')
             )
           )
         }}
       dir_mode: >-
-        {{ tmp_item.mode | default(env_lax | bool | ternary(0777, 0755)) }}
+        {{ tmp_item.mode | default(env_lax | bool | ternary('777', '755')) }}
       no_empty_lines: "{{ tmp_item.no_empty_lines | default(tmp_no_empty_lines) }}"
   when: tmp_item.when | default(true, true) | bool
   loop: "{{ prepare_repos_item.transfer | default([]) }}"

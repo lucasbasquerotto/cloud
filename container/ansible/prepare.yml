@@ -196,7 +196,7 @@
       file:
         path: "{{ project_item }}"
         state: directory
-        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+        mode: "{{ env_lax | bool | ternary('777', '755') }}"
       loop:
         - "{{ project_commit_dir }}"
         - "{{ project_files_cloud_dir }}"
@@ -215,19 +215,19 @@
             #!/bin/bash
             export commit={{ project_env_commit | quote }}
           dest: "{{ project_commit_dir }}/current"
-          mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+          mode: "{{ env_lax | bool | ternary('777', '755') }}"
         - src: "files/ssh.sh"
           dest: "{{ project_files_cloud_dir }}/ssh"
-          mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+          mode: "{{ env_lax | bool | ternary('777', '755') }}"
         - src: "files/run-ctxs.sh"
           dest: "{{ project_files_cloud_dir }}/run-ctxs"
-          mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+          mode: "{{ env_lax | bool | ternary('777', '755') }}"
         - content: "{{ project_env_params | to_nice_yaml }}"
           dest: "{{ project_files_cloud_dir }}/{{ project_env_params_file_rel }}"
-          mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
+          mode: "{{ env_lax | default(false, true) | bool | ternary('666', '600') }}"
         - content: "{{ project_path_map_repos | to_nice_yaml }}"
           dest: "{{ project_files_cloud_dir }}/{{ project_path_map_file_rel }}"
-          mode: "{{ env_lax | default(false, true) | bool | ternary(0666, 0600) }}"
+          mode: "{{ env_lax | default(false, true) | bool | ternary('666', '600') }}"
       when: project_item.when | default(true) | bool
       loop_control:
         loop_var: project_item
@@ -240,7 +240,7 @@
       template:
         src: "files/vars.tpl.sh"
         dest: "{{ project_files_cloud_dir }}/vars.sh"
-        mode: "{{ env_lax | bool | ternary(0666, 0640) }}"
+        mode: "{{ env_lax | bool | ternary('666', '640') }}"
       vars:
         project_vars_title: "{{ project_title }}"
         project_vars_ctxs: "{{ project_env.ctxs }}"

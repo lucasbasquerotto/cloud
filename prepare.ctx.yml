@@ -52,7 +52,7 @@
           - content: "{{ ctx_data.cfg | default(prepare_tmp_default, true) }}"
             dest: "ansible/ansible.generated.cfg"
             tmp_dest: "{{ env_vars.ctx_dir }}/tmp/ansible.generated.cfg"
-            mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+            mode: "{{ env_lax | bool | ternary('644', '600') }}"
             no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
       no_log: "{{ env_no_log }}"
 
@@ -76,7 +76,7 @@
         force: no
         content: ""
         dest: "{{ env_vars.secrets_ctx_dir }}/hosts.backup"
-        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary('644', '600') }}"
       no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
 
@@ -90,7 +90,7 @@
           - content: "{{ ctx_data.hosts }}"
             dest: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
             tmp_dest: "{{ env_vars.secrets_ctx_dir }}/tmp/hosts.tmp"
-            mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+            mode: "{{ env_lax | bool | ternary('644', '600') }}"
             no_empty_lines: "{{ env.meta.template_no_empty_lines | default(false) }}"
       no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
@@ -156,7 +156,7 @@
       copy:
         src: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
         dest: "{{ env_vars.secrets_ctx_dir }}/hosts"
-        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary('644', '600') }}"
         force: "{{ project_ctx_hosts_diff.changed }}"
       no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
@@ -165,7 +165,7 @@
       copy:
         src: "{{ env_vars.secrets_ctx_dir }}/hosts.tmp"
         dest: "{{ env_vars.secrets_ctx_dir }}/hosts.backup"
-        mode: "{{ env_lax | bool | ternary(0644, 0600) }}"
+        mode: "{{ env_lax | bool | ternary('644', '600') }}"
       when: project_ctx_hosts_diff.changed
       no_log: "{{ env_no_log }}"
       tags: ["no_print_skipped"]
@@ -187,7 +187,7 @@
       file:
         path: "{{ project_ctx_run_item }}"
         state: directory
-        mode: "{{ env_lax | bool | ternary(0777, 0755) }}"
+        mode: "{{ env_lax | bool | ternary('777', '755') }}"
       loop:
         - "{{ project_ctx_run_tmp_dest | dirname }}"
         - "{{ project_ctx_run_dest | dirname }}"
@@ -203,7 +203,7 @@
       template:
         src: "{{ project_ctx_run_src }}"
         dest: "{{ project_ctx_run_tmp_dest }}"
-        mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | bool | ternary('666', '600') }}"
         block_end_string: "%>>"
         block_start_string: "<<%"
         variable_end_string: "}>>"
@@ -237,7 +237,7 @@
         remote_src: false
         src: "{{ project_ctx_run_tmp_dest }}"
         dest: "{{ project_ctx_run_dest }}"
-        mode: "{{ env_lax | bool | ternary(0666, 0600) }}"
+        mode: "{{ env_lax | bool | ternary('666', '600') }}"
       no_log: "{{ env_no_log }}"
 
     # pre prepare nodes (ssh)

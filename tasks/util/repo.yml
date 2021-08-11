@@ -32,7 +32,7 @@
   file:
     path: "{{ repo_default_dir | dirname }}"
     state: directory
-    mode: "{{ repo_dev | bool | ternary(0777, 0755) }}"
+    mode: "{{ repo_dev | bool | ternary('777', '755') }}"
   when: repo_dir != repo_default_dir
   no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
