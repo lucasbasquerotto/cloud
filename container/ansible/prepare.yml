@@ -149,6 +149,7 @@
           vars:
             project_name: "{{ project_env.name | default('') }}"
             project_ctxs: "{{ project_env.ctxs | default([]) }}"
+            env: "{{ project_env.env | default({}) }}"
             params: "{{ project_env.params | default({}) }}"
             credentials: "{{ project_env.credentials | default({}) }}"
           no_log: "{{ env_no_log }}"
