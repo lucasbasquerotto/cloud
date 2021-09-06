@@ -838,6 +838,7 @@ def validate_next_value(schema_data, value):
 
     if choices:
       values_for_choices = (value or []) if is_list else [value]
+      values_item_type = (elem_type or '') if is_list else (value_type or '')
 
       for value_item in values_for_choices:
         if isinstance(value_item, dict):
@@ -855,21 +856,27 @@ def validate_next_value(schema_data, value):
         else:
           value_to_compare = (
               value_item
-              if (value_type != 'bool')
+              if (values_item_type != 'bool')
               else to_bool(value_item)
           )
 
           if (value_to_compare not in choices):
             non_empty = (value_to_compare is not None)
             non_empty = non_empty and (
-                (value_type not in primitive_types) or (str(value_to_compare) != '')
+                (values_item_type not in primitive_types) or (str(value_to_compare) != '')
             )
 
             if non_empty:
+              type_info = (
+                  (value_type + ' (elem: ' + values_item_type + ')')
+                  if is_list
+                  else values_item_type
+              )
+
               return [[
                   str('schema_name: ' + schema_name + schema_suffix),
                   str('at: ' + (schema_ctx or '<root>')),
-                  str('type: ' + value_type),
+                  str('type: ' + type_info),
                   str('value: ' + str(value_item)),
                   'msg: value is invalid',
                   'valid choices:',
