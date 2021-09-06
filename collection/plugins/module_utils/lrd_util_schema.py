@@ -129,14 +129,26 @@ def validate_next_value(schema_data, value):
       'float',
   ]
 
-  if choices and (value_type not in primitive_types):
-    return [[
-        str('context: dynamic schema'),
-        str('schema_name: ' + schema_name + schema_suffix),
-        str('at: ' + (schema_ctx or '<root>')),
-        str('type: ' + value_type),
-        'msg: value type is not primitive but has choices',
-    ]]
+  if choices:
+    is_list_type = (value_type in ['list', 'simple_list'])
+
+    if (value_type not in primitive_types) and not is_list_type:
+      return [[
+          str('context: dynamic schema'),
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: value type is not primitive nor a list but has choices',
+      ]]
+    elif is_list_type and (schema_info.get('elem_schema')):
+      return [[
+          str('context: dynamic schema'),
+          str('schema_name: ' + schema_name + schema_suffix),
+          str('at: ' + (schema_ctx or '<root>')),
+          str('type: ' + value_type),
+          'msg: value type is a list with elem_schema defined but has choices',
+          'tip: a list with choices should have only elem_type defined',
+      ]]
 
   if regex and (value_type != 'str'):
     return [[
@@ -825,24 +837,44 @@ def validate_next_value(schema_data, value):
           ]]
 
     if choices:
-      value_to_compare = value if (value_type != 'bool') else to_bool(value)
+      values_for_choices = (value or []) if is_list else [value]
 
-      if(value_to_compare not in choices):
-        non_empty = (value_to_compare is not None)
-        non_empty = non_empty and (
-            (value_type not in primitive_types) or (str(value_to_compare) != '')
-        )
-
-        if non_empty:
+      for value_item in values_for_choices:
+        if isinstance(value_item, dict):
           return [[
               str('schema_name: ' + schema_name + schema_suffix),
               str('at: ' + (schema_ctx or '<root>')),
-              str('type: ' + value_type),
-              str('value: ' + str(value)),
-              'msg: value is invalid',
-              'valid choices:',
-              choices
+              'msg: value is a dictionary, but has choices defined for it',
           ]]
+        elif isinstance(value_item, list):
+          return [[
+              str('schema_name: ' + schema_name + schema_suffix),
+              str('at: ' + (schema_ctx or '<root>')),
+              'msg: value is a list, but has choices defined for it',
+          ]]
+        else:
+          value_to_compare = (
+              value_item
+              if (value_type != 'bool')
+              else to_bool(value_item)
+          )
+
+          if (value_to_compare not in choices):
+            non_empty = (value_to_compare is not None)
+            non_empty = non_empty and (
+                (value_type not in primitive_types) or (str(value_to_compare) != '')
+            )
+
+            if non_empty:
+              return [[
+                  str('schema_name: ' + schema_name + schema_suffix),
+                  str('at: ' + (schema_ctx or '<root>')),
+                  str('type: ' + value_type),
+                  str('value: ' + str(value_item)),
+                  'msg: value is invalid',
+                  'valid choices:',
+                  choices
+              ]]
 
     if regex:
       pattern = re.compile(regex)

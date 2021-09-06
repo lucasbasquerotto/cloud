@@ -38,8 +38,9 @@ schemas:
         type: "list"
         elem_type: "primitive"
         description: >-
-          the value to be validated must be one of the list values;
+          the value to be validated must be one of the values in the list;
           this option can be used only when the type is a primitive
+          or a list with primitives (elem_schema must not be defined for a list)
       regex:
         type: "str"
         description: "regex to validate a string value"
