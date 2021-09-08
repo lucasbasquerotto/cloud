@@ -215,33 +215,33 @@ def prepare_ctx(ctx_name, env, env_init, env_original, env_info):
               + '(only in the base environment file)'
           ]]
 
-      if (not has_original_env) and ctl_env_schema:
-        task_data = dict(
-            base_dir_prefix=env_dir + '/',
-            dict_to_validate=env_init.get('env_params'),
-            all_props=True,
-        )
+        if (not has_original_env) and ctl_env_schema:
+          task_data = dict(
+              base_dir_prefix=env_dir + '/',
+              dict_to_validate=env_init.get('env_params'),
+              all_props=True,
+          )
 
-        info = validate_ctx_schema(
-            ctx_title='validate the controller project environment params schema',
-            schema_files=ctl_env_schema,
-            task_data=task_data,
-        )
-        error_msgs_ctx += (info.get('error_msgs') or [])
+          info = validate_ctx_schema(
+              ctx_title='validate the controller project environment params schema',
+              schema_files=ctl_env_schema,
+              task_data=task_data,
+          )
+          error_msgs_ctx += (info.get('error_msgs') or [])
 
-      if has_original_env and original_env_schema:
-        task_data = dict(
-            base_dir_prefix=env_dir + '/',
-            dict_to_validate=env_original,
-            all_props=True,
-        )
+        if has_original_env and original_env_schema:
+          task_data = dict(
+              base_dir_prefix=env_dir + '/',
+              dict_to_validate=env_original,
+              all_props=True,
+          )
 
-        info = validate_ctx_schema(
-            ctx_title='validate the original environment schema',
-            schema_files=original_env_schema,
-            task_data=task_data,
-        )
-        error_msgs_ctx += (info.get('error_msgs') or [])
+          info = validate_ctx_schema(
+              ctx_title='validate the original environment schema',
+              schema_files=original_env_schema,
+              task_data=task_data,
+          )
+          error_msgs_ctx += (info.get('error_msgs') or [])
   except Exception as error:
     error_msgs_ctx += [[
         'ctx_name: ' + str(ctx_name or ''),
