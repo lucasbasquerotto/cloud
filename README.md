@@ -1,6 +1,6 @@
 # (Under Construction) Cloud Layer
 
-This repository corresponds to the cloud layer and is used to deploy projects. This layer is responsible to deploy a specific project, using the [Cloud Input Vars](#cloud-input-vars) as the input values that contain the data needed to [deploy the project](#deploying-a-project).
+This repository corresponds to the cloud layer and is used to deploy a project to the cloud (or locally, in some cases). This layer is responsible to deploy a specific project, using the [Cloud Input Vars](#cloud-input-vars) as the input values that contain the data needed to [deploy the project](#deploying-a-project).
 
 _It's recommended to use a controller layer, like defined at http://github.com/lucasbasquerotto/ctl, to manage projects and generate those variables, instead of using this layer to deploy a project directly._
 
@@ -8,7 +8,7 @@ _It's recommended to use a controller layer, like defined at http://github.com/l
 
 Before start using this layer, it's easier to see it in action. Below is a simple demo used to deploy a project. The demo uses pre-defined [input variables](#cloud-input-vars), and then execute this layer to deploy a project.
 
-To execute the demo you will need a container engine (like `docker` or `podman`).
+To execute the demo more easily you will need a container engine (like `docker` or `podman`).
 
 1. Create an empty directory somewhere in your filesystem, let's say, `/var/demo`.
 
@@ -23,7 +23,7 @@ To execute the demo you will need a container engine (like `docker` or `podman`)
 4. Deploy the project:
 
 ```shell
-docker run -it --rm -v /var/demo/env:/env -v /var/demo/data:/lrd local/demo
+docker run -it --rm -v /var/demo/env:/env:ro -v /var/demo/data:/lrd local/demo
 ```
 
 **The above commands in a shell script:**
@@ -35,7 +35,7 @@ cat <<'SHELL' > /var/demo/env/demo.yml
 # Enter the data here (see the demo examples)
 SHELL
 
-docker run -it --rm -v /var/demo/env:/env -v /var/demo/data:/lrd local/demo
+docker run -it --rm -v /var/demo/env:/env:ro -v /var/demo/data:/lrd local/demo
 ```
 
 **That's it. The project was deployed.**
