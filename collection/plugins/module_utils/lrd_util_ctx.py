@@ -533,72 +533,72 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
         dest = transfer_content.get('dest')
         error_msgs_aux_item = list()
 
-        if dest in current_content_dests:
-          error_msgs_aux_item += [['msg: duplicate destination']]
-        else:
-          current_content_dests.add(dest)
-
-          if dest not in all_content_dests:
-            all_content_dests.add(dest)
-
-            info = prepare_content(
-                transfer_content.get('src'),
-                env=env,
-                run_info=run_info,
-                additional_info=dict(
-                    input_params=input_params,
-                    custom_dir=custom_dir,
-                ),
-            )
-
-          prepared_content = info.get('result') or dict()
-          validators = prepared_content.get('validators')
-          error_msgs_aux_content = info.get('error_msgs')
-
-          if error_msgs_aux_content:
-            error_msgs_aux_item += error_msgs_aux_content
+        if to_bool(transfer_content.get('when'), True):
+          if dest in current_content_dests:
+            error_msgs_aux_item += [['msg: duplicate destination']]
           else:
-            env_lax = env_data.get('lax')
-            default_dir_mode = 777 if env_lax else 755
-            default_file_mode = 666 if env_lax else 640
-            default_file_executable_mode = 777 if env_lax else 751
-            default_file_mode = (
-                default_file_executable_mode
-                if to_bool(transfer_content.get('executable'))
-                else default_file_mode
-            )
-            validators = update_validators_descriptions(
-                'transfer #' + str(idx + 1) + ' (' + dest + ')',
-                validators
-            )
+            current_content_dests.add(dest)
 
-            result_item = dict(
-                src=prepared_content,
-                dest=dest,
-                is_base_dir=transfer_content.get('is_base_dir'),
-                user=transfer_content.get('user'),
-                group=transfer_content.get(
-                    'group') or transfer_content.get('user'),
-                mode=transfer_content.get('mode') or default_file_mode,
-                dir_mode=transfer_content.get('dir_mode') or default_dir_mode,
-                validators=validators,
-                when=to_bool(transfer_content.get('when')),
-            )
+            if dest not in all_content_dests:
+              all_content_dests.add(dest)
 
-            result_item_keys = sorted(list(result_item))
+              info = prepare_content(
+                  transfer_content.get('src'),
+                  env=env,
+                  run_info=run_info,
+                  additional_info=dict(
+                      input_params=input_params,
+                      custom_dir=custom_dir,
+                  ),
+              )
 
-            for key in result_item_keys:
-              if result_item.get(key) is None:
-                result_item.pop(key, None)
+            prepared_content = info.get('result') or dict()
+            validators = prepared_content.get('validators')
+            error_msgs_aux_content = info.get('error_msgs')
 
-            result += [result_item]
+            if error_msgs_aux_content:
+              error_msgs_aux_item += error_msgs_aux_content
+            else:
+              env_lax = env_data.get('lax')
+              default_dir_mode = 777 if env_lax else 755
+              default_file_mode = 666 if env_lax else 640
+              default_file_executable_mode = 777 if env_lax else 751
+              default_file_mode = (
+                  default_file_executable_mode
+                  if to_bool(transfer_content.get('executable'))
+                  else default_file_mode
+              )
+              validators = update_validators_descriptions(
+                  'transfer #' + str(idx + 1) + ' (' + dest + ')',
+                  validators
+              )
 
-        for value in error_msgs_aux_item:
-          new_value = [
-              str('content: #' + str(idx + 1)),
-              str('dest: ' + dest),
-          ] + value
-          error_msgs_aux += [new_value]
+              result_item = dict(
+                  src=prepared_content,
+                  dest=dest,
+                  is_base_dir=transfer_content.get('is_base_dir'),
+                  user=transfer_content.get('user'),
+                  group=transfer_content.get(
+                      'group') or transfer_content.get('user'),
+                  mode=transfer_content.get('mode') or default_file_mode,
+                  dir_mode=transfer_content.get('dir_mode') or default_dir_mode,
+                  validators=validators,
+              )
+
+              result_item_keys = sorted(list(result_item))
+
+              for key in result_item_keys:
+                if result_item.get(key) is None:
+                  result_item.pop(key, None)
+
+              result += [result_item]
+
+          for value in error_msgs_aux_item:
+            new_value = [
+                str('content: #' + str(idx + 1)),
+                str('dest: ' + dest),
+            ] + value
+            error_msgs_aux += [new_value]
       except Exception as error:
         error_msgs_aux += [[
             str('content: #' + str(idx + 1)),
