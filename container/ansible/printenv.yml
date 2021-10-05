@@ -1,0 +1,83 @@
+- name: Play 01 - Print Env
+  hosts: main
+  gather_facts: no
+  tasks:
+    - name: "[cloud - printenv] - project_base_title"
+      set_fact:
+        project_base_title: "[cloud - printenv]"
+        project_base_dir: "{{ tmp_base_dir }}"
+        project_keys_file_rel: "files/ctl/vars.yml"
+        project_secrets_cloud_dir: "{{ tmp_base_dir }}/secrets/cloud"
+      vars:
+        tmp_base_dir: "{{ env_project_dir }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_base_title }} - load the init environment vars"
+      include_vars:
+        file: "{{ project_base_dir }}/{{ project_keys_file_rel }}"
+        name: project_env_init
+
+    - name: "{{ project_base_title }} - project_title"
+      set_fact:
+        project_title: "[{{ project_env_init.key }}] {{ project_base_title }}"
+        env_dev: "{{ tmp_dev }}"
+        env_lax: "{{ project_env_init.lax | default(tmp_dev, true) }}"
+        env_no_log: "{{ project_env_init.no_log | default(false, true) }}"
+      vars:
+        tmp_dev: "{{ project_env_init.dev | default(false, true) }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_title }} - project_env_dir"
+      set_fact:
+        project_env_dir: "{{ project_base_dir }}/env"
+        project_env_file: "{{ project_base_dir }}/env/{{ project_env_init.repo.env_file }}"
+      no_log: "{{ env_no_log }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_title }} - load the environment vars"
+      include_vars:
+        file: "{{ project_env_file }}"
+        name: project_env_aux
+      no_log: "{{ env_no_log }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_title }} - project_env"
+      set_fact:
+        project_env: "{{ project_env_aux }}"
+      vars:
+        project_name: "{{ project_env_init.key }}"
+        project_ctxs: "{{ project_env_init.ctxs | default([]) }}"
+        params: "{{ project_env_init.env_params | default({}) }}"
+      no_log: "{{ env_no_log }}"
+      tags: ["no_print"]
+
+    # env base repository
+
+    - block:
+        - name: "{{ project_title }} - load the base environment vars"
+          include_vars:
+            file: "{{ project_env_dir + '/' + project_env.env.repo_dir + '/' + project_env.env.file }}"
+            name: project_env_base
+          no_log: "{{ env_no_log }}"
+
+        - name: "{{ project_title }} - project_env (from base)"
+          set_fact:
+            project_env: "{{ project_env_base }}"
+          vars:
+            project_name: "{{ project_env.name | default('') }}"
+            project_ctxs: "{{ project_env.ctxs | default([]) }}"
+            env: "{{ project_env.env | default({}) }}"
+            params: "{{ project_env.params | default({}) }}"
+            credentials: "{{ project_env.credentials | default({}) }}"
+          no_log: "{{ env_no_log }}"
+
+      when: project_env.env is defined
+      no_log: "{{ env_no_log }}"
+      tags: ["no_print"]
+
+    - name: "{{ project_title }} - print the environment content to {{ project_secrets_cloud_dir }}/env.yml"
+      copy:
+        content: "{{ project_env | to_nice_yaml }}"
+        dest: "{{ project_secrets_cloud_dir }}/env.yml"
+        mode: "{{ env_lax | bool | ternary('666', '600') }}"
+      no_log: "{{ env_no_log }}"

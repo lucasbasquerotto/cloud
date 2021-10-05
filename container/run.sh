@@ -80,6 +80,7 @@ if [ "${next:-}" = 'true' ]; then
 		case "$OPT" in
 			end ) next_opt='true'; args+=( "--end" );;
 			ssh ) next_opt='true'; ssh='true'; break;;
+			printenv ) next_opt='true'; printenv='true'; break;;
 			\? ) error "[error] unknown next short option: -${OPTARG:-}";;
 			?* ) error "[error] unknown next long option: --${OPT:-}";;
 		esac
@@ -88,14 +89,14 @@ if [ "${next:-}" = 'true' ]; then
 	shift $((OPTIND-1))
 
 	if [ "${next_opt:-}" != 'true' ]; then
-		msg_aux="ssh, end"
+		msg_aux="end, printenv, ssh"
 		error "[error] no option specified using the next argument (options: $msg_aux)"
 	fi
 fi
 
 skip_main=''
 
-if [ "${ssh:-}" = 'true' ]; then
+if [ "${ssh:-}" = 'true' ] || [ "${printenv:-}" = 'true' ]; then
 	if [ "${fast:-}" = 'true' ]; then
 		skip_main='true'
 	else
@@ -107,31 +108,34 @@ if [ "$last_index" != "$OPTIND" ]; then
 	args+=( "--" );
 fi
 
+vault=()
+
+vault_file="$project_dir/secrets/ctl/vault"
+
+if [ -f "$vault_file" ]; then
+	vault=( '--vault-id' "$vault_file" )
+elif [ "${FORCE_VAULT:-}" = 'true' ]; then
+	vault=( '--vault-id' 'cloud@prompt')
+fi
+
+ansible_args=()
+ansible_args+=( ${vault[@]+"${vault[@]}"} )
+ansible_args+=( ${debug[@]+"${debug[@]}"} )
+ansible_args+=( -i hosts )
+ansible_args+=( --extra-vars "env_project_dir=$project_dir" )
+
 if [ "${fast:-}" = 'true' ]; then
 	echo "[cloud] skipping prepare project (fast)..."
 else
-	vault=()
-
-	vault_file="$project_dir/secrets/ctl/vault"
-
-	if [ -f "$vault_file" ]; then
-		vault=( '--vault-id' "$vault_file" )
-	elif [ "${FORCE_VAULT:-}" = 'true' ]; then
-		vault=( '--vault-id' 'cloud@prompt')
-	fi
-
-	cd /usr/main/ansible
 
 	if [ "$skip" = 'true' ]; then
 		echo "[cloud] skipping prepare project (skip)..."
 	else
 		# Prepare the cloud contexts
+		cd /usr/main/ansible
 		ANSIBLE_CONFIG=/usr/main/ansible/ansible.cfg ansible-playbook \
-			${vault[@]+"${vault[@]}"} \
-			${debug[@]+"${debug[@]}"} \
-			-i hosts \
+			${ansible_args[@]+"${ansible_args[@]}"} \
 			prepare.yml \
-			--extra-vars "env_project_dir=$project_dir" \
 			${prepare_args[@]+"${prepare_args[@]}"} \
 			|| error "[error] prepare ctxs"
 	fi
@@ -178,4 +182,14 @@ fi
 if [ "${ssh:-}" = 'true' ]; then
 	# Connect through ssh
 	bash "$project_dir/files/cloud/ssh" "${@}" || error "[error] ssh"
+fi
+
+if [ "${printenv:-}" = 'true' ]; then
+	# Print the environment file content
+	cd /usr/main/ansible
+	ANSIBLE_CONFIG=/usr/main/ansible/ansible.cfg ansible-playbook \
+		${ansible_args[@]+"${ansible_args[@]}"} \
+		printenv.yml \
+		${prepare_args[@]+"${prepare_args[@]}"} \
+		|| error "[error] printenv"
 fi

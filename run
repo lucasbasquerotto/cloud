@@ -27,10 +27,10 @@ while getopts ':fps-:' OPT; do
 		OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
 	fi
 	case "$OPT" in
-		f|force ) force="true";;
-		p|prepare ) prepare="true";;
-		s|fast ) fast="true";;
-		end ) end="true";;
+		f|force ) force='true';;
+		p|prepare ) prepare='true';;
+		s|fast ) fast='true';;
+		end ) end='true';;
 		debug ) debug=( "-vvvvv" );;
 		\? ) error "[error] unknown short option: -${OPTARG:-}";;
 		?* ) error "[error] unknown long option: --${OPT:-}";;
@@ -65,7 +65,7 @@ if [ "${prepare:-}" = 'true' ]; then
 		shift;
 	else
 		if [ "${fast:-}" = 'true' ]; then
-			fast_prepare="true"
+			fast_prepare='true'
 		fi
 
 		for arg in "$@"; do
@@ -80,10 +80,10 @@ if [ "${prepare:-}" = 'true' ]; then
 	fi
 fi
 
-if [ "${fast:-}" = 'true' ] && [ "${fast_prepare:-}" != "true" ]; then
+if [ "${fast:-}" = 'true' ] && [ "${fast_prepare:-}" != 'true' ]; then
 	echo "[cloud] skipping prepare project context (fast)..."
 else
-	if [ "$skip" = "true" ]; then
+	if [ "$skip" = 'true' ]; then
 		echo "[cloud] skipping prepare project context (skip)..."
 	else
 		# Prepare the cloud context
