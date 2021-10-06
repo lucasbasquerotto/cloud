@@ -94,6 +94,22 @@ if [ "${next:-}" = 'true' ]; then
 	fi
 fi
 
+if [ "${printenv:-}" = 'true' ]; then
+	if [ "$#" -gt 1 ]; then
+		error "[error] printenv accepts at most 1 argument (--stdout) but received $# arguments"
+	fi
+
+	printenv_arg="${1:-}"
+
+	if [ -n "$printenv_arg" ] && [ "$printenv_arg" != '--stdout' ]; then
+		error "[error] printenv only accepts the argument --stdout, but received: $printenv_arg"
+	fi
+
+	if [ "$printenv_arg" = '--stdout' ]; then
+		printenv_stdout='true'
+	fi
+fi
+
 skip_main=''
 
 if [ "${ssh:-}" = 'true' ] || [ "${printenv:-}" = 'true' ]; then
@@ -192,4 +208,13 @@ if [ "${printenv:-}" = 'true' ]; then
 		printenv.yml \
 		${prepare_args[@]+"${prepare_args[@]}"} \
 		|| error "[error] printenv"
+
+	if [ "${printenv_stdout:-}" = 'true' ]; then
+		echo "================================================================"
+		echo "environment output:"
+		echo "----------------------------------------------------------------"
+		cat /main/secrets/cloud/env.yml
+		rm /main/secrets/cloud/env.yml
+		echo "================================================================"
+	fi
 fi
