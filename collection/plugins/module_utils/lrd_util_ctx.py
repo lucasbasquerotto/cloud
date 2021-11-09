@@ -35,7 +35,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation impo
 )
 
 
-def prepare_service(service_info, run_info, top, parent_description=None, service_names=None):
+def prepare_service(service_info, run_info, parent_description=None, service_names=None):
   result = dict()
   error_msgs = list()
 
@@ -81,9 +81,20 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
     else:
       service_names.add(service_name)
 
+    tmp = to_bool(service_info_dict.get('tmp'))
+    can_destroy = to_bool(service_info_dict.get('can_destroy'))
+    absent = to_bool(service_info_dict.get('absent'))
+    delay_errors = to_bool(service_info_dict.get('delay_errors'))
+    ignore_errors = to_bool(service_info_dict.get('ignore_errors'))
+
     result['name'] = service_name
     result['key'] = service_key
     result['description'] = service_description
+    result['tmp'] = tmp
+    result['can_destroy'] = can_destroy
+    result['absent'] = absent
+    result['delay_errors'] = delay_errors
+    result['ignore_errors'] = ignore_errors
 
     try:
       services_dict = env.get('services')
@@ -103,37 +114,34 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
 
         is_list = service.get('list')
 
-        absent = to_bool(service_info_dict.get('absent'))
-        result['absent'] = absent
-        service_info_dict.pop('absent', None)
+        allowed_keys = [
+            'name',
+            'key',
+            'when',
+            'tmp',
+            'can_destroy',
+            'single',
+            'absent',
+            'delay_errors',
+            'ignore_errors',
+            'credentials',
+            'contents',
+            'params',
+            'group_params',
+            'shared_params',
+            'shared_group_params',
+        ]
 
-        tmp = None
-        can_destroy = None
-
-        if top:
-          tmp = to_bool(service_info_dict.get('tmp'))
-          service_info_dict.pop('tmp', None)
-          can_destroy = to_bool(service_info_dict.get('can_destroy'))
-          service_info_dict.pop('can_destroy', None)
+        for key in sorted(list(service_info_dict.keys())):
+          if key not in allowed_keys:
+            error_msgs_aux += [[
+                str('property: ' + key),
+                'msg: invalid service info property',
+                'allowed properties:',
+                sorted(list(allowed_keys)),
+            ]]
 
         if is_list:
-          allowed_keys = [
-              'name',
-              'key',
-              'when',
-              'single',
-              'absent',
-          ]
-
-          for key in sorted(list(service_info_dict.keys())):
-            if key not in allowed_keys:
-              error_msgs_aux += [[
-                  str('property: ' + key),
-                  'msg: invalid service info property for a service list',
-                  'allowed properties:',
-                  sorted(list(allowed_keys)),
-              ]]
-
           allowed_keys = [
               'list',
               'services',
@@ -148,31 +156,6 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
                   sorted(list(allowed_keys)),
               ]]
         else:
-          allowed_keys = [
-              'name',
-              'key',
-              'when',
-              'single',
-              'absent',
-              'delay_errors',
-              'ignore_errors',
-              'credentials',
-              'contents',
-              'params',
-              'group_params',
-              'shared_params',
-              'shared_group_params',
-          ]
-
-          for key in sorted(list(service_info_dict.keys())):
-            if key not in allowed_keys:
-              error_msgs_aux += [[
-                  str('property: ' + key),
-                  'msg: invalid service info property for a non-list service',
-                  'allowed properties:',
-                  sorted(list(allowed_keys)),
-              ]]
-
           allowed_keys = [
               'list',
               'delay_errors',
@@ -206,12 +189,6 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
         error_msgs_aux = []
 
         if not is_list:
-          result['tmp'] = tmp
-          result['can_destroy'] = can_destroy
-
-          result['delay_errors'] = service_info_dict.get('delay_errors')
-          result['ignore_errors'] = service_info_dict.get('ignore_errors')
-
           task = service.get('task')
           result['task'] = task
           result['namespace'] = service.get('namespace')
@@ -375,8 +352,6 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
             error_msgs += [new_value]
         else:
           single = service_info_dict.get('single')
-          delay_errors = service_info_dict.get('delay_errors')
-          ignore_errors = service_info_dict.get('ignore_errors')
 
           if single:
             error_msgs_aux += [[
@@ -391,24 +366,22 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
           services_list = list()
 
           if services:
-            if absent:
-              for idx, service_info_aux in enumerate(services):
-                if isinstance(service_info_aux, dict):
-                  if absent:
-                    service_info_aux['absent'] = True
+            for idx, service_info_aux in enumerate(services):
+              if not isinstance(service_info_aux, dict):
+                service_info_aux = dict(name=service_info_aux)
 
-                  if delay_errors:
-                    service_info_aux['delay_errors'] = True
+              for prop in ['tmp', 'can_destroy', 'absent', 'delay_errors', 'ignore_errors']:
+                service_info_aux[prop] = (
+                    service_info_aux.get(prop)
+                    if service_info_aux.get(prop) is not None
+                    else result.get(prop)
+                )
 
-                  if ignore_errors:
-                    service_info_aux['ignore_errors'] = True
-                else:
-                  services[idx] = dict(name=service_info_aux, absent=True)
+              services[idx] = service_info_aux
 
             info = prepare_services(
                 services,
                 run_info=run_info,
-                top=False,
                 parent_description=service_description,
                 service_names=service_names,
             )
@@ -420,12 +393,6 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
               new_value = [
                   str('service (parent): ' + service_description)] + value
               error_msgs += [new_value]
-
-            if not error_msgs_children:
-              if services_list:
-                for result_child in services_list:
-                  result_child['tmp'] = tmp
-                  result_child['can_destroy'] = can_destroy
 
           result['is_list'] = True
           result['services'] = services_list
@@ -456,7 +423,7 @@ def prepare_service(service_info, run_info, top, parent_description=None, servic
     return dict(error_msgs=error_msgs)
 
 
-def prepare_services(services, run_info, top=False, parent_description=None, service_names=None):
+def prepare_services(services, run_info, parent_description=None, service_names=None):
   result = list()
   error_msgs = list()
 
@@ -476,7 +443,6 @@ def prepare_services(services, run_info, top=False, parent_description=None, ser
           info = prepare_service(
               service_info,
               run_info=run_info,
-              top=top,
               parent_description=parent_description,
               service_names=service_names,
           )
@@ -581,7 +547,8 @@ def prepare_transfer_content(transfer_contents, context_title, prepare_info, inp
                   group=transfer_content.get(
                       'group') or transfer_content.get('user'),
                   mode=transfer_content.get('mode') or default_file_mode,
-                  dir_mode=transfer_content.get('dir_mode') or default_dir_mode,
+                  dir_mode=transfer_content.get(
+                      'dir_mode') or default_dir_mode,
                   validators=validators,
               )
 
@@ -1621,7 +1588,7 @@ def prepare_node(node_info, run_info, local=None):
             service_info['single'] = True
             service_info['params'] = service_params
 
-            info = prepare_service(service_info, run_info=run_info, top=True)
+            info = prepare_service(service_info, run_info=run_info)
 
             prepared_service = info.get('result')
             error_msgs_aux_services = info.get('error_msgs') or list()
@@ -1678,7 +1645,7 @@ def prepare_node(node_info, run_info, local=None):
 
             if validate_ctx:
               info = prepare_service(
-                  service_info, run_info=run_info, top=True
+                  service_info, run_info=run_info
               )
               prepared_node_dns_service = info.get('result')
               error_msgs_aux_service = info.get('error_msgs')
@@ -2982,7 +2949,6 @@ def prepare_ctx(ctx_name, run_info):
           info = prepare_services(
               ctx_initial_services,
               run_info=run_info,
-              top=True,
           )
 
           result_aux = info.get('result')
@@ -3122,7 +3088,6 @@ def prepare_ctx(ctx_name, run_info):
           info = prepare_services(
               ctx_final_services,
               run_info=run_info,
-              top=True,
           )
 
           result_aux = info.get('result')
