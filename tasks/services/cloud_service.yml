@@ -83,7 +83,6 @@
         lookup(
           'lrd.cloud.services',
           cloud_service_list | default([]),
-          top=cloud_service_top,
           env_data=env_data,
           validate=true
         )

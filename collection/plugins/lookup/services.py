@@ -15,7 +15,7 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text, to_bool
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_ctx import prepare_services
 
 from ansible.module_utils._text import to_text
@@ -56,7 +56,6 @@ _raw:
 class LookupModule(LookupBase):
 
   def run(self, terms, variables, **kwargs):
-    top = to_bool(kwargs.get('top'))
     env_data = kwargs.get('env_data')
     validate = kwargs.get('validate')
 
@@ -73,7 +72,7 @@ class LookupModule(LookupBase):
           validate=validate if (validate is not None) else True,
       )
 
-      result_info = prepare_services(services, run_info=run_info, top=top)
+      result_info = prepare_services(services, run_info=run_info)
 
       result_aux = result_info.get('result')
       error_msgs_aux = result_info.get('error_msgs') or list()
