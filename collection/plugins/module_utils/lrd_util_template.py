@@ -17,14 +17,10 @@ from copy import deepcopy
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
-from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
+from ansible.template import generate_ansible_template_vars
 from ansible.utils.display import Display
 
 display = Display()
-
-
-if USE_JINJA2_NATIVE:
-  from ansible.utils.native_jinja import NativeJinjaText
 
 
 def lookup(plugin, ansible_vars, file, params):
@@ -63,12 +59,7 @@ def lookup(plugin, ansible_vars, file, params):
     new_vars.update(params)
     display.vv("params keys: %s" % params.keys())
 
-    if USE_JINJA2_NATIVE:
-      templar = plugin._templar.copy_with_new_env(
-          environment_class=AnsibleEnvironment
-      )
-    else:
-      templar = plugin._templar
+    templar = plugin._templar
 
     with templar.set_temporary_context(
         variable_start_string=None,
@@ -81,11 +72,6 @@ def lookup(plugin, ansible_vars, file, params):
           preserve_trailing_newlines=True,
           escape_backslashes=False
       )
-
-    if USE_JINJA2_NATIVE:
-      # jinja2_native is true globally, we need this text
-      # not to be processed by literal_eval anywhere in Ansible
-      res = NativeJinjaText(res)
 
     return res
   else:

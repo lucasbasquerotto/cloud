@@ -35,13 +35,13 @@
 
 # Pods Repos (Local)
 
-- name: "{{ prepare_repos_title }} - prepare_repos_parent_pods_list - init"
+- name: "{{ prepare_repos_title }} - (var) prepare_repos_parent_pods_list - init"
   set_fact:
     prepare_repos_parent_pods_list: []
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
-- name: "{{ prepare_repos_title }} - prepare_repos_parent_pods_list - fill"
+- name: "{{ prepare_repos_title }} - (var) prepare_repos_parent_pods_list - fill"
   set_fact:
     prepare_repos_parent_pods_list: >-
       {{
@@ -60,6 +60,7 @@
   loop: "{{ prepare_repos_nodes }}"
   loop_control:
     loop_var: tmp_item
+    label: "{{ tmp_item.name | default(tmp_item) }}"
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
