@@ -1574,10 +1574,9 @@ def prepare_node(node_info, run_info, local=None):
             result['active_hosts'] = active_hosts
             result['all_hosts'] = all_hosts
 
-            service_info = service
-
-            if not isinstance(service, dict):
-              service_info = dict(name=service)
+            service_info = (dict(service)
+                            if isinstance(service, dict)
+                            else dict(name=service))
 
             service_params = merge_dicts(
                 service_info.get('params'),
