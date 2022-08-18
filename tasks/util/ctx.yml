@@ -24,6 +24,21 @@
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
+- name: "{{ env_title }} - create empty services file (when it doesn't exist)"
+  copy:
+    content: ""
+    force: no
+    dest: "{{ inventory_dir }}/services.yml"
+    mode: "{{ env_lax | bool | ternary('644', '600') }}"
+  no_log: "{{ env_no_log }}"
+  tags: ["no_print"]
+
+- name: "{{ env_title }} - get the content of the services file"
+  include_vars:
+    file: "{{ inventory_dir }}/services.yml"
+    name: ctx_services_data
+  tags: ["no_print_skipped"]
+
 - name: "{{ env_title }} - generate the node dependencies"
   set_fact:
     ctx_node_dependencies: >-
