@@ -149,7 +149,7 @@
     - name: "{{ cloud_node_item_title }} - update the hosts file with the generated hosts"
       blockinfile:
         path: "{{ inventory_file }}"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ cloud_node_name }}"
+        marker: "# {mark} MANAGED BLOCK - {{ cloud_node_name }}"
         insertafter: "^\\[{{ cloud_node_name }}\\]$"
         block: "{{ cloud_node_hosts_info }}"
       no_log: "{{ env_no_log }}"
