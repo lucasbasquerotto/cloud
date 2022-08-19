@@ -37,6 +37,7 @@ class FilterModule(object):
       self,
       node_dict_dependencies,
       hosts_data,
+      services_data,
       instance_type,
       instance_index,
       ignore_unknown_nodes=None,
@@ -44,6 +45,7 @@ class FilterModule(object):
     info = prepare_host_dependencies(
         node_dict_dependencies=node_dict_dependencies,
         hosts_data=hosts_data,
+        services_data=services_data,
         instance_type=instance_type,
         instance_index=instance_index,
         ignore_unknown_nodes=ignore_unknown_nodes,

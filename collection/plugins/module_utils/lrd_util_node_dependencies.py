@@ -121,8 +121,9 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                 dependency_hosts = []
 
                 for target_node_name in (target_node_names or []):
-                  target_prepared_node = prepared_node_dict.get(
-                      target_node_name)
+                  target_prepared_node = (
+                      prepared_node_dict.get(target_node_name)
+                  )
 
                   if not target_prepared_node:
                     error_msgs_dependency += [[
@@ -255,6 +256,7 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
 def prepare_host_dependencies(
     node_dict_dependencies,
     hosts_data,
+    services_data,
     instance_type,
     instance_index,
     ignore_unknown_nodes=None,
@@ -281,6 +283,7 @@ def prepare_host_dependencies(
           info = prepare_node_host_dependencies(
               node_dependencies,
               hosts_data=hosts_data,
+              services_data=services_data,
               instance_index=instance_index,
               ignore_unknown_nodes=ignore_unknown_nodes,
           )
@@ -325,6 +328,7 @@ def prepare_host_dependencies(
 def prepare_node_host_dependencies(
     node_dependencies,
     hosts_data,
+    services_data,
     instance_index,
     ignore_unknown_nodes=None,
 ):
@@ -354,8 +358,10 @@ def prepare_node_host_dependencies(
 
         if dependency_limit != 0:
           if dependency_type == 'node':
-            node_ip_type = node_dependency.get(
-                'node_ip_type') or 'private'
+            node_ip_type = (
+                node_dependency.get('node_ip_type')
+                or 'private'
+            )
 
             new_dependency_hosts = []
 
@@ -389,18 +395,52 @@ def prepare_node_host_dependencies(
                 new_dependency_host = dependency_host
                 new_dependency_hosts += [new_dependency_host]
               elif required_amount == -1:
-                if ignore_unknown_nodes:
-                  new_dependency_host = dependency_host
-                  new_dependency_hosts += [new_dependency_host]
-                  error_msgs_dependency += [[
-                      str('dependency_host: ' + str(dependency_host)),
-                      'msg: dependency host not defined',
-                  ]]
-                else:
-                  error_msgs_dependency += [[
-                      str('dependency_host: ' + str(dependency_host)),
-                      'msg: dependency host not defined',
-                  ]]
+                error_msgs_dependency += [[
+                    str('dependency_host: ' + str(dependency_host)),
+                    'msg: dependency host not defined',
+                ]]
+
+            dependency_hosts = new_dependency_hosts
+          elif dependency_type == 'service':
+            endpoint_type = (
+                node_dependency.get('endpoint_type')
+                or 'private'
+            )
+
+            new_dependency_hosts = []
+
+            for service_name in dependency_hosts:
+              service_data = services_data.get(service_name) or dict()
+              service_endpoints = service_data.get('endpoints') or list()
+
+              if service_endpoints:
+                for service_endpoint in service_endpoints:
+                  dependency_host_data = service_endpoint.get('endpoints')
+
+                  endpoint_type_prop = (
+                      'private_endpoint'
+                      if (endpoint_type == 'private')
+                      else 'public_endpoint'
+                  )
+                  new_dependency_host = dependency_host_data.get(
+                      endpoint_type_prop
+                  )
+
+                  if not new_dependency_host:
+                    error_msgs_dependency += [[
+                        str('endpoint_type: ' + str(endpoint_type)),
+                        'msg: dependency host has no property for the endpoint type',
+                    ]]
+
+                  new_dependency_hosts += [new_dependency_host or '']
+              elif ignore_unknown_nodes:
+                new_dependency_host = service_name
+                new_dependency_hosts += [new_dependency_host]
+              elif required_amount == -1:
+                error_msgs_dependency += [[
+                    str('dependency_host (service_name): ' + str(service_name)),
+                    'msg: dependency host not defined',
+                ]]
 
             dependency_hosts = new_dependency_hosts
 
