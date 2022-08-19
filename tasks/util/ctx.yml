@@ -25,6 +25,7 @@
   tags: ["no_print"]
 
 - name: "{{ env_title }} - create empty services file (when it doesn't exist)"
+  delegate_to: "localhost"
   copy:
     content: ""
     force: no
@@ -34,6 +35,7 @@
   tags: ["no_print"]
 
 - name: "{{ env_title }} - get the content of the services file"
+  delegate_to: "localhost"
   include_vars:
     file: "{{ inventory_dir }}/services.yml"
     name: ctx_services_data
@@ -68,6 +70,7 @@
         ctx_data.node_dict_dependencies | default({})
         | lrd.cloud.node_dict_dependencies(
           ctx_hosts_data | default({}),
+          services_data=ctx_services_data | default({}),
           instance_type=ctx_item.name,
           instance_index=1,
           ignore_unknown_nodes=ctx_ignore_unknown_nodes | default(false) | bool
