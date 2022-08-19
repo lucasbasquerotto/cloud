@@ -39,9 +39,6 @@
     name: ctx_services_data
   tags: ["no_print_skipped"]
 
-- debug:
-    var: ctx_services_data
-
 - name: "{{ env_title }} - generate the node dependencies"
   set_fact:
     ctx_node_dependencies: >-
