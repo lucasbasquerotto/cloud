@@ -71,6 +71,15 @@ def prepare_node_dependencies(node_names, prepared_node_dict):
                       'port',
                       'when',
                   ],
+                  service=[
+                      'type',
+                      'required_amount',
+                      'limit',
+                      'host',
+                      'protocol',
+                      'port',
+                      'when',
+                  ],
                   ip=[
                       'type',
                       'required_amount',
@@ -415,14 +424,12 @@ def prepare_node_host_dependencies(
 
               if service_endpoints:
                 for service_endpoint in service_endpoints:
-                  dependency_host_data = service_endpoint.get('endpoints')
-
                   endpoint_type_prop = (
                       'private_endpoint'
                       if (endpoint_type == 'private')
                       else 'public_endpoint'
                   )
-                  new_dependency_host = dependency_host_data.get(
+                  new_dependency_host = service_endpoint.get(
                       endpoint_type_prop
                   )
 
