@@ -91,6 +91,16 @@
   no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
 
+- name: "{{ cloud_service_title }} - cloud_service_run_list (reverse when absent)"
+  set_fact:
+    cloud_service_run_list: "{{ cloud_service_run_list | default([]) | reverse }}"
+  when: >-
+    ((cloud_service_run_list | default([]) | length) > 0)
+    and
+    (cloud_service_state == 'absent')
+  no_log: "{{ env_no_log }}"
+  tags: ["no_print"]
+
 - name: "{{ cloud_service_title }} - cloud_service_run_title"
   set_fact:
     cloud_service_run_title: "{{ cloud_service_title }} - run"
