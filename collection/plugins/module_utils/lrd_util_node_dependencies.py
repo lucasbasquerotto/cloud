@@ -419,8 +419,8 @@ def prepare_node_host_dependencies(
             new_dependency_hosts = []
 
             for service_name in dependency_hosts:
-              service_data = services_data.get(service_name) or dict()
-              service_endpoints = service_data.get('endpoints') or list()
+              service_inner_data = services_data.get(service_name) or dict()
+              service_endpoints = service_inner_data.get('endpoints') or list()
 
               if service_endpoints:
                 for service_endpoint in service_endpoints:

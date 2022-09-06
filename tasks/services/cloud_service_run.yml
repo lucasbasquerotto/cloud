@@ -40,7 +40,7 @@
 - name: "{{ cloud_service_run_inner_title }} - result - initial"
   set_fact:
     cloud_service_result: {}
-    cloud_service_endpoints: []
+    cloud_service_info_result: {}
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
@@ -98,21 +98,26 @@
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 
-- name: "{{ cloud_service_run_inner_title }} - cloud_service_run_endpoints_info - init"
+- name: "{{ cloud_service_run_inner_title }} - update the services file with the result data"
   vars:
-    tmp_endpoints:
-      endpoints: "{{ cloud_service_endpoints }}"
-  set_fact:
-    cloud_service_run_endpoints_data: "{{ { cloud_service_run.name: tmp_endpoints } }}"
-  no_log: "{{ env_no_log }}"
-  tags: ["no_print"]
-
-- name: "{{ cloud_service_run_inner_title }} - update the services file with the endpoints"
+    tmp_has_data: >-
+      {{
+        (cloud_service_info_result.params is defined)
+        or
+        (cloud_service_info_result.credentials is defined)
+        or
+        ((cloud_service_info_result.endpoints | default([]) | length) > 0)
+      }}
+    tmp_data:
+      params: "{{ cloud_service_info_result.params | default({}) }}"
+      credentials: "{{ cloud_service_info_result.credentials | default({}) }}"
+      endpoints: "{{ cloud_service_info_result.endpoints | default([]) }}"
+    tmp_outer_data: "{{ { cloud_service_run.name: tmp_data } }}"
   blockinfile:
     path: "{{ inventory_dir }}/services.yml"
-    marker: "# {mark} MANAGED BLOCK - SERVICE ENDPOINTS - {{ cloud_service_run.name }}"
-    block: "{{ cloud_service_run_endpoints_data | to_nice_yaml }}"
-    state: "{{ ((cloud_service_endpoints | length) > 0) | ternary('present', 'absent') }}"
+    marker: "# {mark} MANAGED BLOCK - SERVICE DATA - {{ cloud_service_run.name }}"
+    block: "{{ tmp_outer_data | to_nice_yaml }}"
+    state: "{{ tmp_has_data | ternary('present', 'absent') }}"
     create: true
   no_log: "{{ env_no_log }}"
   tags: ["no_print_skipped"]
