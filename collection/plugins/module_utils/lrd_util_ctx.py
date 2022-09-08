@@ -35,6 +35,301 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation impo
 )
 
 
+def prepare_mixed_params(context_info, context_data, params_dicts, run_info):
+  result = dict()
+  error_msgs = []
+
+  try:
+    shared_group_params_dict = params_dicts.get('shared_group_params_dict')
+    shared_params_dict = params_dicts.get('shared_params_dict')
+    group_params_dict = params_dicts.get('group_params_dict')
+
+    env_data = run_info.get('env_data')
+    service_data = run_info.get('service_data')
+
+    env = env_data.get('env')
+
+    ### Credentials ###
+
+    result_aux_info = None
+    error_msgs_aux_credentials = []
+
+    credentials_dict = context_data.get('credentials')
+    dynamic_credentials_dict = context_data.get('dynamic_credentials')
+    credentials_env_dict = env.get('credentials')
+
+    ### Credentials - Info ###
+
+    if isinstance(context_info, dict):
+      credentials_info_dict = context_info.get('credentials')
+      dynamic_credentials_info_dict = context_info.get(
+          'dynamic_credentials'
+      )
+
+      dynamic_credentials_info = dict()
+
+      for credential_key in (dynamic_credentials_info_dict or dict()):
+        if credentials_info_dict.get('credential_key'):
+          error_msgs_aux_credentials += [[
+              'context: duplicate credential info key',
+              'credential_key: ' + credential_key,
+              'msg: duplicate credential key '
+              + '(defined both in credentials and dynamic_credentials)',
+          ]]
+        else:
+          service_name = credentials_info_dict.get(credential_key)
+          service_credential_name = credential_key
+
+          if isinstance(service_name, dict):
+            service_name = service_name.get('name')
+            service_credential_name = service_name.get(
+                'credential'
+            ) or credential_key
+
+          service_inner_data = service_data.get(service_name) or dict()
+          service_data_credentials = service_inner_data.get(
+              'credentials'
+          ) or dict()
+          credential_value = service_data_credentials.get(
+              service_credential_name
+          )
+          dynamic_credentials_info[credential_key] = credential_value
+
+      params_args = dict(
+          params=dynamic_credentials_info,
+          group_params=credentials_info_dict,
+          group_params_dict=credentials_env_dict,
+      )
+
+      info = mix(params_args)
+
+      result_aux_info = info.get('result')
+      error_msgs_aux_info = info.get('error_msgs') or list()
+
+      for value in (error_msgs_aux_info or []):
+        new_value = ['context: info credentials'] + value
+        error_msgs_aux_credentials += [new_value]
+
+    ### Credentials - Main ###
+
+    dynamic_credentials_data = dict()
+
+    for credential_key in (dynamic_credentials_dict or dict()):
+      if credentials_dict.get('credential_key'):
+        error_msgs_aux_credentials += [[
+            'context: duplicate credential key',
+            'credential_key: ' + credential_key,
+            'msg: duplicate credential key '
+            + '(defined both in credentials and dynamic_credentials)',
+        ]]
+      else:
+        service_name = credentials_dict.get(credential_key)
+        service_credential_name = credential_key
+
+        if isinstance(service_name, dict):
+          service_name = service_name.get('name')
+          service_credential_name = service_name.get(
+              'credential'
+          ) or credential_key
+
+        service_inner_data = service_data.get(service_name) or dict()
+        service_data_credentials = service_inner_data.get(
+            'credentials'
+        ) or dict()
+        credential_value = service_data_credentials.get(
+            service_credential_name
+        )
+        dynamic_credentials_data[credential_key] = credential_value
+
+    params_args = dict(
+        params=dynamic_credentials_data,
+        group_params=credentials_dict,
+        group_params_dict=credentials_env_dict,
+    )
+
+    info = mix(params_args)
+
+    result_aux_credentials = info.get('result')
+    error_msgs_aux_credentials = info.get('error_msgs') or list()
+
+    for value in (error_msgs_aux_credentials or []):
+      new_value = ['context: credentials'] + value
+      error_msgs += [new_value]
+
+    if not error_msgs_aux_credentials:
+      credentials = merge_dicts(result_aux_credentials, result_aux_info)
+      result['credentials'] = credentials or None
+
+    ### Params ###
+
+    result_aux_info = None
+    error_msgs_aux_params = []
+
+    params_dict = context_data.get('params')
+    dynamic_params_dict = context_data.get('dynamic_params')
+
+    ### Params - Info ###
+
+    if isinstance(context_info, dict):
+      params_info_dict = context_info.get('params')
+      dynamic_params_info_dict = context_info.get(
+          'dynamic_params'
+      )
+
+      dynamic_params_info = dict()
+
+      for param_key in (dynamic_params_info_dict or dict()):
+        if params_info_dict.get('param_key'):
+          error_msgs_aux_params += [[
+              'context: duplicate param info key',
+              'param_key: ' + param_key,
+              'msg: duplicate param key '
+              + '(defined both in params and dynamic_params)',
+          ]]
+        else:
+          service_name = params_info_dict.get(param_key)
+          service_param_name = param_key
+
+          if isinstance(service_name, dict):
+            service_name = service_name.get('name')
+            service_param_name = service_name.get(
+                'param'
+            ) or param_key
+
+          service_inner_data = service_data.get(service_name) or dict()
+          service_data_params = service_inner_data.get(
+              'params'
+          ) or dict()
+          param_value = service_data_params.get(
+              service_param_name
+          )
+          dynamic_params_info[param_key] = param_value
+
+      params_args = dict(
+          params=merge_dicts(dynamic_params_info, params_info_dict),
+          group_params=context_info.get('group_params'),
+          shared_params=context_info.get('shared_params'),
+          shared_group_params=context_info.get(
+              'shared_group_params'),
+          shared_group_params_dict=shared_group_params_dict,
+          shared_params_dict=shared_params_dict,
+          group_params_dict=group_params_dict,
+      )
+
+      info = mix(params_args)
+
+      result_aux_info = info.get('result')
+      error_msgs_aux_info = info.get('error_msgs') or list()
+
+      for value in (error_msgs_aux_info or []):
+        new_value = ['context: service info params'] + value
+        error_msgs_aux_params += [new_value]
+
+    ### Params - Main ###
+
+    dynamic_params = dict()
+
+    for param_key in (dynamic_params_dict or dict()):
+      if params_dict.get('param_key'):
+        error_msgs_aux_params += [[
+            'context: duplicate param info key',
+            'param_key: ' + param_key,
+            'msg: duplicate param key '
+            + '(defined both in params and dynamic_params)',
+        ]]
+      else:
+        service_name = params_dict.get(param_key)
+        service_param_name = param_key
+
+        if isinstance(service_name, dict):
+          service_name = service_name.get('name')
+          service_param_name = service_name.get(
+              'param'
+          ) or param_key
+
+        service_inner_data = service_data.get(service_name) or dict()
+        service_data_params = service_inner_data.get(
+            'params'
+        ) or dict()
+        param_value = service_data_params.get(
+            service_param_name
+        )
+        dynamic_params[param_key] = param_value
+
+    params_args = dict(
+        params=merge_dicts(dynamic_params, params_dict),
+        group_params=context_data.get('group_params'),
+        shared_params=context_data.get('shared_params'),
+        shared_group_params=context_data.get('shared_group_params'),
+        shared_group_params_dict=shared_group_params_dict,
+        shared_params_dict=shared_params_dict,
+        group_params_dict=group_params_dict,
+    )
+
+    info = mix(params_args)
+
+    result_aux_service = info.get('result')
+    error_msgs_aux_params_aux = info.get('error_msgs') or list()
+
+    for value in (error_msgs_aux_params_aux or []):
+      new_value = ['context: service params'] + value
+      error_msgs_aux_params += [new_value]
+
+    error_msgs += error_msgs_aux_params
+
+    if not error_msgs_aux_params:
+      params = merge_dicts(result_aux_service, result_aux_info)
+      result['params'] = params or None
+
+    ### Contents ###
+
+    prepared_contents = dict()
+
+    contents = context_data.get('contents')
+
+    ### Contents - Info ###
+
+    if isinstance(context_info, dict):
+      contents_info = context_info.get('contents')
+      contents = merge_dicts(contents, contents_info)
+
+    ### Contents - Main ###
+
+    validators = list()
+
+    for content_key in sorted(list((contents or dict()).keys())):
+      content = contents.get(content_key)
+
+      info = load_content(content, env=env, run_info=run_info)
+
+      prepared_content = info.get('result')
+      meta = info.get('meta') or dict()
+      validators = meta.get('validators') or []
+      validators += validators
+      error_msgs_aux_content = info.get('error_msgs') or list()
+
+      for value in (error_msgs_aux_content or []):
+        new_value = [str('content: ' + content_key)] + value
+        error_msgs += [new_value]
+
+      if not error_msgs_aux_content:
+        prepared_contents[content_key] = prepared_content
+
+    result['contents'] = prepared_contents or None
+
+    result['validators'] = validators
+
+    return dict(result=result, error_msgs=error_msgs)
+  except Exception as error:
+    error_msgs += [[
+        'msg: error when trying to prepare mixed params',
+        'error type: ' + str(type(error)),
+        'error details: ',
+        traceback.format_exc().split('\n'),
+    ]]
+    return dict(error_msgs=error_msgs)
+
+
 def prepare_service(service_info, run_info, parent_description=None, service_names=None):
   result = dict()
   error_msgs = list()
@@ -109,7 +404,6 @@ def prepare_service(service_info, run_info, parent_description=None, service_nam
       else:
         service = services_dict.get(service_key)
 
-        result_aux_info = dict()
         error_msgs_aux = []
 
         is_list = service.get('list')
@@ -125,8 +419,11 @@ def prepare_service(service_info, run_info, parent_description=None, service_nam
             'delay_errors',
             'ignore_errors',
             'credentials',
+            'dynamic_credentials',
             'contents',
+            'dynamic_contents',
             'params',
+            'dynamic_params',
             'group_params',
             'shared_params',
             'shared_group_params',
@@ -166,8 +463,11 @@ def prepare_service(service_info, run_info, parent_description=None, service_nam
               'schema',
               'validator',
               'credentials',
+              'dynamic_credentials',
               'contents',
+              'dynamic_contents',
               'params',
+              'dynamic_params',
               'group_params',
               'shared_params',
               'shared_group_params',
@@ -210,118 +510,46 @@ def prepare_service(service_info, run_info, parent_description=None, service_nam
             if not os.path.exists(task_file):
               error_msgs_aux += [[str('task file not found: ' + task_file)]]
 
-          credentials_info_dict = service_info_dict.get('credentials')
-          credentials_dict = service.get('credentials')
-          credentials_env_dict = env.get('credentials')
-
-          if credentials_info_dict:
-            credentials_dict = merge_dicts(
-                credentials_dict, credentials_info_dict)
-
-          params_args = dict(
-              group_params=credentials_dict,
-              group_params_dict=credentials_env_dict,
-          )
-
-          info = mix(params_args)
-
-          result_aux_credentials = info.get('result')
-          error_msgs_aux_credentials = info.get('error_msgs') or list()
-
-          for value in (error_msgs_aux_credentials or []):
-            new_value = ['context: service credentials'] + value
-            error_msgs_aux += [new_value]
-
-          if not error_msgs_aux_credentials:
-            credentials = result_aux_credentials
-            result['credentials'] = credentials or None
-
-          error_msgs_aux_params = []
-
-          if isinstance(service_info, dict):
-            params_args = dict(
-                params=service_info_dict.get('params'),
-                group_params=service_info_dict.get('group_params'),
-                shared_params=service_info_dict.get('shared_params'),
-                shared_group_params=service_info_dict.get(
-                    'shared_group_params'),
-                shared_group_params_dict=env.get(
-                    'service_shared_group_params'),
-                shared_params_dict=env.get('service_shared_params'),
-                group_params_dict=env.get('service_group_params'),
-            )
-
-            info = mix(params_args)
-
-            result_aux_info = info.get('result')
-            error_msgs_aux_info = info.get('error_msgs') or list()
-
-            for value in (error_msgs_aux_info or []):
-              new_value = ['context: service info params'] + value
-              error_msgs_aux_params += [new_value]
-
-          params_args = dict(
-              params=service.get('params'),
-              group_params=service.get('group_params'),
-              shared_params=service.get('shared_params'),
-              shared_group_params=service.get('shared_group_params'),
+          params_dicts = dict(
               shared_group_params_dict=env.get(
                   'service_shared_group_params'),
               shared_params_dict=env.get('service_shared_params'),
               group_params_dict=env.get('service_group_params'),
           )
 
-          info = mix(params_args)
+          info = prepare_mixed_params(
+              service_info, service, params_dicts, run_info)
 
-          result_aux_service = info.get('result')
-          error_msgs_aux_service = info.get('error_msgs') or list()
-
-          for value in (error_msgs_aux_service or []):
-            new_value = ['context: service params'] + value
-            error_msgs_aux_params += [new_value]
-
-          error_msgs_aux += error_msgs_aux_params
-
-          if not error_msgs_aux_params:
-            service_params = merge_dicts(result_aux_service, result_aux_info)
-            result['params'] = service_params or None
-
-          contents = service.get('contents')
-          prepared_contents = dict()
-
-          contents_info = service_info_dict.get('contents')
-
-          if contents_info:
-            contents = merge_dicts(contents, contents_info)
+          mixed_params = info.get('result')
+          error_msgs_aux_mixed_params = info.get('error_msgs')
 
           service_validators = list()
 
-          for content_key in sorted(list((contents or dict()).keys())):
-            content = contents.get(content_key)
-
-            info = load_content(content, env=env, run_info=run_info)
-
-            prepared_content = info.get('result')
-            meta = info.get('meta') or dict()
-            validators = meta.get('validators') or []
-            service_validators += validators
-            error_msgs_aux_content = info.get('error_msgs') or list()
-
-            for value in (error_msgs_aux_content or []):
-              new_value = [str('service content: ' + content_key)] + value
+          if error_msgs_aux_mixed_params:
+            for value in (error_msgs_aux_mixed_params or []):
+              new_value = ['context: mixed params'] + value
               error_msgs_aux += [new_value]
+          else:
+            result['credentials'] = mixed_params.get('credentials')
+            result['params'] = mixed_params.get('params')
+            result['contents'] = mixed_params.get('contents')
 
-            if not error_msgs_aux_content:
-              prepared_contents[content_key] = prepared_content
-
-          result['contents'] = prepared_contents or None
+            service_validators_aux = mixed_params['validators'] or []
+            service_validators += service_validators_aux
 
           if validate_ctx and not error_msgs_aux:
             task_data = dict(
                 base_dir_prefix=base_dir_prefix,
                 dict_to_validate=result,
-                prop_names=['namespace', 'params',
-                            'credentials', 'contents'],
+                prop_names=[
+                    'namespace',
+                    'credentials',
+                    'dynamic_credentials',
+                    'contents',
+                    'dynamic_contents',
+                    'params',
+                    'dynamic_params',
+                ],
             )
 
             info = validate_ctx_schema(
@@ -2070,8 +2298,11 @@ def prepare_task(task_info_dict, run_info):
                 'schema',
                 'validator',
                 'credentials',
+                'dynamic_credentials',
                 'contents',
+                'dynamic_contents',
                 'params',
+                'dynamic_params',
                 'group_params',
                 'shared_params',
                 'shared_group_params',

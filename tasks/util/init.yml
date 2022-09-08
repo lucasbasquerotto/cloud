@@ -21,6 +21,7 @@
   vars:
     ctx_load_hosts_data: "{{ init_load_node_dependencies | default(false) }}"
     ctx_load_node_dependencies: "{{ init_load_node_dependencies | default(false) }}"
+    ctx_force: false
   no_log: "{{ env_no_log }}"
   tags: ["no_print"]
 

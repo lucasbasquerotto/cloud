@@ -1,29 +1,3 @@
-- name: "{{ env_title }} - generate the context vars"
-  set_fact:
-    ctx_data: >-
-      {{
-        lookup(
-          'lrd.cloud.ctx',
-          env_ctx_name,
-          env_data=env_data,
-          validate=(ctx_validate | default(false) | bool)
-        )
-      }}
-  when: ctx_data is not defined
-  no_log: "{{ env_no_log }}"
-  tags: ["no_print_skipped"]
-
-- name: "{{ env_title }} - hosts data (outer)"
-  include_tasks: "tasks/util/hosts_data.yml"
-  when: >-
-    (ctx_load_hosts_data | default(false) | bool)
-    and
-    (ctx_node_dependencies is not defined)
-    and
-    (ctx_data.has_node_dependency | default(false) | bool)
-  no_log: "{{ env_no_log }}"
-  tags: ["no_print"]
-
 - name: "{{ env_title }} - create empty services file (when it doesn't exist)"
   delegate_to: "localhost"
   copy:
@@ -39,7 +13,35 @@
   include_vars:
     file: "{{ inventory_dir }}/services.yml"
     name: ctx_services_data
+  when: (ctx_services_data is not defined) or (ctx_force | default(false) | bool)
   tags: ["no_print_skipped"]
+
+- name: "{{ env_title }} - generate the context vars"
+  set_fact:
+    ctx_data: >-
+      {{
+        lookup(
+          'lrd.cloud.ctx',
+          env_ctx_name,
+          env_data=env_data,
+          services_data=ctx_services_data,
+          validate=(ctx_validate | default(false) | bool)
+        )
+      }}
+  when: (ctx_data is not defined) or (ctx_force | default(false) | bool)
+  no_log: "{{ env_no_log }}"
+  tags: ["no_print_skipped"]
+
+- name: "{{ env_title }} - hosts data (outer)"
+  include_tasks: "tasks/util/hosts_data.yml"
+  when: >-
+    (ctx_load_hosts_data | default(false) | bool)
+    and
+    (ctx_node_dependencies is not defined)
+    and
+    (ctx_data.has_node_dependency | default(false) | bool)
+  no_log: "{{ env_no_log }}"
+  tags: ["no_print"]
 
 - name: "{{ env_title }} - generate the node dependencies"
   set_fact:

@@ -57,6 +57,7 @@ class LookupModule(LookupBase):
 
   def run(self, terms, variables, **kwargs):
     env_data = kwargs.get('env_data')
+    services_data = kwargs.get('services_data')
     validate = kwargs.get('validate')
 
     ret = []
@@ -69,6 +70,7 @@ class LookupModule(LookupBase):
           plugin=self,
           ansible_vars=variables,
           env_data=env_data,
+          services_data=services_data,
           validate=validate if (validate is not None) else True,
       )
 
