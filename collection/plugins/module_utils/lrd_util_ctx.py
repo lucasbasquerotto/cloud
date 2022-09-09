@@ -104,7 +104,7 @@ def prepare_mixed_credentials(context_full_info, run_info):
     context_ctx_info = context_full_info.get('ctx_info')
 
     env_data = run_info.get('env_data')
-    service_data = run_info.get('service_data')
+    services_data = run_info.get('services_data')
 
     env = env_data.get('env')
 
@@ -137,23 +137,26 @@ def prepare_mixed_credentials(context_full_info, run_info):
               + '(defined both in credentials and dynamic_credentials)',
           ]]
         else:
-          service_name = credentials_ctx_info_dict.get(credential_key)
+          service_info = dynamic_credentials_ctx_info_dict.get(credential_key)
+          service_name = service_info
           service_credential_name = credential_key
 
-          if isinstance(service_name, dict):
-            service_name = service_name.get('name')
-            service_credential_name = service_name.get(
+          if isinstance(service_info, dict):
+            service_name = service_info.get('name')
+            service_credential_name = service_info.get(
                 'credential'
             ) or credential_key
 
-          service_inner_data = service_data.get(service_name) or dict()
+          service_inner_data = services_data.get(service_name) or dict()
           service_data_credentials = service_inner_data.get(
               'credentials'
           ) or dict()
           credential_value = service_data_credentials.get(
               service_credential_name
           )
-          dynamic_credentials_info[credential_key] = credential_value
+
+          if credential_value is not None:
+            dynamic_credentials_info[credential_key] = credential_value
 
       params_args = dict(
           params=dynamic_credentials_info,
@@ -189,23 +192,26 @@ def prepare_mixed_credentials(context_full_info, run_info):
               + '(defined both in credentials and dynamic_credentials)',
           ]]
         else:
-          service_name = credentials_info_dict.get(credential_key)
+          service_info = dynamic_credentials_info_dict.get(credential_key)
+          service_name = service_info
           service_credential_name = credential_key
 
-          if isinstance(service_name, dict):
-            service_name = service_name.get('name')
-            service_credential_name = service_name.get(
+          if isinstance(service_info, dict):
+            service_name = service_info.get('name')
+            service_credential_name = service_info.get(
                 'credential'
             ) or credential_key
 
-          service_inner_data = service_data.get(service_name) or dict()
+          service_inner_data = services_data.get(service_name) or dict()
           service_data_credentials = service_inner_data.get(
               'credentials'
           ) or dict()
           credential_value = service_data_credentials.get(
               service_credential_name
           )
-          dynamic_credentials_info[credential_key] = credential_value
+
+          if credential_value is not None:
+            dynamic_credentials_info[credential_key] = credential_value
 
       params_args = dict(
           params=dynamic_credentials_info,
@@ -235,23 +241,26 @@ def prepare_mixed_credentials(context_full_info, run_info):
             + '(defined both in credentials and dynamic_credentials)',
         ]]
       else:
-        service_name = credentials_dict.get(credential_key)
+        service_info = dynamic_credentials_dict.get(credential_key)
+        service_name = service_info
         service_credential_name = credential_key
 
-        if isinstance(service_name, dict):
-          service_name = service_name.get('name')
-          service_credential_name = service_name.get(
+        if isinstance(service_info, dict):
+          service_name = service_info.get('name')
+          service_credential_name = service_info.get(
               'credential'
           ) or credential_key
 
-        service_inner_data = service_data.get(service_name) or dict()
+        service_inner_data = services_data.get(service_name) or dict()
         service_data_credentials = service_inner_data.get(
             'credentials'
         ) or dict()
         credential_value = service_data_credentials.get(
             service_credential_name
         )
-        dynamic_credentials_data[credential_key] = credential_value
+
+        if credential_value is not None:
+          dynamic_credentials_data[credential_key] = credential_value
 
     params_args = dict(
         params=dynamic_credentials_data,
@@ -298,7 +307,7 @@ def prepare_mixed_params(context_full_info, params_dicts, run_info):
     shared_params_dict = params_dicts.get('shared_params_dict')
     group_params_dict = params_dicts.get('group_params_dict')
 
-    service_data = run_info.get('service_data')
+    services_data = run_info.get('services_data')
 
     ### Params ###
 
@@ -328,23 +337,26 @@ def prepare_mixed_params(context_full_info, params_dicts, run_info):
               + '(defined both in params and dynamic_params)',
           ]]
         else:
-          service_name = params_ctx_info_dict.get(param_key)
+          service_info = dynamic_params_ctx_info_dict.get(param_key)
+          service_name = service_info
           service_param_name = param_key
 
-          if isinstance(service_name, dict):
-            service_name = service_name.get('name')
-            service_param_name = service_name.get(
+          if isinstance(service_info, dict):
+            service_name = service_info.get('name')
+            service_param_name = service_info.get(
                 'param'
             ) or param_key
 
-          service_inner_data = service_data.get(service_name) or dict()
+          service_inner_data = services_data.get(service_name) or dict()
           service_data_params = service_inner_data.get(
               'params'
           ) or dict()
           param_value = service_data_params.get(
               service_param_name
           )
-          dynamic_params_info[param_key] = param_value
+
+          if param_value is not None:
+            dynamic_params_info[param_key] = param_value
 
       params_args = dict(
           params=merge_dicts(dynamic_params_info, params_ctx_info_dict),
@@ -384,23 +396,26 @@ def prepare_mixed_params(context_full_info, params_dicts, run_info):
               + '(defined both in params and dynamic_params)',
           ]]
         else:
-          service_name = params_info_dict.get(param_key)
+          service_info = dynamic_params_info_dict.get(param_key)
+          service_name = service_info
           service_param_name = param_key
 
-          if isinstance(service_name, dict):
-            service_name = service_name.get('name')
-            service_param_name = service_name.get(
+          if isinstance(service_info, dict):
+            service_name = service_info.get('name')
+            service_param_name = service_info.get(
                 'param'
             ) or param_key
 
-          service_inner_data = service_data.get(service_name) or dict()
+          service_inner_data = services_data.get(service_name) or dict()
           service_data_params = service_inner_data.get(
               'params'
           ) or dict()
           param_value = service_data_params.get(
               service_param_name
           )
-          dynamic_params_info[param_key] = param_value
+
+          if param_value is not None:
+            dynamic_params_info[param_key] = param_value
 
       params_args = dict(
           params=merge_dicts(dynamic_params_info, params_info_dict),
@@ -436,23 +451,26 @@ def prepare_mixed_params(context_full_info, params_dicts, run_info):
             + '(defined both in params and dynamic_params)',
         ]]
       else:
-        service_name = params_dict.get(param_key)
+        service_info = dynamic_params_dict.get(param_key)
+        service_name = service_info
         service_param_name = param_key
 
-        if isinstance(service_name, dict):
-          service_name = service_name.get('name')
-          service_param_name = service_name.get(
+        if isinstance(service_info, dict):
+          service_name = service_info.get('name')
+          service_param_name = service_info.get(
               'param'
           ) or param_key
 
-        service_inner_data = service_data.get(service_name) or dict()
+        service_inner_data = services_data.get(service_name) or dict()
         service_data_params = service_inner_data.get(
             'params'
         ) or dict()
         param_value = service_data_params.get(
             service_param_name
         )
-        dynamic_params[param_key] = param_value
+
+        if param_value is not None:
+          dynamic_params[param_key] = param_value
 
     params_args = dict(
         params=merge_dicts(dynamic_params, params_dict),
@@ -498,7 +516,7 @@ def prepare_mixed_contents(context_full_info, run_info):
     context_ctx_info = context_full_info.get('ctx_info')
 
     env_data = run_info.get('env_data')
-    service_data = run_info.get('service_data')
+    services_data = run_info.get('services_data')
 
     env = env_data.get('env')
 
@@ -530,26 +548,29 @@ def prepare_mixed_contents(context_full_info, run_info):
               + '(defined both in contents and dynamic_contents)',
           ]]
         else:
-          service_name = contents_ctx_info_dict.get(content_key)
+          service_info = dynamic_contents_ctx_info_dict.get(content_key)
+          service_name = service_info
           service_content_name = content_key
 
-          if isinstance(service_name, dict):
-            service_name = service_name.get('name')
-            service_content_name = service_name.get(
+          if isinstance(service_info, dict):
+            service_name = service_info.get('name')
+            service_content_name = service_info.get(
                 'content'
             ) or content_key
 
-          service_inner_data = service_data.get(service_name) or dict()
+          service_inner_data = services_data.get(service_name) or dict()
           service_data_contents = service_inner_data.get(
               'contents'
           ) or dict()
           content_value = service_data_contents.get(
               service_content_name
           )
-          dynamic_contents_info[content_key] = dict(
-              type='str',
-              params=dict(value=content_value)
-          )
+
+          if content_value is not None:
+            dynamic_contents_info[content_key] = dict(
+                type='str',
+                params=dict(value=content_value)
+            )
 
       result_aux_ctx_info = merge_dicts(
           dynamic_contents_info, contents_ctx_info_dict)
@@ -573,26 +594,29 @@ def prepare_mixed_contents(context_full_info, run_info):
               + '(defined both in contents and dynamic_contents)',
           ]]
         else:
-          service_name = contents_info_dict.get(content_key)
+          service_info = dynamic_contents_info_dict.get(content_key)
+          service_name = service_info
           service_content_name = content_key
 
-          if isinstance(service_name, dict):
-            service_name = service_name.get('name')
-            service_content_name = service_name.get(
+          if isinstance(service_info, dict):
+            service_name = service_info.get('name')
+            service_content_name = service_info.get(
                 'content'
             ) or content_key
 
-          service_inner_data = service_data.get(service_name) or dict()
+          service_inner_data = services_data.get(service_name) or dict()
           service_data_contents = service_inner_data.get(
               'contents'
           ) or dict()
           content_value = service_data_contents.get(
               service_content_name
           )
-          dynamic_contents_info[content_key] = dict(
-              type='str',
-              params=dict(value=content_value)
-          )
+
+          if content_value is not None:
+            dynamic_contents_info[content_key] = dict(
+                type='str',
+                params=dict(value=content_value)
+            )
 
       result_aux_info = merge_dicts(dynamic_contents_info, contents_info_dict)
 
@@ -609,26 +633,29 @@ def prepare_mixed_contents(context_full_info, run_info):
             + '(defined both in contents and dynamic_contents)',
         ]]
       else:
-        service_name = contents_dict.get(content_key)
+        service_info = dynamic_contents_dict.get(content_key)
+        service_name = service_info
         service_content_name = content_key
 
-        if isinstance(service_name, dict):
-          service_name = service_name.get('name')
-          service_content_name = service_name.get(
+        if isinstance(service_info, dict):
+          service_name = service_info.get('name')
+          service_content_name = service_info.get(
               'content'
           ) or content_key
 
-        service_inner_data = service_data.get(service_name) or dict()
+        service_inner_data = services_data.get(service_name) or dict()
         service_data_contents = service_inner_data.get(
             'contents'
         ) or dict()
         content_value = service_data_contents.get(
             service_content_name
         )
-        dynamic_contents[content_key] = dict(
-            type='str',
-            params=dict(value=content_value)
-        )
+
+        if content_value is not None:
+          dynamic_contents[content_key] = dict(
+              type='str',
+              params=dict(value=content_value)
+          )
 
     result_aux = merge_dicts(dynamic_contents, contents_dict)
 
