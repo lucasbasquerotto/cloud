@@ -48,7 +48,7 @@ def prepare_mixed_data(context_full_info, params_dicts, run_info):
     error_msgs_aux = info.get('error_msgs') or list()
 
     for value in (error_msgs_aux or []):
-      new_value = ['context: mixed credentials'] + value
+      new_value = ['context: mixed data (credentials)'] + value
       error_msgs += [new_value]
 
     if not error_msgs_aux:
@@ -62,7 +62,7 @@ def prepare_mixed_data(context_full_info, params_dicts, run_info):
     error_msgs_aux = info.get('error_msgs') or list()
 
     for value in (error_msgs_aux or []):
-      new_value = ['context: mixed params'] + value
+      new_value = ['context: mixed data (params)'] + value
       error_msgs += [new_value]
 
     if not error_msgs_aux:
@@ -76,7 +76,7 @@ def prepare_mixed_data(context_full_info, params_dicts, run_info):
     error_msgs_aux = info.get('error_msgs') or list()
 
     for value in (error_msgs_aux or []):
-      new_value = ['context: mixed contents'] + value
+      new_value = ['context: mixed data (contents)'] + value
       error_msgs += [new_value]
 
     if not error_msgs_aux:
@@ -898,21 +898,21 @@ def prepare_service(service_info, run_info, parent_description=None, service_nam
               context_full_info, params_dicts, run_info
           )
 
-          mixed_params = info.get('result')
-          error_msgs_aux_mixed_params = info.get('error_msgs')
+          mixed_data = info.get('result')
+          error_msgs_aux_mixed_data = info.get('error_msgs')
 
           service_validators = list()
 
-          if error_msgs_aux_mixed_params:
-            for value in (error_msgs_aux_mixed_params or []):
-              new_value = ['context: mixed params'] + value
+          if error_msgs_aux_mixed_data:
+            for value in (error_msgs_aux_mixed_data or []):
+              new_value = ['context: mixed data'] + value
               error_msgs_aux += [new_value]
           else:
-            result['credentials'] = mixed_params.get('credentials')
-            result['params'] = mixed_params.get('params')
-            result['contents'] = mixed_params.get('contents')
+            result['credentials'] = mixed_data.get('credentials')
+            result['params'] = mixed_data.get('params')
+            result['contents'] = mixed_data.get('contents')
 
-            service_validators_aux = mixed_params['validators'] or []
+            service_validators_aux = mixed_data['validators'] or []
             service_validators += service_validators_aux
 
           if validate_ctx and not error_msgs_aux:
@@ -1490,19 +1490,19 @@ def prepare_pod(pod_info, parent_data, run_info):
             context_full_info, params_dicts, run_info
         )
 
-        mixed_params = info.get('result')
-        error_msgs_aux_mixed_params = info.get('error_msgs')
+        mixed_data = info.get('result')
+        error_msgs_aux_mixed_data = info.get('error_msgs')
 
-        if error_msgs_aux_mixed_params:
-          for value in (error_msgs_aux_mixed_params or []):
-            new_value = ['context: mixed params'] + value
+        if error_msgs_aux_mixed_data:
+          for value in (error_msgs_aux_mixed_data or []):
+            new_value = ['context: mixed data'] + value
             error_msgs_aux += [new_value]
         else:
-          result['credentials'] = mixed_params.get('credentials')
-          result['params'] = mixed_params.get('params')
-          result['contents'] = mixed_params.get('contents')
+          result['credentials'] = mixed_data.get('credentials')
+          result['params'] = mixed_data.get('params')
+          result['contents'] = mixed_data.get('contents')
 
-          pod_validators += mixed_params['validators'] or []
+          pod_validators += mixed_data['validators'] or []
 
         if validate_ctx and not error_msgs_aux:
           schema_data = dict(input=initial_input)
@@ -1858,19 +1858,19 @@ def prepare_node(node_info, run_info, local=None):
             context_full_info, params_dicts, run_info
         )
 
-        mixed_params = info.get('result')
-        error_msgs_aux_mixed_params = info.get('error_msgs')
+        mixed_data = info.get('result')
+        error_msgs_aux_mixed_data = info.get('error_msgs')
 
-        if error_msgs_aux_mixed_params:
-          for value in (error_msgs_aux_mixed_params or []):
-            new_value = ['context: mixed params'] + value
+        if error_msgs_aux_mixed_data:
+          for value in (error_msgs_aux_mixed_data or []):
+            new_value = ['context: mixed data'] + value
             error_msgs_aux += [new_value]
         else:
-          result['credentials'] = mixed_params.get('credentials')
-          result['params'] = mixed_params.get('params')
-          result['contents'] = mixed_params.get('contents')
+          result['credentials'] = mixed_data.get('credentials')
+          result['params'] = mixed_data.get('params')
+          result['contents'] = mixed_data.get('contents')
 
-          node_validators += mixed_params['validators'] or []
+          node_validators += mixed_data['validators'] or []
 
         node_params = result.get('params')
         credentials = result.get('credentials')
@@ -2587,28 +2587,28 @@ def prepare_task(task_info_dict, run_info):
           context_full_info, params_dicts, run_info
       )
 
-      mixed_params = info.get('result')
-      error_msgs_aux_mixed_params = info.get('error_msgs')
+      mixed_data = info.get('result')
+      error_msgs_aux_mixed_data = info.get('error_msgs')
 
-      if error_msgs_aux_mixed_params:
-        for value in (error_msgs_aux_mixed_params or []):
-          new_value = ['context: mixed params'] + value
+      if error_msgs_aux_mixed_data:
+        for value in (error_msgs_aux_mixed_data or []):
+          new_value = ['context: mixed data'] + value
           error_msgs_aux += [new_value]
       else:
-        result['credentials'] = mixed_params.get('credentials')
-        result['params'] = mixed_params.get('params')
-        result['contents'] = mixed_params.get('contents')
+        result['credentials'] = mixed_data.get('credentials')
+        result['params'] = mixed_data.get('params')
+        result['contents'] = mixed_data.get('contents')
 
-        task_validators += mixed_params['validators'] or []
+        task_validators += mixed_data['validators'] or []
 
         if task_type != 'task':
-          if mixed_params.get('credentials'):
+          if mixed_data.get('credentials'):
             error_msgs_aux += [[
                 str('task_type: ' + task_type),
                 'msg: task type has no support for task credentials',
             ]]
 
-          if mixed_params.get('params'):
+          if mixed_data.get('params'):
             error_msgs_aux += [[
                 str(str),
                 'msg: task type has no support for task parameters',
@@ -3337,6 +3337,7 @@ def prepare_ctx(ctx_name, run_info):
           if not error_msgs_aux:
             prepared_initial_services = result_aux
             result['prepared_initial_services'] = prepared_initial_services
+            result['initial_services'] = ctx_initial_services
 
             if validate_ctx and prepared_initial_services:
               for idx, item in enumerate(prepared_initial_services):
@@ -3476,6 +3477,7 @@ def prepare_ctx(ctx_name, run_info):
           if not error_msgs_aux:
             prepared_final_services = result_aux
             result['prepared_final_services'] = prepared_final_services
+            result['final_services'] = ctx_final_services
 
             if validate_ctx and prepared_final_services:
               for idx, item in enumerate(prepared_final_services):

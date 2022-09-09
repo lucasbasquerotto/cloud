@@ -34,14 +34,17 @@
     - name: "{{ env_title }} - initial services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ ctx_data.prepared_initial_services | default([]) }}"
         cloud_service_title: "{{ env_title }} - initial services"
-        cloud_service_prepared_list: "{{ main_tmp_services }}"
+        cloud_service_list: "{{ [main_tmp_service] }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
+      loop: "{{ ctx_data.initial_services | default([]) }}"
+      loop_control:
+        loop_var: main_tmp_service
+        label: "{{ main_tmp_service.name | default(main_tmp_service) }}"
       no_log: "{{ env_no_log }}"
-      when: (main_tmp_services | length) > 0
+      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_initial_services }}"
@@ -445,14 +448,17 @@
     - name: "{{ env_title }} - final services (outer)"
       include_tasks: "tasks/services/cloud_service.yml"
       vars:
-        main_tmp_services: "{{ ctx_data.prepared_final_services | default([]) }}"
         cloud_service_title: "{{ env_title }} - final services"
-        cloud_service_prepared_list: "{{ main_tmp_services }}"
+        cloud_service_list: "{{ [main_tmp_service] }}"
         cloud_service_top: true
         cloud_service_tmp_dir: "{{ env_ctx_dir }}/cloud/services"
         cloud_service_state: "present"
-      when: (main_tmp_services | length) > 0
+      loop: "{{ ctx_data.final_services | default([]) }}"
+      loop_control:
+        loop_var: main_tmp_service
+        label: "{{ main_tmp_service.name | default(main_tmp_service) }}"
       no_log: "{{ env_no_log }}"
+      tags: ["no_print_skipped"]
 
     - name: "{{ env_title }}"
       include_tasks: "{{ ctx_data.hooks.after_final_services }}"

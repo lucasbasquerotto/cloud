@@ -84,6 +84,7 @@
           'lrd.cloud.services',
           cloud_service_list | default([]),
           env_data=env_data,
+          services_data=ctx_services_data,
           validate=true
         )
       }}
