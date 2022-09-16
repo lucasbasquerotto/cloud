@@ -16,7 +16,7 @@
 from __future__ import (absolute_import, division, print_function)
 
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import error_text
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import prepare_content
+from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_mixed_data import prepare_content
 
 from ansible.module_utils._text import to_text
 from ansible.plugins.lookup import LookupBase

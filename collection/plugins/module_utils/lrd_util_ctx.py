@@ -22,9 +22,6 @@ import traceback
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_utils import (
     default, is_empty, is_str, merge_dicts, to_bool
 )
-from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_content import (
-    prepare_content
-)
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_node_dependencies import (
     prepare_node_dependencies
 )
@@ -33,7 +30,7 @@ from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_validation impo
     get_validators, update_validators_descriptions, validate_ctx_schema
 )
 from ansible_collections.lrd.cloud.plugins.module_utils.lrd_util_mixed_data import (
-    prepare_mixed_data
+    prepare_content, prepare_mixed_data
 )
 
 
